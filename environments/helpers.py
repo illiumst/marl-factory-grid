@@ -28,6 +28,7 @@ def check_agent_move(state, dim, action):
         raise AssertionError('Only one agent per slice is allowed.')
     x, y = agent_pos[0]
     x_new, y_new = x, y
+    # Actions
     if action == 0: # North
         x_new -= 1
     elif action == 1: # East
@@ -48,6 +49,14 @@ def check_agent_move(state, dim, action):
     elif action == 7: # NW
         x_new -= 1
         y_new -= 1
+    # Check validity
+    valid = (x_new < 0 or y_new < 0
+             or x_new >= agent_slice.shape[0]
+             or y_new >= agent_slice.shape[0]
+             )
+    return (x, y), (x_new, y_new), valid
+
+
 
 
 

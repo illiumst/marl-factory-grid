@@ -31,7 +31,8 @@ class Factory(object):
             actions = [actions]
         # level, agent 1,..., agent n,
         for i, a in enumerate(actions):
-            h.check_agent_move(state=self.state, dim=i+1, action=a)
+            old_pos, new_pos, valid = h.check_agent_move(state=self.state, dim=i+1, action=a)
+
 
 if __name__ == '__main__':
     factory = Factory(n_agents=1)
