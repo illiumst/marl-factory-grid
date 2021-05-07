@@ -40,17 +40,17 @@ class Factory(object):
         for i in range(self.n_agents):  # might as well save the positions (redundant)
             agent_slice = self.state[i+1]
             x, y = np.argwhere(agent_slice == 1)[0]
-            collisions_vec = self.state[:, x, y]
+            collisions_vec = self.state[:, x, y].copy()  # otherwise you overwrite the grid/state
             collisions_vec[i+1] = 0  # no self-collisions
             collision_vecs.append(collisions_vec)
         self.handle_collisions(collisions_vec)
-
         return self.state, r, self.done, {}
 
     def make_move(self, agent_i, old_pos, new_pos):
         (x, y), (x_new, y_new) = old_pos, new_pos
-        self.state[agent_i, x, y] = 0
-        self.state[agent_i, x_new, y_new] = 1
+        self.state[agent_i+1, x, y] = 0
+        self.state[agent_i+1, x_new, y_new] = 1
+        print( old_pos, new_pos)
 
     def handle_collisions(self, vecs):
         pass
@@ -58,5 +58,6 @@ class Factory(object):
 
 if __name__ == '__main__':
     factory = Factory(n_agents=1)
-    factory.step(0)
-    print(factory.state.shape)
+    print(factory.state)
+    state, r, done, _ = factory.step(0)
+    print(state)
