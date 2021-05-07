@@ -61,10 +61,3 @@ class BaseFactory(object):
 
     def step_core(self, collisions_vec, actions, r):
         return 0
-
-
-if __name__ == '__main__':
-    factory = BaseFactory(n_agents=1)
-    print(factory.state)
-    state, r, done, _ = factory.step(0)
-    print(state)
