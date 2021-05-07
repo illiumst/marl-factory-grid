@@ -50,10 +50,11 @@ def check_agent_move(state, dim, action):
         x_new -= 1
         y_new -= 1
     # Check validity
-    valid = (x_new < 0 or y_new < 0
-             or x_new >= agent_slice.shape[0]
-             or y_new >= agent_slice.shape[0]
-             )
+    valid = not (
+            x_new < 0 or y_new < 0
+            or x_new >= agent_slice.shape[0]
+            or y_new >= agent_slice.shape[0]
+    )  # if agent tried to leave the grid
     return (x, y), (x_new, y_new), valid
 
 
