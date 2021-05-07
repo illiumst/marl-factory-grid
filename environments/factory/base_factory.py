@@ -3,7 +3,7 @@ from pathlib import Path
 from environments import helpers as h
 
 
-class Factory(object):
+class BaseFactory(object):
     LEVELS_DIR = 'levels'
 
     def __init__(self, level='simple', n_agents=1, max_steps=1e3):
@@ -16,6 +16,7 @@ class Factory(object):
 
     def reset(self):
         self.done = False
+        self.steps = 0
         self.agents = np.zeros((self.n_agents, *self.level.shape), dtype=np.int8)
         free_cells = np.argwhere(self.level == 0)
         np.random.shuffle(free_cells)
@@ -30,6 +31,7 @@ class Factory(object):
         assert type(actions) in [int, list]
         if type(actions) == int:
             actions = [actions]
+        self.steps += 1
         r = 0
         # level, agent 1,..., agent n,
         for i, a in enumerate(actions):
@@ -44,20 +46,26 @@ class Factory(object):
             collisions_vec[i+1] = 0  # no self-collisions
             collision_vecs.append(collisions_vec)
         self.handle_collisions(collisions_vec)
+        r += self.step_core(collisions_vec, actions, r)
+        if self.steps >= self.max_steps:
+            self.done = True
         return self.state, r, self.done, {}
 
     def make_move(self, agent_i, old_pos, new_pos):
         (x, y), (x_new, y_new) = old_pos, new_pos
         self.state[agent_i+1, x, y] = 0
         self.state[agent_i+1, x_new, y_new] = 1
-        print( old_pos, new_pos)
+        print(old_pos, new_pos)
 
     def handle_collisions(self, vecs):
         pass
 
+    def step_core(self, collisions_vec, actions, r):
+        return 0
+
 
 if __name__ == '__main__':
-    factory = Factory(n_agents=1)
+    factory = BaseFactory(n_agents=1)
     print(factory.state)
     state, r, done, _ = factory.step(0)
     print(state)
