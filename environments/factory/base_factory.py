@@ -55,7 +55,6 @@ class BaseFactory(object):
         (x, y), (x_new, y_new) = old_pos, new_pos
         self.state[agent_i+1, x, y] = 0
         self.state[agent_i+1, x_new, y_new] = 1
-        print(old_pos, new_pos)
 
     def handle_collisions(self, vecs):
         pass
