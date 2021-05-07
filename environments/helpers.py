@@ -16,7 +16,7 @@ def parse_level(path):
 
 def one_hot_level(level, wall_char=WALL):
     grid = np.array(level)
-    binary_grid = np.zeros(grid.shape)
+    binary_grid = np.zeros(grid.shape, dtype=np.int8)
     binary_grid[grid == wall_char] = 1
     return binary_grid
 
