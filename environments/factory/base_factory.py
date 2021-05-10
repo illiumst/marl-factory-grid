@@ -45,19 +45,16 @@ class BaseFactory(object):
             collisions_vec = self.state[:, x, y].copy()  # otherwise you overwrite the grid/state
             collisions_vec[i+1] = 0  # no self-collisions
             collision_vecs.append(collisions_vec)
-        self.handle_collisions(collisions_vec)
-        r += self.step_core(collisions_vec, actions, r)
+        reward, info = self.step_core(collisions_vec, actions, r)
+        r += reward
         if self.steps >= self.max_steps:
             self.done = True
-        return self.state, r, self.done, {}
+        return self.state, r, self.done, info
 
     def make_move(self, agent_i, old_pos, new_pos):
         (x, y), (x_new, y_new) = old_pos, new_pos
         self.state[agent_i+1, x, y] = 0
         self.state[agent_i+1, x_new, y_new] = 1
 
-    def handle_collisions(self, vecs):
-        pass
-
     def step_core(self, collisions_vec, actions, r):
-        return 0
+        return 0, {}

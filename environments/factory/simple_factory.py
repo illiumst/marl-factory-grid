@@ -11,12 +11,16 @@ class SimpleFactory(BaseFactory):
         super().reset()
         dirt_slice = np.zeros((1, *self.state.shape[1:]))
         self.state = np.concatenate((self.state, dirt_slice))  # dirt is now the last slice
+        free_for_dirt = self.free_for_dirt()
+        for x, y in free_for_dirt[:self.max_dirt]:
+            self.state[-1, x, y] = 1
+        print(self.state)
+
+    def free_for_dirt(self):
         free_for_dirt = self.state.sum(0)
         free_for_dirt = np.argwhere(free_for_dirt == 0)
         np.random.shuffle(free_for_dirt)
-        for x,y in free_for_dirt[:self.max_dirt]:
-            self.state[-1, x, y] = 1
-        print(self.state)
+        return free_for_dirt
 
 
 if __name__ == '__main__':
