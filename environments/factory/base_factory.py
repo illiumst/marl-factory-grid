@@ -46,7 +46,6 @@ class BaseFactory(object):
             x, y = np.argwhere(agent_slice == 1)[0]
             collisions_vec = self.state[:, x, y].copy()  # otherwise you overwrite the grid/state
             collisions_vec[i+1] = 0  # no self-collisions
-            #collision_vecs.append(collisions_vec)
             collision_vecs[i] += collisions_vec
         reward, info = self.step_core(np.array(collision_vecs), actions, r)
         r += reward
