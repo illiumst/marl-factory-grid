@@ -63,9 +63,7 @@ class BaseFactory:
         pos_x, pos_y = pos
         collisions_vec = self.state[:, pos_x, pos_y].copy()  # "vertical fiber" at position of agent i
         collisions_vec[h.AGENT_START_IDX + agent_i] = h.IS_FREE_CELL  # no self-collisions
-        if valid:
-            pass
-        else:
+        if not valid:
             collisions_vec[h.LEVEL_IDX] = h.IS_OCCUPIED_CELL
         return collisions_vec
 
@@ -82,9 +80,7 @@ class BaseFactory:
             # Does not collide width level boundrys
             self.move(agent_i, old_pos, new_pos)
             return new_pos, valid
-        else:
-            # Agent seems to be trying to collide in this step
-            return old_pos, valid
+        return old_pos, valid
 
     @property
     def free_cells(self) -> np.ndarray:
