@@ -31,19 +31,27 @@ class BaseFactory:
         # Returns State, Reward, Done, Info
         return self.state, 0, self.done, {}
 
+    def additional_actions(self, agent_i, action) -> ((int, int), bool):
+        raise NotImplementedError
+
     def step(self, actions):
         actions = [actions] if isinstance(actions, int) else actions
         assert isinstance(actions, list), f'"actions has to be in [{int, list}]'
         self.steps += 1
         r = 0
 
-        collision_vecs = np.zeros((self.n_agents, self.state.shape[0]))  # n_agents x n_slices
         actions = list(enumerate(actions))
         random.shuffle(actions)
-
         for agent_i, action in actions:
-            new_pos, collision_vec, did_collide = self.move_or_colide(agent_i, action)
-            collision_vecs[agent_i] = collision_vec
+            if action <= 8:
+                pos, did_collide = self.move_or_colide(agent_i, action)
+            else:
+                pos, did_collide = self.additional_actions(agent_i, action)
+            actions[agent_i] = (pos, did_collide)
+
+        collision_vecs = np.zeros((self.n_agents, self.state.shape[0]))  # n_agents x n_slices
+        for agent_i, action in enumerate(actions):
+            collision_vecs[agent_i] = self.check_collisions(agent_i, *action)
 
         reward, info = self.step_core(collision_vecs, actions, r)
         r += reward
@@ -51,22 +59,32 @@ class BaseFactory:
             self.done = True
         return self.state, r, self.done, info
 
+    def check_collisions(self, agent_i, pos, valid):
+        pos_x, pos_y = pos
+        collisions_vec = self.state[:, pos_x, pos_y].copy()  # "vertical fiber" at position of agent i
+        collisions_vec[h.AGENT_START_IDX + agent_i] = h.IS_FREE_CELL  # no self-collisions
+        if valid:
+            pass
+        else:
+            collisions_vec[h.LEVEL_IDX] = h.IS_OCCUPIED_CELL
+        return collisions_vec
+
     def move(self, agent_i, old_pos, new_pos):
         (x, y), (x_new, y_new) = old_pos, new_pos
         self.state[agent_i + h.AGENT_START_IDX, x, y] = h.IS_FREE_CELL
         self.state[agent_i + h.AGENT_START_IDX, x_new, y_new] = h.IS_OCCUPIED_CELL
 
     def move_or_colide(self, agent_i, action) -> ((int, int), bool):
-        old_pos, new_pos, collision_vec, did_collide = h.check_agent_move(state=self.state,
-                                                                          dim=agent_i + h.AGENT_START_IDX,
-                                                                          action=action)
-        if not did_collide:
+        old_pos, new_pos, valid = h.check_agent_move(state=self.state,
+                                                           dim=agent_i + h.AGENT_START_IDX,
+                                                           action=action)
+        if valid:
             # Does not collide width level boundrys
             self.move(agent_i, old_pos, new_pos)
-            return new_pos, collision_vec, did_collide
+            return new_pos, valid
         else:
             # Agent seems to be trying to collide in this step
-            return old_pos, collision_vec, did_collide
+            return old_pos, valid
 
     @property
     def free_cells(self) -> np.ndarray:

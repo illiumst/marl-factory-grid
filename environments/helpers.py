@@ -64,16 +64,7 @@ def check_agent_move(state, dim, action):
             or y_new >= agent_slice.shape[0]
     )
 
-    if valid:
-        collisions_vec = state[:, x_new, y_new].copy()  # "vertical fiber" at position of agent i
-        collisions_vec[dim] = IS_FREE_CELL              # no self-collisions
-        pass
-    else:
-        collisions_vec = state[:, x, y].copy()  # "vertical fiber" at position of agent i
-        collisions_vec[dim] = IS_FREE_CELL              # no self-collisions
-        collisions_vec[LEVEL_IDX] = IS_OCCUPIED_CELL
-    did_collide = collisions_vec.sum(0) != IS_FREE_CELL
-    return (x, y), (x_new, y_new), collisions_vec, did_collide
+    return (x, y), (x_new, y_new), valid
 
 
 if __name__ == '__main__':

@@ -30,6 +30,6 @@ class SimpleFactory(BaseFactory):
 if __name__ == '__main__':
     import random
     factory = SimpleFactory(n_agents=1, max_dirt=8)
-    random_actions = [random.randint(0, 8) for _ in range(200)]
+    random_actions = [random.randint(0, 7) for _ in range(200)]
     for action in random_actions:
         state, r, done, _ = factory.step(action)
