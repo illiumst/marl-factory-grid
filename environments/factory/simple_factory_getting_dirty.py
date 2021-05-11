@@ -3,22 +3,25 @@ from environments.factory.base_factory import BaseFactory
 from collections import namedtuple
 
 
-DirtProperties = namedtuple('DirtProperties', ['clean_amount', 'max_spawn_ratio', 'gain_amount'])
+DirtProperties = namedtuple('DirtProperties', ['clean_amount', 'max_spawn_ratio', 'gain_amount'],
+                            defaults=[0.25, 0.1, 0.1])
 
 
 class GettingDirty(BaseFactory):
 
     _dirt_indx = -1
 
-    def __init__(self, *args, dirt_properties, **kwargs):
+    def __init__(self, *args, dirt_properties:DirtProperties, **kwargs):
         super(GettingDirty, self).__init__(*args, **kwargs)
         self._dirt_properties = dirt_properties
         self.slice_strings.update({self.state.shape[0]-1: 'dirt'})
 
     def spawn_dirt(self):
         free_for_dirt = self.free_cells
-        for x, y in free_for_dirt[:self._max_dirt_spawn_ratio * free_for_dirt.]:  # randomly distribute dirt across the grid
-            self.state[self._dirt_indx, x, y] += 0.1
+        # randomly distribute dirt across the grid
+        n_dirt_tiles = self._dirt_properties.max_spawn_ratio * len(free_for_dirt)
+        for x, y in free_for_dirt[:n_dirt_tiles]:
+            self.state[self._dirt_indx, x, y] += self._dirt_properties.gain_amount
 
     def reset(self):
         # ToDo: When self.reset returns the new states and stuff, use it here!
