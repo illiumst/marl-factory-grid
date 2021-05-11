@@ -29,26 +29,28 @@ def check_agent_move(state, dim, action):
     x, y = agent_pos[0]
     x_new, y_new = x, y
     # Actions
-    if action == 0: # North
+    if action == 0:  # North
         x_new -= 1
-    elif action == 1: # East
+    elif action == 1:  # East
         y_new += 1
-    elif action == 2: # South
+    elif action == 2:  # South
         x_new += 1
-    elif action == 3: # West
+    elif action == 3:  # West
         y_new -= 1
-    elif action == 4: # NE
+    elif action == 4:  # NE
         x_new -= 1
         y_new += 1
-    elif action == 5: # SE
+    elif action == 5:  # SE
         x_new += 1
         y_new += 1
-    elif action == 6: # SW
+    elif action == 6:  # SW
         x_new += 1
         y_new -= 1
-    elif action == 7: # NW
+    elif action == 7:  # NW
         x_new -= 1
         y_new -= 1
+    else:
+        pass
     # Check validity
     valid = not (
             x_new < 0 or y_new < 0
@@ -58,10 +60,7 @@ def check_agent_move(state, dim, action):
     return (x, y), (x_new, y_new), valid
 
 
-
-
-
 if __name__ == '__main__':
-    x = parse_level(Path(__file__).parent / 'factory' / 'levels' / 'simple.txt')
-    y = one_hot_level(x)
+    parsed_level = parse_level(Path(__file__).parent / 'factory' / 'levels' / 'simple.txt')
+    y = one_hot_level(parsed_level)
     print(np.argwhere(y == 0))
