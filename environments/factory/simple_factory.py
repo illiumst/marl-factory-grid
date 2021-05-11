@@ -8,7 +8,6 @@ class SimpleFactory(BaseFactory):
         super(SimpleFactory, self).__init__(*args, **kwargs)
         self.slice_strings.update({self.state.shape[0]-1: 'dirt'})
 
-
     def spawn_dirt(self):
         free_for_dirt = self.free_cells
         for x, y in free_for_dirt[:self.max_dirt]:  # randomly distribute dirt across the grid

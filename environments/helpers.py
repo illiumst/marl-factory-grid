@@ -3,6 +3,11 @@ from pathlib import Path
 
 # Constants
 WALL = '#'
+LEVELS_DIR = 'levels'
+LEVEL_IDX = 0
+AGENT_START_IDX = 1
+IS_FREE_CELL = 0
+IS_OCCUPIED_CELL = 1
 
 
 # Utility functions
@@ -51,13 +56,24 @@ def check_agent_move(state, dim, action):
         y_new -= 1
     else:
         pass
-    # Check validity
+
+    # Check if agent colides with grid boundrys
     valid = not (
             x_new < 0 or y_new < 0
             or x_new >= agent_slice.shape[0]
             or y_new >= agent_slice.shape[0]
-    )  # if agent tried to leave the grid
-    return (x, y), (x_new, y_new), valid
+    )
+
+    if valid:
+        collisions_vec = state[:, x_new, y_new].copy()  # "vertical fiber" at position of agent i
+        collisions_vec[dim] = IS_FREE_CELL              # no self-collisions
+        pass
+    else:
+        collisions_vec = state[:, x, y].copy()  # "vertical fiber" at position of agent i
+        collisions_vec[dim] = IS_FREE_CELL              # no self-collisions
+        collisions_vec[LEVEL_IDX] = IS_OCCUPIED_CELL
+    did_collide = collisions_vec.sum(0) != IS_FREE_CELL
+    return (x, y), (x_new, y_new), collisions_vec, did_collide
 
 
 if __name__ == '__main__':
