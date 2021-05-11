@@ -74,10 +74,10 @@ class BaseFactory:
 
     def move_or_colide(self, agent_i, action) -> ((int, int), bool):
         old_pos, new_pos, valid = h.check_agent_move(state=self.state,
-                                                           dim=agent_i + h.AGENT_START_IDX,
-                                                           action=action)
+                                                     dim=agent_i + h.AGENT_START_IDX,
+                                                     action=action)
         if valid:
-            # Does not collide width level boundrys
+            # Does not collide width level boundaries
             self.move(agent_i, old_pos, new_pos)
             return new_pos, valid
         return old_pos, valid
