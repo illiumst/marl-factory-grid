@@ -2,14 +2,12 @@ import numpy as np
 from environments.factory.base_factory import BaseFactory
 from collections import namedtuple
 
-
+DIRT_INDEX = -1
 DirtProperties = namedtuple('DirtProperties', ['clean_amount', 'max_spawn_ratio', 'gain_amount'],
                             defaults=[0.25, 0.1, 0.1])
 
 
 class GettingDirty(BaseFactory):
-
-    _dirt_indx = -1
 
     def __init__(self, *args, dirt_properties:DirtProperties, **kwargs):
         super(GettingDirty, self).__init__(*args, **kwargs)
@@ -21,7 +19,10 @@ class GettingDirty(BaseFactory):
         # randomly distribute dirt across the grid
         n_dirt_tiles = self._dirt_properties.max_spawn_ratio * len(free_for_dirt)
         for x, y in free_for_dirt[:n_dirt_tiles]:
-            self.state[self._dirt_indx, x, y] += self._dirt_properties.gain_amount
+            self.state[DIRT_INDEX, x, y] += self._dirt_properties.gain_amount
+
+    def additional_actions(self, agent_i, action) -> ((int, int), bool):
+        if action ==
 
     def reset(self):
         # ToDo: When self.reset returns the new states and stuff, use it here!
