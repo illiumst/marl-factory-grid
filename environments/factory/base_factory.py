@@ -8,6 +8,10 @@ from environments import helpers as h
 
 class BaseFactory:
 
+    @property
+    def movement_actions(self):
+        return (int(self.allow_vertical_movement) + int(self.allow_horizontal_movement)) * 4
+
     def __init__(self, level='simple', n_agents=1, max_steps=1e3):
         self.n_agents = n_agents
         self.max_steps = max_steps
@@ -64,8 +68,7 @@ class BaseFactory:
         return self.state, r, self.done, info
 
     def _is_moving_action(self, action):
-        movement_actions = (int(self.allow_vertical_movement) + int(self.allow_horizontal_movement)) * 4
-        if action < movement_actions:
+        if action < self.movement_actions:
             return True
         else:
             return False
@@ -105,6 +108,9 @@ class BaseFactory:
         else:
             # Agent seems to be trying to collide in this step
             return old_pos, valid
+
+    def agent_i_position(self, agent_i):
+        return np.argwhere(self.state[h.AGENT_START_IDX+agent_i] == h.IS_OCCUPIED_CELL)
 
     @property
     def free_cells(self) -> np.ndarray:
