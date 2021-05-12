@@ -30,7 +30,7 @@ class GettingDirty(BaseFactory):
         self.state = np.concatenate((self.state, dirt_slice))  # dirt is now the last slice
         self.spawn_dirt()
 
-    def step_core(self, collisions_vecs, actions, r):
+    def calculate_reward(self, collisions_vecs, actions, r):
         for agent_i, cols in enumerate(collisions_vecs):
             cols = np.argwhere(cols != 0).flatten()
             print(f't = {self.steps}\tAgent {agent_i} has collisions with '
