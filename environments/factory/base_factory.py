@@ -110,7 +110,7 @@ class BaseFactory:
             return old_pos, valid
 
     def agent_i_position(self, agent_i):
-        return np.argwhere(self.state[h.AGENT_START_IDX+agent_i] == h.IS_OCCUPIED_CELL)
+        return tuple(np.argwhere(self.state[h.AGENT_START_IDX+agent_i] == h.IS_OCCUPIED_CELL).flatten())
 
     @property
     def free_cells(self) -> np.ndarray:
