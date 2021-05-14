@@ -13,9 +13,9 @@ class AgentState:
         self.i = i
         self.action = action
 
-        self.pos = None
         self.collision_vector = None
         self.action_valid = None
+        self.pos = None
 
     @property
     def collisions(self):
@@ -34,6 +34,7 @@ class FactoryMonitor:
     def __init__(self, env):
         self._env = env
         self._monitor = defaultdict(lambda: defaultdict(lambda: 0))
+        self._last_vals = defaultdict(lambda: 0)
 
     def __iter__(self):
         for key, value in self._monitor.items():
@@ -42,19 +43,23 @@ class FactoryMonitor:
     def add(self, key, value, step=None):
         assert step is None or step >= 1                                            # Is this good practice?
         step = step or self._env.steps
-        self._monitor[key][step] = list(self._monitor[key].values())[-1] + value
-        return self._monitor[key][step]
+        self._last_vals[key] = self._last_vals[key] + value
+        self._monitor[key][step] = self._last_vals[key]
+        return self._last_vals[key]
 
     def set(self, key, value, step=None):
         assert step is None or step >= 1                                            # Is this good practice?
         step = step or self._env.steps
-        self._monitor[key][step] = value
-        return self._monitor[key][step]
+        self._last_vals[key] = value
+        self._monitor[key][step] = self._last_vals[key]
+        return self._last_vals[key]
 
-    def reduce(self, key, value, step=None):
+    def remove(self, key, value, step=None):
         assert step is None or step >= 1                                            # Is this good practice?
         step = step or self._env.steps
-        self._monitor[key][step] = list(self._monitor[key].values())[-1] - value
+        self._last_vals[key] = self._last_vals[key] - value
+        self._monitor[key][step] = self._last_vals[key]
+        return self._last_vals[key]
 
     def to_dict(self):
         return dict(self)
@@ -83,13 +88,13 @@ class BaseFactory:
             h.parse_level(Path(__file__).parent / h.LEVELS_DIR / f'{level}.txt')
         )
         self.slice_strings = {0: 'level', **{i: f'agent#{i}' for i in range(1, self.n_agents+1)}}
-        self.monitor = FactoryMonitor(self)
         self.reset()
 
     def reset(self):
         self.done = False
         self.steps = 0
         self.cumulative_reward = 0
+        self.monitor = FactoryMonitor(self)
         # Agent placement ...
         agents = np.zeros((self.n_agents, *self.level.shape), dtype=np.int8)
         floor_tiles = np.argwhere(self.level == h.IS_FREE_CELL)
