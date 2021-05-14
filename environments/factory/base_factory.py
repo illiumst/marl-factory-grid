@@ -1,22 +1,21 @@
-import random
-from typing import Tuple, List, Union, Iterable
+from collections import defaultdict
+from typing import List
 
 import numpy as np
 from pathlib import Path
 
-from attr import dataclass
-
 from environments import helpers as h
 
 
-@dataclass
 class AgentState:
-    i: int
-    action: int
 
-    pos = None
-    collision_vector = None
-    action_valid = None
+    def __init__(self, i: int, action: int):
+        self.i = i
+        self.action = action
+
+        self.pos = None
+        self.collision_vector = None
+        self.action_valid = None
 
     @property
     def collisions(self):
@@ -30,11 +29,50 @@ class AgentState:
                 raise AttributeError(f'"{key}" cannot be updated, this attr is not a part of {self.__class__.__name__}')
 
 
+class FactoryMonitor:
+
+    def __init__(self, env):
+        self._env = env
+        self._monitor = defaultdict(lambda: defaultdict(lambda: 0))
+
+    def __iter__(self):
+        for key, value in self._monitor.items():
+            yield key, dict(value)
+
+    def add(self, key, value, step=None):
+        assert step is None or step >= 1                                            # Is this good practice?
+        step = step or self._env.steps
+        self._monitor[key][step] = list(self._monitor[key].values())[-1] + value
+        return self._monitor[key][step]
+
+    def set(self, key, value, step=None):
+        assert step is None or step >= 1                                            # Is this good practice?
+        step = step or self._env.steps
+        self._monitor[key][step] = value
+        return self._monitor[key][step]
+
+    def reduce(self, key, value, step=None):
+        assert step is None or step >= 1                                            # Is this good practice?
+        step = step or self._env.steps
+        self._monitor[key][step] = list(self._monitor[key].values())[-1] - value
+
+    def to_dict(self):
+        return dict(self)
+
+    def to_pd_dataframe(self):
+        import pandas as pd
+        return pd.DataFrame.from_dict(self.to_dict())
+
+
 class BaseFactory:
 
     @property
     def movement_actions(self):
         return (int(self.allow_vertical_movement) + int(self.allow_horizontal_movement)) * 4
+
+    @property
+    def string_slices(self):
+        return {value: key for key, value in self.slice_strings.items()}
 
     def __init__(self, level='simple', n_agents=1, max_steps=1e3):
         self.n_agents = n_agents
@@ -45,11 +83,13 @@ class BaseFactory:
             h.parse_level(Path(__file__).parent / h.LEVELS_DIR / f'{level}.txt')
         )
         self.slice_strings = {0: 'level', **{i: f'agent#{i}' for i in range(1, self.n_agents+1)}}
+        self.monitor = FactoryMonitor(self)
         self.reset()
 
     def reset(self):
         self.done = False
         self.steps = 0
+        self.cumulative_reward = 0
         # Agent placement ...
         agents = np.zeros((self.n_agents, *self.level.shape), dtype=np.int8)
         floor_tiles = np.argwhere(self.level == h.IS_FREE_CELL)
@@ -62,7 +102,7 @@ class BaseFactory:
         # Returns State, Reward, Done, Info
         return self.state, 0, self.done, {}
 
-    def additional_actions(self, agent_i, action) -> ((int, int), bool):
+    def additional_actions(self, agent_i: int, action: int) -> ((int, int), bool):
         raise NotImplementedError
 
     def step(self, actions):
@@ -86,10 +126,11 @@ class BaseFactory:
             states[i].update(collision_vector=collision_vec)
 
         reward, info = self.calculate_reward(states)
+        self.cumulative_reward += reward
 
         if self.steps >= self.max_steps:
             self.done = True
-        return self.state, reward, self.done, info
+        return self.state, self.cumulative_reward, self.done, info
 
     def _is_moving_action(self, action):
         if action < self.movement_actions:

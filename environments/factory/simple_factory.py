@@ -22,8 +22,11 @@ class SimpleFactory(BaseFactory):
     def calculate_reward(self, agent_states):
         for agent_state in agent_states:
             collisions = agent_state.collisions
+            entities = [self.slice_strings[entity] for entity in collisions]
+            for entity in entities:
+                self.monitor.add(f'{entity}_collisions', 1)
             print(f't = {self.steps}\tAgent {agent_state.i} has collisions with '
-                  f'{[self.slice_strings[entity] for entity in collisions]}')
+                  f'{entities}')
         return 0, {}
 
 
@@ -33,3 +36,6 @@ if __name__ == '__main__':
     random_actions = [random.randint(0, 7) for _ in range(200)]
     for action in random_actions:
         state, r, done, _ = factory.step(action)
+    print(f'Factory run done, reward is:\n    {r}')
+    print(f'There have been the following collisions: \n {dict(factory.monitor)}')
+

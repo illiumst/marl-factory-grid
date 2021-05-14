@@ -1,9 +1,10 @@
+from collections import defaultdict
+from typing import List
+
 import numpy as np
 from attr import dataclass
 
-from environments.factory.base_factory import BaseFactory
-from collections import namedtuple
-from typing import Iterable
+from environments.factory.base_factory import BaseFactory, AgentState
 from environments import helpers as h
 
 DIRT_INDEX = -1
@@ -16,9 +17,8 @@ class DirtProperties:
 
 class GettingDirty(BaseFactory):
 
-    @property
-    def _clean_up_action(self):
-        return self.movement_actions + 1 - 1
+    def _is_clean_up_action(self, action):
+        return self.movement_actions + 1 - 1 == action
 
     def __init__(self, *args, dirt_properties: DirtProperties, **kwargs):
         self._dirt_properties = dirt_properties
@@ -43,16 +43,20 @@ class GettingDirty(BaseFactory):
             self.state[DIRT_INDEX][pos] = max(new_dirt_amount, h.IS_FREE_CELL)
             return pos, cleanup_was_sucessfull
 
-    def additional_actions(self, agent_i, action) -> ((int, int), bool):
+    def additional_actions(self, agent_i: int, action: int) -> ((int, int), bool):
         if action != self._is_moving_action(action):
-            if action == self._clean_up_action:
+            if self._is_clean_up_action(action):
                 agent_i_pos = self.agent_i_position(agent_i)
                 _, valid = self.clean_up(agent_i_pos)
                 if valid:
                     print(f'Agent {agent_i} did just clean up some dirt at {agent_i_pos}.')
+                    self.monitor.add('dirt_cleaned', self._dirt_properties.clean_amount)
                 else:
                     print(f'Agent {agent_i} just tried to clean up some dirt at {agent_i_pos}, but was unsucsessfull.')
+                    self.monitor.add('failed_attempts', 1)
                 return agent_i_pos, valid
+            else:
+                raise RuntimeError('This should not happen!!!')
         else:
             raise RuntimeError('This should not happen!!!')
 
@@ -63,18 +67,26 @@ class GettingDirty(BaseFactory):
         self.state = np.concatenate((self.state, dirt_slice))  # dirt is now the last slice
         self.spawn_dirt()
 
-    def calculate_reward(self, collisions_vecs: np.ndarray, actions: Iterable[int]) -> (int, dict):
-        for agent_i, cols in enumerate(collisions_vecs):
-            cols = np.argwhere(cols != 0).flatten()
-            print(f't = {self.steps}\tAgent {agent_i} has collisions with '
-                  f'{[self.slice_strings[entity] for entity in cols if entity != self.state.shape[0]]}')
-        return 0, {}
+    def calculate_reward(self, agent_states: List[AgentState]) -> (int, dict):
+        this_step_reward = 0
+        for agent_state in agent_states:
+            collisions = agent_state.collisions
+            print(f't = {self.steps}\tAgent {agent_state.i} has collisions with '
+                  f'{[self.slice_strings[entity] for entity in collisions if entity != self.string_slices["dirt"]]}')
+            if self._is_clean_up_action(agent_state.action) and agent_state.action_valid:
+                this_step_reward += 1
+
+        self.monitor.set('dirt_amount', self.state[DIRT_INDEX].sum())
+        self.monitor.set('dirty_tiles', len(np.nonzero(self.state[DIRT_INDEX])))
+        return this_step_reward, {}
 
 
 if __name__ == '__main__':
     import random
     dirt_props = DirtProperties()
     factory = GettingDirty(n_agents=1, dirt_properties=dirt_props)
-    random_actions = [random.randint(0, 8) for _ in range(200)]
-    for action in random_actions:
-        state, r, done, _ = factory.step(action)
+    random_actions = [random.randint(0, 8) for _ in range(2000)]
+    for random_action in random_actions:
+        state, r, done, _ = factory.step(random_action)
+    print(f'Factory run done, reward is:\n    {r}')
+    print(f'The following running stats have been recorded:\n{dict(factory.monitor)}')
