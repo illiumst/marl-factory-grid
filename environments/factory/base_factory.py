@@ -93,7 +93,7 @@ class BaseFactory:
         self.slice_strings = {0: 'level', **{i: f'agent#{i}' for i in range(1, self.n_agents+1)}}
         self.reset()
 
-    def reset(self):
+    def reset(self)  -> (np.ndarray, int, bool, dict):
         self.done = False
         self.steps = 0
         self.cumulative_reward = 0
