@@ -68,6 +68,9 @@ class FactoryMonitor:
         import pandas as pd
         return pd.DataFrame.from_dict(self.to_dict())
 
+    def reset(self):
+        raise RuntimeError("DO NOT DO THIS! Always initalize a new Monitor per Env-Run.")
+
 
 class BaseFactory:
 
