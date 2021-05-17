@@ -26,7 +26,7 @@ class GettingDirty(BaseFactory):
         self.slice_strings.update({self.state.shape[0]-1: 'dirt'})
 
     def spawn_dirt(self) -> None:
-        free_for_dirt = self.free_cells
+        free_for_dirt = self.free_cells(excluded_slices=DIRT_INDEX)
         # randomly distribute dirt across the grid
         n_dirt_tiles = int(random.uniform(0, self._dirt_properties.max_spawn_ratio) * len(free_for_dirt))
         for x, y in free_for_dirt[:n_dirt_tiles]:
@@ -43,6 +43,11 @@ class GettingDirty(BaseFactory):
             self.state[DIRT_INDEX][pos] = max(new_dirt_amount, h.IS_FREE_CELL)
             return pos, cleanup_was_sucessfull
 
+    def step(self, actions):
+        _, _, _, info = super(GettingDirty, self).step(actions)
+        self.spawn_dirt()
+        return self.state, self.cumulative_reward, self.done, info
+
     def additional_actions(self, agent_i: int, action: int) -> ((int, int), bool):
         if action != self._is_moving_action(action):
             if self._is_clean_up_action(action):
@@ -53,7 +58,7 @@ class GettingDirty(BaseFactory):
                     self.monitor.add('dirt_cleaned', self._dirt_properties.clean_amount)
                 else:
                     print(f'Agent {agent_i} just tried to clean up some dirt at {agent_i_pos}, but was unsucsessfull.')
-                    self.monitor.add('failed_attempts', 1)
+                    self.monitor.add('failed_cleanup_attempt', 1)
                 return agent_i_pos, valid
             else:
                 raise RuntimeError('This should not happen!!!')
@@ -76,6 +81,9 @@ class GettingDirty(BaseFactory):
             if self._is_clean_up_action(agent_state.action) and agent_state.action_valid:
                 this_step_reward += 1
 
+            for entity in collisions:
+                if entity != self.string_slices["dirt"]:
+                    self.monitor.add(f'agent_{agent_state.i}_vs_{self.slice_strings[entity]}', 1)
         self.monitor.set('dirt_amount', self.state[DIRT_INDEX].sum())
         self.monitor.set('dirty_tiles', len(np.nonzero(self.state[DIRT_INDEX])))
         return this_step_reward, {}
@@ -87,15 +95,16 @@ if __name__ == '__main__':
     factory = GettingDirty(n_agents=1, dirt_properties=dirt_props)
     monitor_list = list()
     for epoch in range(100):
-        random_actions = [random.randint(0, 7) for _ in range(200)]
+        random_actions = [random.randint(0, 8) for _ in range(200)]
         state, r, done, _ = factory.reset()
         for action in random_actions:
             state, r, done, info = factory.step(action)
-        monitor_list.append(factory.monitor)
-        print(f'Factory run done, reward is:\n    {r}')
+        monitor_list.append(factory.monitor.to_pd_dataframe())
+        print(f'Factory run {epoch} done, reward is:\n    {r}')
+
     from pathlib import Path
     import pickle
     out_path = Path('debug_out')
     out_path.mkdir(exist_ok=True, parents=True)
-    with (out_path / 'monitor.pick').open('rb') as f:
-        pickle.dump(monitor_list, f)
+    with (out_path / 'monitor.pick').open('wb') as f:
+        pickle.dump(monitor_list, f, protocol=pickle.HIGHEST_PROTOCOL)

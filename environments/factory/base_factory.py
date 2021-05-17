@@ -1,10 +1,10 @@
-from collections import defaultdict
-from typing import List
+from typing import List, Union
 
 import numpy as np
 from pathlib import Path
 
 from environments import helpers as h
+from environments.factory._factory_monitor import FactoryMonitor
 
 
 class AgentState:
@@ -27,51 +27,6 @@ class AgentState:
                 self.__setattr__(key, value)
             else:
                 raise AttributeError(f'"{key}" cannot be updated, this attr is not a part of {self.__class__.__name__}')
-
-
-class FactoryMonitor:
-
-    def __init__(self, env):
-        self._env = env
-        self._monitor = defaultdict(lambda: defaultdict(lambda: 0))
-        self._last_vals = defaultdict(lambda: 0)
-
-    def __iter__(self):
-        for key, value in self._monitor.items():
-            yield key, dict(value)
-
-    def add(self, key, value, step=None):
-        assert step is None or step >= 1                                            # Is this good practice?
-        step = step or self._env.steps
-        self._last_vals[key] = self._last_vals[key] + value
-        self._monitor[key][step] = self._last_vals[key]
-        return self._last_vals[key]
-
-    def set(self, key, value, step=None):
-        assert step is None or step >= 1                                            # Is this good practice?
-        step = step or self._env.steps
-        self._last_vals[key] = value
-        self._monitor[key][step] = self._last_vals[key]
-        return self._last_vals[key]
-
-    def remove(self, key, value, step=None):
-        assert step is None or step >= 1                                            # Is this good practice?
-        step = step or self._env.steps
-        self._last_vals[key] = self._last_vals[key] - value
-        self._monitor[key][step] = self._last_vals[key]
-        return self._last_vals[key]
-
-    def to_dict(self):
-        return dict(self)
-
-
-
-    def to_pd_dataframe(self):
-        import pandas as pd
-        return pd.DataFrame.from_dict(self.to_dict())
-
-    def reset(self):
-        raise RuntimeError("DO NOT DO THIS! Always initalize a new Monitor per Env-Run.")
 
 
 class BaseFactory:
@@ -192,9 +147,19 @@ class BaseFactory:
         pos_x, pos_y = positions[0]  # a.flatten()
         return pos_x, pos_y
 
-    @property
-    def free_cells(self) -> np.ndarray:
-        free_cells = self.state.sum(0)
+    def free_cells(self, excluded_slices: Union[None, List, int] = None) -> np.ndarray:
+        excluded_slices = excluded_slices or []
+        assert isinstance(excluded_slices, (int, list))
+        excluded_slices = excluded_slices if isinstance(excluded_slices, list) else [excluded_slices]
+
+        state = self.state
+        if excluded_slices:
+            # Todo: Is there a cleaner way?
+            inds = list(range(self.state.shape[0]))
+            excluded_slices = [inds[x] if x < 0 else x for x in excluded_slices]
+            state = self.state[[x for x in inds if x not in excluded_slices]]
+
+        free_cells = state.sum(0)
         free_cells = np.argwhere(free_cells == h.IS_FREE_CELL)
         np.random.shuffle(free_cells)
         return free_cells
