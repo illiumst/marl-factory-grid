@@ -31,7 +31,7 @@ class GettingDirty(BaseFactory):
     def render(self):
         if not self.renderer:  # lazy init
             h, w = self.state.shape[1:]
-            self.renderer = Renderer(w, h, view_radius=0, assets=['wall', 'agent', 'dirt'])
+            self.renderer = Renderer(w, h, view_radius=0)
         self.renderer.render(  # todo: nur fuers prinzip, ist hardgecoded Dreck aktuell
             OrderedDict(wall=np.argwhere(self.state[0] > 0),  # Ordered dict defines the drawing order! important
                         dirt=np.argwhere(self.state[DIRT_INDEX] > 0),

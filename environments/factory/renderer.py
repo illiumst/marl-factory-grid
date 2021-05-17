@@ -8,7 +8,7 @@ class Renderer:
     WHITE = (200, 200, 200)
     PINK = (0.5, 255, 118, 117)
 
-    def __init__(self, grid_w=16, grid_h=16, cell_size=30, fps=4, grid_lines=True, view_radius=2, assets=['wall', 'dirt', 'agent']):
+    def __init__(self, grid_w=16, grid_h=16, cell_size=30, fps=4,  grid_lines=True, view_radius=2):
         self.grid_h = grid_h
         self.grid_w = grid_w
         self.cell_size = cell_size
@@ -19,7 +19,9 @@ class Renderer:
         self.screen_size = (grid_h*cell_size, grid_w*cell_size)
         self.screen = pygame.display.set_mode(self.screen_size)
         self.clock = pygame.time.Clock()
-        self.assets = {name: self.load_asset(name, 0.96) for name in assets}
+        assets = list((Path(__file__).parent / 'assets').glob('*.png'))
+        self.assets = {path.stem: self.load_asset(str(path), 0.95) for path in assets}
+        print(self.assets)
         self.fill_bg()
 
     def fill_bg(self):
@@ -40,9 +42,9 @@ class Renderer:
 
         return img, rect
 
-    def load_asset(self, name, factor=1.0):
+    def load_asset(self, path, factor=1.0):
         s = int(factor*self.cell_size)
-        wall_img = pygame.image.load(str(Path(__file__).parent / 'assets' / f'{name}.png')).convert_alpha()
+        wall_img = pygame.image.load(path).convert_alpha()
         wall_img = pygame.transform.scale(wall_img, (s, s))
         return wall_img
 
