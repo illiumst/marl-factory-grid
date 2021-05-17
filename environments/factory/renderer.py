@@ -6,18 +6,20 @@ from pathlib import Path
 class Renderer:
     BG_COLOR = (99, 110, 114)
     WHITE = (200, 200, 200)
+    PINK = (0.5, 255, 118, 117)
 
-    def __init__(self, grid_w=16, grid_h=16, cell_size=25, fps=4, grid_lines=True, assets=['wall', 'agent']):
+    def __init__(self, grid_w=16, grid_h=16, cell_size=25, fps=4, grid_lines=True, view_radius=2, assets=['wall', 'agent']):
         self.grid_h = grid_h
         self.grid_w = grid_w
         self.cell_size = cell_size
-        self.fps = fps#
+        self.fps = fps
         self.grid_lines = grid_lines
+        self.view_radius = view_radius
         pygame.init()
         self.screen_size = (grid_h*cell_size, grid_w*cell_size)
         self.screen = pygame.display.set_mode(self.screen_size)
         self.clock = pygame.time.Clock()
-        self.assets = {name: self.load_asset(name, 0.97) for name in assets}
+        self.assets = {name: self.load_asset(name, 0.96) for name in assets}
         self.fill_bg()
 
     def fill_bg(self):
@@ -29,14 +31,14 @@ class Renderer:
                     rect = pygame.Rect(x, y, self.cell_size, self.cell_size)
                     pygame.draw.rect(self.screen, Renderer.WHITE, rect, 1)
 
-    def render_asset(self, r, c, name):
+    def blit_params(self, r, c, name):
         img = self.assets[name]
         o = self.cell_size//2
         r_, c_ = r*self.cell_size + o, c*self.cell_size + o
         rect = img.get_rect()
         rect.centerx, rect.centery = c_, r_
-        self.screen.blit(img, rect)
-        return c_, r_
+
+        return img, rect
 
     def load_asset(self, name, factor=1.0):
         s = int(factor*self.cell_size)
@@ -48,7 +50,13 @@ class Renderer:
         self.fill_bg()
         for asset, positions in pos_dict.items():
             for x, y in positions:
-                self.render_asset(x, y, asset)
+                img, rect = self.blit_params(x, y, asset)
+                if 'agent' in asset and self.view_radius > 0:
+                    visibility_rect = rect.inflate((self.view_radius*2)*self.cell_size, (self.view_radius*2)*self.cell_size)
+                    shape_surf = pygame.Surface(visibility_rect.size, pygame.SRCALPHA)
+                    pygame.draw.rect(shape_surf, self.PINK, shape_surf.get_rect())
+                    self.screen.blit(shape_surf, visibility_rect)
+                self.screen.blit(img, rect)
         pygame.display.flip()
         self.clock.tick(self.fps)
 
@@ -56,5 +64,5 @@ class Renderer:
 if __name__ == '__main__':
     renderer = Renderer(fps=2, cell_size=40, assets=['wall', 'agent', 'dirt'])
     for i in range(15):
-        renderer.render({'agent': [(5, 5)], 'wall': [(0, i), (i, 0)], 'dirt': [(3,3), (3,4)]})
+        renderer.render({'agent': [(5, i)], 'wall': [(0, i), (i, 0)], 'dirt': [(3,3), (3,4)]})
 
