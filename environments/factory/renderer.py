@@ -8,7 +8,7 @@ class Renderer:
     WHITE = (200, 200, 200)
     PINK = (0.5, 255, 118, 117)
 
-    def __init__(self, grid_w=16, grid_h=16, cell_size=25, fps=4, grid_lines=True, view_radius=2, assets=['wall', 'agent']):
+    def __init__(self, grid_w=16, grid_h=16, cell_size=30, fps=4, grid_lines=True, view_radius=2, assets=['wall', 'dirt', 'agent']):
         self.grid_h = grid_h
         self.grid_w = grid_w
         self.cell_size = cell_size
