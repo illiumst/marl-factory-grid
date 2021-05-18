@@ -1,4 +1,4 @@
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 from typing import List
 
 import numpy as np
@@ -6,6 +6,8 @@ from attr import dataclass
 
 from environments.factory.base_factory import BaseFactory, AgentState
 from environments import helpers as h
+
+from environments.factory.renderer import Renderer
 
 DIRT_INDEX = -1
 @dataclass
@@ -24,6 +26,18 @@ class GettingDirty(BaseFactory):
         self._dirt_properties = dirt_properties
         super(GettingDirty, self).__init__(*args, **kwargs)
         self.slice_strings.update({self.state.shape[0]-1: 'dirt'})
+        self.renderer = None  # expensive - dont use it when not required !
+
+    def render(self):
+        if not self.renderer:  # lazy init
+            h, w = self.state.shape[1:]
+            self.renderer = Renderer(w, h, view_radius=0)
+        self.renderer.render(  # todo: nur fuers prinzip, ist hardgecoded Dreck aktuell
+            OrderedDict(wall=np.argwhere(self.state[0] > 0),  # Ordered dict defines the drawing order! important
+                        dirt=np.argwhere(self.state[DIRT_INDEX] > 0),
+                        agent=np.argwhere(self.state[1] > 0)
+                        )
+        )
 
     def spawn_dirt(self) -> None:
         free_for_dirt = self.free_cells(excluded_slices=DIRT_INDEX)
@@ -91,6 +105,9 @@ class GettingDirty(BaseFactory):
 
 if __name__ == '__main__':
     import random
+
+    render = True
+
     dirt_props = DirtProperties()
     factory = GettingDirty(n_agents=1, dirt_properties=dirt_props)
     monitor_list = list()
@@ -99,6 +116,7 @@ if __name__ == '__main__':
         state, r, done, _ = factory.reset()
         for action in random_actions:
             state, r, done, info = factory.step(action)
+            if render: factory.render()
         monitor_list.append(factory.monitor.to_pd_dataframe())
         print(f'Factory run {epoch} done, reward is:\n    {r}')
 
