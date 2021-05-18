@@ -10,6 +10,7 @@ class Entity:
     name: str
     pos: np.array
     value: float = 1
+    value_operation: str = 'none'
 
 
 class Renderer:
@@ -29,7 +30,7 @@ class Renderer:
         self.screen = pygame.display.set_mode(self.screen_size)
         self.clock = pygame.time.Clock()
         assets = list((Path(__file__).parent / 'assets').glob('*.png'))
-        self.assets = {path.stem: self.load_asset(str(path), 0.95) for path in assets}
+        self.assets = {path.stem: self.load_asset(str(path), 0.97) for path in assets}
         self.fill_bg()
 
     def fill_bg(self):
@@ -44,7 +45,13 @@ class Renderer:
     def blit_params(self, entity, name):
         r, c = entity.pos
         img = self.assets[name]
-        img.set_alpha(255*entity.value)
+        if entity.value_operation == 'opacity':
+            img.set_alpha(255*entity.value)
+        elif entity.value_operation == 'scale':
+            re = img.get_rect()
+            img = pygame.transform.smoothscale(
+                img, (int(entity.value*re.width), int(entity.value*re.height))
+            )
         o = self.cell_size//2
         r_, c_ = r*self.cell_size + o, c*self.cell_size + o
         rect = img.get_rect()
@@ -54,7 +61,7 @@ class Renderer:
     def load_asset(self, path, factor=1.0):
         s = int(factor*self.cell_size)
         wall_img = pygame.image.load(path).convert_alpha()
-        wall_img = pygame.transform.scale(wall_img, (s, s))
+        wall_img = pygame.transform.smoothscale(wall_img, (s, s))
         return wall_img
 
     def render(self, pos_dict):
