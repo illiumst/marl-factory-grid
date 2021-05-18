@@ -45,9 +45,9 @@ class GettingDirty(BaseFactory):
 
         def asset_str(agent):
             cols = ' '.join([self.slice_strings[j] for j in agent.collisions])
-            asset_str = f'agent{agent.i + 1}violation' if (not agent.action_valid or 'level' in cols or 'agent' in cols) \
+            if 'agent' in cols: return 'agent_collision'
+            return f'agent{agent.i + 1}violation' if (not agent.action_valid or 'level' in cols or 'agent' in cols) \
                 else (f'agent{agent.i + 1}valid' if self._is_clean_up_action(agent.action) else f'agent{agent.i + 1}')
-            return asset_str
 
         agents = {f'agent{i+1}': [Entity(asset_str(agent), agent.pos)]
                   for i, agent in enumerate(self.agent_states)}
