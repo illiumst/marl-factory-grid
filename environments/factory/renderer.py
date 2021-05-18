@@ -1,4 +1,3 @@
-import numpy as np
 import pygame
 from pathlib import Path
 
@@ -66,5 +65,5 @@ class Renderer:
 if __name__ == '__main__':
     renderer = Renderer(fps=2, cell_size=40, assets=['wall', 'agent', 'dirt'])
     for i in range(15):
-        renderer.render({'agent': [(5, i)], 'wall': [(0, i), (i, 0)], 'dirt': [(3,3), (3,4)]})
+        renderer.render({'agent': [(5, i)], 'wall': [(0, i), (i, 0)], 'dirt': [(3, 3), (3, 4)]})
 
