@@ -1,5 +1,6 @@
 from typing import List, Union
 
+import gym
 import numpy as np
 from pathlib import Path
 
@@ -29,7 +30,11 @@ class AgentState:
                 raise AttributeError(f'"{key}" cannot be updated, this attr is not a part of {self.__class__.__name__}')
 
 
-class BaseFactory:
+class BaseFactory(gym.Env):
+
+    @property
+    def action_space(self):
+        return self._registered_actions
 
     @property
     def movement_actions(self):
@@ -44,13 +49,20 @@ class BaseFactory:
         self.max_steps = max_steps
         self.allow_vertical_movement = True
         self.allow_horizontal_movement = True
+        self.allow_no_OP = True
+        self._registered_actions = self.movement_actions + int(self.allow_no_OP)
         self.level = h.one_hot_level(
             h.parse_level(Path(__file__).parent / h.LEVELS_DIR / f'{level}.txt')
         )
         self.slice_strings = {0: 'level', **{i: f'agent#{i}' for i in range(1, self.n_agents+1)}}
+
         self.reset()
 
-    def reset(self)  -> (np.ndarray, int, bool, dict):
+    def register_actions(self, n_actions):
+        self._registered_actions += n_actions
+        return True
+
+    def reset(self) -> (np.ndarray, int, bool, dict):
         self.done = False
         self.steps = 0
         self.cumulative_reward = 0
