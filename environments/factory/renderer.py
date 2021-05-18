@@ -41,9 +41,9 @@ class Renderer:
                     rect = pygame.Rect(x, y, self.cell_size, self.cell_size)
                     pygame.draw.rect(self.screen, Renderer.WHITE, rect, 1)
 
-    def blit_params(self, entity, name):
+    def blit_params(self, entity):
         r, c = entity.pos
-        img = self.assets[name]
+        img = self.assets[entity.name]
         if entity.value_operation == 'opacity':
             img.set_alpha(255*entity.value)
         elif entity.value_operation == 'scale':
@@ -71,7 +71,7 @@ class Renderer:
         self.fill_bg()
         for asset, entities in pos_dict.items():
             for entity in entities:
-                bp = self.blit_params(entity, asset)
+                bp = self.blit_params(entity)
                 if 'agent' in asset and self.view_radius > 0:
                     visibility_rect = bp['dest'].inflate((self.view_radius*2)*self.cell_size, (self.view_radius*2)*self.cell_size)
                     shape_surf = pygame.Surface(visibility_rect.size, pygame.SRCALPHA)
