@@ -160,9 +160,7 @@ class BaseFactory:
             excluded_slices = [inds[x] if x < 0 else x for x in excluded_slices]
             state = self.state[[x for x in inds if x not in excluded_slices]]
 
-        free_cells = state.sum(0)
-        free_cells[excluded_slices] = 0
-        free_cells = np.argwhere(free_cells == h.IS_FREE_CELL)
+        free_cells = np.argwhere(state.sum(0) == h.IS_FREE_CELL)
         np.random.shuffle(free_cells)
         return free_cells
 

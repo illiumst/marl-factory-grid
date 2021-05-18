@@ -90,12 +90,8 @@ class GettingDirty(BaseFactory):
         return self.state, r, self.done, {}
 
     def calculate_reward(self, agent_states: List[AgentState]) -> (int, dict):
+        # TODO: What reward to use?
         this_step_reward = 0
-
-        dirt_vs_level_collisions = np.argwhere(self.state[h.LEVEL_IDX] * self.state[DIRT_INDEX] == h.IS_OCCUPIED_CELL)
-        for dirt_vs_level_collision in dirt_vs_level_collisions:
-            print(f'Dirt was placed on Level at: {dirt_vs_level_collision.squeeze()}')
-            pass
 
         for agent_state in agent_states:
             collisions = agent_state.collisions
