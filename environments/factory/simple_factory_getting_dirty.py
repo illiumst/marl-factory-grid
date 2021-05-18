@@ -39,7 +39,7 @@ class GettingDirty(BaseFactory):
             height, width = self.state.shape[1:]
             self.renderer = Renderer(width, height, view_radius=2)
 
-        dirt      = [Entity('dirt', [x, y], min(1.5*self.state[DIRT_INDEX, x, y], 1), 'opacity')
+        dirt      = [Entity('dirt', [x, y], min(0.15+self.state[DIRT_INDEX, x, y], 1.5), 'scale')
                      for x, y in np.argwhere(self.state[DIRT_INDEX] > h.IS_FREE_CELL)]
         walls     = [Entity('wall', pos) for pos in np.argwhere(self.state[h.LEVEL_IDX] > h.IS_FREE_CELL)]
         asset_str = lambda agent: f'agent{agent.i+1}violation' if (not agent.action_valid or agent.collision_vector[h.LEVEL_IDX] > 0)\

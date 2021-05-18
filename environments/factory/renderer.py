@@ -2,6 +2,7 @@ import sys
 from dataclasses import dataclass
 import numpy as np
 from pathlib import Path
+from collections import deque
 import pygame
 
 
@@ -14,8 +15,9 @@ class Entity:
 
 
 class Renderer:
-    BG_COLOR = (99, 110, 114)
+    BG_COLOR = (178, 190, 195)#(99, 110, 114)
     WHITE = (200, 200, 200)
+    AGENT_VIEW_COLOR = (9, 132, 227)
 
     def __init__(self, grid_w=16, grid_h=16, cell_size=40, fps=4,  grid_lines=True, view_radius=2):
         self.grid_h = grid_h
@@ -69,16 +71,18 @@ class Renderer:
                 pygame.quit()
                 sys.exit()
         self.fill_bg()
+        blits = deque()
         for asset, entities in pos_dict.items():
             for entity in entities:
                 bp = self.blit_params(entity)
-                if 'agent' in asset and self.view_radius > 0:
+                if 'agent' in entity.name and self.view_radius > 0:
                     visibility_rect = bp['dest'].inflate((self.view_radius*2)*self.cell_size, (self.view_radius*2)*self.cell_size)
                     shape_surf = pygame.Surface(visibility_rect.size, pygame.SRCALPHA)
-                    pygame.draw.rect(shape_surf, self.WHITE, shape_surf.get_rect())
-                    shape_surf.set_alpha(70)
-                    self.screen.blit(shape_surf, visibility_rect)
-                self.screen.blit(**bp)
+                    pygame.draw.rect(shape_surf, self.AGENT_VIEW_COLOR, shape_surf.get_rect())
+                    shape_surf.set_alpha(64)
+                    blits.appendleft(dict(source=shape_surf, dest=visibility_rect))
+                blits.append(bp)
+        for blit in blits: self.screen.blit(**blit)
         pygame.display.flip()
         self.clock.tick(self.fps)
 
