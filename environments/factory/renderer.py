@@ -29,7 +29,7 @@ class Renderer:
         self.screen = pygame.display.set_mode(self.screen_size)
         self.clock = pygame.time.Clock()
         assets = list((Path(__file__).parent / 'assets').rglob('*.png'))
-        self.assets = {path.stem: self.load_asset(str(path), 0.97) for path in assets}
+        self.assets = {path.stem: self.load_asset(str(path), 0.96) for path in assets}
         self.fill_bg()
 
     def fill_bg(self):
@@ -76,7 +76,7 @@ class Renderer:
                     visibility_rect = bp['dest'].inflate((self.view_radius*2)*self.cell_size, (self.view_radius*2)*self.cell_size)
                     shape_surf = pygame.Surface(visibility_rect.size, pygame.SRCALPHA)
                     pygame.draw.rect(shape_surf, self.WHITE, shape_surf.get_rect())
-                    shape_surf.set_alpha(96)
+                    shape_surf.set_alpha(70)
                     self.screen.blit(shape_surf, visibility_rect)
                 self.screen.blit(**bp)
         pygame.display.flip()

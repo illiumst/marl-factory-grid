@@ -39,11 +39,12 @@ class GettingDirty(BaseFactory):
             height, width = self.state.shape[1:]
             self.renderer = Renderer(width, height, view_radius=2)
 
-        dirt      = [Entity('dirt', [x, y], min(1.1*self.state[DIRT_INDEX, x, y], 1), 'opacity')
+        dirt      = [Entity('dirt', [x, y], min(1.5*self.state[DIRT_INDEX, x, y], 1), 'opacity')
                      for x, y in np.argwhere(self.state[DIRT_INDEX] > h.IS_FREE_CELL)]
         walls     = [Entity('wall', pos) for pos in np.argwhere(self.state[h.LEVEL_IDX] > h.IS_FREE_CELL)]
-        violation = lambda agent: agent.action_valid and agent.collision_vector[h.LEVEL_IDX] <= 0
-        agents = {f'agent{i+1}': [Entity(f'agent{i+1}' if violation(agent) else f'agent{i+1}violation', agent.pos)]
+        asset_str = lambda agent: f'agent{agent.i+1}violation' if (not agent.action_valid or agent.collision_vector[h.LEVEL_IDX] > 0)\
+            else (f'agent{agent.i+1}valid' if self._is_clean_up_action(agent.action) else f'agent{agent.i+1}')
+        agents = {f'agent{i+1}': [Entity(asset_str(agent), agent.pos)]
                   for i, agent in enumerate(self.agent_states)}
         self.renderer.render(OrderedDict(dirt=dirt, wall=walls, **agents))
 
