@@ -1,7 +1,7 @@
 
 # Created by https://www.toptal.com/developers/gitignore/api/linux,unity,macos,python,windows,pycharm,notepadpp,visualstudiocode,latex
 # Edit at https://www.toptal.com/developers/gitignore?templates=linux,unity,macos,python,windows,pycharm,notepadpp,visualstudiocode,latex
-
+environments/factory/debug_out
 ### LaTeX ###
 ## Core latex/pdflatex auxiliary files:
 *.aux
