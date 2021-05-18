@@ -28,7 +28,7 @@ class Renderer:
         self.screen_size = (grid_h*cell_size, grid_w*cell_size)
         self.screen = pygame.display.set_mode(self.screen_size)
         self.clock = pygame.time.Clock()
-        assets = list((Path(__file__).parent / 'assets').glob('*.png'))
+        assets = list((Path(__file__).parent / 'assets').rglob('*.png'))
         self.assets = {path.stem: self.load_asset(str(path), 0.97) for path in assets}
         self.fill_bg()
 
