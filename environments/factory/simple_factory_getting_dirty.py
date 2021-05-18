@@ -104,12 +104,12 @@ class GettingDirty(BaseFactory):
             raise RuntimeError('This should not happen!!!')
 
     def reset(self) -> (np.ndarray, int, bool, dict):
-        state, r, done, _ = super().reset()  # state, reward, done, info ... =
+        _ = super().reset()  # state, reward, done, info ... =
         dirt_slice = np.zeros((1, *self.state.shape[1:]))
         self.state = np.concatenate((self.state, dirt_slice))  # dirt is now the last slice
         self.spawn_dirt()
         self.next_dirt_spawn = self._dirt_properties.spawn_frequency
-        return self.state, r, self.done, {}
+        return self.state
 
     def calculate_reward(self, agent_states: List[AgentState]) -> (int, dict):
         # TODO: What reward to use?

@@ -1,6 +1,7 @@
 from typing import List, Union, Iterable
 
 import gym
+from gym import spaces
 import numpy as np
 from pathlib import Path
 
@@ -34,7 +35,11 @@ class BaseFactory(gym.Env):
 
     @property
     def action_space(self):
-        return self._registered_actions
+        return spaces.Discrete(self._registered_actions)
+
+    @property
+    def observation_space(self):
+        return spaces.Box(low=-1, high=1, shape=self.state.shape, dtype=np.float32)
 
     @property
     def movement_actions(self):
@@ -81,15 +86,15 @@ class BaseFactory(gym.Env):
             self.agent_states.append(agent_state)
         # state.shape = level, agent 1,..., agent n,
         self.state = np.concatenate((np.expand_dims(self.level, axis=0), agents), axis=0)
-        # Returns State, Reward, Done, Info
+        # Returns State
 
-        return self.state, 0, self.done, {}
+        return self.state
 
     def additional_actions(self, agent_i: int, action: int) -> ((int, int), bool):
         raise NotImplementedError
 
     def step(self, actions):
-        actions = [actions] if isinstance(actions, int) else actions
+        actions = [actions] if isinstance(actions, int) or np.isscalar(actions) else actions
         assert isinstance(actions, Iterable), f'"actions" has to be in [{int, list}]'
         self.steps += 1
 

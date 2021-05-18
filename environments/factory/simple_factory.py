@@ -18,8 +18,8 @@ class SimpleFactory(BaseFactory):
         dirt_slice = np.zeros((1, *self.state.shape[1:]))
         self.state = np.concatenate((self.state, dirt_slice))  # dirt is now the last slice
         self.spawn_dirt()
-        # Always: This should return state, r, done, info
-        return self.state, r, done, _
+        # Always: This should return state
+        return self.state
 
     def calculate_reward(self, agent_states):
         for agent_state in agent_states:
