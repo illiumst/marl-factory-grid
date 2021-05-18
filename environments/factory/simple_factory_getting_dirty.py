@@ -35,14 +35,15 @@ class GettingDirty(BaseFactory):
             height, width = self.state.shape[1:]
             self.renderer = Renderer(width, height, view_radius=0)
         self.renderer.render(
-            OrderedDict(dirt=np.argwhere(self.state[DIRT_INDEX] > 0),
-                        wall=np.argwhere(self.state[h.LEVEL_IDX] > 0),
-                        agent=np.argwhere(self.state[h.AGENT_START_IDX] > 0)
+            OrderedDict(dirt=np.argwhere(self.state[DIRT_INDEX] > h.IS_FREE_CELL),
+                        wall=np.argwhere(self.state[h.LEVEL_IDX] > h.IS_FREE_CELL),
+                        agent=np.argwhere(self.state[h.AGENT_START_IDX] > h.IS_FREE_CELL)
                         )
         )
 
     def spawn_dirt(self) -> None:
         free_for_dirt = self.free_cells(excluded_slices=DIRT_INDEX)
+
         # randomly distribute dirt across the grid
         n_dirt_tiles = int(random.uniform(0, self._dirt_properties.max_spawn_ratio) * len(free_for_dirt))
         for x, y in free_for_dirt[:n_dirt_tiles]:
@@ -91,7 +92,7 @@ class GettingDirty(BaseFactory):
     def calculate_reward(self, agent_states: List[AgentState]) -> (int, dict):
         this_step_reward = 0
 
-        dirt_vs_level_collisions = np.argwhere(self.state[h.LEVEL_IDX, DIRT_INDEX].sum(0) == h.IS_FREE_CELL)
+        dirt_vs_level_collisions = np.argwhere(self.state[h.LEVEL_IDX] * self.state[DIRT_INDEX] == h.IS_OCCUPIED_CELL)
         for dirt_vs_level_collision in dirt_vs_level_collisions:
             print(f'Dirt was placed on Level at: {dirt_vs_level_collision.squeeze()}')
             pass

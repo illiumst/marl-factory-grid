@@ -147,7 +147,7 @@ class BaseFactory:
         pos_x, pos_y = positions[0]  # a.flatten()
         return pos_x, pos_y
 
-    def free_cells(self, excluded_slices: Union[None, List[int], int] = None) -> np.ndarray:
+    def free_cells(self, excluded_slices: Union[None, List[int], int] = None) -> np.array:
         excluded_slices = excluded_slices or []
         assert isinstance(excluded_slices, (int, list))
         excluded_slices = excluded_slices if isinstance(excluded_slices, list) else [excluded_slices]
