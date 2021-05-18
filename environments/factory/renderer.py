@@ -1,4 +1,4 @@
-import numpy as np
+import sys
 import pygame
 from pathlib import Path
 
@@ -21,7 +21,6 @@ class Renderer:
         self.clock = pygame.time.Clock()
         assets = list((Path(__file__).parent / 'assets').glob('*.png'))
         self.assets = {path.stem: self.load_asset(str(path), 0.95) for path in assets}
-        print(self.assets)
         self.fill_bg()
 
     def fill_bg(self):
@@ -49,6 +48,10 @@ class Renderer:
         return wall_img
 
     def render(self, pos_dict):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
         self.fill_bg()
         for asset, positions in pos_dict.items():
             for x, y in positions:
@@ -64,7 +67,7 @@ class Renderer:
 
 
 if __name__ == '__main__':
-    renderer = Renderer(fps=2, cell_size=40, assets=['wall', 'agent', 'dirt'])
+    renderer = Renderer(fps=2, cell_size=40)
     for i in range(15):
         renderer.render({'agent': [(5, i)], 'wall': [(0, i), (i, 0)], 'dirt': [(3,3), (3,4)]})
 
