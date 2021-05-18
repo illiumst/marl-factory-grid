@@ -42,9 +42,9 @@ class GettingDirty(BaseFactory):
         dirt   = [Entity('dirt', [x, y], min(self.state[DIRT_INDEX, x, y], 1), 'scale')
                   for x, y in np.argwhere(self.state[DIRT_INDEX] > h.IS_FREE_CELL)]
         walls  = [Entity('dirt', pos) for pos in np.argwhere(self.state[h.LEVEL_IDX] > h.IS_FREE_CELL)]
-        agents = [Entity('agent', pos) for pos in np.argwhere(self.state[h.AGENT_START_IDX] > h.IS_FREE_CELL)]
+        agents = [Entity('agent1', pos) for pos in np.argwhere(self.state[h.AGENT_START_IDX] > h.IS_FREE_CELL)]
 
-        self.renderer.render(OrderedDict(dirt=dirt, wall=walls, agent=agents))
+        self.renderer.render(OrderedDict(dirt=dirt, wall=walls, agent1=agents))
 
     def spawn_dirt(self) -> None:
         free_for_dirt = self.free_cells(excluded_slices=DIRT_INDEX)
