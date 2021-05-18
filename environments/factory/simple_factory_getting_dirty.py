@@ -37,7 +37,7 @@ class GettingDirty(BaseFactory):
     def render(self):
         if not self.renderer:  # lazy init
             height, width = self.state.shape[1:]
-            self.renderer = Renderer(width, height, view_radius=0)
+            self.renderer = Renderer(width, height, view_radius=2)
 
         dirt   = [Entity('dirt', [x, y], min(self.state[DIRT_INDEX, x, y], 1), 'scale')
                   for x, y in np.argwhere(self.state[DIRT_INDEX] > h.IS_FREE_CELL)]

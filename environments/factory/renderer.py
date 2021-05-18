@@ -16,7 +16,6 @@ class Entity:
 class Renderer:
     BG_COLOR = (99, 110, 114)
     WHITE = (200, 200, 200)
-    PINK = (0.5, 255, 118, 117)
 
     def __init__(self, grid_w=16, grid_h=16, cell_size=40, fps=4,  grid_lines=True, view_radius=2):
         self.grid_h = grid_h
@@ -76,7 +75,8 @@ class Renderer:
                 if 'agent' in asset and self.view_radius > 0:
                     visibility_rect = bp['dest'].inflate((self.view_radius*2)*self.cell_size, (self.view_radius*2)*self.cell_size)
                     shape_surf = pygame.Surface(visibility_rect.size, pygame.SRCALPHA)
-                    pygame.draw.rect(shape_surf, self.PINK, shape_surf.get_rect())
+                    pygame.draw.rect(shape_surf, self.WHITE, shape_surf.get_rect())
+                    shape_surf.set_alpha(96)
                     self.screen.blit(shape_surf, visibility_rect)
                 self.screen.blit(**bp)
         pygame.display.flip()
