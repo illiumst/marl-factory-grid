@@ -1,6 +1,6 @@
 import pygame
 from pathlib import Path
-
+import sys
 
 class Renderer:
     BG_COLOR = (99, 110, 114)
