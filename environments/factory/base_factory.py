@@ -55,12 +55,13 @@ class BaseFactory(gym.Env):
             h.parse_level(Path(__file__).parent / h.LEVELS_DIR / f'{level}.txt')
         )
         self.slice_strings = {0: 'level', **{i: f'agent#{i}' for i in range(1, self.n_agents+1)}}
+        if not self.__class__.__subclasses__():
+            self.reset()
+        else:
+            self.register_additional_actions()
 
-        self.reset()
-
-    def register_actions(self, n_actions):
-        self._registered_actions += n_actions
-        return True
+    def register_additional_actions(self):
+        raise NotImplementedError('Please register additional actions ')
 
     def reset(self) -> (np.ndarray, int, bool, dict):
         self.done = False
