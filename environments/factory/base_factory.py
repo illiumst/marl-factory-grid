@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import List, Union, Iterable
 
 import gym
 import numpy as np
@@ -90,7 +90,7 @@ class BaseFactory(gym.Env):
 
     def step(self, actions):
         actions = [actions] if isinstance(actions, int) else actions
-        assert isinstance(actions, list), f'"actions" has to be in [{int, list}]'
+        assert isinstance(actions, Iterable), f'"actions" has to be in [{int, list}]'
         self.steps += 1
 
         # Move this in a seperate function?

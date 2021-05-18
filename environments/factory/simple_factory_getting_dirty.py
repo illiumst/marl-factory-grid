@@ -106,7 +106,10 @@ class GettingDirty(BaseFactory):
         current_dirt_amount = self.state[DIRT_INDEX].sum()
         dirty_tiles = len(np.nonzero(self.state[DIRT_INDEX]))
 
-        this_step_reward = -(dirty_tiles / current_dirt_amount)
+        try:
+            this_step_reward = -(dirty_tiles / current_dirt_amount)
+        except ZeroDivisionError:
+            this_step_reward = 0
 
         for agent_state in agent_states:
             collisions = agent_state.collisions
@@ -127,10 +130,10 @@ if __name__ == '__main__':
     render = True
 
     dirt_props = DirtProperties()
-    factory = GettingDirty(n_agents=1, dirt_properties=dirt_props)
+    factory = GettingDirty(n_agents=2, dirt_properties=dirt_props)
     monitor_list = list()
     for epoch in range(100):
-        random_actions = [random.randint(0, 8) for _ in range(200)]
+        random_actions = [(random.randint(0, 8), random.randint(0, 8)) for _ in range(200)]
         env_state, reward, done_bool, _ = factory.reset()
         for agent_i_action in random_actions:
             env_state, reward, done_bool, info_obj = factory.step(agent_i_action)
