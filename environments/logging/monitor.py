@@ -60,16 +60,25 @@ class MonitorCallback(BaseCallback):
         super(MonitorCallback, self).__init__()
         self._outpath = Path(outpath)
         self._filename = filename
+        self._monitor_list = list()
         self.out_file = self._outpath / f'{self._filename.split(".")[0]}.pick'
         self.env = env
         self.started = False
         self.closed = False
+
+    @property
+    def monitor_as_df_list(self):
+        return [x.to_pd_dataframe() for x in self._monitor_list]
 
     def __enter__(self):
         self._on_training_start()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._on_training_end()
+
+    def _on_rollout_end(self) -> None:
+        self._monitor_list.append(self.env.monitor)
+        pass
 
     def _on_training_start(self) -> None:
         if self.started:
@@ -85,7 +94,7 @@ class MonitorCallback(BaseCallback):
         else:
             # self.out_file.unlink(missing_ok=True)
             with self.out_file.open('wb') as f:
-                pickle.dump(self.env.monitor_as_df_list, f, protocol=pickle.HIGHEST_PROTOCOL)
+                pickle.dump(self.monitor_as_df_list, f, protocol=pickle.HIGHEST_PROTOCOL)
             self.closed = True
 
     def _on_step(self) -> bool:

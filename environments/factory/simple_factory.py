@@ -120,8 +120,8 @@ class SimpleFactory(BaseFactory):
         dirty_tiles = len(np.nonzero(self.state[DIRT_INDEX]))
 
         try:
-            this_step_reward = -(dirty_tiles / current_dirt_amount)
-        except ZeroDivisionError:
+            this_step_reward = (dirty_tiles / current_dirt_amount)
+        except (ZeroDivisionError, RuntimeWarning):
             this_step_reward = 0
 
         for agent_state in agent_states:
@@ -136,6 +136,7 @@ class SimpleFactory(BaseFactory):
                     self.monitor.add(f'agent_{agent_state.i}_vs_{self.slice_strings[entity]}', 1)
         self.monitor.set('dirt_amount', current_dirt_amount)
         self.monitor.set('dirty_tiles', dirty_tiles)
+        print(f"reward is {this_step_reward}")
         return this_step_reward, {}
 
 
