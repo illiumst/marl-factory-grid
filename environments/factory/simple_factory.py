@@ -37,7 +37,7 @@ if __name__ == '__main__':
     import random
     factory = SimpleFactory(n_agents=1, max_dirt=8)
     monitor_list = list()
-    for epoch in range(100):
+    for epoch in range(5):
         random_actions = [random.randint(0, 7) for _ in range(200)]
         state, r, done, _ = factory.reset()
         for action in random_actions:

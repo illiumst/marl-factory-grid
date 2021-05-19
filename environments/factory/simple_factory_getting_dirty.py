@@ -10,6 +10,7 @@ from environments import helpers as h
 
 from environments.factory.renderer import Renderer
 from environments.factory.renderer import Entity
+from environments.logging.monitor import MonitorCallback
 
 DIRT_INDEX = -1
 
@@ -24,9 +25,12 @@ class DirtProperties:
 
 class GettingDirty(BaseFactory):
 
+    def register_additional_actions(self):
+        self._registered_actions += 1
+        return True
+
     def _is_clean_up_action(self, action):
-        # Account for NoOP; remove -1 when activating NoOP
-        return self.movement_actions + 1 - 1 == action
+        return self.action_space.n - 1 == action
 
     def __init__(self, *args, dirt_properties: DirtProperties, **kwargs):
         self._dirt_properties = dirt_properties
@@ -141,20 +145,14 @@ if __name__ == '__main__':
 
     dirt_props = DirtProperties()
     factory = GettingDirty(n_agents=2, dirt_properties=dirt_props)
-    monitor_list = list()
-    for epoch in range(100):
-        random_actions = [(random.randint(0, 8), random.randint(0, 8)) for _ in range(200)]
-        env_state, reward, done_bool, _ = factory.reset()
-        for agent_i_action in random_actions:
-            env_state, reward, done_bool, info_obj = factory.step(agent_i_action)
-            if render:
-                factory.render()
-        monitor_list.append(factory.monitor.to_pd_dataframe())
-        print(f'Factory run {epoch} done, reward is:\n    {reward}')
-
-    from pathlib import Path
-    import pickle
-    out_path = Path('debug_out')
-    out_path.mkdir(exist_ok=True, parents=True)
-    with (out_path / 'monitor.pick').open('wb') as f:
-        pickle.dump(monitor_list, f, protocol=pickle.HIGHEST_PROTOCOL)
+    with MonitorCallback(factory):
+        for epoch in range(100):
+            random_actions = [(random.randint(0, 8), random.randint(0, 8)) for _ in range(200)]
+            env_state, reward, done_bool, _ = factory.reset()
+            for agent_i_action in random_actions:
+                env_state, reward, done_bool, info_obj = factory.step(agent_i_action)
+                if render:
+                    factory.render()
+                if done_bool:
+                    break
+            print(f'Factory run {epoch} done, reward is:\n    {reward}')

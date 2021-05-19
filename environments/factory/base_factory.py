@@ -6,7 +6,7 @@ import numpy as np
 from pathlib import Path
 
 from environments import helpers as h
-from environments.factory._factory_monitor import FactoryMonitor
+from environments.logging.monitor import FactoryMonitor
 
 
 class AgentState:
@@ -18,6 +18,7 @@ class AgentState:
         self.collision_vector = None
         self.action_valid = None
         self.pos = None
+        self.info = {}
 
     @property
     def collisions(self):
@@ -42,6 +43,10 @@ class BaseFactory(gym.Env):
         return spaces.Box(low=-1, high=1, shape=self.state.shape, dtype=np.float32)
 
     @property
+    def monitor_as_df_list(self):
+        return [x.to_pd_dataframe() for x in self._monitor_list]
+
+    @property
     def movement_actions(self):
         return (int(self.allow_vertical_movement) + int(self.allow_horizontal_movement)) * 4
 
@@ -55,15 +60,16 @@ class BaseFactory(gym.Env):
         self.allow_vertical_movement = True
         self.allow_horizontal_movement = True
         self.allow_no_OP = True
+        self._monitor_list = list()
         self._registered_actions = self.movement_actions + int(self.allow_no_OP)
         self.level = h.one_hot_level(
             h.parse_level(Path(__file__).parent / h.LEVELS_DIR / f'{level}.txt')
         )
         self.slice_strings = {0: 'level', **{i: f'agent#{i}' for i in range(1, self.n_agents+1)}}
-        if not self.__class__.__subclasses__():
-            self.reset()
-        else:
-            self.register_additional_actions()
+        self.reset()
+
+    def __init_subclass__(cls):
+        print(cls)
 
     def register_additional_actions(self):
         raise NotImplementedError('Please register additional actions ')
@@ -73,6 +79,7 @@ class BaseFactory(gym.Env):
         self.steps = 0
         self.cumulative_reward = 0
         self.monitor = FactoryMonitor(self)
+        self._monitor_list.append(self.monitor)
         self.agent_states = []
         # Agent placement ...
         agents = np.zeros((self.n_agents, *self.level.shape), dtype=np.int8)
