@@ -120,38 +120,38 @@ class SimpleFactory(BaseFactory):
 
         try:
             # penalty = current_dirt_amount
-            penalty = 0
+            reward = 0
         except (ZeroDivisionError, RuntimeWarning):
-            penalty = 0
-        inforcements = 0
+            reward = 0
+
         for agent_state in agent_states:
             cols = agent_state.collisions
             self.print(f't = {self.steps}\tAgent {agent_state.i} has collisions with '
                        f'{[self.slice_strings[entity] for entity in cols if entity != self.string_slices["dirt"]]}')
             if self._is_clean_up_action(agent_state.action):
                 if agent_state.action_valid:
-                    inforcements += 10
+                    reward += 2
                     self.print(f'Agent {agent_state.i} did just clean up some dirt at {agent_state.pos}.')
                     self.monitor.add('dirt_cleaned', self._dirt_properties.clean_amount)
                 else:
                     self.print(f'Agent {agent_state.i} just tried to clean up some dirt '
                                f'at {agent_state.pos}, but was unsucsessfull.')
                     self.monitor.add('failed_cleanup_attempt', 1)
+                    reward -= 0.05
             elif self._is_moving_action(agent_state.action):
                 if not agent_state.action_valid:
-                    penalty += 10
+                    reward -= 0.1
                 else:
-                    inforcements += 1
+                    reward += 0
 
             for entity in cols:
                 if entity != self.string_slices["dirt"]:
                     self.monitor.add(f'agent_{agent_state.i}_vs_{self.slice_strings[entity]}', 1)
 
-        this_step_reward = max(0, inforcements-penalty)
         self.monitor.set('dirt_amount', current_dirt_amount)
         self.monitor.set('dirty_tiles', dirty_tiles)
-        self.print(f"reward is {this_step_reward}")
-        return this_step_reward, {}
+        self.print(f"reward is {reward}")
+        return reward, {}
 
     def print(self, string):
         if self.verbose:
@@ -166,7 +166,7 @@ if __name__ == '__main__':
     with MonitorCallback(factory):
         for epoch in range(100):
             random_actions = [(random.randint(0, 8), random.randint(0, 8)) for _ in range(200)]
-            env_state, reward, done_bool, _ = factory.reset()
+            env_state, this_reward, done_bool, _ = factory.reset()
             for agent_i_action in random_actions:
                 env_state, reward, done_bool, info_obj = factory.step(agent_i_action)
                 if render:

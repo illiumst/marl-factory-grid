@@ -48,7 +48,7 @@ class FactoryMonitor:
         except IndexError:
             return None
         df = df.fillna(method='ffill')
-        return df
+        return
 
     def reset(self):
         raise RuntimeError("DO NOT DO THIS! Always initalize a new Monitor per Env-Run.")
@@ -74,10 +74,6 @@ class MonitorCallback(BaseCallback):
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._on_training_end()
 
-    def _on_rollout_end(self) -> None:
-        self._monitor_list.append(self.env.monitor)
-        pass
-
     def _on_training_start(self) -> None:
         if self.started:
             pass
@@ -96,4 +92,7 @@ class MonitorCallback(BaseCallback):
             self.closed = True
 
     def _on_step(self) -> bool:
-        pass
+        if self.locals['dones'].item():
+            self._monitor_list.append(self.env.monitor)
+        else:
+            pass

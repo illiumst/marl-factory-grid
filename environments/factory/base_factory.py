@@ -50,13 +50,13 @@ class BaseFactory(gym.Env):
     def string_slices(self):
         return {value: key for key, value in self.slice_strings.items()}
 
-    def __init__(self, level='simple', n_agents=1, max_steps=1e3):
+    def __init__(self, level='simple', n_agents=1, max_steps=int(5e2)):
         self.n_agents = n_agents
         self.max_steps = max_steps
         self.allow_vertical_movement = True
         self.allow_horizontal_movement = True
         self.allow_no_OP = True
-        self.done_at_collision = True
+        self.done_at_collision = False
         self._registered_actions = self.movement_actions + int(self.allow_no_OP) + self.register_additional_actions()
         self.level = h.one_hot_level(
             h.parse_level(Path(__file__).parent / h.LEVELS_DIR / f'{level}.txt')
