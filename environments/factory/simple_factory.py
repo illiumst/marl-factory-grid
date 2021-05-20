@@ -82,10 +82,6 @@ class SimpleFactory(BaseFactory):
             return pos, cleanup_was_sucessfull
 
     def step(self, actions):
-        # TODO: For debugging only!!!! Remove at times.....
-        if self.state[h.LEVEL_IDX][self.agent_i_position(0)] == h.IS_OCCUPIED_CELL:
-            print(f'fAgent placed on wall!!!!, step is :{self.steps}')
-            raise Exception('Agent placed on wall!!!!')
         _, r, done, info = super(SimpleFactory, self).step(actions)
         if not self.next_dirt_spawn:
             self.spawn_dirt()
