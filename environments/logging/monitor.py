@@ -56,12 +56,10 @@ class FactoryMonitor:
 
 class MonitorCallback(BaseCallback):
 
-    def __init__(self, env, outpath='debug_out', filename='monitor'):
+    def __init__(self, env, filepath=Path('debug_out/monitor.pick')):
         super(MonitorCallback, self).__init__()
-        self._outpath = Path(outpath)
-        self._filename = filename
+        self.filepath = Path(filepath)
         self._monitor_list = list()
-        self.out_file = self._outpath / f'{self._filename.split(".")[0]}.pick'
         self.env = env
         self.started = False
         self.closed = False
@@ -84,7 +82,7 @@ class MonitorCallback(BaseCallback):
         if self.started:
             pass
         else:
-            self.out_file.parent.mkdir(exist_ok=True, parents=True)
+            self.filepath.parent.mkdir(exist_ok=True, parents=True)
             self.started = True
         pass
 
@@ -93,7 +91,7 @@ class MonitorCallback(BaseCallback):
             pass
         else:
             # self.out_file.unlink(missing_ok=True)
-            with self.out_file.open('wb') as f:
+            with self.filepath.open('wb') as f:
                 pickle.dump(self.monitor_as_df_list, f, protocol=pickle.HIGHEST_PROTOCOL)
             self.closed = True
 
