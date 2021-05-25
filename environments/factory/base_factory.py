@@ -191,8 +191,7 @@ class BaseFactory(gym.Env):
 
     def calculate_reward(self, agent_states: List[AgentState]) -> (int, dict):
         # Returns: Reward, Info
-        # Set to "raise NotImplementedError"
-        return 0, {}
+        raise NotImplementedError
 
     def render(self):
         raise NotImplementedError

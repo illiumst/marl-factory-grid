@@ -112,7 +112,7 @@ class SimpleFactory(BaseFactory):
     def calculate_reward(self, agent_states: List[AgentState]) -> (int, dict):
         # TODO: What reward to use?
         current_dirt_amount = self.state[DIRT_INDEX].sum()
-        dirty_tiles = len(np.nonzero(self.state[DIRT_INDEX]))
+        dirty_tiles = np.argwhere(self.state[DIRT_INDEX] != h.IS_FREE_CELL).shape[0]
 
         try:
             # penalty = current_dirt_amount
@@ -128,7 +128,7 @@ class SimpleFactory(BaseFactory):
                 if agent_state.action_valid:
                     reward += 2
                     self.print(f'Agent {agent_state.i} did just clean up some dirt at {agent_state.pos}.')
-                    self.monitor.add('dirt_cleaned', self._dirt_properties.clean_amount)
+                    self.monitor.add('dirt_cleaned', 1)
                 else:
                     self.print(f'Agent {agent_state.i} just tried to clean up some dirt '
                                f'at {agent_state.pos}, but was unsucsessfull.')
