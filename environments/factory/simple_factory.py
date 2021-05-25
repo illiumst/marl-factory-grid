@@ -132,11 +132,11 @@ class SimpleFactory(BaseFactory):
                 if agent_state.action_valid:
                     reward += 0.9
                     self.print(f'Agent {agent_state.i} did just clean up some dirt at {agent_state.pos}.')
-                    self.monitor.add('dirt_cleaned', 1)
+                    self.monitor.set('dirt_cleaned', 1)
                 else:
                     self.print(f'Agent {agent_state.i} just tried to clean up some dirt '
                                f'at {agent_state.pos}, but was unsucsessfull.')
-                    self.monitor.add('failed_cleanup_attempt', 1)
+                    self.monitor.set('failed_cleanup_attempt', 1)
                     reward -= 0.01
             elif self._is_moving_action(agent_state.action):
                 if agent_state.action_valid:
@@ -146,7 +146,7 @@ class SimpleFactory(BaseFactory):
 
             for entity in cols:
                 if entity != self.string_slices["dirt"]:
-                    self.monitor.add(f'agent_{agent_state.i}_vs_{self.slice_strings[entity]}', 1)
+                    self.monitor.set(f'agent_{agent_state.i}_vs_{self.slice_strings[entity]}', 1)
 
         self.monitor.set('dirt_amount', current_dirt_amount)
         self.monitor.set('dirty_tiles', dirty_tiles)
