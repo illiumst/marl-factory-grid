@@ -44,7 +44,7 @@ class BaseFactory(gym.Env):
 
     @property
     def movement_actions(self):
-        return (int(self.allow_vertical_movement) + int(self.allow_horizontal_movement)) * 4
+        return (int(self.allow_square_movement) + int(self.allow_diagonal_movement)) * 4
 
     @property
     def string_slices(self):
@@ -53,9 +53,9 @@ class BaseFactory(gym.Env):
     def __init__(self, level='simple', n_agents=1, max_steps=int(5e2)):
         self.n_agents = n_agents
         self.max_steps = max_steps
-        self.allow_vertical_movement = True
-        self.allow_horizontal_movement = True
-        self.allow_no_OP = True
+        self.allow_square_movement = True
+        self.allow_diagonal_movement = False
+        self.allow_no_OP = False
         self.done_at_collision = False
         self._registered_actions = self.movement_actions + int(self.allow_no_OP) + self.register_additional_actions()
         self.level = h.one_hot_level(

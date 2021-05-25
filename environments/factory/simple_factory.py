@@ -34,6 +34,7 @@ class SimpleFactory(BaseFactory):
     def __init__(self, *args, dirt_properties: DirtProperties, verbose=False, **kwargs):
         self._dirt_properties = dirt_properties
         self.verbose = verbose
+        self.max_dirt = 20
         super(SimpleFactory, self).__init__(*args, **kwargs)
         self.slice_strings.update({self.state.shape[0]-1: 'dirt'})
         self.renderer = None  # expensive - dont use it when not required !
@@ -63,12 +64,15 @@ class SimpleFactory(BaseFactory):
         self.renderer.render(OrderedDict(dirt=dirt, wall=walls, **agents))
 
     def spawn_dirt(self) -> None:
-        free_for_dirt = self.free_cells(excluded_slices=DIRT_INDEX)
+        if not self.state[DIRT_INDEX].sum() > self.max_dirt:
+            free_for_dirt = self.free_cells(excluded_slices=DIRT_INDEX)
 
-        # randomly distribute dirt across the grid
-        n_dirt_tiles = int(random.uniform(0, self._dirt_properties.max_spawn_ratio) * len(free_for_dirt))
-        for x, y in free_for_dirt[:n_dirt_tiles]:
-            self.state[DIRT_INDEX, x, y] += self._dirt_properties.gain_amount
+            # randomly distribute dirt across the grid
+            n_dirt_tiles = int(random.uniform(0, self._dirt_properties.max_spawn_ratio) * len(free_for_dirt))
+            for x, y in free_for_dirt[:n_dirt_tiles]:
+                self.state[DIRT_INDEX, x, y] += self._dirt_properties.gain_amount
+        else:
+            pass
 
     def clean_up(self, pos: (int, int)) -> ((int, int), bool):
         new_dirt_amount = self.state[DIRT_INDEX][pos] - self._dirt_properties.clean_amount
@@ -126,19 +130,19 @@ class SimpleFactory(BaseFactory):
                        f'{[self.slice_strings[entity] for entity in cols if entity != self.string_slices["dirt"]]}')
             if self._is_clean_up_action(agent_state.action):
                 if agent_state.action_valid:
-                    reward += 2
+                    reward += 0.9
                     self.print(f'Agent {agent_state.i} did just clean up some dirt at {agent_state.pos}.')
                     self.monitor.add('dirt_cleaned', 1)
                 else:
                     self.print(f'Agent {agent_state.i} just tried to clean up some dirt '
                                f'at {agent_state.pos}, but was unsucsessfull.')
                     self.monitor.add('failed_cleanup_attempt', 1)
-                    reward -= 0.05
+                    reward -= 0.01
             elif self._is_moving_action(agent_state.action):
-                if not agent_state.action_valid:
-                    reward -= 0.1
+                if agent_state.action_valid:
+                    reward -= 0.2
                 else:
-                    reward += 0
+                    reward -= 0.1
 
             for entity in cols:
                 if entity != self.string_slices["dirt"]:
@@ -147,6 +151,8 @@ class SimpleFactory(BaseFactory):
         self.monitor.set('dirt_amount', current_dirt_amount)
         self.monitor.set('dirty_tiles', dirty_tiles)
         self.print(f"reward is {reward}")
+        # Potential based rewards ->
+        #  track the last reward , minus the current reward = potential
         return reward, {}
 
     def print(self, string):
