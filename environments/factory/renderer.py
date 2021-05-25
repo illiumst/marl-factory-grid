@@ -16,7 +16,7 @@ class Entity:
 
 class Renderer:
     BG_COLOR = (178, 190, 195)#(99, 110, 114)
-    WHITE = (200, 200, 200)
+    WHITE = (223, 230, 233)#(200, 200, 200)
     AGENT_VIEW_COLOR = (9, 132, 227)
 
     def __init__(self, grid_w=16, grid_h=16, cell_size=40, fps=4,  grid_lines=True, view_radius=2):
@@ -31,7 +31,7 @@ class Renderer:
         self.screen = pygame.display.set_mode(self.screen_size)
         self.clock = pygame.time.Clock()
         assets = list((Path(__file__).parent / 'assets').rglob('*.png'))
-        self.assets = {path.stem: self.load_asset(str(path), 0.96) for path in assets}
+        self.assets = {path.stem: self.load_asset(str(path), 1) for path in assets}
         self.fill_bg()
 
     def fill_bg(self):
