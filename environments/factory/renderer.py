@@ -15,8 +15,8 @@ class Entity:
 
 
 class Renderer:
-    BG_COLOR = (178, 190, 195)#(99, 110, 114)
-    WHITE = (223, 230, 233)#(200, 200, 200)
+    BG_COLOR = (178, 190, 195)         # (99, 110, 114)
+    WHITE = (223, 230, 233)            # (200, 200, 200)
     AGENT_VIEW_COLOR = (9, 132, 227)
 
     def __init__(self, grid_w=16, grid_h=16, cell_size=40, fps=4,  grid_lines=True, view_radius=2):

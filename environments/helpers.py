@@ -64,6 +64,9 @@ def check_agent_move(state, dim, action):
             or y_new >= agent_slice.shape[0]
     )
 
+    # Check for collision with level walls
+    valid = valid and not state[LEVEL_IDX][x_new, y_new]
+
     return (x, y), (x_new, y_new), valid
 
 

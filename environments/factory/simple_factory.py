@@ -17,10 +17,12 @@ DIRT_INDEX = -1
 
 @dataclass
 class DirtProperties:
-    clean_amount = 10
-    max_spawn_ratio = 0.1
-    gain_amount = 0.1
-    spawn_frequency = 5
+    clean_amount = 2            # How much does the robot clean with one action.
+    max_spawn_ratio = 0.2       # On max how much tiles does the dirt spawn in percent.
+    gain_amount = 0.5           # How much dirt does spawn per tile
+    spawn_frequency = 5         # Spawn Frequency in Steps
+    max_local_amount = 1        # Max dirt amount per tile.
+    max_global_amount = 20      # Max dirt amount in the whole environment.
 
 
 class SimpleFactory(BaseFactory):
@@ -64,13 +66,15 @@ class SimpleFactory(BaseFactory):
         self.renderer.render(OrderedDict(dirt=dirt, wall=walls, **agents))
 
     def spawn_dirt(self) -> None:
-        if not self.state[DIRT_INDEX].sum() > self.max_dirt or not np.argwhere(self.state[DIRT_INDEX] != h.IS_FREE_CELL).shape[0] > 10:
+        if not np.argwhere(self.state[DIRT_INDEX] != h.IS_FREE_CELL).shape[0] > self._dirt_properties.max_global_amount:
             free_for_dirt = self.free_cells(excluded_slices=DIRT_INDEX)
 
             # randomly distribute dirt across the grid
             n_dirt_tiles = int(random.uniform(0, self._dirt_properties.max_spawn_ratio) * len(free_for_dirt))
             for x, y in free_for_dirt[:n_dirt_tiles]:
-                self.state[DIRT_INDEX, x, y] += self._dirt_properties.gain_amount
+                new_value = self.state[DIRT_INDEX, x, y] + self._dirt_properties.gain_amount
+                self.state[DIRT_INDEX, x, y] = max(new_value, self._dirt_properties.max_local_amount)
+
         else:
             pass
 
@@ -130,19 +134,20 @@ class SimpleFactory(BaseFactory):
                        f'{[self.slice_strings[entity] for entity in cols if entity != self.string_slices["dirt"]]}')
             if self._is_clean_up_action(agent_state.action):
                 if agent_state.action_valid:
-                    reward += 0.9
+                    reward += 1
                     self.print(f'Agent {agent_state.i} did just clean up some dirt at {agent_state.pos}.')
                     self.monitor.set('dirt_cleaned', 1)
                 else:
+                    reward -= 1
                     self.print(f'Agent {agent_state.i} just tried to clean up some dirt '
                                f'at {agent_state.pos}, but was unsucsessfull.')
                     self.monitor.set('failed_cleanup_attempt', 1)
-                    reward -= 0.01
+
             elif self._is_moving_action(agent_state.action):
                 if agent_state.action_valid:
-                    reward -= 0.2
+                    reward -= 0.01
                 else:
-                    reward -= 0.1
+                    reward -= 0.5
 
             for entity in cols:
                 if entity != self.string_slices["dirt"]:

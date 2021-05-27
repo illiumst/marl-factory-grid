@@ -3,6 +3,23 @@ import seaborn as sns
 from matplotlib import pyplot as plt
 
 
+PALETTE = 10 * (
+    "#377eb8",
+    "#4daf4a",
+    "#984ea3",
+    "#e41a1c",
+    "#ff7f00",
+    "#a65628",
+    "#f781bf",
+    "#888888",
+    "#a6cee3",
+    "#b2df8a",
+    "#cab2d6",
+    "#fb9a99",
+    "#fdbf6f",
+)
+
+
 def plot(filepath, ext='png', tag='monitor', **kwargs):
     plt.rcParams.update(kwargs)
 
@@ -18,7 +35,7 @@ def prepare_plot(filepath, results_df, ext='png', tag=''):
     _ = sns.lineplot(data=results_df, ci='sd', x='step')
 
     # %%
-    sns.set_theme(palette='husl', style='whitegrid')
+    sns.set_theme(palette=PALETTE, style='whitegrid')
     font_size = 16
     tex_fonts = {
         # Use LaTeX to write all text
