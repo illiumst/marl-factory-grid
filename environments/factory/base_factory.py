@@ -50,12 +50,12 @@ class BaseFactory(gym.Env):
     def string_slices(self):
         return {value: key for key, value in self.slice_strings.items()}
 
-    def __init__(self, level='simple', n_agents=1, max_steps=int(5e2)):
+    def __init__(self, level='simple', n_agents=1, max_steps=int(2e2)):
         self.n_agents = n_agents
         self.max_steps = max_steps
         self.allow_square_movement = True
-        self.allow_diagonal_movement = False
-        self.allow_no_OP = False
+        self.allow_diagonal_movement = True
+        self.allow_no_OP = True
         self.done_at_collision = False
         self._registered_actions = self.movement_actions + int(self.allow_no_OP) + self.register_additional_actions()
         self.level = h.one_hot_level(
@@ -119,7 +119,7 @@ class BaseFactory(gym.Env):
 
         if self.steps >= self.max_steps:
             done = True
-        self.monitor.add('step_reward', reward)
+        self.monitor.set('step_reward', reward)
         return self.state, reward, done, info
 
     def _is_moving_action(self, action):

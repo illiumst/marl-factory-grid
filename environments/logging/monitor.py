@@ -45,11 +45,7 @@ class FactoryMonitor:
     def to_pd_dataframe(self):
         import pandas as pd
         df = pd.DataFrame.from_dict(self.to_dict())
-        try:
-            df.loc[0] = df.iloc[0].fillna(0)
-        except IndexError:
-            return None
-        df = df.fillna(method='ffill')
+        df.fillna(0)
         return df
 
     def reset(self):

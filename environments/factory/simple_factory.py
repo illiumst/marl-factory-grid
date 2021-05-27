@@ -64,7 +64,7 @@ class SimpleFactory(BaseFactory):
         self.renderer.render(OrderedDict(dirt=dirt, wall=walls, **agents))
 
     def spawn_dirt(self) -> None:
-        if not self.state[DIRT_INDEX].sum() > self.max_dirt:
+        if not self.state[DIRT_INDEX].sum() > self.max_dirt or not np.argwhere(self.state[DIRT_INDEX] != h.IS_FREE_CELL).shape[0] > 10:
             free_for_dirt = self.free_cells(excluded_slices=DIRT_INDEX)
 
             # randomly distribute dirt across the grid
@@ -150,6 +150,7 @@ class SimpleFactory(BaseFactory):
 
         self.monitor.set('dirt_amount', current_dirt_amount)
         self.monitor.set('dirty_tiles', dirty_tiles)
+        self.monitor.set('step', self.steps)
         self.print(f"reward is {reward}")
         # Potential based rewards ->
         #  track the last reward , minus the current reward = potential
