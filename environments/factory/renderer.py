@@ -5,7 +5,6 @@ from pathlib import Path
 from collections import deque
 import pygame
 
-
 @dataclass
 class Entity:
     name: str

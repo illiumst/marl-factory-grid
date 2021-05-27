@@ -49,27 +49,25 @@ def combine_runs(run_path: Union[str, PathLike]):
                                                          for col in df.columns if col not in ['episode', 'run']
                                                          }).reset_index()
 
+
     import seaborn as sns
     from matplotlib import pyplot as plt
-    df_melted = df_group.melt(id_vars=['train_step', 'run'],
+    df_melted = df_group.melt(id_vars=['episode', 'run'],
                               value_vars=['agent_0_vs_level', 'dirt_amount',
                                           'dirty_tiles', 'step_reward',
                                           'failed_cleanup_attempt',
                                           'dirt_cleaned'], var_name="Variable",
                               value_name="Score")
 
-    sns.lineplot(data=df_melted, x='train_step', y='Score', hue='Variable', ci='sd')
+    sns.lineplot(data=df_melted, x='episode', y='Score', hue='Variable', ci='sd')
     plt.show()
-
-    prepare_plot(filepath=run_path / f'{run_path.name}_monitor_out_combined',
-                 results_df=df.filter(regex=(".+_roll|(step)$")), tag='monitor')
     print('Plotting done.')
 
 
 if __name__ == '__main__':
 
-    # combine_runs('debug_out/PPO_1622113195')
-    # exit()
+    combine_runs('debug_out/PPO_1622120377')
+    exit()
 
     from stable_baselines3 import DQN, PPO
 
@@ -80,8 +78,9 @@ if __name__ == '__main__':
 
     for seed in range(5):
 
-        env = SimpleFactory(n_agents=1, dirt_properties=dirt_props)
-        model = PPO("MlpPolicy", env, verbose=1, ent_coef=0.0, seed=seed)
+        env = SimpleFactory(n_agents=1, dirt_properties=dirt_props, force_skip_render=True)
+
+        model = PPO("MlpPolicy", env, verbose=1, ent_coef=0.0, seed=seed, device='cpu')
 
         out_path = Path('../debug_out') / f'{model.__class__.__name__}_{time_stamp}'
 

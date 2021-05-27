@@ -8,9 +8,8 @@ import numpy as np
 from environments.factory.base_factory import BaseFactory, AgentState
 from environments import helpers as h
 
-from environments.factory.renderer import Renderer
-from environments.factory.renderer import Entity
 from environments.logging.monitor import MonitorCallback
+from environments.factory.renderer import Renderer, Entity
 
 DIRT_INDEX = -1
 
@@ -33,7 +32,7 @@ class SimpleFactory(BaseFactory):
     def _is_clean_up_action(self, action):
         return self.action_space.n - 1 == action
 
-    def __init__(self, *args, dirt_properties: DirtProperties, verbose=False, **kwargs):
+    def __init__(self, *args, dirt_properties: DirtProperties, verbose=False, force_skip_render=False, **kwargs):
         self._dirt_properties = dirt_properties
         self.verbose = verbose
         self.max_dirt = 20
@@ -42,6 +41,7 @@ class SimpleFactory(BaseFactory):
         self.renderer = None  # expensive - dont use it when not required !
 
     def render(self):
+
         if not self.renderer:  # lazy init
             height, width = self.state.shape[1:]
             self.renderer = Renderer(width, height, view_radius=2)
@@ -148,6 +148,10 @@ class SimpleFactory(BaseFactory):
                     reward -= 0.01
                 else:
                     reward -= 0.5
+
+            else:
+                self.monitor.set('no_op', 1)
+                reward -= 0.25
 
             for entity in cols:
                 if entity != self.string_slices["dirt"]:
