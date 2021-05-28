@@ -54,3 +54,4 @@ def prepare_plot(filepath, results_df, ext='png', tag=''):
     except (FileNotFoundError, RuntimeError):
         tex_fonts['text.usetex'] = False
         plot(filepath, ext=ext, tag=tag, **tex_fonts)
+    plt.show()
