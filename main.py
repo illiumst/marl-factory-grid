@@ -5,6 +5,7 @@ from os import PathLike
 from pathlib import Path
 import time
 import pandas as pd
+from natsort import natsorted
 
 from stable_baselines3.common.callbacks import CallbackList
 
@@ -25,8 +26,8 @@ def combine_runs(run_path: Union[str, PathLike]):
             monitor_list = pickle.load(f)
 
         for m_idx in range(len(monitor_list)):
-            monitor_list[m_idx]['episode'] = str(m_idx)
-            monitor_list[m_idx]['run'] = str(run)
+            monitor_list[m_idx]['episode'] = m_idx
+            monitor_list[m_idx]['run'] = run
 
         df = pd.concat(monitor_list, ignore_index=True)
         df['train_step'] = range(df.shape[0])
@@ -42,31 +43,30 @@ def combine_runs(run_path: Union[str, PathLike]):
 
         df_list.append(df)
     df = pd.concat(df_list,  ignore_index=True)
-    df = df.fillna(0)
+    df = df.fillna(0).rename(columns={'episode': 'Episode', 'run': 'Run'})
 
-    df_group = df.groupby(['episode', 'run']).aggregate({col: 'mean' if col in ['dirt_amount',
+    df_group = df.groupby(['Episode', 'Run']).aggregate({col: 'mean' if col in ['dirt_amount',
                                                                                 'dirty_tiles'] else 'sum'
-                                                         for col in df.columns if col not in ['episode', 'run']
-                                                         }).reset_index()
+                                                         for col in df.columns if
+                                                         col not in ['Episode', 'Run', 'train_step']
+                                                         })
 
+    non_overlapp_window = df_group.groupby(['Run', (df_group.index.get_level_values('Episode') // 50)]).mean()
 
-    import seaborn as sns
-    from matplotlib import pyplot as plt
-    df_melted = df_group.melt(id_vars=['episode', 'run'],
-                              value_vars=['agent_0_vs_level', 'dirt_amount',
-                                          'dirty_tiles', 'step_reward',
-                                          'failed_cleanup_attempt',
-                                          'dirt_cleaned'], var_name="Variable",
-                              value_name="Score")
+    df_melted = non_overlapp_window.reset_index().melt(id_vars=['Episode', 'Run'],
+                                                       value_vars=['agent_0_vs_level', 'dirt_amount',
+                                                                   'dirty_tiles', 'step_reward',
+                                                                   'failed_cleanup_attempt',
+                                                                   'dirt_cleaned'], var_name="Measurement",
+                                                       value_name="Score")
 
-    sns.lineplot(data=df_melted, x='episode', y='Score', hue='Variable', ci='sd')
-    plt.show()
+    prepare_plot(run_path / f'{run_path.name}_monitor_lineplot.png', df_melted)
     print('Plotting done.')
 
 
 if __name__ == '__main__':
 
-    combine_runs('debug_out/PPO_1622120377')
+    combine_runs('debug_out/PPO_1622128912')
     exit()
 
     from stable_baselines3 import DQN, PPO
@@ -82,7 +82,7 @@ if __name__ == '__main__':
 
         model = PPO("MlpPolicy", env, verbose=1, ent_coef=0.0, seed=seed, device='cpu')
 
-        out_path = Path('../debug_out') / f'{model.__class__.__name__}_{time_stamp}'
+        out_path = Path('debug_out') / f'{model.__class__.__name__}_{time_stamp}'
 
         identifier = f'{seed}_{model.__class__.__name__}_{time_stamp}'
         out_path /= identifier
@@ -92,7 +92,7 @@ if __name__ == '__main__':
              MonitorCallback(env, filepath=out_path / f'monitor_{identifier}.pick', plotting=False)]
         )
 
-        model.learn(total_timesteps=int(5e5), callback=callbacks)
+        model.learn(total_timesteps=int(2e6), callback=callbacks)
 
         save_path = out_path / f'model_{identifier}.zip'
         save_path.parent.mkdir(parents=True, exist_ok=True)

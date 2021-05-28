@@ -30,9 +30,8 @@ def plot(filepath, ext='png', tag='monitor', **kwargs):
 
 
 def prepare_plot(filepath, results_df, ext='png', tag=''):
-    # %%
 
-    _ = sns.lineplot(data=results_df, ci='sd', x='step')
+    _ = sns.lineplot(data=results_df, x='Episode', y='Score', hue='Measurement', ci='sd')
 
     # %%
     sns.set_theme(palette=PALETTE, style='whitegrid')
