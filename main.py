@@ -45,7 +45,7 @@ def combine_runs(run_path: Union[str, PathLike]):
     df = pd.concat(df_list,  ignore_index=True)
     df = df.fillna(0).rename(columns={'episode': 'Episode', 'run': 'Run'})
 
-    df_group = df.groupby(['Episode', 'Run']).aggregate({col: 'mean' if col in ['dirt_amount',
+    df_group = df.groupby(['Episode', 'Run']).aggregate({col: 'sum' if col in ['dirt_amount',
                                                                                 'dirty_tiles'] else 'sum'
                                                          for col in df.columns if
                                                          col not in ['Episode', 'Run', 'train_step']
@@ -66,8 +66,8 @@ def combine_runs(run_path: Union[str, PathLike]):
 
 if __name__ == '__main__':
 
-    combine_runs('debug_out/PPO_1622128912')
-    exit()
+    # combine_runs('debug_out/PPO_1622128912')
+    # exit()
 
     from stable_baselines3 import DQN, PPO
 
@@ -78,7 +78,7 @@ if __name__ == '__main__':
 
     for seed in range(5):
 
-        env = SimpleFactory(n_agents=1, dirt_properties=dirt_props, force_skip_render=True)
+        env = SimpleFactory(n_agents=1, dirt_properties=dirt_props, allow_diagonal_movement=False, allow_no_op=False)
 
         model = PPO("MlpPolicy", env, verbose=1, ent_coef=0.0, seed=seed, device='cpu')
 
