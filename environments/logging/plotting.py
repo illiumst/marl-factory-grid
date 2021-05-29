@@ -20,13 +20,13 @@ PALETTE = 10 * (
 )
 
 
-def plot(filepath, ext='png', tag='monitor', **kwargs):
+def plot(filepath, ext='png', **kwargs):
     plt.rcParams.update(kwargs)
 
     plt.tight_layout()
     figure = plt.gcf()
     plt.show()
-    figure.savefig(str(filepath.parent / f'{filepath.stem}_{tag}_measures.{ext}'), format=ext)
+    figure.savefig(str(filepath), format=ext)
 
 
 def prepare_plot(filepath, results_df, ext='png', tag=''):

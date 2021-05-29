@@ -104,6 +104,9 @@ class MonitorCallback(BaseCallback):
                         df = pd.DataFrame(columns=monitor.columns)
                     for _, row in monitor.iterrows():
                         df.loc[df.shape[0]] = row
+                if df is None:  # The env exited premature, we catch it.
+                    self.closed = True
+                    return
                 for column in list(df.columns):
                     if column != 'episode':
                         df[f'{column}_roll'] = df[column].rolling(window=50).mean()

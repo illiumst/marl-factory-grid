@@ -38,8 +38,8 @@ class SimpleFactory(BaseFactory):
         self.verbose = verbose
         self.max_dirt = 20
         super(SimpleFactory, self).__init__(*args, **kwargs)
-        self.slice_strings.update({self.state.shape[0]-1: 'dirt'})
-        self.renderer = None  # expensive - dont use it when not required !
+        self.state_slices.register_additional_items('dirt')
+        self.renderer = None  # expensive - don't use it when not required !
 
     def render(self):
 
@@ -52,7 +52,9 @@ class SimpleFactory(BaseFactory):
         walls     = [Entity('wall', pos) for pos in np.argwhere(self.state[h.LEVEL_IDX] > h.IS_FREE_CELL)]
 
         def asset_str(agent):
-            cols = ' '.join([self.slice_strings[j] for j in agent.collisions])
+            if any([x is None for x in [self.state_slices[j] for j in agent.collisions]]):
+                print('error')
+            cols = ' '.join([self.state_slices[j] for j in agent.collisions])
             if 'agent' in cols:
                 return 'agent_collision'
             elif not agent.action_valid or 'level' in cols or 'agent' in cols:
@@ -131,8 +133,12 @@ class SimpleFactory(BaseFactory):
 
         for agent_state in agent_states:
             cols = agent_state.collisions
+
+            list_of_collisions = [self.state_slices[entity] for entity in cols
+                                  if entity != self.state_slices.by_name("dirt")]
+
             self.print(f't = {self.steps}\tAgent {agent_state.i} has collisions with '
-                       f'{[self.slice_strings[entity] for entity in cols if entity != self.string_slices["dirt"]]}')
+                       f'{list_of_collisions}')
             if self._is_clean_up_action(agent_state.action):
                 if agent_state.action_valid:
                     reward += 1
@@ -155,8 +161,8 @@ class SimpleFactory(BaseFactory):
                 reward -= 0.25
 
             for entity in cols:
-                if entity != self.string_slices["dirt"]:
-                    self.monitor.set(f'agent_{agent_state.i}_vs_{self.slice_strings[entity]}', 1)
+                if entity != self.state_slices.by_name("dirt"):
+                    self.monitor.set(f'agent_{agent_state.i}_vs_{self.state_slices[entity]}', 1)
 
         self.monitor.set('dirt_amount', current_dirt_amount)
         self.monitor.set('dirty_tiles', dirty_tiles)

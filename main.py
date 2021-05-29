@@ -61,8 +61,8 @@ def combine_runs(run_path: Union[str, PathLike]):
 
 if __name__ == '__main__':
 
-    combine_runs('debug_out/PPO_1622120377')
-    exit()
+    # combine_runs('debug_out/PPO_1622120377')
+    # exit()
 
     from stable_baselines3 import PPO  # DQN
     dirt_props = DirtProperties()
@@ -72,7 +72,7 @@ if __name__ == '__main__':
 
     for seed in range(5):
 
-        env = SimpleFactory(n_agents=1, dirt_properties=dirt_props, allow_diagonal_movement=False, allow_no_op=False)
+        env = SimpleFactory(n_agents=1, dirt_properties=dirt_props, allow_diagonal_movement=True, allow_no_op=False)
 
         model = PPO("MlpPolicy", env, verbose=1, ent_coef=0.0, seed=seed, device='cpu')
 
