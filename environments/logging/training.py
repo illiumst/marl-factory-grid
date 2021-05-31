@@ -32,7 +32,7 @@ class TraningMonitor(BaseCallback):
             df.to_csv(self.filepath, mode='a', header=False)
 
     def _on_step(self) -> bool:
-        for idx, done in np.ndenumerate(self.locals['dones']):
+        for idx, done in np.ndenumerate(self.locals.get('dones', [])):
             idx = idx[0]
             # self.values[self.num_timesteps].update(**{f'reward_env_{idx}': self.locals['rewards'][idx]})
             self.rewards[idx] += self.locals['rewards'][idx]

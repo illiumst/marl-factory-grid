@@ -189,6 +189,10 @@ class BaseFactory(gym.Env):
         if self.steps >= self.max_steps:
             done = True
         self.monitor.set('step_reward', reward)
+        self.monitor.set('step', self.steps)
+
+        if done:
+            info.update(monitor=self.monitor)
         return self.state, reward, done, info
 
     def _is_moving_action(self, action):

@@ -4,7 +4,9 @@ from collections import defaultdict
 
 from stable_baselines3.common.callbacks import BaseCallback
 
+from environments.helpers import IGNORED_DF_COLUMNS
 from environments.logging.plotting import prepare_plot
+import pandas as pd
 
 
 class FactoryMonitor:
@@ -59,15 +61,11 @@ class MonitorCallback(BaseCallback):
     def __init__(self, env, filepath=Path('debug_out/monitor.pick'), plotting=True):
         super(MonitorCallback, self).__init__()
         self.filepath = Path(filepath)
-        self._monitor_list = list()
+        self._monitor_df = pd.DataFrame()
         self.env = env
         self.plotting = plotting
         self.started = False
         self.closed = False
-
-    @property
-    def monitor_as_df_list(self):
-        return [x.to_pd_dataframe() for x in self._monitor_list]
 
     def __enter__(self):
         self._on_training_start()
@@ -89,11 +87,10 @@ class MonitorCallback(BaseCallback):
         else:
             # self.out_file.unlink(missing_ok=True)
             with self.filepath.open('wb') as f:
-                pickle.dump(self.monitor_as_df_list, f, protocol=pickle.HIGHEST_PROTOCOL)
+                pickle.dump(self._monitor_df.reset_index(), f, protocol=pickle.HIGHEST_PROTOCOL)
             if self.plotting:
                 print('Monitor files were dumped to disk, now plotting....')
-                # %% Imports
-                import pandas as pd
+
                 # %% Load MonitorList from Disk
                 with self.filepath.open('rb') as f:
                     monitor_list = pickle.load(f)
@@ -111,14 +108,21 @@ class MonitorCallback(BaseCallback):
                     if column != 'episode':
                         df[f'{column}_roll'] = df[column].rolling(window=50).mean()
                 # result.tail()
-                prepare_plot(filepath=self.filepath, results_df=df.filter(regex=(".+_roll")), tag='monitor')
+                prepare_plot(filepath=self.filepath, results_df=df.filter(regex=(".+_roll")))
                 print('Plotting done.')
             self.closed = True
 
     def _on_step(self) -> bool:
-        if self.locals['dones'].item():
-            self._monitor_list.append(self.env.monitor)
-        else:
-            pass
+        for env_idx, done in enumerate(self.locals.get('dones', [])):
+            if done:
+                env_monitor_df = self.locals['infos'][env_idx]['monitor'].to_pd_dataframe()
+                columns = [col for col in env_monitor_df.columns if col not in IGNORED_DF_COLUMNS]
+                env_monitor_df = env_monitor_df.aggregate(
+                    {col: 'mean' if 'amount' in col or 'count' in col else 'sum' for col in columns}
+                )
+                env_monitor_df['episode'] = len(self._monitor_df)
+                self._monitor_df = self._monitor_df.append([env_monitor_df])
+            else:
+                pass
         return True
 

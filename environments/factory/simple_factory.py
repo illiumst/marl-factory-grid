@@ -145,28 +145,27 @@ class SimpleFactory(BaseFactory):
                     self.print(f'Agent {agent_state.i} did just clean up some dirt at {agent_state.pos}.')
                     self.monitor.set('dirt_cleaned', 1)
                 else:
-                    reward -= 1
+                    reward -= 0.5
                     self.print(f'Agent {agent_state.i} just tried to clean up some dirt '
                                f'at {agent_state.pos}, but was unsucsessfull.')
                     self.monitor.set('failed_cleanup_attempt', 1)
 
             elif self._is_moving_action(agent_state.action):
                 if agent_state.action_valid:
-                    reward -= 0.01
+                    reward -= 0.00
                 else:
                     reward -= 0.5
 
             else:
                 self.monitor.set('no_op', 1)
-                reward -= 0.25
+                reward -= 0.1
 
             for entity in cols:
                 if entity != self.state_slices.by_name("dirt"):
                     self.monitor.set(f'agent_{agent_state.i}_vs_{self.state_slices[entity]}', 1)
 
         self.monitor.set('dirt_amount', current_dirt_amount)
-        self.monitor.set('dirty_tiles', dirty_tiles)
-        self.monitor.set('step', self.steps)
+        self.monitor.set('dirty_tile_count', dirty_tiles)
         self.print(f"reward is {reward}")
         # Potential based rewards ->
         #  track the last reward , minus the current reward = potential

@@ -29,7 +29,7 @@ def plot(filepath, ext='png', **kwargs):
     figure.savefig(str(filepath), format=ext)
 
 
-def prepare_plot(filepath, results_df, ext='png', tag=''):
+def prepare_plot(filepath, results_df, ext='png'):
 
     _ = sns.lineplot(data=results_df, x='Episode', y='Score', hue='Measurement', ci='sd')
 
@@ -50,8 +50,7 @@ def prepare_plot(filepath, results_df, ext='png', tag=''):
     }
 
     try:
-        plot(filepath, ext=ext, tag=tag, **tex_fonts)
+        plot(filepath, ext=ext, **tex_fonts)
     except (FileNotFoundError, RuntimeError):
         tex_fonts['text.usetex'] = False
-        plot(filepath, ext=ext, tag=tag, **tex_fonts)
-    plt.show()
+        plot(filepath, ext=ext, **tex_fonts)
