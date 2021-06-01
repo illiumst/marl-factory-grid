@@ -32,9 +32,6 @@ def plot(filepath, ext='png', **kwargs):
 
 def prepare_plot(filepath, results_df, ext='png'):
 
-    _ = sns.lineplot(data=results_df, x='Episode', y='Score', hue='Measurement', ci='sd')
-
-    # %%
     sns.set_theme(palette=PALETTE, style='whitegrid')
     font_size = 16
     tex_fonts = {
@@ -49,6 +46,8 @@ def prepare_plot(filepath, results_df, ext='png'):
         "xtick.labelsize": font_size - 2,
         "ytick.labelsize": font_size - 2
     }
+
+    sns.lineplot(data=results_df, x='Episode', y='Score', hue='Measurement', ci='sd')
 
     try:
         plot(filepath, ext=ext, **tex_fonts)

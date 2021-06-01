@@ -26,17 +26,9 @@ def combine_runs(run_path: Union[str, PathLike]):
             monitor_df = pickle.load(f)
 
         monitor_df['run'] = run
-
         monitor_df = monitor_df.fillna(0)
-
-        #for column in list(df.columns):
-        #    if column not in ['episode', 'run', 'step', 'train_step']:
-        #        if 'clean' in column or '_vs_' in column:
-        #            df[f'{column}_sum_roll'] = df[column].rolling(window=50, min_periods=1).sum()
-        #        else:
-        #            df[f'{column}_mean_roll'] = df[column].rolling(window=50, min_periods=1).mean()
-
         df_list.append(monitor_df)
+
     df = pd.concat(df_list,  ignore_index=True)
     df = df.fillna(0).rename(columns={'episode': 'Episode', 'run': 'Run'})
     columns = [col for col in df.columns if col not in IGNORED_DF_COLUMNS]
@@ -53,20 +45,17 @@ def combine_runs(run_path: Union[str, PathLike]):
 
 if __name__ == '__main__':
 
-    # combine_runs('debug_out/PPO_1622399010')
-    # exit()
-
     from stable_baselines3 import PPO, DQN, A2C
     dirt_props = DirtProperties()
     time_stamp = int(time.time())
 
     out_path = None
 
-    for modeL_type in [A2C, PPO]:
+    for modeL_type in [A2C, PPO, DQN]:
         for seed in range(5):
 
-            env = SimpleFactory(n_agents=1, dirt_properties=dirt_props, pomdp_size=7,
-                                allow_diagonal_movement=False, allow_no_op=False)
+            env = SimpleFactory(n_agents=1, dirt_properties=dirt_props, pomdp_radius=2, max_steps=400,
+                                allow_diagonal_movement=False, allow_no_op=False, verbose=True)
 
             model = modeL_type("MlpPolicy", env, verbose=1, seed=seed, device='cpu')
 
@@ -80,11 +69,12 @@ if __name__ == '__main__':
                  MonitorCallback(env, filepath=out_path / f'monitor_{identifier}.pick', plotting=False)]
             )
 
-            model.learn(total_timesteps=int(5e5), callback=callbacks)
+            model.learn(total_timesteps=int(2e5), callback=callbacks)
 
             save_path = out_path / f'model_{identifier}.zip'
             save_path.parent.mkdir(parents=True, exist_ok=True)
             model.save(save_path)
+            env.save_params(out_path.parent / f'env_{model.__class__.__name__}_{time_stamp}.pick')
 
         if out_path:
             combine_runs(out_path.parent)

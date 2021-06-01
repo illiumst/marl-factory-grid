@@ -9,7 +9,7 @@ AGENT_START_IDX = 1
 IS_FREE_CELL = 0
 IS_OCCUPIED_CELL = 1
 TO_BE_AVERAGED = ['dirt_amount', 'dirty_tiles']
-IGNORED_DF_COLUMNS = ['Episode', 'Run', 'train_step', 'step', 'index']
+IGNORED_DF_COLUMNS = ['Episode', 'Run', 'train_step', 'step', 'index', 'dirt_amount', 'dirty_tile_count']
 
 
 # Utility functions

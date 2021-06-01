@@ -1,3 +1,4 @@
+import pickle
 import warnings
 from pathlib import Path
 
@@ -12,10 +13,15 @@ warnings.filterwarnings('ignore', category=UserWarning)
 
 
 if __name__ == '__main__':
-    dirt_props = DirtProperties()
-    env = SimpleFactory(n_agents=1, dirt_properties=dirt_props)
 
-    out_path = Path(r'C:\Users\steff\projects\f_iks\debug_out\PPO_1622485791\1_PPO_1622485791')
+    out_path = Path(r'C:\Users\steff\projects\f_iks\debug_out\A2C_1622557712')
+    with (out_path / f'env_{out_path.name}.pick').open('rb') as f:
+        env_kwargs = pickle.load(f)
+    env = SimpleFactory(**env_kwargs)
+
+    # Edit THIS:
+    model_path = out_path
+
     model_files = list(natsorted(out_path.rglob('*.zip')))
     this_model = model_files[0]
 
