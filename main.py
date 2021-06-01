@@ -56,16 +56,16 @@ if __name__ == '__main__':
     # combine_runs('debug_out/PPO_1622399010')
     # exit()
 
-    from stable_baselines3 import PPO, DQN
+    from stable_baselines3 import PPO, DQN, A2C
     dirt_props = DirtProperties()
     time_stamp = int(time.time())
 
     out_path = None
 
-    for modeL_type in [PPO]:
+    for modeL_type in [A2C, PPO]:
         for seed in range(5):
 
-            env = SimpleFactory(n_agents=1, dirt_properties=dirt_props,
+            env = SimpleFactory(n_agents=1, dirt_properties=dirt_props, pomdp_size=7,
                                 allow_diagonal_movement=False, allow_no_op=False)
 
             model = modeL_type("MlpPolicy", env, verbose=1, seed=seed, device='cpu')

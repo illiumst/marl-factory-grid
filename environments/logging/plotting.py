@@ -25,8 +25,9 @@ def plot(filepath, ext='png', **kwargs):
 
     plt.tight_layout()
     figure = plt.gcf()
-    plt.show()
     figure.savefig(str(filepath), format=ext)
+    plt.show()
+    plt.clf()
 
 
 def prepare_plot(filepath, results_df, ext='png'):

@@ -1,12 +1,11 @@
+from pathlib import Path
 from typing import List, Union, Iterable
 
 import gym
-from gym import spaces
 import numpy as np
-from pathlib import Path
+from gym import spaces
 
 from environments import helpers as h
-from environments.logging.monitor import FactoryMonitor
 
 
 class AgentState:
@@ -102,16 +101,29 @@ class BaseFactory(gym.Env):
 
     @property
     def observation_space(self):
-        return spaces.Box(low=-1, high=1, shape=self.state.shape, dtype=np.float32)
+        if self.pomdp_size:
+            return spaces.Box(low=0, high=1, shape=(self.state.shape[0], self.pomdp_size,
+                                                    self.pomdp_size), dtype=np.float32)
+        else:
+            space = spaces.Box(low=0, high=1, shape=self.state.shape, dtype=np.float32)
+            # space = spaces.MultiBinary(np.prod(self.state.shape))
+            #  space = spaces.Dict({
+            #    'level': spaces.MultiBinary(np.prod(self.state[0].shape)),
+            #    'agent_n': spaces.Discrete(np.prod(self.state[1].shape)),
+            #    'dirt': spaces.Box(low=0, high=1, shape=self.state[2].shape, dtype=np.float32)
+            # })
+            return space
 
     @property
     def movement_actions(self):
         return self._actions.movement_actions
 
-
-    def __init__(self, level='simple', n_agents=1, max_steps=int(2e2), **kwargs):
+    def __init__(self, level='simple', n_agents=1, max_steps=int(5e2), pomdp_size: Union[None, int] = None, **kwargs):
         self.n_agents = n_agents
         self.max_steps = max_steps
+        assert pomdp_size is None or (pomdp_size is not None and pomdp_size % 2 == 1)
+        self.pomdp_size = pomdp_size
+
         self.done_at_collision = False
         _actions = Actions(allow_square_movement=kwargs.get('allow_square_movement', True),
                            allow_diagonal_movement=kwargs.get('allow_diagonal_movement', True),
@@ -138,7 +150,6 @@ class BaseFactory(gym.Env):
 
     def reset(self) -> (np.ndarray, int, bool, dict):
         self.steps = 0
-        self.monitor = FactoryMonitor(self)
         self.agent_states = []
         # Agent placement ...
         agents = np.zeros((self.n_agents, *self.level.shape), dtype=np.int8)
@@ -153,7 +164,35 @@ class BaseFactory(gym.Env):
         # state.shape = level, agent 1,..., agent n,
         self.state = np.concatenate((np.expand_dims(self.level, axis=0), agents), axis=0)
         # Returns State
-        return self.state
+        return self._return_state()
+
+    def _return_state(self):
+        if self.pomdp_size:
+            pos = self.agent_states[0].pos
+            # pos = [agent_state.pos for agent_state in self.agent_states]
+            # obs = [] ... list comprehension... pos per agent
+            offset = self.pomdp_size // 2
+            x0, x1 = max(0, pos[0] - offset), pos[0] + offset + 1
+            y0, y1 = max(0, pos[1] - offset), pos[1] + offset + 1
+            obs = self.state[:, x0:x1, y0:y1]
+            if obs.shape[1] != self.pomdp_size or obs.shape[2] != self.pomdp_size:
+                obs_padded = np.zeros((obs.shape[0], self.pomdp_size, self.pomdp_size))
+                try:
+                    a_pos = np.argwhere(obs[h.AGENT_START_IDX] == h.IS_OCCUPIED_CELL)[0]
+                except IndexError:
+                    print('Shiiiiiit')
+                try:
+                    obs_padded[:, abs(a_pos[0]-offset):abs(a_pos[0]-offset)+obs.shape[1], abs(a_pos[1]-offset):abs(a_pos[1]-offset)+obs.shape[2]] = obs
+                except ValueError:
+                    print('Shiiiiiit')
+                assert all(np.argwhere(obs_padded[h.AGENT_START_IDX] == h.IS_OCCUPIED_CELL)[0] == (3,3))
+
+
+
+                obs = obs_padded
+        else:
+            obs = self.state
+        return obs
 
     def do_additional_actions(self, agent_i: int, action: int) -> ((int, int), bool):
         raise NotImplementedError
@@ -188,12 +227,11 @@ class BaseFactory(gym.Env):
 
         if self.steps >= self.max_steps:
             done = True
-        self.monitor.set('step_reward', reward)
-        self.monitor.set('step', self.steps)
 
-        if done:
-            info.update(monitor=self.monitor)
-        return self.state, reward, done, info
+        info.update(step_reward=reward, step=self.steps)
+
+        obs = self._return_state()
+        return obs, reward, done, info
 
     def _is_moving_action(self, action):
         return action in self._actions.movement_actions
