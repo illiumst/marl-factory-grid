@@ -12,7 +12,6 @@ from environments.factory.simple_factory import DirtProperties, SimpleFactory
 from environments.helpers import IGNORED_DF_COLUMNS
 from environments.logging.monitor import MonitorCallback
 from environments.logging.plotting import prepare_plot
-from environments.logging.training import TraningMonitor
 
 warnings.filterwarnings('ignore', category=FutureWarning)
 warnings.filterwarnings('ignore', category=UserWarning)
@@ -55,7 +54,7 @@ if __name__ == '__main__':
         for seed in range(5):
 
             env = SimpleFactory(n_agents=1, dirt_properties=dirt_props, pomdp_radius=2, max_steps=400,
-                                allow_diagonal_movement=False, allow_no_op=False, verbose=True)
+                                allow_diagonal_movement=False, allow_no_op=False, verbose=False)
 
             model = modeL_type("MlpPolicy", env, verbose=1, seed=seed, device='cpu')
 
@@ -65,8 +64,7 @@ if __name__ == '__main__':
             out_path /= identifier
 
             callbacks = CallbackList(
-                [TraningMonitor(out_path / f'train_logging_{identifier}.csv'),
-                 MonitorCallback(env, filepath=out_path / f'monitor_{identifier}.pick', plotting=False)]
+                [MonitorCallback(env, filepath=out_path / f'monitor_{identifier}.pick', plotting=False)]
             )
 
             model.learn(total_timesteps=int(2e5), callback=callbacks)

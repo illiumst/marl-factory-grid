@@ -150,7 +150,7 @@ class SimpleFactory(BaseFactory):
                     self.print(f'Agent {agent_state.i} did just clean up some dirt at {agent_state.pos}.')
                     info_dict.update(dirt_cleaned=1)
                 else:
-                    reward -= 0.0
+                    reward -= 0.01
                     self.print(f'Agent {agent_state.i} just tried to clean up some dirt '
                                f'at {agent_state.pos}, but was unsucsessfull.')
                     info_dict.update(failed_cleanup_attempt=1)
@@ -162,14 +162,14 @@ class SimpleFactory(BaseFactory):
                 else:
                     # info_dict.update(collision=1)
                     # self.print('collision')
-                    reward -= 0.00
+                    reward -= 0.01
 
             else:
                 info_dict.update(no_op=1)
                 reward -= 0.00
 
             for entity in list_of_collisions:
-                info_dict.update({f'agent_{agent_state.i}_vs_{self._state_slices.by_name(entity)}': 1})
+                info_dict.update({f'agent_{agent_state.i}_vs_{entity}': 1})
 
         info_dict.update(dirt_amount=current_dirt_amount)
         info_dict.update(dirty_tile_count=dirty_tiles)
