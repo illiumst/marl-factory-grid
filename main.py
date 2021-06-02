@@ -55,6 +55,8 @@ if __name__ == '__main__':
     time_stamp = int(time.time())
 
     out_path = None
+    combine_runs(Path(__file__).parent / 'debug_out'/ 'A2C_1622571986')
+    exit()
 
     for modeL_type in [A2C, PPO, DQN]:
         for seed in range(5):
