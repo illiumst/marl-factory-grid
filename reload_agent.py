@@ -14,20 +14,21 @@ warnings.filterwarnings('ignore', category=UserWarning)
 
 if __name__ == '__main__':
 
-    out_path = Path(r'C:\Users\steff\projects\f_iks\debug_out\A2C_1622558379')
-    with (out_path / f'env_{out_path.name}.pick').open('rb') as f:
+    model_name = 'A2C_1622571986'
+    run_id = 0
+    out_path = Path(__file__).parent / 'debug_out'
+    model_path = out_path / model_name
+
+    with (model_path / f'env_{model_name}.pick').open('rb') as f:
         env_kwargs = pickle.load(f)
-    env = SimpleFactory(allow_no_op=False, allow_diagonal_movement=False, allow_square_movement=True, **env_kwargs)
+    env = SimpleFactory( **env_kwargs)
 
     # Edit THIS:
-    model_path = out_path / '1_A2C_1622558379'
-
-    model_files = list(natsorted(out_path.rglob('*.zip')))
+    model_files = list(natsorted((model_path / f'{run_id}_{model_name}').rglob('*.zip')))
     this_model = model_files[0]
 
     model = PPO.load(this_model)
-    evaluation_result = evaluate_policy(model, env, n_eval_episodes=100, deterministic=False,
-                                        render=True)
+    evaluation_result = evaluate_policy(model, env, n_eval_episodes=100, deterministic=False, render=True)
     print(evaluation_result)
 
     env.close()
