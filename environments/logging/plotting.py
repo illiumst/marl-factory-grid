@@ -30,11 +30,11 @@ def prepare_plot(filepath, results_df, ext='png'):
     results_df.Measurement = results_df.Measurement.str.replace('_', '-')
     try:
         sns.set(rc={'text.usetex': True}, style='whitegrid')
-        sns.lineplot(data=results_df, x='Episode', y='Score', hue='Measurement', ci='sd', palette=PALETTE)
+        sns.lineplot(data=results_df, x='Episode', y='Score', hue='Measurement', ci=95, palette=PALETTE)
         plot(filepath, ext=ext)  # plot raises errors not lineplot!
     except (FileNotFoundError, RuntimeError):
         print('Struggling to plot Figure using LaTeX - going back to normal.')
         plt.close('all')
         sns.set(rc={'text.usetex': False}, style='whitegrid')
-        sns.lineplot(data=results_df, x='Episode', y='Score', hue='Measurement', ci='sd', palette=PALETTE)
+        sns.lineplot(data=results_df, x='Episode', y='Score', hue='Measurement', ci=95, palette=PALETTE)
         plot(filepath, ext=ext)
