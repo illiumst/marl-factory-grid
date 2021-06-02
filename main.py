@@ -41,8 +41,6 @@ def combine_runs(run_path: Union[str, PathLike]):
                                                                 value_vars=columns, var_name="Measurement",
                                                                 value_name="Score")
     df_melted = df_melted[df_melted['Episode'] % skip_n == 0]
-    #df_melted['Episode'] = df_melted['Episode'] * skip_n  # only needed for old version
-
 
     prepare_plot(run_path / f'{run_path.name}_monitor_lineplot.png', df_melted)
     print('Plotting done.')
@@ -51,12 +49,14 @@ def combine_runs(run_path: Union[str, PathLike]):
 if __name__ == '__main__':
 
     from stable_baselines3 import PPO, DQN, A2C
+    from algorithms.dqn_reg import RegDQN
+
     dirt_props = DirtProperties()
     time_stamp = int(time.time())
 
     out_path = None
 
-    for modeL_type in [A2C, PPO, DQN]:
+    for modeL_type in [RegDQN, DQN]:
         for seed in range(5):
 
             env = SimpleFactory(n_agents=1, dirt_properties=dirt_props, pomdp_radius=2, max_steps=400,
