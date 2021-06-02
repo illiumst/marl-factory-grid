@@ -1,12 +1,13 @@
 import pickle
 import warnings
-from typing import Union
+from typing import Union, List
 from os import PathLike
 from pathlib import Path
 import time
 import pandas as pd
 
 from stable_baselines3.common.callbacks import CallbackList
+from stable_baselines3.common.vec_env import VecFrameStack, DummyVecEnv
 
 from environments.factory.simple_factory import DirtProperties, SimpleFactory
 from environments.helpers import IGNORED_DF_COLUMNS
@@ -41,26 +42,64 @@ def combine_runs(run_path: Union[str, PathLike]):
                                                                 value_vars=columns, var_name="Measurement",
                                                                 value_name="Score")
     df_melted = df_melted[df_melted['Episode'] % skip_n == 0]
-    #df_melted['Episode'] = df_melted['Episode'] * skip_n  # only needed for old version
-
 
     prepare_plot(run_path / f'{run_path.name}_monitor_lineplot.png', df_melted)
+    print('Plotting done.')
+
+
+def compare_runs(run_path: Path, run_identifier: int, parameter: Union[str, List[str]]):
+    run_path = Path(run_path)
+    df_list = list()
+    parameter = list(parameter) if isinstance(parameter, str) else parameter
+    for path in run_path.iterdir():
+        if path.is_dir() and str(run_identifier) in path.name:
+            for run, monitor_file in enumerate(path.rglob('monitor_*.pick')):
+                with monitor_file.open('rb') as f:
+                    monitor_df = pickle.load(f)
+
+                monitor_df['run'] = run
+                monitor_df['model'] = path.name.split('_')[0]
+                monitor_df = monitor_df.fillna(0)
+                df_list.append(monitor_df)
+
+    df = pd.concat(df_list, ignore_index=True)
+    df = df.fillna(0).rename(columns={'episode': 'Episode', 'run': 'Run', 'model': 'Model'})
+    columns = [col for col in df.columns if col in parameter]
+
+    roll_n = 30
+    skip_n = 10
+
+    non_overlapp_window = df.groupby(['Model', 'Run', 'Episode']).rolling(roll_n, min_periods=1).mean()
+
+    df_melted = non_overlapp_window[columns].reset_index().melt(id_vars=['Episode', 'Run', 'Model'],
+                                                                value_vars=columns, var_name="Measurement",
+                                                                value_name="Score")
+    df_melted = df_melted[df_melted['Episode'] % skip_n == 0]
+
+    style = 'Measurement' if len(columns) > 1 else None
+    prepare_plot(run_path / f'{run_identifier}_compare_{parameter}.png', df_melted, hue='Model', style=style)
     print('Plotting done.')
 
 
 if __name__ == '__main__':
 
     from stable_baselines3 import PPO, DQN, A2C
+    from algorithms.dqn_reg import RegDQN
+
     dirt_props = DirtProperties()
     time_stamp = int(time.time())
 
     out_path = None
 
-    for modeL_type in [A2C, PPO, DQN]:
+    for modeL_type in [PPO, A2C, RegDQN, DQN]:
         for seed in range(5):
 
             env = SimpleFactory(n_agents=1, dirt_properties=dirt_props, pomdp_radius=2, max_steps=400,
-                                allow_diagonal_movement=False, allow_no_op=False, verbose=False)
+                                allow_diagonal_movement=True, allow_no_op=False, verbose=False,
+                                omit_agent_slice_in_obs=True)
+
+            vec_wrap = DummyVecEnv([lambda: env for _ in range(4)])
+            stack_wrap = VecFrameStack(vec_wrap, n_stack=4, channels_order='first')
 
             model = modeL_type("MlpPolicy", env, verbose=1, seed=seed, device='cpu')
 
@@ -70,7 +109,7 @@ if __name__ == '__main__':
             out_path /= identifier
 
             callbacks = CallbackList(
-                [MonitorCallback(env, filepath=out_path / f'monitor_{identifier}.pick', plotting=False)]
+                [MonitorCallback(filepath=out_path / f'monitor_{identifier}.pick', plotting=False)]
             )
 
             model.learn(total_timesteps=int(2e5), callback=callbacks)
@@ -82,3 +121,5 @@ if __name__ == '__main__':
 
         if out_path:
             combine_runs(out_path.parent)
+    if out_path:
+        compare_runs(Path('debug_out'), time_stamp, 'step_reward')

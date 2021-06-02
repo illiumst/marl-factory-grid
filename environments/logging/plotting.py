@@ -26,18 +26,19 @@ def plot(filepath, ext='png'):
     plt.clf()
 
 
-def prepare_plot(filepath, results_df, ext='png'):
-    results_df.Measurement = results_df.Measurement.str.replace('_', '-')
-    hue_order = sorted(list(results_df.Measurement.unique()))
+def prepare_plot(filepath, results_df, ext='png', hue='Measurement', style=None):
+    df = results_df.copy()
+    df[hue] = df[hue].str.replace('_', '-')
+    hue_order = sorted(list(df[hue].unique()))
     try:
         sns.set(rc={'text.usetex': True}, style='whitegrid')
-        sns.lineplot(data=results_df, x='Episode', y='Score', hue='Measurement',
-                     ci=95, palette=PALETTE, hue_order=hue_order)
+        sns.lineplot(data=df, x='Episode', y='Score', ci=95, palette=PALETTE,
+                     hue_order=hue_order, hue=hue, style=style)
         plot(filepath, ext=ext)  # plot raises errors not lineplot!
     except (FileNotFoundError, RuntimeError):
         print('Struggling to plot Figure using LaTeX - going back to normal.')
         plt.close('all')
         sns.set(rc={'text.usetex': False}, style='whitegrid')
-        sns.lineplot(data=results_df, x='Episode', y='Score', hue='Measurement',
+        sns.lineplot(data=df, x='Episode', y='Score', hue=hue, style=style,
                      ci=95, palette=PALETTE, hue_order=hue_order)
         plot(filepath, ext=ext)

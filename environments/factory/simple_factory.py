@@ -37,8 +37,7 @@ class SimpleFactory(BaseFactory):
         self.dirt_properties = dirt_properties
         self.verbose = verbose
         self.max_dirt = 20
-        super(SimpleFactory, self).__init__(*args, **kwargs)
-        self._state_slices.register_additional_items('dirt')
+        super(SimpleFactory, self).__init__(*args, additional_slices='dirt', **kwargs)
         self._renderer = None  # expensive - don't use it when not required !
 
     def render(self):

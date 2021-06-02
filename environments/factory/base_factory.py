@@ -54,6 +54,12 @@ class Register:
         self_with_additional_items = self + other
         return self_with_additional_items
 
+    def keys(self):
+        return self._register.keys()
+
+    def items(self):
+        return self._register.items()
+
     def __getitem__(self, item):
         return self._register[item]
 
@@ -103,7 +109,8 @@ class BaseFactory(gym.Env):
     @property
     def observation_space(self):
         if self.pomdp_radius:
-            return spaces.Box(low=0, high=1, shape=(self._state.shape[0], self.pomdp_radius * 2 + 1,
+            agent_slice = self.n_agents if self.omit_agent_slice_in_obs else 0
+            return spaces.Box(low=0, high=1, shape=(self._state.shape[0] - agent_slice, self.pomdp_radius * 2 + 1,
                                                     self.pomdp_radius * 2 + 1), dtype=np.float32)
         else:
             space = spaces.Box(low=0, high=1, shape=self._state.shape, dtype=np.float32)
@@ -114,13 +121,15 @@ class BaseFactory(gym.Env):
         return self._actions.movement_actions
 
     def __init__(self, level='simple', n_agents=1, max_steps=int(5e2), pomdp_radius: Union[None, int] = None,
-                 allow_square_movement=True, allow_diagonal_movement=True, allow_no_op=True, **kwargs):
+                 allow_square_movement=True, allow_diagonal_movement=True, allow_no_op=True,
+                 omit_agent_slice_in_obs=False, **kwargs):
         self.allow_no_op = allow_no_op
         self.allow_diagonal_movement = allow_diagonal_movement
         self.allow_square_movement = allow_square_movement
         self.n_agents = n_agents
         self.max_steps = max_steps
         self.pomdp_radius = pomdp_radius
+        self.omit_agent_slice_in_obs = omit_agent_slice_in_obs
 
         self.done_at_collision = False
         _actions = Actions(allow_square_movement=self.allow_square_movement,
@@ -132,6 +141,8 @@ class BaseFactory(gym.Env):
             h.parse_level(Path(__file__).parent / h.LEVELS_DIR / f'{level}.txt')
         )
         self._state_slices = StateSlice(n_agents)
+        if 'additional_slices' in kwargs:
+            self._state_slices.register_additional_items(kwargs.get('additional_slices'))
         self.reset()
 
     @property
@@ -162,7 +173,7 @@ class BaseFactory(gym.Env):
         # state.shape = level, agent 1,..., agent n,
         self._state = np.concatenate((np.expand_dims(self._level, axis=0), agents), axis=0)
         # Returns State
-        return self._return_state()
+        return None
 
     def _return_state(self):
         if self.pomdp_radius:
@@ -181,7 +192,15 @@ class BaseFactory(gym.Env):
                 obs = obs_padded
         else:
             obs = self._state
-        return obs
+        if self.omit_agent_slice_in_obs:
+            if obs.shape != (3, 5, 5):
+                print('Shiiiiiit')
+            obs_new = obs[[key for key, val in self._state_slices.items() if 'agent' not in val]]
+            if obs_new.shape != self.observation_space.shape:
+                print('Shiiiiiit')
+            return obs_new
+        else:
+            return obs
 
     def do_additional_actions(self, agent_i: int, action: int) -> ((int, int), bool):
         raise NotImplementedError

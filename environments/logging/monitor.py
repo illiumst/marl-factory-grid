@@ -12,12 +12,11 @@ class MonitorCallback(BaseCallback):
 
     ext = 'png'
 
-    def __init__(self, env, filepath=Path('debug_out/monitor.pick'), plotting=True):
+    def __init__(self, filepath=Path('debug_out/monitor.pick'), plotting=True):
         super(MonitorCallback, self).__init__()
         self.filepath = Path(filepath)
         self._monitor_df = pd.DataFrame()
         self._monitor_dict = dict()
-        self.env = env
         self.plotting = plotting
         self.started = False
         self.closed = False
