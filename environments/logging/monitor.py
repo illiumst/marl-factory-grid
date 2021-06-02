@@ -72,7 +72,8 @@ class MonitorCallback(BaseCallback):
             self._monitor_dict[self.num_timesteps] = {key: val for key, val in info.items()
                                                       if key not in ['terminal_observation', 'episode']}
 
-        for env_idx, done in enumerate(self.locals.get('dones', [])):
+        for env_idx, done in list(enumerate(self.locals.get('dones', []))) + \
+                             list(enumerate(self.locals.get('done', []))):
             if done:
                 env_monitor_df = pd.DataFrame.from_dict(self._monitor_dict, orient='index')
                 self._monitor_dict = dict()
