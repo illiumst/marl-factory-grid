@@ -32,6 +32,8 @@ def combine_runs(run_path: Union[str, PathLike]):
     df = df.fillna(0).rename(columns={'episode': 'Episode', 'run': 'Run'})
     columns = [col for col in df.columns if col not in IGNORED_DF_COLUMNS]
 
+    print(df.head())
+
     non_overlapp_window = df.groupby(['Run', df['Episode'] // 20]).mean()
 
     df_melted = non_overlapp_window[columns].reset_index().melt(id_vars=['Episode', 'Run'],
@@ -49,6 +51,8 @@ if __name__ == '__main__':
     time_stamp = int(time.time())
 
     out_path = None
+    combine_runs(Path('/Users/romue/PycharmProjects/EDYS/debug_out/A2C_1622571986'))
+    exit()
 
     for modeL_type in [A2C, PPO, DQN]:
         for seed in range(5):

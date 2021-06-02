@@ -18,9 +18,7 @@ PALETTE = 10 * (
 )
 
 
-def plot(filepath, ext='png', **kwargs):
-    plt.rcParams.update(kwargs)
-
+def plot(filepath, ext='png'):
     plt.tight_layout()
     figure = plt.gcf()
     figure.savefig(str(filepath), format=ext)
@@ -29,26 +27,14 @@ def plot(filepath, ext='png', **kwargs):
 
 
 def prepare_plot(filepath, results_df, ext='png'):
-
-    sns.set_theme(palette=PALETTE, style='whitegrid')
-    font_size = 16
-    tex_fonts = {
-        # Use LaTeX to write all text
-        "text.usetex": False,
-        "font.family": "serif",
-        # Use 10pt font in plots, to match 10pt font in document
-        "axes.labelsize": font_size,
-        "font.size": font_size,
-        # Make the legend/label fonts a little smaller
-        "legend.fontsize": font_size - 2,
-        "xtick.labelsize": font_size - 2,
-        "ytick.labelsize": font_size - 2
-    }
-
-    sns.lineplot(data=results_df, x='Episode', y='Score', hue='Measurement', ci='sd')
-
+    results_df.Measurement = results_df.Measurement.str.replace('_', '-')
     try:
-        plot(filepath, ext=ext, **tex_fonts)
+        sns.set(rc={'text.usetex': True}, style='whitegrid')
+        sns.lineplot(data=results_df, x='Episode', y='Score', hue='Measurement', ci='sd', palette=PALETTE)
+        plot(filepath, ext=ext)  # plot raises errors not lineplot!
     except (FileNotFoundError, RuntimeError):
-        tex_fonts['text.usetex'] = False
-        plot(filepath, ext=ext, **tex_fonts)
+        print('Struggling to plot Figure using LaTeX - going back to normal.')
+        plt.close('all')
+        sns.set(rc={'text.usetex': False}, style='whitegrid')
+        sns.lineplot(data=results_df, x='Episode', y='Score', hue='Measurement', ci='sd', palette=PALETTE)
+        plot(filepath, ext=ext)
