@@ -26,7 +26,7 @@ class Renderer:
         self.grid_lines = grid_lines
         self.view_radius = view_radius
         pygame.init()
-        self.screen_size = (grid_h*cell_size, grid_w*cell_size)
+        self.screen_size = (grid_w*cell_size, grid_h*cell_size)
         self.screen = pygame.display.set_mode(self.screen_size)
         self.clock = pygame.time.Clock()
         assets = list((Path(__file__).parent / 'assets').rglob('*.png'))
@@ -36,7 +36,7 @@ class Renderer:
     def fill_bg(self):
         self.screen.fill(Renderer.BG_COLOR)
         if self.grid_lines:
-            h, w = self.screen_size
+            w, h = self.screen_size
             for x in range(0, w, self.cell_size):
                 for y in range(0, h, self.cell_size):
                     rect = pygame.Rect(x, y, self.cell_size, self.cell_size)
@@ -81,7 +81,8 @@ class Renderer:
                     shape_surf.set_alpha(64)
                     blits.appendleft(dict(source=shape_surf, dest=visibility_rect))
                 blits.append(bp)
-        for blit in blits: self.screen.blit(**blit)
+        for blit in blits:
+            self.screen.blit(**blit)
         pygame.display.flip()
         self.clock.tick(self.fps)
 

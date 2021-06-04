@@ -1,11 +1,12 @@
 from collections import OrderedDict
 from dataclasses import dataclass
+from pathlib import Path
 from typing import List, Union, NamedTuple
 import random
 
 import numpy as np
 
-from environments.factory.base_factory import BaseFactory, AgentState
+from environments.factory.base_factory import BaseFactory, AgentState, MovementProperties
 from environments import helpers as h
 
 from environments.logging.monitor import MonitorCallback
@@ -186,16 +187,19 @@ if __name__ == '__main__':
     render = True
 
     dirt_props = DirtProperties()
-    factory = SimpleFactory(n_agents=2, dirt_properties=dirt_props)
+    move_props = MovementProperties(allow_diagonal_movement=False, allow_no_op=False)
+    factory = SimpleFactory(n_agents=2, dirt_properties=dirt_props, movement_properties=move_props, level='rooms',
+                            pomdp_radius=2)
+
     n_actions = factory.action_space.n - 1
-    with MonitorCallback(factory):
-        for epoch in range(100):
-            random_actions = [(random.randint(0, n_actions), random.randint(0, n_actions)) for _ in range(200)]
-            env_state, this_reward, done_bool, _ = factory.reset()
-            for agent_i_action in random_actions:
-                env_state, reward, done_bool, info_obj = factory.step(agent_i_action)
-                if render:
-                    factory.render()
-                if done_bool:
-                    break
-            print(f'Factory run {epoch} done, reward is:\n    {reward}')
+
+    for epoch in range(100):
+        random_actions = [(random.randint(0, n_actions), random.randint(0, n_actions)) for _ in range(200)]
+        env_state, this_reward, done_bool, _ = factory.reset()
+        for agent_i_action in random_actions:
+            env_state, reward, done_bool, info_obj = factory.step(agent_i_action)
+            if render:
+                factory.render()
+            if done_bool:
+                break
+        print(f'Factory run {epoch} done, reward is:\n    {reward}')

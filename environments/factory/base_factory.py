@@ -12,7 +12,7 @@ from environments import helpers as h
 
 
 class MovementProperties(NamedTuple):
-    allow_square_movement: bool = False
+    allow_square_movement: bool = True
     allow_diagonal_movement: bool = False
     allow_no_op: bool = False
 
@@ -110,6 +110,10 @@ class StateSlice(Register):
 
 
 class BaseFactory(gym.Env):
+
+    # def __setattr__(self, key, value):
+    #     if isinstance(value, dict):
+
 
     @property
     def action_space(self):

@@ -102,24 +102,23 @@ if __name__ == '__main__':
 
     out_path = None
 
-    # for modeL_type in [PPO, A2C, RegDQN, DQN]:
-    modeL_type = PPO
-    for coef in [0.01, 0.1, 0.25]:
+    for modeL_type in [PPO, A2C, RegDQN, DQN]:
         for seed in range(3):
 
             env = SimpleFactory(n_agents=1, dirt_properties=dirt_props, pomdp_radius=None, max_steps=400,
-                                movement_properties=move_props,
+                                movement_properties=move_props, level='rooms',
                                 omit_agent_slice_in_obs=True)
             env.save_params(Path('debug_out', 'yaml.txt'))
 
             # env = FrameStack(env, 4)
 
-            model = modeL_type("MlpPolicy", env, verbose=1, seed=seed, device='cpu')
+            kwargs = dict(ent_coef=0.01) if isinstance(modeL_type, (PPO, A2C)) else {}
+            model = modeL_type("MlpPolicy", env, verbose=1, seed=seed, device='cpu', **kwargs)
 
             out_path = Path('debug_out') / f'{model.__class__.__name__}_{time_stamp}'
 
             # identifier = f'{seed}_{model.__class__.__name__}_{time_stamp}'
-            identifier = f'{seed}_{str(coef).replace(".", "")}_{time_stamp}'
+            identifier = f'{seed}_{modeL_type.__class__.__name__}_{time_stamp}'
             out_path /= identifier
 
             callbacks = CallbackList(
