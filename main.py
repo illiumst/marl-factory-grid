@@ -89,7 +89,7 @@ if __name__ == '__main__':
     # exit()
 
     from stable_baselines3 import PPO, DQN, A2C
-    from algorithms.dqn_reg import RegDQN
+    from algorithms.reg_dqn import RegDQN
     # from sb3_contrib import QRDQN
 
     dirt_props = DirtProperties()
@@ -100,10 +100,10 @@ if __name__ == '__main__':
 
     out_path = None
 
-    for modeL_type in [PPO]:  # , A2C, RegDQN, DQN]:
+    for modeL_type in [PPO, A2C, RegDQN, DQN]:
         for seed in range(3):
 
-            env = SimpleFactory(n_agents=1, dirt_properties=dirt_props, pomdp_radius=None, max_steps=400,
+            env = SimpleFactory(n_agents=1, dirt_properties=dirt_props, pomdp_radius=3, max_steps=400,
                                 movement_properties=move_props, level='rooms',
                                 omit_agent_slice_in_obs=True)
 
@@ -112,7 +112,7 @@ if __name__ == '__main__':
             kwargs = dict(ent_coef=0.01) if isinstance(modeL_type, (PPO, A2C)) else {}
             model = modeL_type("MlpPolicy", env, verbose=1, seed=seed, device='cpu', **kwargs)
 
-            out_path = Path('debug_out') / f'{model.__class__.__name__}_{time_stamp}'
+            out_path = Path('debug_out') / f'{modeL_type.__class__.__name__}_{time_stamp}'
 
             # identifier = f'{seed}_{model.__class__.__name__}_{time_stamp}'
             identifier = f'{seed}_{modeL_type.__class__.__name__}_{time_stamp}'
