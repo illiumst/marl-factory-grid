@@ -4,7 +4,10 @@ from typing import Union, List
 from os import PathLike
 from pathlib import Path
 import time
+
+import numpy as np
 import pandas as pd
+from gym.wrappers import FrameStack
 
 from stable_baselines3.common.callbacks import CallbackList
 from stable_baselines3.common.vec_env import VecFrameStack, DummyVecEnv
@@ -50,7 +53,7 @@ def combine_runs(run_path: Union[str, PathLike]):
 def compare_runs(run_path: Path, run_identifier: int, parameter: Union[str, List[str]]):
     run_path = Path(run_path)
     df_list = list()
-    parameter = list(parameter) if isinstance(parameter, str) else parameter
+    parameter = [parameter] if isinstance(parameter, str) else parameter
     for path in run_path.iterdir():
         if path.is_dir() and str(run_identifier) in path.name:
             for run, monitor_file in enumerate(path.rglob('monitor_*.pick')):
@@ -83,29 +86,36 @@ def compare_runs(run_path: Path, run_identifier: int, parameter: Union[str, List
 
 if __name__ == '__main__':
 
+    # compare_runs(Path('debug_out'), 1622650432, 'step_reward')
+    # exit()
+
     from stable_baselines3 import PPO, DQN, A2C
     from algorithms.dqn_reg import RegDQN
+    # from sb3_contrib import QRDQN
 
     dirt_props = DirtProperties()
     time_stamp = int(time.time())
 
     out_path = None
 
-    for modeL_type in [PPO, A2C, RegDQN, DQN]:
-        for seed in range(5):
+    # for modeL_type in [PPO, A2C, RegDQN, DQN]:
+    modeL_type = PPO
+    for coef in [0.01, 0.1, 0.25]:
+        for seed in range(3):
 
             env = SimpleFactory(n_agents=1, dirt_properties=dirt_props, pomdp_radius=2, max_steps=400,
                                 allow_diagonal_movement=True, allow_no_op=False, verbose=False,
                                 omit_agent_slice_in_obs=True)
+            env.save_params(Path('debug_out', 'yaml.txt'))
 
-            vec_wrap = DummyVecEnv([lambda: env for _ in range(4)])
-            stack_wrap = VecFrameStack(vec_wrap, n_stack=4, channels_order='first')
+            # env = FrameStack(env, 4)
 
             model = modeL_type("MlpPolicy", env, verbose=1, seed=seed, device='cpu')
 
             out_path = Path('debug_out') / f'{model.__class__.__name__}_{time_stamp}'
 
-            identifier = f'{seed}_{model.__class__.__name__}_{time_stamp}'
+            # identifier = f'{seed}_{model.__class__.__name__}_{time_stamp}'
+            identifier = f'{seed}_{str(coef).replace(".", "")}_{time_stamp}'
             out_path /= identifier
 
             callbacks = CallbackList(

@@ -32,8 +32,8 @@ def prepare_plot(filepath, results_df, ext='png', hue='Measurement', style=None)
     hue_order = sorted(list(df[hue].unique()))
     try:
         sns.set(rc={'text.usetex': True}, style='whitegrid')
-        sns.lineplot(data=df, x='Episode', y='Score', ci=95, palette=PALETTE,
-                     hue_order=hue_order, hue=hue, style=style)
+        _ = sns.lineplot(data=df, x='Episode', y='Score', ci=95, palette=PALETTE,
+                         hue_order=hue_order, hue=hue, style=style)
         plot(filepath, ext=ext)  # plot raises errors not lineplot!
     except (FileNotFoundError, RuntimeError):
         print('Struggling to plot Figure using LaTeX - going back to normal.')

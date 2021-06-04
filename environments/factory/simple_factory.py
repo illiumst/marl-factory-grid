@@ -14,14 +14,15 @@ from environments.factory.renderer import Renderer, Entity
 DIRT_INDEX = -1
 CLEAN_UP_ACTION = 'clean_up'
 
+
 @dataclass
 class DirtProperties:
-    clean_amount = 2            # How much does the robot clean with one action.
-    max_spawn_ratio = 0.2       # On max how much tiles does the dirt spawn in percent.
-    gain_amount = 0.5           # How much dirt does spawn per tile
-    spawn_frequency = 5         # Spawn Frequency in Steps
-    max_local_amount = 1        # Max dirt amount per tile.
-    max_global_amount = 20      # Max dirt amount in the whole environment.
+    clean_amount: int = 2            # How much does the robot clean with one action.
+    max_spawn_ratio: float = 0.2       # On max how much tiles does the dirt spawn in percent.
+    gain_amount: float = 0.5           # How much dirt does spawn per tile
+    spawn_frequency: int = 5         # Spawn Frequency in Steps
+    max_local_amount: int = 1        # Max dirt amount per tile.
+    max_global_amount: int = 20      # Max dirt amount in the whole environment.
 
 
 class SimpleFactory(BaseFactory):
@@ -93,11 +94,11 @@ class SimpleFactory(BaseFactory):
 
     def step(self, actions):
         _, r, done, info = super(SimpleFactory, self).step(actions)
-        if not self.next_dirt_spawn:
+        if not self._next_dirt_spawn:
             self.spawn_dirt()
-            self.next_dirt_spawn = self.dirt_properties.spawn_frequency
+            self._next_dirt_spawn = self.dirt_properties.spawn_frequency
         else:
-            self.next_dirt_spawn -= 1
+            self._next_dirt_spawn -= 1
         obs = self._return_state()
         return obs, r, done, info
 
@@ -117,7 +118,7 @@ class SimpleFactory(BaseFactory):
         dirt_slice = np.zeros((1, *self._state.shape[1:]))
         self._state = np.concatenate((self._state, dirt_slice))  # dirt is now the last slice
         self.spawn_dirt()
-        self.next_dirt_spawn = self.dirt_properties.spawn_frequency
+        self._next_dirt_spawn = self.dirt_properties.spawn_frequency
         obs = self._return_state()
         return obs
 
