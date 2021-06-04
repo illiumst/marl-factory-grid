@@ -1,6 +1,6 @@
 from collections import OrderedDict
 from dataclasses import dataclass
-from typing import List, Union
+from typing import List, Union, NamedTuple
 import random
 
 import numpy as np
@@ -15,8 +15,7 @@ DIRT_INDEX = -1
 CLEAN_UP_ACTION = 'clean_up'
 
 
-@dataclass
-class DirtProperties:
+class DirtProperties(NamedTuple):
     clean_amount: int = 2            # How much does the robot clean with one action.
     max_spawn_ratio: float = 0.2       # On max how much tiles does the dirt spawn in percent.
     gain_amount: float = 0.5           # How much dirt does spawn per tile

@@ -12,6 +12,7 @@ from gym.wrappers import FrameStack
 from stable_baselines3.common.callbacks import CallbackList
 from stable_baselines3.common.vec_env import VecFrameStack, DummyVecEnv
 
+from environments.factory.base_factory import MovementProperties
 from environments.factory.simple_factory import DirtProperties, SimpleFactory
 from environments.helpers import IGNORED_DF_COLUMNS
 from environments.logging.monitor import MonitorCallback
@@ -94,6 +95,9 @@ if __name__ == '__main__':
     # from sb3_contrib import QRDQN
 
     dirt_props = DirtProperties()
+    move_props = MovementProperties(allow_diagonal_movement=False,
+                                    allow_square_movement=True,
+                                    allow_no_op=False)
     time_stamp = int(time.time())
 
     out_path = None
@@ -104,7 +108,7 @@ if __name__ == '__main__':
         for seed in range(3):
 
             env = SimpleFactory(n_agents=1, dirt_properties=dirt_props, pomdp_radius=None, max_steps=400,
-                                allow_diagonal_movement=True, allow_no_op=False, verbose=False,
+                                movement_properties=move_props,
                                 omit_agent_slice_in_obs=True)
             env.save_params(Path('debug_out', 'yaml.txt'))
 
