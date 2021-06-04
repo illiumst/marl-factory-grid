@@ -61,7 +61,7 @@ def compare_runs(run_path: Path, run_identifier: int, parameter: Union[str, List
                     monitor_df = pickle.load(f)
 
                 monitor_df['run'] = run
-                monitor_df['model'] = path.name.split('_')[0]
+                monitor_df['model'] = path.name.split('_')[1]
                 monitor_df = monitor_df.fillna(0)
                 df_list.append(monitor_df)
 
@@ -86,7 +86,7 @@ def compare_runs(run_path: Path, run_identifier: int, parameter: Union[str, List
 
 if __name__ == '__main__':
 
-    # compare_runs(Path('debug_out'), 1622650432, 'step_reward')
+    # compare_runs(Path('debug_out') / 'PPO_1622800949', 1622800949, 'step_reward')
     # exit()
 
     from stable_baselines3 import PPO, DQN, A2C
@@ -103,7 +103,7 @@ if __name__ == '__main__':
     for coef in [0.01, 0.1, 0.25]:
         for seed in range(3):
 
-            env = SimpleFactory(n_agents=1, dirt_properties=dirt_props, pomdp_radius=2, max_steps=400,
+            env = SimpleFactory(n_agents=1, dirt_properties=dirt_props, pomdp_radius=None, max_steps=400,
                                 allow_diagonal_movement=True, allow_no_op=False, verbose=False,
                                 omit_agent_slice_in_obs=True)
             env.save_params(Path('debug_out', 'yaml.txt'))
