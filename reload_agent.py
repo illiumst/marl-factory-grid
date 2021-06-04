@@ -1,7 +1,7 @@
-import pickle
 import warnings
 from pathlib import Path
 
+import yaml
 from natsort import natsorted
 from stable_baselines3 import PPO
 from stable_baselines3.common.evaluation import evaluate_policy
@@ -19,9 +19,9 @@ if __name__ == '__main__':
     out_path = Path(__file__).parent / 'debug_out'
     model_path = out_path / model_name
 
-    with (model_path / f'env_{model_name}.pick').open('rb') as f:
-        env_kwargs = pickle.load(f)
-    env = SimpleFactory( **env_kwargs)
+    with Path(r'C:\Users\steff\projects\f_iks\debug_out\yaml.txt').open('r') as f:
+        env_kwargs = yaml.load(f)
+    env = SimpleFactory(**env_kwargs)
 
     # Edit THIS:
     model_files = list(natsorted((model_path / f'{run_id}_{model_name}').rglob('*.zip')))

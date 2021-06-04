@@ -185,17 +185,21 @@ class SimpleFactory(BaseFactory):
 
 if __name__ == '__main__':
     render = True
+    import yaml
+    with Path(r'C:\Users\steff\projects\f_iks\debug_out\yaml.txt').open('r') as f:
+        env_kwargs = yaml.load(f)
+    factory = SimpleFactory(**env_kwargs)
 
-    dirt_props = DirtProperties()
-    move_props = MovementProperties(allow_diagonal_movement=False, allow_no_op=False)
-    factory = SimpleFactory(n_agents=2, dirt_properties=dirt_props, movement_properties=move_props, level='rooms',
-                            pomdp_radius=2)
+    # dirt_props = DirtProperties()
+    # move_props = MovementProperties(allow_diagonal_movement=False, allow_no_op=False)
+    # factory = SimpleFactory(n_agents=2, dirt_properties=dirt_props, movement_properties=move_props, level='rooms',
+    #                         pomdp_radius=2)
 
     n_actions = factory.action_space.n - 1
 
     for epoch in range(100):
-        random_actions = [(random.randint(0, n_actions), random.randint(0, n_actions)) for _ in range(200)]
-        env_state, this_reward, done_bool, _ = factory.reset()
+        random_actions = [[random.randint(0, n_actions) for _ in range(factory.n_agents)] for _ in range(200)]
+        env_state = factory.reset()
         for agent_i_action in random_actions:
             env_state, reward, done_bool, info_obj = factory.step(agent_i_action)
             if render:

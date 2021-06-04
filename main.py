@@ -5,12 +5,10 @@ from os import PathLike
 from pathlib import Path
 import time
 
-import numpy as np
 import pandas as pd
 from gym.wrappers import FrameStack
 
 from stable_baselines3.common.callbacks import CallbackList
-from stable_baselines3.common.vec_env import VecFrameStack, DummyVecEnv
 
 from environments.factory.base_factory import MovementProperties
 from environments.factory.simple_factory import DirtProperties, SimpleFactory
@@ -102,13 +100,12 @@ if __name__ == '__main__':
 
     out_path = None
 
-    for modeL_type in [PPO, A2C, RegDQN, DQN]:
+    for modeL_type in [PPO]:  # , A2C, RegDQN, DQN]:
         for seed in range(3):
 
             env = SimpleFactory(n_agents=1, dirt_properties=dirt_props, pomdp_radius=None, max_steps=400,
                                 movement_properties=move_props, level='rooms',
                                 omit_agent_slice_in_obs=True)
-            env.save_params(Path('debug_out', 'yaml.txt'))
 
             # env = FrameStack(env, 4)
 
@@ -125,7 +122,7 @@ if __name__ == '__main__':
                 [MonitorCallback(filepath=out_path / f'monitor_{identifier}.pick', plotting=False)]
             )
 
-            model.learn(total_timesteps=int(2e5), callback=callbacks)
+            model.learn(total_timesteps=int(5e5), callback=callbacks)
 
             save_path = out_path / f'model_{identifier}.zip'
             save_path.parent.mkdir(parents=True, exist_ok=True)
