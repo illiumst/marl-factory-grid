@@ -69,7 +69,7 @@ def make(name='Pong-v0', imgsource='color', files=None):
         imgsource = RandomColorSource(shape2d)
     elif imgsource == "noise":
         imgsource = NoiseSource(shape2d)
-    if args.imgsource == "images":
+    elif imgsource == "images":
         imgsource = RandomImageSource(shape2d, files)
     else:
         raise NotImplementedError(f'{imgsource} is not supported, use one of {{video, color, noise}}')
