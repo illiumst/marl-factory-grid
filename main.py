@@ -60,7 +60,7 @@ def compare_runs(run_path: Path, run_identifier: int, parameter: Union[str, List
                     monitor_df = pickle.load(f)
 
                 monitor_df['run'] = run
-                monitor_df['model'] = path.name.split('_')[1]
+                monitor_df['model'] = path.name.split('_')[0]
                 monitor_df = monitor_df.fillna(0)
                 df_list.append(monitor_df)
 
@@ -85,8 +85,8 @@ def compare_runs(run_path: Path, run_identifier: int, parameter: Union[str, List
 
 if __name__ == '__main__':
 
-    # compare_runs(Path('debug_out') / 'PPO_1622800949', 1622800949, 'step_reward')
-    # exit()
+    compare_runs(Path('debug_out'), 1623052687, ['agent_0_vs_level'])
+    exit()
 
     from stable_baselines3 import PPO, DQN, A2C
     from algorithms.reg_dqn import RegDQN
@@ -104,7 +104,7 @@ if __name__ == '__main__':
         for seed in range(3):
 
             env = SimpleFactory(n_agents=1, dirt_properties=dirt_props, pomdp_radius=3, max_steps=400,
-                                movement_properties=move_props, level='rooms',
+                                movement_properties=move_props, level_name='rooms',
                                 omit_agent_slice_in_obs=True)
 
             # env = FrameStack(env, 4)
@@ -112,10 +112,10 @@ if __name__ == '__main__':
             kwargs = dict(ent_coef=0.01) if isinstance(modeL_type, (PPO, A2C)) else {}
             model = modeL_type("MlpPolicy", env, verbose=1, seed=seed, device='cpu', **kwargs)
 
-            out_path = Path('debug_out') / f'{modeL_type.__class__.__name__}_{time_stamp}'
+            out_path = Path('debug_out') / f'{model.__class__.__name__}_{time_stamp}'
 
             # identifier = f'{seed}_{model.__class__.__name__}_{time_stamp}'
-            identifier = f'{seed}_{modeL_type.__class__.__name__}_{time_stamp}'
+            identifier = f'{seed}_{model.__class__.__name__}_{time_stamp}'
             out_path /= identifier
 
             callbacks = CallbackList(
@@ -127,7 +127,7 @@ if __name__ == '__main__':
             save_path = out_path / f'model_{identifier}.zip'
             save_path.parent.mkdir(parents=True, exist_ok=True)
             model.save(save_path)
-            env.save_params(out_path.parent / f'env_{model.__class__.__name__}_{time_stamp}.pick')
+            env.save_params(out_path.parent / f'env_{model.__class__.__name__}_{time_stamp}.yaml')
 
         if out_path:
             combine_runs(out_path.parent)
