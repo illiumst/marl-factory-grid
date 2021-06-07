@@ -17,6 +17,32 @@ class MovementProperties(NamedTuple):
     allow_no_op: bool = False
 
 
+class Entity():
+
+    @property
+    def pos(self):
+        return self._pos
+
+    def __init__(self, pos):
+        self._pos = pos
+
+    def check_agent_move(state: np.ndarray, dim: int, action: str):
+        agent_slice = state[dim]  # horizontal slice from state tensor
+        agent_pos = np.argwhere(agent_slice == 1)
+        if len(agent_pos) > 1:
+            raise AssertionError('Only one agent per slice is allowed.')
+        x, y = agent_pos[0]
+
+        # Actions
+        x_diff, y_diff = ACTIONMAP[action]
+        x_new = x + x_diff
+        y_new = y + y_diff
+
+
+
+        return (x, y), (x_new, y_new), valid
+
+
 class AgentState:
 
     def __init__(self, i: int, action: int):
