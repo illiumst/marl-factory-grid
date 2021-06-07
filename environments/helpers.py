@@ -38,19 +38,19 @@ def one_hot_level(level, wall_char=WALL):
     return binary_grid
 
 
-def check_position(state: np.ndarray, position_to_check: Tuple[int, int], dim: int = 0):
-    x, y = position_to_check
-    agent_slice = state[dim]
+def check_position(slice_to_check_against: np.ndarray, position_to_check: Tuple[int, int]):
+    x_pos, y_pos = position_to_check
 
     # Check if agent colides with grid boundrys
     valid = not (
-            x < 0 or y < 0
-            or x >= agent_slice.shape[0]
-            or y >= agent_slice.shape[0]
+            x_pos < 0 or y_pos < 0
+            or x_pos >= slice_to_check_against.shape[0]
+            or y_pos >= slice_to_check_against.shape[0]
     )
 
     # Check for collision with level walls
-    valid = valid and not state[LEVEL_IDX][x, y]
+    valid = valid and not slice_to_check_against[x_pos, y_pos]
+    return valid
 
 
 if __name__ == '__main__':

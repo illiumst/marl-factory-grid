@@ -85,8 +85,8 @@ def compare_runs(run_path: Path, run_identifier: int, parameter: Union[str, List
 
 if __name__ == '__main__':
 
-    compare_runs(Path('debug_out'), 1623052687, ['step_reward'])
-    exit()
+    # compare_runs(Path('debug_out'), 1623052687, ['step_reward'])
+    # exit()
 
     from stable_baselines3 import PPO, DQN, A2C
     from algorithms.reg_dqn import RegDQN
