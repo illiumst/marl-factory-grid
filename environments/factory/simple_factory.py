@@ -46,7 +46,7 @@ class SimpleFactory(BaseFactory):
 
         if not self._renderer:  # lazy init
             height, width = self._state.shape[1:]
-            self._renderer = Renderer(width, height, view_radius=self.pomdp_radius, fps=9)
+            self._renderer = Renderer(width, height, view_radius=self.pomdp_radius, fps=5)
 
         dirt = [Entity('dirt', [x, y], min(0.15 + self._state[DIRT_INDEX, x, y], 1.5), 'scale')
                 for x, y in np.argwhere(self._state[DIRT_INDEX] > h.IS_FREE_CELL)]
@@ -67,7 +67,7 @@ class SimpleFactory(BaseFactory):
         agents = []
         for i, agent in enumerate(self._agent_states):
             name, state = asset_str(agent)
-            agents.append(Entity(name, agent.pos, 1, 'none', state))
+            agents.append(Entity(name, agent.pos, 1, 'none', state, i+1))
         self._renderer.render(dirt+walls+agents)
 
     def spawn_dirt(self) -> None:

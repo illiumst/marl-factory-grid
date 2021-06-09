@@ -13,6 +13,7 @@ class Entity(NamedTuple):
     value: float = 1
     value_operation: str = 'none'
     state: str = None
+    id: int = 0
 
 
 class Renderer:
@@ -21,7 +22,7 @@ class Renderer:
     AGENT_VIEW_COLOR = (9, 132, 227)
     ASSETS = Path(__file__).parent / 'assets'
 
-    def __init__(self, grid_w=16, grid_h=16, cell_size=40, fps=8,  grid_lines=True, view_radius=2):
+    def __init__(self, grid_w=16, grid_h=16, cell_size=40, fps=7,  grid_lines=True, view_radius=2):
         self.grid_h = grid_h
         self.grid_w = grid_w
         self.cell_size = cell_size
@@ -37,7 +38,8 @@ class Renderer:
         self.fill_bg()
 
         now = time.time()
-        font1 = pygame.font.Font(None, 24)
+        self.font = pygame.font.Font(None, 20)
+        self.font.set_bold(1.0)
         print('Loading System font with pygame.font.Font took', time.time() - now)
 
 
@@ -83,19 +85,23 @@ class Renderer:
         for entity in entities:
             bp = self.blit_params(entity)
             blits.append(bp)
-            if 'agent' in entity.name and self.view_radius > 0:
-                visibility_rect = bp['dest'].inflate(
-                    (self.view_radius*2)*self.cell_size, (self.view_radius*2)*self.cell_size
-                )
-                shape_surf = pygame.Surface(visibility_rect.size, pygame.SRCALPHA)
-                pygame.draw.rect(shape_surf, self.AGENT_VIEW_COLOR, shape_surf.get_rect())
-                shape_surf.set_alpha(64)
-                blits.appendleft(dict(source=shape_surf, dest=visibility_rect))
+            if entity.name.lower() == 'agent':
+                if self.view_radius > 0:
+                    visibility_rect = bp['dest'].inflate(
+                        (self.view_radius*2)*self.cell_size, (self.view_radius*2)*self.cell_size
+                    )
+                    shape_surf = pygame.Surface(visibility_rect.size, pygame.SRCALPHA)
+                    pygame.draw.rect(shape_surf, self.AGENT_VIEW_COLOR, shape_surf.get_rect())
+                    shape_surf.set_alpha(64)
+                    blits.appendleft(dict(source=shape_surf, dest=visibility_rect))
                 if entity.state != 'blank':
                     agent_state_blits = self.blit_params(
-                        Entity(entity.state, (entity.pos[0]+0.11, entity.pos[1]), 0.48, 'scale')
+                        Entity(entity.state, (entity.pos[0]+0.12, entity.pos[1]), 0.48, 'scale')
                     )
-                    blits.append(agent_state_blits)
+                    textsurface = self.font.render(str(entity.id), False, (0, 0, 0))
+                    text_blit = dict(source=textsurface, dest=(bp['dest'].center[0]-.07*self.cell_size,
+                                                               bp['dest'].center[1]))
+                    blits += [agent_state_blits, text_blit]
 
         for blit in blits:
             self.screen.blit(**blit)
