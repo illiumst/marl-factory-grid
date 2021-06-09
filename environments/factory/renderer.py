@@ -77,13 +77,18 @@ class Renderer:
             bp = self.blit_params(entity)
             blits.append(bp)
             if 'agent' in entity.name and self.view_radius > 0:
-                visibility_rect = bp['dest'].inflate((self.view_radius*2)*self.cell_size, (self.view_radius*2)*self.cell_size)
+                visibility_rect = bp['dest'].inflate(
+                    (self.view_radius*2)*self.cell_size, (self.view_radius*2)*self.cell_size
+                )
                 shape_surf = pygame.Surface(visibility_rect.size, pygame.SRCALPHA)
                 pygame.draw.rect(shape_surf, self.AGENT_VIEW_COLOR, shape_surf.get_rect())
                 shape_surf.set_alpha(64)
                 blits.appendleft(dict(source=shape_surf, dest=visibility_rect))
-                agent_state_blits = self.blit_params(Entity(entity.state, (entity.pos[0]+0.11, entity.pos[1]), 0.48, 'scale'))
-                blits.append(agent_state_blits)
+                if entity.state != 'blank':
+                    agent_state_blits = self.blit_params(
+                        Entity(entity.state, (entity.pos[0]+0.11, entity.pos[1]), 0.48, 'scale')
+                    )
+                    blits.append(agent_state_blits)
 
         for blit in blits:
             self.screen.blit(**blit)

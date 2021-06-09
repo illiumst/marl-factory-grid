@@ -57,7 +57,7 @@ class SimpleFactory(BaseFactory):
                 print('error')
             cols = ' '.join([self._state_slices[j] for j in agent.collisions])
             if 'agent' in cols:
-                return 'agent_collision'
+                return 'agent_collision', 'blank'
             elif not agent.action_valid or 'level' in cols or 'agent' in cols:
                 return f'agent{agent.i + 1}', 'invalid'
             elif self._is_clean_up_action(agent.action):
