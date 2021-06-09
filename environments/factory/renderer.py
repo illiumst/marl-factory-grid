@@ -4,6 +4,7 @@ from pathlib import Path
 from collections import deque
 import pygame
 from typing import NamedTuple
+import time
 
 
 class Entity(NamedTuple):
@@ -20,7 +21,7 @@ class Renderer:
     AGENT_VIEW_COLOR = (9, 132, 227)
     ASSETS = Path(__file__).parent / 'assets'
 
-    def __init__(self, grid_w=16, grid_h=16, cell_size=40, fps=4,  grid_lines=True, view_radius=2):
+    def __init__(self, grid_w=16, grid_h=16, cell_size=40, fps=8,  grid_lines=True, view_radius=2):
         self.grid_h = grid_h
         self.grid_w = grid_w
         self.cell_size = cell_size
@@ -34,6 +35,12 @@ class Renderer:
         assets = list(self.ASSETS.rglob('*.png'))
         self.assets = {path.stem: self.load_asset(str(path), 1) for path in assets}
         self.fill_bg()
+
+        now = time.time()
+        font1 = pygame.font.Font(None, 24)
+        print('Loading System font with pygame.font.Font took', time.time() - now)
+
+
 
     def fill_bg(self):
         self.screen.fill(Renderer.BG_COLOR)
