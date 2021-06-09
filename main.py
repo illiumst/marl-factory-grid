@@ -35,8 +35,8 @@ def combine_runs(run_path: Union[str, PathLike]):
     df = df.fillna(0).rename(columns={'episode': 'Episode', 'run': 'Run'})
     columns = [col for col in df.columns if col not in IGNORED_DF_COLUMNS]
 
-    roll_n = 30
-    skip_n = 20
+    roll_n = 50
+    skip_n = 40
 
     non_overlapp_window = df.groupby(['Run', 'Episode']).rolling(roll_n, min_periods=1).mean()
 
@@ -68,8 +68,8 @@ def compare_runs(run_path: Path, run_identifier: int, parameter: Union[str, List
     df = df.fillna(0).rename(columns={'episode': 'Episode', 'run': 'Run', 'model': 'Model'})
     columns = [col for col in df.columns if col in parameter]
 
-    roll_n = 30
-    skip_n = 10
+    roll_n = 40
+    skip_n = 20
 
     non_overlapp_window = df.groupby(['Model', 'Run', 'Episode']).rolling(roll_n, min_periods=1).mean()
 
@@ -85,22 +85,23 @@ def compare_runs(run_path: Path, run_identifier: int, parameter: Union[str, List
 
 if __name__ == '__main__':
 
-    compare_runs(Path('debug_out'), 1623052687, ['agent_0_vs_level'])
-    exit()
+    # compare_runs(Path('debug_out'), 1623052687, ['step_reward'])
+    # exit()
 
     from stable_baselines3 import PPO, DQN, A2C
     from algorithms.reg_dqn import RegDQN
     # from sb3_contrib import QRDQN
 
-    dirt_props = DirtProperties()
-    move_props = MovementProperties(allow_diagonal_movement=False,
+    dirt_props = DirtProperties(clean_amount=3, gain_amount=0.2, max_global_amount=30,
+                                max_local_amount=5, spawn_frequency=3)
+    move_props = MovementProperties(allow_diagonal_movement=True,
                                     allow_square_movement=True,
                                     allow_no_op=False)
     time_stamp = int(time.time())
 
     out_path = None
 
-    for modeL_type in [PPO, A2C, RegDQN, DQN]:
+    for modeL_type in [PPO, A2C]:  # , RegDQN, DQN]:
         for seed in range(3):
 
             env = SimpleFactory(n_agents=1, dirt_properties=dirt_props, pomdp_radius=3, max_steps=400,
@@ -122,7 +123,7 @@ if __name__ == '__main__':
                 [MonitorCallback(filepath=out_path / f'monitor_{identifier}.pick', plotting=False)]
             )
 
-            model.learn(total_timesteps=int(5e5), callback=callbacks)
+            model.learn(total_timesteps=int(1e5), callback=callbacks)
 
             save_path = out_path / f'model_{identifier}.zip'
             save_path.parent.mkdir(parents=True, exist_ok=True)
