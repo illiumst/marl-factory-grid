@@ -58,15 +58,16 @@ class SimpleFactory(BaseFactory):
             if 'agent' in cols:
                 return 'agent_collision'
             elif not agent.action_valid or 'level' in cols or 'agent' in cols:
-                return f'agent{agent.i + 1}violation'
+                return f'agent{agent.i + 1}', 'invalid'
             elif self._is_clean_up_action(agent.action):
-                return f'agent{agent.i + 1}valid'
+                return f'agent{agent.i + 1}', 'valid'
             else:
-                return f'agent{agent.i + 1}'
-
-        agents = {f'agent{i+1}': [Entity(asset_str(agent), agent.pos)]
-                  for i, agent in enumerate(self._agent_states)}
-        self._renderer.render(OrderedDict(dirt=dirt, wall=walls, **agents))
+                return f'agent{agent.i + 1}', 'idle'
+        agents = []
+        for i, agent in enumerate(self._agent_states):
+            name, state = asset_str(agent)
+            agents.append(Entity(name, agent.pos, 1, 'none', state))
+        self._renderer.render(dirt+walls+agents)
 
     def spawn_dirt(self) -> None:
         if not np.argwhere(self._state[DIRT_INDEX] != h.IS_FREE_CELL).shape[0] > self.dirt_properties.max_global_amount:
