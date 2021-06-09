@@ -59,11 +59,11 @@ class SimpleFactory(BaseFactory):
             if 'agent' in cols:
                 return 'agent_collision', 'blank'
             elif not agent.action_valid or 'level' in cols or 'agent' in cols:
-                return f'agent{agent.i + 1}', 'invalid'
+                return 'agent', 'invalid'
             elif self._is_clean_up_action(agent.action):
-                return f'agent{agent.i + 1}', 'valid'
+                return 'agent', 'valid'
             else:
-                return f'agent{agent.i + 1}', 'idle'
+                return 'agent', 'idle'
         agents = []
         for i, agent in enumerate(self._agent_states):
             name, state = asset_str(agent)
