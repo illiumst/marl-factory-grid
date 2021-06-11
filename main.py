@@ -93,7 +93,7 @@ if __name__ == '__main__':
     # from sb3_contrib import QRDQN
 
     dirt_props = DirtProperties(clean_amount=3, gain_amount=0.2, max_global_amount=30,
-                                max_local_amount=5, spawn_frequency=3)
+                                max_local_amount=5, spawn_frequency=1, max_spawn_ratio=0.05)
     move_props = MovementProperties(allow_diagonal_movement=True,
                                     allow_square_movement=True,
                                     allow_no_op=False)
@@ -104,31 +104,29 @@ if __name__ == '__main__':
     for modeL_type in [PPO, A2C]:  # , RegDQN, DQN]:
         for seed in range(3):
 
-            env = SimpleFactory(n_agents=1, dirt_properties=dirt_props, pomdp_radius=3, max_steps=400,
-                                movement_properties=move_props, level_name='rooms',
-                                omit_agent_slice_in_obs=True)
+            with SimpleFactory(n_agents=1, dirt_properties=dirt_props, pomdp_radius=2, max_steps=400,
+                               movement_properties=move_props, level_name='rooms', frames_to_stack=4,
+                               omit_agent_slice_in_obs=False, combin_agent_slices_in_obs=True) as env:
 
-            # env = FrameStack(env, 4)
+                kwargs = dict(ent_coef=0.01) if isinstance(modeL_type, (PPO, A2C)) else {}
+                model = modeL_type("MlpPolicy", env, verbose=1, seed=seed, device='cpu', **kwargs)
 
-            kwargs = dict(ent_coef=0.01) if isinstance(modeL_type, (PPO, A2C)) else {}
-            model = modeL_type("MlpPolicy", env, verbose=1, seed=seed, device='cpu', **kwargs)
+                out_path = Path('debug_out') / f'{model.__class__.__name__}_{time_stamp}'
 
-            out_path = Path('debug_out') / f'{model.__class__.__name__}_{time_stamp}'
+                # identifier = f'{seed}_{model.__class__.__name__}_{time_stamp}'
+                identifier = f'{seed}_{model.__class__.__name__}_{time_stamp}'
+                out_path /= identifier
 
-            # identifier = f'{seed}_{model.__class__.__name__}_{time_stamp}'
-            identifier = f'{seed}_{model.__class__.__name__}_{time_stamp}'
-            out_path /= identifier
+                callbacks = CallbackList(
+                    [MonitorCallback(filepath=out_path / f'monitor_{identifier}.pick', plotting=False)]
+                )
 
-            callbacks = CallbackList(
-                [MonitorCallback(filepath=out_path / f'monitor_{identifier}.pick', plotting=False)]
-            )
+                model.learn(total_timesteps=int(1e5), callback=callbacks)
 
-            model.learn(total_timesteps=int(1e5), callback=callbacks)
-
-            save_path = out_path / f'model_{identifier}.zip'
-            save_path.parent.mkdir(parents=True, exist_ok=True)
-            model.save(save_path)
-            env.save_params(out_path.parent / f'env_{model.__class__.__name__}_{time_stamp}.yaml')
+                save_path = out_path / f'model_{identifier}.zip'
+                save_path.parent.mkdir(parents=True, exist_ok=True)
+                model.save(save_path)
+                env.save_params(out_path.parent / f'env_{model.__class__.__name__}_{time_stamp}.yaml')
 
         if out_path:
             combine_runs(out_path.parent)

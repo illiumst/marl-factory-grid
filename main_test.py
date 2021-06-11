@@ -3,13 +3,14 @@ import warnings
 
 from pathlib import Path
 import yaml
+from gym.wrappers import FrameStack
 from natsort import natsorted
 
 from stable_baselines3.common.callbacks import CallbackList
 from stable_baselines3 import PPO, DQN, A2C
 
 # our imports
-from environments.factory.simple_factory import SimpleFactory
+from environments.factory.simple_factory import SimpleFactory, DirtProperties
 from environments.logging.monitor import MonitorCallback
 from algorithms.reg_dqn import RegDQN
 from main import compare_runs, combine_runs
@@ -28,7 +29,7 @@ if __name__ == '__main__':
     # rewards += [total reward]
     # boxplot total rewards
 
-    run_id = '1623078961'
+    run_id = '1623241962'
     model_name = 'PPO'
 
     # -----------------------
@@ -45,8 +46,12 @@ if __name__ == '__main__':
     for seed in range(3):
         with (model_path / f'env_{model_path.name}.yaml').open('r') as f:
             env_kwargs = yaml.load(f, Loader=yaml.FullLoader)
-        env_kwargs.update(n_agents=2)
+        dirt_props = DirtProperties(clean_amount=3, gain_amount=0.2, max_global_amount=30,
+                                    max_local_amount=3, spawn_frequency=1, max_spawn_ratio=0.05)
+        env_kwargs.update(n_agents=1, dirt_properties=dirt_props)
         env = SimpleFactory(**env_kwargs)
+
+        env = FrameStack(env, 4)
 
         exp_out_path = model_path / 'exp'
         callbacks = CallbackList(
@@ -58,13 +63,19 @@ if __name__ == '__main__':
         for epoch in range(100):
             observations = env.reset()
             if render:
-                env.render()
+                if isinstance(env, FrameStack):
+                    env.env.render()
+                else:
+                    env.render()
             done_bool = False
             r = 0
             while not done_bool:
-                actions = [model.predict(obs, deterministic=False)[0] for obs in observations]
+                if env.n_agents > 1:
+                    actions = [model.predict(obs, deterministic=False)[0] for obs in observations]
+                else:
+                    actions = model.predict(observations, deterministic=False)[0]
 
-                obs, r, done_bool, info_obj = env.step(actions)
+                observations, r, done_bool, info_obj = env.step(actions)
                 if render:
                     env.render()
                 if done_bool:

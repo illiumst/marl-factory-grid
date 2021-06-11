@@ -1,6 +1,8 @@
 from typing import Union, List, NamedTuple
 import numpy as np
 
+from environments import helpers as h
+
 
 class MovementProperties(NamedTuple):
     allow_square_movement: bool = True
@@ -123,5 +125,38 @@ class StateSlice(Register):
 
     def __init__(self, n_agents: int):
         super(StateSlice, self).__init__()
-        offset = 1
+        offset = 1  # AGENT_START_IDX
         self.register_additional_items(['level', *[f'agent#{i}' for i in range(offset, n_agents+offset)]])
+
+
+class Zones(Register):
+
+    @property
+    def danger_zone(self):
+        return self._zone_slices[self.by_name(h.DANGER_ZONE)]
+
+    @property
+    def accounting_zones(self):
+        return [self[idx] for idx, name in self.items() if name != h.DANGER_ZONE]
+
+    def __init__(self, parsed_level):
+        super(Zones, self).__init__()
+        slices = list()
+        self._accounting_zones = list()
+        self._danger_zones = list()
+        for symbol in np.unique(parsed_level):
+            if symbol == h.WALL:
+                continue
+            elif symbol == h.DANGER_ZONE:
+                self + symbol
+                slices.append(h.one_hot_level(parsed_level, symbol))
+                self._danger_zones.append(symbol)
+            else:
+                self + symbol
+                slices.append(h.one_hot_level(parsed_level, symbol))
+                self._accounting_zones.append(symbol)
+
+        self._zone_slices = np.stack(slices)
+
+    def __getitem__(self, item):
+        return self._zone_slices[item]

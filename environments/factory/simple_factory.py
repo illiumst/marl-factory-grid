@@ -8,7 +8,7 @@ from environments.factory.base_factory import BaseFactory
 from environments import helpers as h
 
 from environments.factory.renderer import Renderer, Entity
-from environments.utility_classes import AgentState, MovementProperties
+from environments.utility_classes import AgentState, MovementProperties, Register
 
 DIRT_INDEX = -1
 CLEAN_UP_ACTION = 'clean_up'
@@ -39,8 +39,8 @@ class SimpleFactory(BaseFactory):
         self.dirt_properties = dirt_properties
         self.verbose = verbose
         self.max_dirt = 20
-        super(SimpleFactory, self).__init__(*args, additional_slices='dirt', **kwargs)
         self._renderer = None  # expensive - don't use it when not required !
+        super(SimpleFactory, self).__init__(*args, additional_slices='dirt', **kwargs)
 
     def render(self):
 
@@ -79,7 +79,6 @@ class SimpleFactory(BaseFactory):
             for x, y in free_for_dirt[:n_dirt_tiles]:
                 new_value = self._state[DIRT_INDEX, x, y] + self.dirt_properties.gain_amount
                 self._state[DIRT_INDEX, x, y] = max(new_value, self.dirt_properties.max_local_amount)
-
         else:
             pass
 
@@ -126,10 +125,11 @@ class SimpleFactory(BaseFactory):
         return obs
 
     def calculate_reward(self, agent_states: List[AgentState]) -> (int, dict):
-        # TODO: What reward to use?
+        info_dict = dict()
         current_dirt_amount = self._state[DIRT_INDEX].sum()
         dirty_tiles = np.argwhere(self._state[DIRT_INDEX] != h.IS_FREE_CELL).shape[0]
-        info_dict = dict()
+        info_dict.update(dirt_amount=current_dirt_amount)
+        info_dict.update(dirty_tile_count=dirty_tiles)
 
         try:
             # penalty = current_dirt_amount
@@ -156,14 +156,13 @@ class SimpleFactory(BaseFactory):
                     reward -= 0.01
                     self.print(f'Agent {agent_state.i} just tried to clean up some dirt '
                                f'at {agent_state.pos}, but was unsucsessfull.')
-                    info_dict.update(failed_cleanup_attempt=1)
+                    info_dict.update({f'agent_{agent_state.i}_failed_action': 1})
 
             elif self._actions.is_moving_action(agent_state.action):
                 if agent_state.action_valid:
                     # info_dict.update(movement=1)
                     reward -= 0.00
                 else:
-                    # info_dict.update(collision=1)
                     # self.print('collision')
                     reward -= 0.01
 
@@ -172,10 +171,9 @@ class SimpleFactory(BaseFactory):
                 reward -= 0.00
 
             for entity in list_of_collisions:
+                entity = 'agent' if 'agent' in entity else entity
                 info_dict.update({f'agent_{agent_state.i}_vs_{entity}': 1})
 
-        info_dict.update(dirt_amount=current_dirt_amount)
-        info_dict.update(dirty_tile_count=dirty_tiles)
         self.print(f"reward is {reward}")
         # Potential based rewards ->
         #  track the last reward , minus the current reward = potential
@@ -191,8 +189,8 @@ if __name__ == '__main__':
 
     move_props = MovementProperties(allow_diagonal_movement=True, allow_square_movement=True)
     dirt_props = DirtProperties()
-    factory = SimpleFactory(movement_properties=move_props, dirt_properties=dirt_props, n_agents=2,
-                            combin_agent_slices_in_obs=True, omit_agent_slice_in_obs=False)
+    factory = SimpleFactory(movement_properties=move_props, dirt_properties=dirt_props, n_agents=10,
+                            combin_agent_slices_in_obs=True, omit_agent_slice_in_obs=False, level_name='rooms')
 
     # dirt_props = DirtProperties()
     # move_props = MovementProperties(allow_diagonal_movement=False, allow_no_op=False)

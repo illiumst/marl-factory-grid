@@ -6,6 +6,7 @@ from pathlib import Path
 
 # Constants
 WALL = '#'
+DANGER_ZONE = 'x'
 LEVELS_DIR = 'levels'
 LEVEL_IDX = 0
 AGENT_START_IDX = 1

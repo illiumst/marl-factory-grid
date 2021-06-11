@@ -21,14 +21,14 @@ if __name__ == '__main__':
 
     with (model_path / f'env_{model_name}.yaml').open('r') as f:
         env_kwargs = yaml.load(f, Loader=yaml.FullLoader)
-    env = SimpleFactory(level_name='rooms', **env_kwargs)
+    with SimpleFactory(level_name='rooms', **env_kwargs) as env:
 
-    # Edit THIS:
-    model_files = list(natsorted((model_path / f'{run_id}_{model_name}').rglob('model_*.zip')))
-    this_model = model_files[0]
+        # Edit THIS:
+        model_files = list(natsorted((model_path / f'{run_id}_{model_name}').rglob('model_*.zip')))
+        this_model = model_files[0]
 
-    model = PPO.load(this_model)
-    evaluation_result = evaluate_policy(model, env, n_eval_episodes=100, deterministic=False, render=True)
-    print(evaluation_result)
+        model = PPO.load(this_model)
+        evaluation_result = evaluate_policy(model, env, n_eval_episodes=100, deterministic=False, render=True)
+        print(evaluation_result)
 
-    env.close()
+
