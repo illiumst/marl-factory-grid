@@ -101,14 +101,20 @@ if __name__ == '__main__':
 
     out_path = None
 
-    for modeL_type in [PPO, A2C]:  # , RegDQN, DQN]:
+    for modeL_type in [A2C, PPO, RegDQN, DQN]:  # , QRDQN]:
         for seed in range(3):
 
             with SimpleFactory(n_agents=1, dirt_properties=dirt_props, pomdp_radius=2, max_steps=400,
                                movement_properties=move_props, level_name='rooms', frames_to_stack=4,
                                omit_agent_slice_in_obs=False, combin_agent_slices_in_obs=True) as env:
 
-                kwargs = dict(ent_coef=0.01) if isinstance(modeL_type, (PPO, A2C)) else {}
+                if modeL_type.__name__ in ["PPO", "A2C"]:
+                    kwargs = dict(ent_coef=0.01)
+                elif modeL_type.__name__ in ["RegDQN", "DQN", "QRDQN"]:
+                    kwargs = dict(target_update_interval=500, buffer_size=30000, learning_starts=5000,
+                                  exploration_final_eps=0.01, batch_size=96)
+                else:
+                    raise NameError(f'The model "{model.__name__}" has the wrong name.')
                 model = modeL_type("MlpPolicy", env, verbose=1, seed=seed, device='cpu', **kwargs)
 
                 out_path = Path('debug_out') / f'{model.__class__.__name__}_{time_stamp}'

@@ -265,7 +265,6 @@ class BaseFactory(gym.Env):
         # d = {key: val._asdict() if hasattr(val, '_asdict') else val for key, val in self.__dict__.items()
         d = {key: val for key, val in self.__dict__.items() if not key.startswith('_') and not key.startswith('__')}
         filepath.parent.mkdir(parents=True, exist_ok=True)
-        super(BaseFactory, self).save_params()
         with filepath.open('w') as f:
             yaml.dump(d, f)
             # pickle.dump(d, f, protocol=pickle.HIGHEST_PROTOCOL)

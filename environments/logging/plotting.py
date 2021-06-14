@@ -41,6 +41,6 @@ def prepare_plot(filepath, results_df, ext='png', hue='Measurement', style=None)
         plt.close('all')
         sns.set(rc={'text.usetex': False}, style='whitegrid')
         lineplot = sns.lineplot(data=df, x='Episode', y='Score', hue=hue, style=style,
-                                ci=95, palette=PALETTE, hue_order=hue_order)
+                                     ci=95, palette=PALETTE, hue_order=hue_order)
         lineplot.set_title(f'{sorted(list(df["Measurement"].unique()))}')
         plot(filepath, ext=ext)

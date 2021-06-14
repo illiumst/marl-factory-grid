@@ -192,11 +192,6 @@ if __name__ == '__main__':
     factory = SimpleFactory(movement_properties=move_props, dirt_properties=dirt_props, n_agents=10,
                             combin_agent_slices_in_obs=True, omit_agent_slice_in_obs=False, level_name='rooms')
 
-    # dirt_props = DirtProperties()
-    # move_props = MovementProperties(allow_diagonal_movement=False, allow_no_op=False)
-    # factory = SimpleFactory(n_agents=2, dirt_properties=dirt_props, movement_properties=move_props, level='rooms',
-    #                         pomdp_radius=2)
-
     n_actions = factory.action_space.n - 1
 
     for epoch in range(100):
