@@ -6,7 +6,6 @@ from pathlib import Path
 import time
 
 import pandas as pd
-from gym.wrappers import FrameStack
 
 from stable_baselines3.common.callbacks import CallbackList
 
@@ -111,8 +110,12 @@ if __name__ == '__main__':
                 if modeL_type.__name__ in ["PPO", "A2C"]:
                     kwargs = dict(ent_coef=0.01)
                 elif modeL_type.__name__ in ["RegDQN", "DQN", "QRDQN"]:
-                    kwargs = dict(target_update_interval=500, buffer_size=30000, learning_starts=5000,
-                                  exploration_final_eps=0.01, batch_size=96)
+                    kwargs = dict(buffer_size=50000,
+                                  learning_starts=25000,
+                                  batch_size=64,
+                                  target_update_interval=5000,
+                                  exploration_fraction=0.25,
+                                  exploration_final_eps=0.025)
                 else:
                     raise NameError(f'The model "{model.__name__}" has the wrong name.')
                 model = modeL_type("MlpPolicy", env, verbose=1, seed=seed, device='cpu', **kwargs)

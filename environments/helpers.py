@@ -6,21 +6,34 @@ from pathlib import Path
 
 # Constants
 WALL = '#'
+DOOR = 'D'
 DANGER_ZONE = 'x'
 LEVELS_DIR = 'levels'
+LEVEL = 'level'
+DOORS = 'doors'
 LEVEL_IDX = 0
-AGENT_START_IDX = 1
 IS_FREE_CELL = 0
 IS_OCCUPIED_CELL = 1
 TO_BE_AVERAGED = ['dirt_amount', 'dirty_tiles']
 IGNORED_DF_COLUMNS = ['Episode', 'Run', 'train_step', 'step', 'index', 'dirt_amount', 'dirty_tile_count']
 
 ACTIONMAP = defaultdict(lambda: (0, 0), dict(north=(-1, 0), east=(0, 1),
-                                        south=(1, 0), west=(0, -1),
-                                        north_east=(-1, +1), south_east=(1, 1),
-                                        south_west=(+1, -1), north_west=(-1, -1)
-                                        )
+                                             south=(1, 0), west=(0, -1),
+                                             north_east=(-1, +1), south_east=(1, 1),
+                                             south_west=(+1, -1), north_west=(-1, -1)
+                                             )
                         )
+
+HORIZONTAL_DOOR_MAP = np.asarray([[0, 0, 0], [1, 0, 1], [0, 0, 0]])
+VERTICAL_DOOR_MAP = np.asarray([[0, 1, 0], [0, 0, 0], [0, 1, 0]])
+
+HORIZONTAL_DOOR_ZONE_1 = np.asarray([[1, 1, 1], [0, 0, 0], [0, 0, 0]])
+HORIZONTAL_DOOR_ZONE_2 = np.asarray([[0, 0, 0], [0, 0, 0], [1, 1, 1]])
+VERTICAL_DOOR_ZONE_1 = np.asarray([[1, 0, 0], [0, 0, 0], [0, 0, 1]])
+VERTICAL_DOOR_ZONE_2 = np.asarray([[1, 0, 0], [0, 0, 0], [0, 0, 1]])
+
+NOT_VALID = False
+VALID = True
 
 
 # Utility functions
