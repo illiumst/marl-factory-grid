@@ -1,4 +1,3 @@
-from collections import OrderedDict
 from typing import List, Union, NamedTuple
 import random
 
@@ -8,7 +7,7 @@ from environments.factory.base_factory import BaseFactory
 from environments import helpers as h
 
 from environments.factory.renderer import Renderer, Entity
-from environments.utility_classes import AgentState, MovementProperties, Register
+from environments.utility_classes import AgentState, MovementProperties
 
 DIRT_INDEX = -1
 CLEAN_UP_ACTION = 'clean_up'
@@ -27,20 +26,20 @@ class DirtProperties(NamedTuple):
 class SimpleFactory(BaseFactory):
 
     @property
-    def additional_actions(self) -> Union[str, List[str]]:
-        return CLEAN_UP_ACTION
+    def additional_actions(self) -> List[str]:
+        return [CLEAN_UP_ACTION]
 
     def _is_clean_up_action(self, action: Union[str, int]):
         if isinstance(action, str):
             action = self._actions.by_name(action)
         return self._actions[action] == CLEAN_UP_ACTION
 
-    def __init__(self, *args, dirt_properties: DirtProperties, verbose=False, **kwargs):
+    def __init__(self, *args, dirt_properties: DirtProperties = DirtProperties(), verbose=False, **kwargs):
         self.dirt_properties = dirt_properties
         self.verbose = verbose
         self.max_dirt = 20
         self._renderer = None  # expensive - don't use it when not required !
-        super(SimpleFactory, self).__init__(*args, additional_slices='dirt', **kwargs)
+        super(SimpleFactory, self).__init__(*args, additional_slices=['dirt'], **kwargs)
 
     def render(self):
 
@@ -190,7 +189,8 @@ if __name__ == '__main__':
     move_props = MovementProperties(allow_diagonal_movement=True, allow_square_movement=True)
     dirt_props = DirtProperties()
     factory = SimpleFactory(movement_properties=move_props, dirt_properties=dirt_props, n_agents=10,
-                            combin_agent_slices_in_obs=True, omit_agent_slice_in_obs=False, level_name='rooms')
+                            combin_agent_slices_in_obs=True, level_name='rooms',
+                            pomdp_radius=3)
 
     n_actions = factory.action_space.n - 1
 

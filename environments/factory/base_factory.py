@@ -1,4 +1,3 @@
-from argparse import Namespace
 from pathlib import Path
 from typing import List, Union, Iterable
 
@@ -10,7 +9,7 @@ import yaml
 from gym.wrappers import FrameStack
 
 from environments import helpers as h
-from environments.utility_classes import Actions, StateSlice, AgentState, MovementProperties, Zones
+from environments.utility_classes import Actions, StateSlices, AgentState, MovementProperties, Zones, DoorState
 
 
 # noinspection PyAttributeOutsideInit
@@ -48,7 +47,7 @@ class BaseFactory(gym.Env):
                  omit_agent_slice_in_obs=False, **kwargs):
         assert (combin_agent_slices_in_obs != omit_agent_slice_in_obs) or \
                (not combin_agent_slices_in_obs and not omit_agent_slice_in_obs), \
-               'Both options are exclusive'
+            'Both options are exclusive'
         assert frames_to_stack != 1 and frames_to_stack >= 0, "'frames_to_stack' cannot be negative or 1."
 
         self.movement_properties = movement_properties
@@ -62,16 +61,28 @@ class BaseFactory(gym.Env):
         self.frames_to_stack = frames_to_stack
 
         self.done_at_collision = False
-        _actions = Actions(self.movement_properties)
-        self._actions = _actions + self.additional_actions
 
+        self._state_slices = StateSlices()
         level_filepath = Path(__file__).parent / h.LEVELS_DIR / f'{self.level_name}.txt'
         parsed_level = h.parse_level(level_filepath)
         self._level = h.one_hot_level(parsed_level)
-        self._state_slices = StateSlice(n_agents)
+        parsed_doors = h.one_hot_level(parsed_level, h.DOOR)
+        if parsed_doors.any():
+            self._doors = parsed_doors
+            level_slices = ['level', 'doors']
+            can_use_doors = True
+        else:
+            level_slices = ['level']
+            can_use_doors = False
+        offset = len(level_slices)
+        self._state_slices.register_additional_items([*level_slices,
+                                                      *[f'agent#{i}' for i in range(offset, n_agents + offset)]])
         if 'additional_slices' in kwargs:
             self._state_slices.register_additional_items(kwargs.get('additional_slices'))
         self._zones = Zones(parsed_level)
+
+        self._actions = Actions(self.movement_properties, can_use_doors=can_use_doors)
+        self._actions.register_additional_items(self.additional_actions)
         self.reset()
 
     @property
@@ -88,7 +99,8 @@ class BaseFactory(gym.Env):
 
     def reset(self) -> (np.ndarray, int, bool, dict):
         self._steps = 0
-        self._agent_states = []
+        self._agent_states = list()
+
         # Agent placement ...
         agents = np.zeros((self.n_agents, *self._level.shape), dtype=np.int8)
         floor_tiles = np.argwhere(self._level == h.IS_FREE_CELL)
@@ -97,10 +109,18 @@ class BaseFactory(gym.Env):
         for i, (x, y) in enumerate(floor_tiles[:self.n_agents]):
             agents[i, x, y] = h.IS_OCCUPIED_CELL
             agent_state = AgentState(i, -1)
-            agent_state.update(pos=[x, y])
+            agent_state.update(pos=(x, y))
             self._agent_states.append(agent_state)
         # state.shape = level, agent 1,..., agent n,
-        self._state = np.concatenate((np.expand_dims(self._level, axis=0), agents), axis=0)
+        if 'doors' in self._state_slices.values():
+            self._door_states = [DoorState(i, tuple(pos)) for i, pos
+                                 in enumerate(np.argwhere(self._doors == h.IS_OCCUPIED_CELL))]
+            self._state = np.concatenate((np.expand_dims(self._level, axis=0),
+                                          np.expand_dims(self._doors, axis=0),
+                                          agents), axis=0)
+
+        else:
+            self._state = np.concatenate((np.expand_dims(self._level, axis=0), agents), axis=0)
         # Returns State
         return None
 
@@ -109,9 +129,13 @@ class BaseFactory(gym.Env):
             obs = self._build_per_agent_obs(0)
         elif self.n_agents >= 2:
             obs = np.stack([self._build_per_agent_obs(agent_i) for agent_i in range(self.n_agents)])
+        else:
+            raise ValueError('n_agents cannot be smaller than 1!!')
         return obs
 
     def _build_per_agent_obs(self, agent_i: int) -> np.ndarray:
+        first_agent_slice = self._state_slices.AGENTSTARTIDX
+        # Todo: make this more efficient!
         if self.pomdp_radius:
             global_pos = self._agent_states[agent_i].pos
             x0, x1 = max(0, global_pos[0] - self.pomdp_radius), global_pos[0] + self.pomdp_radius + 1
@@ -119,13 +143,10 @@ class BaseFactory(gym.Env):
             obs = self._state[:, x0:x1, y0:y1]
             if obs.shape[1] != self.pomdp_radius * 2 + 1 or obs.shape[2] != self.pomdp_radius * 2 + 1:
                 obs_padded = np.full((obs.shape[0], self.pomdp_radius * 2 + 1, self.pomdp_radius * 2 + 1), 1)
-                try:
-                    a_pos = np.argwhere(obs[h.AGENT_START_IDX + agent_i] == h.IS_OCCUPIED_CELL)[0]
-                except IndexError:
-                    print('NO')
+                a_pos = np.argwhere(obs[first_agent_slice + agent_i] == h.IS_OCCUPIED_CELL)[0]
                 obs_padded[:,
-                           abs(a_pos[0]-self.pomdp_radius):abs(a_pos[0]-self.pomdp_radius)+obs.shape[1],
-                           abs(a_pos[1]-self.pomdp_radius):abs(a_pos[1]-self.pomdp_radius)+obs.shape[2]] = obs
+                abs(a_pos[0]-self.pomdp_radius):abs(a_pos[0]-self.pomdp_radius)+obs.shape[1],
+                abs(a_pos[1]-self.pomdp_radius):abs(a_pos[1]-self.pomdp_radius)+obs.shape[2]] = obs
                 obs = obs_padded
         else:
             obs = self._state
@@ -136,7 +157,7 @@ class BaseFactory(gym.Env):
             if self.combin_agent_slices_in_obs:
                 agent_obs = np.sum(obs[[key for key, val in self._state_slices.items() if 'agent' in val]],
                                    axis=0, keepdims=True)
-                obs = np.concatenate((obs[:h.AGENT_START_IDX], agent_obs, obs[h.AGENT_START_IDX+self.n_agents:]))
+                obs = np.concatenate((obs[:first_agent_slice], agent_obs, obs[first_agent_slice+self.n_agents:]))
                 return obs
             else:
                 return obs
@@ -151,26 +172,29 @@ class BaseFactory(gym.Env):
         done = False
 
         # Move this in a seperate function?
-        agent_states = list()
         for agent_i, action in enumerate(actions):
-            agent_i_state = AgentState(agent_i, action)
             if self._actions.is_moving_action(action):
                 pos, valid = self.move_or_colide(agent_i, action)
             elif self._actions.is_no_op(action):
-                pos, valid = self.agent_i_position(agent_i), True
+                pos, valid = self._agent_states[agent_i].pos, h.VALID
+            elif self._actions.is_door_usage(action):
+                try:
+                    door = [door for door in self._door_states if door.pos == self._agent_states[agent_i].pos][0]
+                    door.use()
+                    pos, valid = self._agent_states[agent_i].pos, h.VALID
+                except IndexError:
+                    pos, valid = self._agent_states[agent_i].pos, h.NOT_VALID
             else:
                 pos, valid = self.do_additional_actions(agent_i, action)
             # Update state accordingly
-            agent_i_state.update(pos=pos, action_valid=valid)
-            agent_states.append(agent_i_state)
+            self._agent_states[agent_i].update(pos=pos, action_valid=valid, action=action)
 
-        for i, collision_vec in enumerate(self.check_all_collisions(agent_states, self._state.shape[0])):
-            agent_states[i].update(collision_vector=collision_vec)
+        for i, collision_vec in enumerate(self.check_all_collisions(self._agent_states, self._state.shape[0])):
+            self._agent_states[i].update(collision_vector=collision_vec)
             if self.done_at_collision and collision_vec.any():
                 done = True
 
-        self._agent_states = agent_states
-        reward, info = self.calculate_reward(agent_states)
+        reward, info = self.calculate_reward(self._agent_states)
 
         if self._steps >= self.max_steps:
             done = True
@@ -190,8 +214,12 @@ class BaseFactory(gym.Env):
     def check_collisions(self, agent_state: AgentState) -> np.ndarray:
         pos_x, pos_y = agent_state.pos
         # FixMe: We need to find a way to spare out some dimensions, eg. an info dimension etc... a[?,]
+        #  https://numpy.org/doc/stable/reference/arrays.indexing.html#boolean-array-indexing
         collisions_vec = self._state[:, pos_x, pos_y].copy()                 # "vertical fiber" at position of agent i
-        collisions_vec[h.AGENT_START_IDX + agent_state.i] = h.IS_FREE_CELL  # no self-collisions
+        collisions_vec[self._state_slices.AGENTSTARTIDX + agent_state.i] = h.IS_FREE_CELL   # no self-collisions
+        if 'door' in self._state_slices.values():
+            collisions_vec[self._state_slices.by_name('doors')] = h.IS_FREE_CELL            # no door-collisions
+
         if agent_state.action_valid:
             # ToDo: Place a function hook here
             pass
@@ -202,8 +230,8 @@ class BaseFactory(gym.Env):
 
     def do_move(self, agent_i: int, old_pos: (int, int), new_pos: (int, int)) -> None:
         (x, y), (x_new, y_new) = old_pos, new_pos
-        self._state[agent_i + h.AGENT_START_IDX, x, y] = h.IS_FREE_CELL
-        self._state[agent_i + h.AGENT_START_IDX, x_new, y_new] = h.IS_OCCUPIED_CELL
+        self._state[agent_i + self._state_slices.AGENTSTARTIDX, x, y] = h.IS_FREE_CELL
+        self._state[agent_i + self._state_slices.AGENTSTARTIDX, x_new, y_new] = h.IS_OCCUPIED_CELL
 
     def move_or_colide(self, agent_i: int, action: int) -> ((int, int), bool):
         old_pos, new_pos, valid = self._check_agent_move(agent_i=agent_i, action=self._actions[action])
@@ -216,7 +244,8 @@ class BaseFactory(gym.Env):
             return old_pos, valid
 
     def _check_agent_move(self, agent_i, action: str):
-        agent_slice = self._state[h.AGENT_START_IDX + agent_i]  # horizontal slice from state tensor
+        agent_slice_idx = self._state_slices.AGENTSTARTIDX + agent_i
+        agent_slice = self._state[agent_slice_idx]  # horizontal slice from state tensor
         agent_pos = np.argwhere(agent_slice == 1)
         if len(agent_pos) > 1:
             raise AssertionError('Only one agent per slice is allowed.')
@@ -227,17 +256,51 @@ class BaseFactory(gym.Env):
         x_new = x + x_diff
         y_new = y + y_diff
 
+        if h.DOORS in self._state_slices.values():
+            door = [door for door in self._door_states if door.pos == (x, y)]
+            if door:
+                door = door[0]
+                if door.is_open:
+                    pass
+                else:  # door.is_closed:
+                    local_door_map = self._state[self._state_slices.by_name(h.LEVEL)][door.pos[0]-1:door.pos[0]+2,
+                                                                                      door.pos[1]-1:door.pos[1]+2]
+                    local_agent_map = np.zeros_like(local_door_map)
+                    local_agent_map[tuple(np.subtract(door.pos, self._agent_states[agent_i]._last_pos))] += 1
+                    local_agent_map[tuple(np.subtract(door.pos, (x_new, y_new)))] += 1
+                    if np.all(local_door_map == h.HORIZONTAL_DOOR_MAP):
+                        # This is a horizontal Door Configuration
+                        if np.sum(local_agent_map[0]) >= 2 or np.sum(local_agent_map[-1]) >= 2:
+                            # The Agent goes back to where he came from
+                            pass
+                        else:
+                            # The Agent tries to go through a closed door
+                            return (x, y), (x, y), h.NOT_VALID
+                    else:
+                        # This is a vertical Door Configuration
+                        if np.sum(local_agent_map[:, 0]) >= 2 or np.sum(local_agent_map[:, -1]) >= 2:
+                            # The Agent goes back to where he came from
+                            pass
+                        else:
+                            # The Agent tries to go through a closed door
+                            return (x, y), (x, y), h.NOT_VALID
+            else:
+                pass
+        else:
+            pass
+
         valid = h.check_position(self._state[h.LEVEL_IDX], (x_new, y_new))
 
         return (x, y), (x_new, y_new), valid
 
     def agent_i_position(self, agent_i: int) -> (int, int):
-        positions = np.argwhere(self._state[h.AGENT_START_IDX + agent_i] == h.IS_OCCUPIED_CELL)
+        positions = np.argwhere(self._state[self._state_slices.AGENTSTARTIDX + agent_i] == h.IS_OCCUPIED_CELL)
         assert positions.shape[0] == 1
         pos_x, pos_y = positions[0]  # a.flatten()
         return pos_x, pos_y
 
     def free_cells(self, excluded_slices: Union[None, List[int], int] = None) -> np.array:
+
         excluded_slices = excluded_slices or []
         assert isinstance(excluded_slices, (int, list))
         excluded_slices = excluded_slices if isinstance(excluded_slices, list) else [excluded_slices]
@@ -246,9 +309,14 @@ class BaseFactory(gym.Env):
 
         if excluded_slices:
             # Todo: Is there a cleaner way?
-            inds = list(range(self._state.shape[0]))
-            excluded_slices = [inds[x] if x < 0 else x for x in excluded_slices]
-            state = self._state[[x for x in inds if x not in excluded_slices]]
+            #  inds = list(range(self._state.shape[0]))
+            #  excluded_slices = [inds[x] if x < 0 else x for x in excluded_slices]
+            #  state = self._state[[x for x in inds if x not in excluded_slices]]
+
+            # Yes there is!
+            bool_array = np.full(self._state.shape[0], True)
+            bool_array[excluded_slices] = False
+            state = self._state[bool_array]
 
         free_cells = np.argwhere(state.sum(0) == h.IS_FREE_CELL)
         np.random.shuffle(free_cells)
