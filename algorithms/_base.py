@@ -146,9 +146,6 @@ class BaseQlearner:
             rewards = torch.tensor([e.reward for e in experience]).float()
             dones = torch.tensor([e.done for e in experience]).float()
 
-            print(rewards)
-
-
             next_q_values = self.target_q_net(next_obs).detach().max(-1)[0]
             target_q_values = rewards + (1. - dones) * self.gamma * next_q_values
 
