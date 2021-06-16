@@ -62,9 +62,6 @@ class BaseFactory(gym.Env):
 
         self.done_at_collision = False
 
-        self._actions = Actions(self.movement_properties)
-        self._actions.register_additional_items(self.additional_actions)
-
         self._state_slices = StateSlices()
         level_filepath = Path(__file__).parent / h.LEVELS_DIR / f'{self.level_name}.txt'
         parsed_level = h.parse_level(level_filepath)
@@ -73,14 +70,19 @@ class BaseFactory(gym.Env):
         if parsed_doors.any():
             self._doors = parsed_doors
             level_slices = ['level', 'doors']
+            can_use_doors = True
         else:
             level_slices = ['level']
+            can_use_doors = False
         offset = len(level_slices)
         self._state_slices.register_additional_items([*level_slices,
                                                       *[f'agent#{i}' for i in range(offset, n_agents + offset)]])
         if 'additional_slices' in kwargs:
             self._state_slices.register_additional_items(kwargs.get('additional_slices'))
         self._zones = Zones(parsed_level)
+
+        self._actions = Actions(self.movement_properties, can_use_doors=can_use_doors)
+        self._actions.register_additional_items(self.additional_actions)
         self.reset()
 
     @property
@@ -174,7 +176,14 @@ class BaseFactory(gym.Env):
             if self._actions.is_moving_action(action):
                 pos, valid = self.move_or_colide(agent_i, action)
             elif self._actions.is_no_op(action):
-                pos, valid = self.agent_i_position(agent_i), True
+                pos, valid = self._agent_states[agent_i].pos, h.VALID
+            elif self._actions.is_door_usage(action):
+                try:
+                    door = [door for door in self._door_states if door.pos == self._agent_states[agent_i].pos][0]
+                    door.use()
+                    pos, valid = self._agent_states[agent_i].pos, h.VALID
+                except IndexError:
+                    pos, valid = self._agent_states[agent_i].pos, h.NOT_VALID
             else:
                 pos, valid = self.do_additional_actions(agent_i, action)
             # Update state accordingly
@@ -273,6 +282,7 @@ class BaseFactory(gym.Env):
                             # The Agent goes back to where he came from
                             pass
                         else:
+                            # The Agent tries to go through a closed door
                             return (x, y), (x, y), h.NOT_VALID
             else:
                 pass

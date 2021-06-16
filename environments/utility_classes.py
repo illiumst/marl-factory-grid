@@ -202,10 +202,11 @@ class Actions(Register):
     def movement_actions(self):
         return self._movement_actions
 
-    def __init__(self, movement_properties: MovementProperties):
+    def __init__(self, movement_properties: MovementProperties, can_use_doors=False):
         self.allow_no_op = movement_properties.allow_no_op
         self.allow_diagonal_movement = movement_properties.allow_diagonal_movement
         self.allow_square_movement = movement_properties.allow_square_movement
+        self.can_use_doors = can_use_doors
         super(Actions, self).__init__()
 
         if self.allow_square_movement:
@@ -213,8 +214,10 @@ class Actions(Register):
         if self.allow_diagonal_movement:
             self.register_additional_items(['north_east', 'south_east', 'south_west', 'north_west'])
         self._movement_actions = self._register.copy()
+        if self.can_use_doors:
+            self.register_additional_items(['use_door'])
         if self.allow_no_op:
-            self + 'no-op'
+            self.register_additional_items(['no-op'])
 
     def is_moving_action(self, action: Union[str, int]):
         if isinstance(action, str):
@@ -226,6 +229,11 @@ class Actions(Register):
         if isinstance(action, str):
             action = self.by_name(action)
         return self[action] == 'no-op'
+
+    def is_door_usage(self, action: Union[str, int]):
+        if isinstance(action, str):
+            action = self.by_name(action)
+        return self[action] == 'use_door'
 
 
 class StateSlices(Register):
