@@ -50,11 +50,11 @@ class BaseDQN(nn.Module):
     def __init__(self):
         super(BaseDQN, self).__init__()
         self.net = nn.Sequential(
-            nn.Linear(5 * 5 * 3, 64),
-            nn.Tanh(),
-            nn.Linear(64, 64),
-            nn.Tanh(),
-            nn.Linear(64, 5)
+            nn.Linear(3*5*5, 64),
+            nn.ReLU(),
+            nn.Linear(64,  64),
+            nn.ReLU(),
+            nn.Linear(64, 9)
         )
 
     def act(self, x):
@@ -70,14 +70,15 @@ class BaseDQN(nn.Module):
 
 
 class BaseQlearner:
-    def __init__(self, q_net, target_q_net, env, buffer, n_steps, target_update, warmup, eps_end,
-                 gamma=0.99, train_every_n_steps=4, exploration_fraction=0.2, batch_size=64, lr=1e-4, reg_weight=0.0):
+    def __init__(self, q_net, target_q_net, env, buffer, target_update, warmup, eps_end,
+                 gamma=0.99, train_every_n_steps=4, n_grad_steps=1,
+                 exploration_fraction=0.2, batch_size=64, lr=1e-4, reg_weight=0.0):
         self.q_net = q_net
         self.target_q_net = target_q_net
+        self.target_q_net.load_state_dict(self.q_net.state_dict())
         self.target_q_net.eval()
         self.env = env
         self.buffer = buffer
-        self.n_steps = n_steps
         self.target_update = target_update
         self.warmup = warmup
         self.eps = 1.
@@ -86,64 +87,78 @@ class BaseQlearner:
         self.batch_size = batch_size
         self.gamma = gamma
         self.train_every_n_steps = train_every_n_steps
+        self.n_grad_steps = n_grad_steps
         self.lr = lr
         self.reg_weight = reg_weight
         self.optimizer = torch.optim.Adam(self.q_net.parameters(), lr=self.lr)
         self.device = 'cpu'
         self.running_reward = deque(maxlen=10)
+        self.running_loss = deque(maxlen=10)
 
     def to(self, device):
         self.device = device
         return self
 
-    def anneal_eps(self, step):
-        fraction = min(float(step) / int(self.exploration_fraction*self.n_steps), 1.0)
-        self.eps = 1 + fraction * (self.eps_end - 1)
+    def anneal_eps(self, step, n_steps):
+        fraction = min(float(step) / int(self.exploration_fraction*n_steps), 1.0)
+        eps = 1 + fraction * (self.eps_end - 1)
+        return eps
 
-    def learn(self):
-        step = 0
-        while step < self.n_steps:
+    def learn(self, n_steps):
+        step, eps = 0, 1
+        while step < n_steps:
             obs, done = self.env.reset(), False
             total_reward = 0
             while not done:
-                action = self.q_net.random_action() if np.random.rand() < self.eps \
-                    else self.q_net.act(torch.from_numpy(obs).unsqueeze(0).float())
-                next_obs, reward, done, info = env.step(action)
-                print(action, reward)
-                experience = Experience(obs.copy(), next_obs.copy(), action, reward, done)  # do we really need to copy?
-                obs = next_obs
-                self.buffer.add(experience)
 
+                action = self.q_net.act(torch.from_numpy(obs).unsqueeze(0).float()) \
+                    if np.random.rand() > eps else env.action_space.sample()
+
+                next_obs, reward, done, info = env.step(action)
+
+                experience = Experience(observation=obs, next_observation=next_obs, action=action, reward=reward, done=done)  # do we really need to copy?
+                self.buffer.add(experience)
                 # end of step routine
-                self.anneal_eps(step)
+                obs = next_obs
                 step += 1
                 total_reward += reward
+                eps = self.anneal_eps(step, n_steps)
+
                 if step % self.train_every_n_steps == 0:
                     self.train()
                 if step % self.target_update == 0:
-                    polyak_update(self.q_net.parameters(), self.target_q_net.parameters(), 1.0)
+                    self.target_q_net.load_state_dict(self.q_net.state_dict())
+
 
             self.running_reward.append(total_reward)
-            if step % 800 == 0:
-                print(f'Step: {step} ({(step/self.n_steps)*100:.2f}%)\tRunning reward: {sum(list(self.running_reward))/len(self.running_reward)}\t eps: {self.eps:.4f}')
+            if step % 10 == 0:
+                print(f'Step: {step} ({(step/n_steps)*100:.2f}%)\tRunning reward: {sum(list(self.running_reward))/len(self.running_reward)}\t'
+                      f' eps: {eps:.4f}\tRunning loss: {sum(list(self.running_loss))/len(self.running_loss)}')
+
 
     def train(self):
-        for _ in range(4):
+        for _ in range(self.n_grad_steps):
             experience = self.buffer.sample(self.batch_size)
+
             obs = torch.stack([torch.from_numpy(e.observation) for e in experience], 0).float()
             next_obs = torch.stack([torch.from_numpy(e.next_observation) for e in experience], 0).float()
             actions = torch.tensor([e.action for e in experience]).long()
             rewards = torch.tensor([e.reward for e in experience]).float()
             dones = torch.tensor([e.done for e in experience]).float()
 
-            with torch.no_grad():
-                next_q_values = self.target_q_net(next_obs).max(-1)[0]
-                target_q_values = rewards + (1 - dones) * self.gamma * next_q_values
+            print(rewards)
 
-            q_values = self.q_net(obs).gather(-1, actions.unsqueeze(-1))
+
+            next_q_values = self.target_q_net(next_obs).detach().max(-1)[0]
+            target_q_values = rewards + (1. - dones) * self.gamma * next_q_values
+
+
+            q_values = self.q_net(obs).gather(-1, actions.unsqueeze(0))
 
             delta = q_values - target_q_values
             loss = torch.mean(self.reg_weight * q_values + torch.pow(delta, 2))
+
+            self.running_loss.append(loss.item())
 
             # Optimize the model
             self.optimizer.zero_grad()
@@ -154,13 +169,23 @@ class BaseQlearner:
 
 if __name__ == '__main__':
     from environments.factory.simple_factory import SimpleFactory, DirtProperties, MovementProperties
+    from algorithms.reg_dqn import RegDQN
     dirt_props = DirtProperties(clean_amount=3, gain_amount=0.2, max_global_amount=30,
                                 max_local_amount=5, spawn_frequency=1, max_spawn_ratio=0.05)
     move_props = MovementProperties(allow_diagonal_movement=True,
                                     allow_square_movement=True,
                                     allow_no_op=False)
-    env = SimpleFactory(dirt_properties=dirt_props, movement_properties=move_props, n_agents=1, pomdp_radius=2, combin_agent_slices_in_obs=True, max_steps=400, omit_agent_slice_in_obs=False)
+    env = SimpleFactory(dirt_properties=dirt_props, movement_properties=move_props, n_agents=1, pomdp_radius=2,  max_steps=400, omit_agent_slice_in_obs=False)
     #print(env.action_space)
+    from stable_baselines3.dqn import DQN
+
+    #dqn = RegDQN('MlpPolicy', env, verbose=True, buffer_size = 50000, learning_starts = 25000, batch_size = 64, target_update_interval = 5000, exploration_fraction = 0.25, exploration_final_eps = 0.025)
+    #print(dqn.policy)
+    #dqn.learn(100000)
+
+
+    print(env.observation_space, env.action_space)
     dqn, target_dqn = BaseDQN(), BaseDQN()
-    learner = BaseQlearner(dqn, target_dqn, env, BaseBuffer(50000), n_steps=100000, target_update=2000, warmup=1000, train_every_n_steps=1, eps_end=0.025, reg_weight=0.0, exploration_fraction=0.3)
-    print(learner.learn())
+    learner = BaseQlearner(dqn, target_dqn, env, BaseBuffer(50000), target_update=5000, warmup=25000, lr=1e-4, gamma=0.99,
+                           train_every_n_steps=4, eps_end=0.05, reg_weight=0.1, exploration_fraction=0.25, batch_size=64)
+    learner.learn(100000)
