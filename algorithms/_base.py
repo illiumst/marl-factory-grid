@@ -209,7 +209,7 @@ if __name__ == '__main__':
                                     allow_square_movement=True,
                                     allow_no_op=False)
     env = SimpleFactory(dirt_properties=dirt_props, movement_properties=move_props, n_agents=N_AGENTS, pomdp_radius=2,  max_steps=400, omit_agent_slice_in_obs=False)
-    env = DummyVecEnv([lambda: env])
+    # env = DummyVecEnv([lambda: env])
     print(env)
     from stable_baselines3.dqn import DQN
 

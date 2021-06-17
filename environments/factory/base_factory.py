@@ -210,12 +210,13 @@ class BaseFactory(gym.Env):
 
         # Step the door close intervall
         agents_pos = [agent.pos for agent in self._agent_states]
-        for door_i, door in enumerate(self._door_states):
-            if door.is_open and door.time_to_close and door.pos not in agents_pos:
-                door.time_to_close -= 1
-            elif door.is_open and not door.time_to_close and door.pos not in agents_pos:
-                door.use()
-                self._state[self._state_slices.by_name(h.DOORS)] = 1 if door.is_closed else -1
+        if self.has_doors:
+            for door_i, door in enumerate(self._door_states):
+                if door.is_open and door.time_to_close and door.pos not in agents_pos:
+                    door.time_to_close -= 1
+                elif door.is_open and not door.time_to_close and door.pos not in agents_pos:
+                    door.use()
+                    self._state[self._state_slices.by_name(h.DOORS)] = 1 if door.is_closed else -1
 
         reward, info = self.calculate_reward(self._agent_states)
 
