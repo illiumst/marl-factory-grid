@@ -108,10 +108,12 @@ class AgentState:
 
 class DoorState:
 
-    def __init__(self, i: int, pos: Tuple[int, int], closed_on_init=True):
+    def __init__(self, i: int, pos: Tuple[int, int], closed_on_init=True, auto_close_interval=10):
         self.i = i
         self.pos = pos
         self._state = self._state = IS_CLOSED if closed_on_init else IS_OPEN
+        self.auto_close_interval = auto_close_interval
+        self.time_to_close = -1
 
     @property
     def is_closed(self):
@@ -126,8 +128,11 @@ class DoorState:
         return self._state
 
     def use(self):
-        self._state: str = IS_CLOSED if self._state == IS_OPEN else IS_OPEN
-
+        if self._state == IS_OPEN:
+            self._state = IS_CLOSED
+        else:
+            self._state = IS_OPEN
+            self.time_to_close = self.auto_close_interval
 
 class Register:
 
