@@ -56,11 +56,11 @@ class BaseDQN(nn.Module):
     def __init__(self):
         super(BaseDQN, self).__init__()
         self.net = nn.Sequential(
-            nn.Linear(3*5*5, 128),
+            nn.Linear(3*5*5, 64),
             nn.ReLU(),
-            nn.Linear(128,  128),
+            nn.Linear(64,  64),
             nn.ReLU(),
-            nn.Linear(128, 9)
+            nn.Linear(64, 9)
         )
 
     def act(self, x) -> np.ndarray:
@@ -81,8 +81,7 @@ class BaseQlearner:
                  exploration_fraction=0.2, batch_size=64, lr=1e-4, reg_weight=0.0):
         self.q_net = q_net
         self.target_q_net = target_q_net
-        #self.q_net.apply(self.weights_init)
-        polyak_update(self.q_net.parameters(), self.target_q_net.parameters(), 1)
+        self.q_net.apply(self.weights_init)
         self.target_q_net.eval()
         self.env = env
         self.buffer = buffer
@@ -99,8 +98,8 @@ class BaseQlearner:
         self.n_agents = n_agents
         self.device = 'cpu'
         self.optimizer = torch.optim.Adam(self.q_net.parameters(), lr=self.lr)
-        self.running_reward = deque(maxlen=30)
-        self.running_loss = deque(maxlen=30)
+        self.running_reward = deque(maxlen=10)
+        self.running_loss = deque(maxlen=10)
 
     def to(self, device):
         self.device = device
@@ -149,7 +148,7 @@ class BaseQlearner:
                     self.train()
                 if step % self.target_update == 0:
                     print('UPDATE')
-                    polyak_update(self.q_net.parameters(), self.target_q_net.parameters(), 1.0)
+                    polyak_update(self.q_net.parameters(), self.target_q_net.parameters(), 1)
 
 
             self.running_reward.append(total_reward)
@@ -160,7 +159,7 @@ class BaseQlearner:
     def _training_routine(self, obs, next_obs, action):
         current_q_values = self.q_net(obs)
         current_q_values = torch.gather(current_q_values, dim=1, index=action)
-        next_q_values_raw = self.target_q_net(next_obs).max(dim=-1)[0].reshape(-1, 1).detach()
+        next_q_values_raw = self.target_q_net(next_obs).max(dim=1)[0].reshape(-1, 1).detach()
         return current_q_values, next_q_values_raw
 
     def train(self):
@@ -180,10 +179,9 @@ class BaseQlearner:
                                                                          )
                     pred_q += q_values
                     target_q_raw += next_q_values_raw
-
-            target_q = experience.reward + (1 - experience.done) * self.gamma * target_q_raw
+            target_q = experience.reward  + (1 - experience.done) * self.gamma * target_q_raw
             loss = torch.mean(self.reg_weight * pred_q + torch.pow(pred_q - target_q, 2))
-            #print(target_q)
+            #print(pred_q.shape, target_q.shape)
 
             # log loss
             self.running_loss.append(loss.item())
@@ -208,8 +206,8 @@ if __name__ == '__main__':
     move_props = MovementProperties(allow_diagonal_movement=True,
                                     allow_square_movement=True,
                                     allow_no_op=False)
-    env = SimpleFactory(dirt_properties=dirt_props, movement_properties=move_props, n_agents=N_AGENTS, pomdp_radius=2,  max_steps=400, omit_agent_slice_in_obs=False)
-    # env = DummyVecEnv([lambda: env])
+    env = SimpleFactory(dirt_properties=dirt_props, movement_properties=move_props, n_agents=N_AGENTS, pomdp_radius=2,  max_steps=400, omit_agent_slice_in_obs=False, combin_agent_slices_in_obs=True)
+    #env = DummyVecEnv([lambda: env])
     from stable_baselines3.dqn import DQN
 
     #dqn = RegDQN('MlpPolicy', env, verbose=True, buffer_size = 50000, learning_starts = 64, batch_size = 64,
@@ -220,6 +218,6 @@ if __name__ == '__main__':
 
     print(env.observation_space, env.action_space)
     dqn, target_dqn = BaseDQN(), BaseDQN()
-    learner = BaseQlearner(dqn, target_dqn, env, BaseBuffer(50000), target_update=10000, lr=0.0001, gamma=0.99, n_agents=N_AGENTS,
+    learner = BaseQlearner(dqn, target_dqn, env, BaseBuffer(5000), target_update=5000, lr=0.0001, gamma=0.99, n_agents=N_AGENTS,
                            train_every_n_steps=4, eps_end=0.05, n_grad_steps=1, reg_weight=0.05, exploration_fraction=0.25, batch_size=64)
     learner.learn(100000)
