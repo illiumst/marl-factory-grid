@@ -111,7 +111,7 @@ if __name__ == '__main__':
                     kwargs = dict(ent_coef=0.01)
                 elif modeL_type.__name__ in ["RegDQN", "DQN", "QRDQN"]:
                     kwargs = dict(buffer_size=50000,
-                                  learning_starts=25000,
+                                  learning_starts=64,
                                   batch_size=64,
                                   target_update_interval=5000,
                                   exploration_fraction=0.25,

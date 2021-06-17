@@ -42,8 +42,6 @@ class Renderer:
         self.font.set_bold(1.0)
         print('Loading System font with pygame.font.Font took', time.time() - now)
 
-
-
     def fill_bg(self):
         self.screen.fill(Renderer.BG_COLOR)
         if self.grid_lines:
@@ -71,9 +69,9 @@ class Renderer:
 
     def load_asset(self, path, factor=1.0):
         s = int(factor*self.cell_size)
-        wall_img = pygame.image.load(path).convert_alpha()
-        wall_img = pygame.transform.smoothscale(wall_img, (s, s))
-        return wall_img
+        asset = pygame.image.load(path).convert_alpha()
+        asset = pygame.transform.smoothscale(asset, (s, s))
+        return asset
 
     def render(self, entities):
         for event in pygame.event.get():
@@ -82,7 +80,10 @@ class Renderer:
                 sys.exit()
         self.fill_bg()
         blits = deque()
-        for entity in entities:
+        for entity in [x for x in entities if 'door' in x.name]:
+            bp = self.blit_params(entity)
+            blits.append(bp)
+        for entity in [x for x in entities if 'door' not in x.name]:
             bp = self.blit_params(entity)
             blits.append(bp)
             if entity.name.lower() == 'agent':
@@ -106,7 +107,6 @@ class Renderer:
         for blit in blits:
             self.screen.blit(**blit)
 
-
         pygame.display.flip()
         self.clock.tick(self.fps)
 
@@ -114,6 +114,6 @@ class Renderer:
 if __name__ == '__main__':
     renderer = Renderer(fps=2, cell_size=40)
     for i in range(15):
-        entity = Entity('agent', [5, i], 1, 'idle', 'idle')
-        renderer.render([entity])
+        entity_1 = Entity('agent', [5, i], 1, 'idle', 'idle')
+        renderer.render([entity_1])
 

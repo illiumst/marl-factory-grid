@@ -14,7 +14,7 @@ CLEAN_UP_ACTION = 'clean_up'
 
 
 class DirtProperties(NamedTuple):
-    clean_amount: int = 2            # How much does the robot clean with one action.
+    clean_amount: int = 2            # How much does the robot clean with one actions.
     max_spawn_ratio: float = 0.2       # On max how much tiles does the dirt spawn in percent.
     gain_amount: float = 0.5           # How much dirt does spawn per tile
     spawn_frequency: int = 5         # Spawn Frequency in Steps
@@ -41,7 +41,7 @@ class SimpleFactory(BaseFactory):
         self._renderer = None  # expensive - don't use it when not required !
         super(SimpleFactory, self).__init__(*args, additional_slices=['dirt'], **kwargs)
 
-    def render(self):
+    def render(self, mode='human'):
 
         if not self._renderer:  # lazy init
             height, width = self._state.shape[1:]
@@ -67,7 +67,11 @@ class SimpleFactory(BaseFactory):
         for i, agent in enumerate(self._agent_states):
             name, state = asset_str(agent)
             agents.append(Entity(name, agent.pos, 1, 'none', state, i+1))
-        self._renderer.render(dirt+walls+agents)
+        doors = []
+        for i, door in enumerate(self._door_states):
+            name, state = 'door_open' if door.is_open else 'door_closed', 'blank'
+            agents.append(Entity(name, door.pos, 1, 'none', state, i+1))
+        self._renderer.render(dirt+walls+agents+doors)
 
     def spawn_dirt(self) -> None:
         if not np.argwhere(self._state[DIRT_INDEX] != h.IS_FREE_CELL).shape[0] > self.dirt_properties.max_global_amount:
@@ -156,6 +160,7 @@ class SimpleFactory(BaseFactory):
                     self.print(f'Agent {agent_state.i} just tried to clean up some dirt '
                                f'at {agent_state.pos}, but was unsucsessfull.')
                     info_dict.update({f'agent_{agent_state.i}_failed_action': 1})
+                    info_dict.update({f'agent_{agent_state.i}_failed_dirt_cleanup': 1})
 
             elif self._actions.is_moving_action(agent_state.action):
                 if agent_state.action_valid:
@@ -164,6 +169,17 @@ class SimpleFactory(BaseFactory):
                 else:
                     # self.print('collision')
                     reward -= 0.01
+
+            elif self._actions.is_door_usage(agent_state.action):
+                if agent_state.action_valid:
+                    reward += 0.1
+                    self.print(f'Agent {agent_state.i} did just use the door at {agent_state.pos}.')
+                    info_dict.update(door_used=1)
+                else:
+                    self.print(f'Agent {agent_state.i} just tried to use a door '
+                               f'at {agent_state.pos}, but was unsucsessfull.')
+                    info_dict.update({f'agent_{agent_state.i}_failed_action': 1})
+                    info_dict.update({f'agent_{agent_state.i}_failed_door_open': 1})
 
             else:
                 info_dict.update(no_op=1)
@@ -184,7 +200,7 @@ class SimpleFactory(BaseFactory):
 
 
 if __name__ == '__main__':
-    render = True
+    render = False
 
     move_props = MovementProperties(allow_diagonal_movement=True, allow_square_movement=True)
     dirt_props = DirtProperties()
@@ -193,8 +209,9 @@ if __name__ == '__main__':
                             pomdp_radius=3)
 
     n_actions = factory.action_space.n - 1
+    _ = factory.observation_space
 
-    for epoch in range(100):
+    for epoch in range(10000):
         random_actions = [[random.randint(0, n_actions) for _ in range(factory.n_agents)] for _ in range(200)]
         env_state = factory.reset()
         r = 0
