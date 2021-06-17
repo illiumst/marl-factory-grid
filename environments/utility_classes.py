@@ -83,13 +83,13 @@ class AgentState:
         curr_x, curr_y = self.pos
         return last_x-curr_x, last_y-curr_y
 
-    def __init__(self, i: int, action: int):
+    def __init__(self, i: int, action: int, pos=None):
         self.i = i
         self.action = action
 
         self.collision_vector = None
         self.action_valid = None
-        self.pos = None
+        self.pos = pos
         self._last_pos = (-1, -1)
 
     def update(self, **kwargs):                             # is this hacky?? o.0
@@ -248,7 +248,7 @@ class StateSlices(Register):
         if self._agent_start_idx:
             return self._agent_start_idx
         else:
-            self._agent_start_idx = min([idx for idx, x in self.items() if 'agent' in x])
+            self._agent_start_idx = min([idx for idx, x in self.items() if h.AGENT in x])
             return self._agent_start_idx
 
     def __init__(self):

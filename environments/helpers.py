@@ -10,10 +10,16 @@ DOOR = 'D'
 DANGER_ZONE = 'x'
 LEVELS_DIR = 'levels'
 LEVEL = 'level'
-DOORS = 'doors'
-LEVEL_IDX = 0
+AGENT = 'agent'
 IS_FREE_CELL = 0
 IS_OCCUPIED_CELL = 1
+
+DOORS = 'doors'
+IS_CLOSED_DOOR = IS_OCCUPIED_CELL
+IS_OPEN_DOOR = -1
+
+LEVEL_IDX = 0
+
 TO_BE_AVERAGED = ['dirt_amount', 'dirty_tiles']
 IGNORED_DF_COLUMNS = ['Episode', 'Run', 'train_step', 'step', 'index', 'dirt_amount', 'dirty_tile_count']
 

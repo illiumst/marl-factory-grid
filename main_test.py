@@ -29,8 +29,8 @@ if __name__ == '__main__':
     # rewards += [total reward]
     # boxplot total rewards
 
-    run_id = '1623241962'
-    model_name = 'PPO'
+    run_id = '1623923982'
+    model_name = 'A2C'
 
     # -----------------------
     out_path = Path(__file__).parent / 'debug_out'
@@ -48,7 +48,7 @@ if __name__ == '__main__':
             env_kwargs = yaml.load(f, Loader=yaml.FullLoader)
         dirt_props = DirtProperties(clean_amount=3, gain_amount=0.2, max_global_amount=30,
                                     max_local_amount=3, spawn_frequency=1, max_spawn_ratio=0.05)
-        env_kwargs.update(n_agents=1, dirt_properties=dirt_props)
+        # env_kwargs.update(n_agents=1, dirt_properties=dirt_props)
         env = SimpleFactory(**env_kwargs)
 
         env = FrameStack(env, 4)

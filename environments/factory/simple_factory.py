@@ -49,28 +49,30 @@ class SimpleFactory(BaseFactory):
 
         dirt = [Entity('dirt', [x, y], min(0.15 + self._state[DIRT_INDEX, x, y], 1.5), 'scale')
                 for x, y in np.argwhere(self._state[DIRT_INDEX] > h.IS_FREE_CELL)]
-        walls = [Entity('wall', pos) for pos in np.argwhere(self._state[h.LEVEL_IDX] > h.IS_FREE_CELL)]
+        walls = [Entity('wall', pos)
+                 for pos in np.argwhere(self._state[self._state_slices.by_name(h.LEVEL)] > h.IS_FREE_CELL)]
 
         def asset_str(agent):
             if any([x is None for x in [self._state_slices[j] for j in agent.collisions]]):
                 print('error')
             cols = ' '.join([self._state_slices[j] for j in agent.collisions])
-            if 'agent' in cols:
+            if h.AGENT in cols:
                 return 'agent_collision', 'blank'
-            elif not agent.action_valid or 'level' in cols or 'agent' in cols:
-                return 'agent', 'invalid'
+            elif not agent.action_valid or 'level' in cols or h.AGENT in cols:
+                return h.AGENT, 'invalid'
             elif self._is_clean_up_action(agent.action):
-                return 'agent', 'valid'
+                return h.AGENT, 'valid'
             else:
-                return 'agent', 'idle'
+                return h.AGENT, 'idle'
         agents = []
         for i, agent in enumerate(self._agent_states):
             name, state = asset_str(agent)
             agents.append(Entity(name, agent.pos, 1, 'none', state, i+1))
         doors = []
-        for i, door in enumerate(self._door_states):
-            name, state = 'door_open' if door.is_open else 'door_closed', 'blank'
-            agents.append(Entity(name, door.pos, 1, 'none', state, i+1))
+        if self.has_doors:
+            for i, door in enumerate(self._door_states):
+                name, state = 'door_open' if door.is_open else 'door_closed', 'blank'
+                agents.append(Entity(name, door.pos, 1, 'none', state, i+1))
         self._renderer.render(dirt+walls+agents+doors)
 
     def spawn_dirt(self) -> None:
@@ -141,26 +143,25 @@ class SimpleFactory(BaseFactory):
             reward = 0
 
         for agent_state in agent_states:
+            agent_name = f'{h.AGENT.capitalize()} {agent_state.i}'
             cols = agent_state.collisions
 
             list_of_collisions = [self._state_slices[entity] for entity in cols
-                                  if entity != self._state_slices.by_name("dirt")]
+                                  if entity != self._state_slices.by_name('dirt')]
 
             if list_of_collisions:
-                self.print(f't = {self._steps}\tAgent {agent_state.i} has collisions with '
-                           f'{list_of_collisions}')
+                self.print(f't = {self._steps}\t{agent_name} has collisions with {list_of_collisions}')
 
             if self._is_clean_up_action(agent_state.action):
                 if agent_state.action_valid:
                     reward += 1
-                    self.print(f'Agent {agent_state.i} did just clean up some dirt at {agent_state.pos}.')
+                    self.print(f'{agent_name} did just clean up some dirt at {agent_state.pos}.')
                     info_dict.update(dirt_cleaned=1)
                 else:
                     reward -= 0.01
-                    self.print(f'Agent {agent_state.i} just tried to clean up some dirt '
-                               f'at {agent_state.pos}, but was unsucsessfull.')
-                    info_dict.update({f'agent_{agent_state.i}_failed_action': 1})
-                    info_dict.update({f'agent_{agent_state.i}_failed_dirt_cleanup': 1})
+                    self.print(f'{agent_name} just tried to clean up some dirt at {agent_state.pos}, but failed.')
+                    info_dict.update({f'{h.AGENT}_{agent_state.i}_failed_action': 1})
+                    info_dict.update({f'{h.AGENT}_{agent_state.i}_failed_dirt_cleanup': 1})
 
             elif self._actions.is_moving_action(agent_state.action):
                 if agent_state.action_valid:
@@ -173,21 +174,20 @@ class SimpleFactory(BaseFactory):
             elif self._actions.is_door_usage(agent_state.action):
                 if agent_state.action_valid:
                     reward += 0.1
-                    self.print(f'Agent {agent_state.i} did just use the door at {agent_state.pos}.')
+                    self.print(f'{agent_name} did just use the door at {agent_state.pos}.')
                     info_dict.update(door_used=1)
                 else:
-                    self.print(f'Agent {agent_state.i} just tried to use a door '
-                               f'at {agent_state.pos}, but was unsucsessfull.')
-                    info_dict.update({f'agent_{agent_state.i}_failed_action': 1})
-                    info_dict.update({f'agent_{agent_state.i}_failed_door_open': 1})
+                    self.print(f'{agent_name} just tried to use a door at {agent_state.pos}, but failed.')
+                    info_dict.update({f'{h.AGENT}_{agent_state.i}_failed_action': 1})
+                    info_dict.update({f'{h.AGENT}_{agent_state.i}_failed_door_open': 1})
 
             else:
                 info_dict.update(no_op=1)
                 reward -= 0.00
 
             for entity in list_of_collisions:
-                entity = 'agent' if 'agent' in entity else entity
-                info_dict.update({f'agent_{agent_state.i}_vs_{entity}': 1})
+                entity = h.AGENT if h.AGENT in entity else entity
+                info_dict.update({f'{h.AGENT}_{agent_state.i}_vs_{entity}': 1})
 
         self.print(f"reward is {reward}")
         # Potential based rewards ->
