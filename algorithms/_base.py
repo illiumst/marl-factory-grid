@@ -56,20 +56,25 @@ class BaseDQN(nn.Module):
     def __init__(self):
         super(BaseDQN, self).__init__()
         self.net = nn.Sequential(
+            nn.Flatten(),
             nn.Linear(3*5*5, 64),
-            nn.ReLU(),
+            nn.ELU(),
             nn.Linear(64,  64),
-            nn.ReLU(),
-            nn.Linear(64, 9)
+            nn.ELU()
         )
+        self.value_head         =  nn.Linear(64, 1)
+        self.advantage_head     =  nn.Linear(64, 9)
 
     def act(self, x) -> np.ndarray:
         with torch.no_grad():
-            action = self.net(x.view(x.shape[0], -1)).max(-1)[1].numpy()
+            action = self.forward(x).max(-1)[1].numpy()
         return action
 
     def forward(self, x):
-        return self.net(x.view(x.shape[0], -1))
+        features = self.net(x)
+        advantages = self.advantage_head(features)
+        values = self.value_head(features)
+        return values + (advantages - advantages.mean())
 
     def random_action(self):
         return random.randrange(0, 5)
@@ -97,9 +102,10 @@ class BaseQlearner:
         self.reg_weight = reg_weight
         self.n_agents = n_agents
         self.device = 'cpu'
-        self.optimizer = torch.optim.Adam(self.q_net.parameters(), lr=self.lr)
-        self.running_reward = deque(maxlen=10)
-        self.running_loss = deque(maxlen=10)
+        self.optimizer = torch.optim.AdamW(self.q_net.parameters(), lr=self.lr)
+        self.running_reward = deque(maxlen=5)
+        self.running_loss = deque(maxlen=5)
+        self._n_updates = 0
 
     def to(self, device):
         self.device = device
@@ -135,8 +141,7 @@ class BaseQlearner:
 
                 next_obs, reward, done, info = self.env.step(action if not len(action) == 1 else action[0])
 
-                experience = Experience(observation=obs.copy(), next_observation=next_obs.copy(),
-                                        action=action, reward=reward, done=done)  # do we really need to copy?
+                experience = Experience(observation=obs, next_observation=next_obs, action=action, reward=reward, done=done)  # do we really need to copy?
                 self.buffer.add(experience)
                 # end of step routine
                 obs = next_obs
@@ -146,6 +151,7 @@ class BaseQlearner:
 
                 if step % self.train_every_n_steps == 0:
                     self.train()
+                    self._n_updates += 1
                 if step % self.target_update == 0:
                     print('UPDATE')
                     polyak_update(self.q_net.parameters(), self.target_q_net.parameters(), 1)
@@ -154,12 +160,12 @@ class BaseQlearner:
             self.running_reward.append(total_reward)
             if step % 10 == 0:
                 print(f'Step: {step} ({(step/n_steps)*100:.2f}%)\tRunning reward: {sum(list(self.running_reward))/len(self.running_reward):.2f}\t'
-                      f' eps: {self.eps:.4f}\tRunning loss: {sum(list(self.running_loss))/len(self.running_loss):.4f}')
+                      f' eps: {self.eps:.4f}\tRunning loss: {sum(list(self.running_loss))/len(self.running_loss):.4f}\tUpdates:{self._n_updates}')
 
     def _training_routine(self, obs, next_obs, action):
         current_q_values = self.q_net(obs)
-        current_q_values = torch.gather(current_q_values, dim=1, index=action)
-        next_q_values_raw = self.target_q_net(next_obs).max(dim=1)[0].reshape(-1, 1).detach()
+        current_q_values = torch.gather(current_q_values, dim=-1, index=action)
+        next_q_values_raw = self.target_q_net(next_obs).max(dim=-1)[0].reshape(-1, 1).detach()
         return current_q_values, next_q_values_raw
 
     def train(self):
@@ -181,7 +187,6 @@ class BaseQlearner:
                     target_q_raw += next_q_values_raw
             target_q = experience.reward  + (1 - experience.done) * self.gamma * target_q_raw
             loss = torch.mean(self.reg_weight * pred_q + torch.pow(pred_q - target_q, 2))
-            #print(pred_q.shape, target_q.shape)
 
             # log loss
             self.running_loss.append(loss.item())
@@ -198,7 +203,6 @@ if __name__ == '__main__':
     from algorithms.reg_dqn import RegDQN
     from stable_baselines3.common.vec_env import DummyVecEnv
 
-
     N_AGENTS = 1
 
     dirt_props = DirtProperties(clean_amount=3, gain_amount=0.2, max_global_amount=30,
@@ -210,14 +214,13 @@ if __name__ == '__main__':
     #env = DummyVecEnv([lambda: env])
     from stable_baselines3.dqn import DQN
 
-    #dqn = RegDQN('MlpPolicy', env, verbose=True, buffer_size = 50000, learning_starts = 64, batch_size = 64,
-    #             target_update_interval = 5000, exploration_fraction = 0.25, exploration_final_eps = 0.025,
-    #             train_freq=4, gradient_steps=1, reg_weight=0.05)
+    #dqn = RegDQN('MlpPolicy', env, verbose=True, buffer_size = 40000, learning_starts = 0, batch_size = 64,learning_rate=0.0008,
+    #             target_update_interval = 3500, exploration_fraction = 0.25, exploration_final_eps = 0.05,
+    #             train_freq=4, gradient_steps=1, reg_weight=0.05, seed=69)
     #dqn.learn(100000)
 
 
-    print(env.observation_space, env.action_space)
     dqn, target_dqn = BaseDQN(), BaseDQN()
-    learner = BaseQlearner(dqn, target_dqn, env, BaseBuffer(5000), target_update=5000, lr=0.0001, gamma=0.99, n_agents=N_AGENTS,
+    learner = BaseQlearner(dqn, target_dqn, env, BaseBuffer(40000), target_update=3500, lr=0.0008, gamma=0.99, n_agents=N_AGENTS,
                            train_every_n_steps=4, eps_end=0.05, n_grad_steps=1, reg_weight=0.05, exploration_fraction=0.25, batch_size=64)
     learner.learn(100000)
