@@ -206,6 +206,14 @@ class MDQN(BaseQlearner):
         self.alpha = alpha
         self.clip0 = clip_l0
 
+    def tau_ln_pi(self, qs):
+        # Custom log-sum-exp trick from page 18 to compute the e log-policy terms
+        v_k = qs.max(-1)[0].unsqueeze(-1)
+        advantage = qs - v_k
+        logsum = torch.logsumexp(advantage / self.temperature, -1).unsqueeze(-1)
+        tau_ln_pi = advantage - self.temperature * logsum
+        return tau_ln_pi
+
     def train(self):
         if len(self.buffer) < self.batch_size: return
         for _ in range(self.n_grad_steps):
@@ -213,17 +221,14 @@ class MDQN(BaseQlearner):
             experience = self.buffer.sample(self.batch_size, cer=self.train_every_n_steps)
 
             q_target_next = self.target_q_net(experience.next_observation).detach()
-            advantages_next = (q_target_next - q_target_next.max(-1)[0].unsqueeze(-1))
-            logsum = torch.logsumexp(advantages_next / self.temperature, -1).unsqueeze(-1)
-            tau_log_pi_next = advantages_next - self.temperature * logsum
+            tau_log_pi_next = self.tau_ln_pi(q_target_next)
+
+            q_k_targets = self.target_q_net(experience.observation).detach()
+            log_pi = self.tau_ln_pi(q_k_targets)
 
             pi_target = F.softmax(q_target_next / self.temperature, dim=-1)
             q_target = (self.gamma * (pi_target * (q_target_next - tau_log_pi_next) * (1 - experience.done)).sum(-1)).unsqueeze(-1)
 
-            q_k_targets = self.target_q_net(experience.observation).detach()
-            v_k_target = q_k_targets.max(-1)[0].unsqueeze(-1)
-            logsum = torch.logsumexp((q_k_targets - v_k_target) / self.temperature, -1).unsqueeze(-1)
-            log_pi = q_k_targets - v_k_target - self.temperature * logsum
             munchausen_addon = log_pi.gather(-1, experience.action)
 
             munchausen_reward = (experience.reward + self.alpha * torch.clamp(munchausen_addon, min=self.clip0, max=0))
@@ -272,5 +277,5 @@ if __name__ == '__main__':
 
     dqn, target_dqn = BaseDQN(), BaseDQN()
     learner = MDQN(dqn, target_dqn, env, BaseBuffer(40000), target_update=3500, lr=0.0008, gamma=0.99, n_agents=N_AGENTS, tau=0.95, max_grad_norm=10,
-                           train_every_n_steps=4, eps_end=0.025, n_grad_steps=1, reg_weight=0.1, exploration_fraction=0.25, batch_size=64)
+                   train_every_n_steps=4, eps_end=0.025, n_grad_steps=1, reg_weight=0.1, exploration_fraction=0.25, batch_size=64)
     learner.learn(100000)
