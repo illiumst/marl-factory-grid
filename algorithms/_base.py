@@ -39,9 +39,9 @@ class BaseBuffer:
         return Experience(observations, next_observations, actions, rewards, dones)
 
 
-class BaseDQN(nn.Module):
+class BaseDDQN(nn.Module):
     def __init__(self):
-        super(BaseDQN, self).__init__()
+        super(BaseDDQN, self).__init__()
         self.net = nn.Sequential(
             nn.Flatten(),
             nn.Linear(3*5*5, 64),
@@ -62,6 +62,27 @@ class BaseDQN(nn.Module):
         advantages = self.advantage_head(features)
         values = self.value_head(features)
         return values + (advantages - advantages.mean())
+
+
+class BaseDQN(nn.Module):
+    def __init__(self):
+        super(BaseDQN, self).__init__()
+        self.net = nn.Sequential(
+            nn.Flatten(),
+            nn.Linear(3*5*5, 64),
+            nn.ELU(),
+            nn.Linear(64,  64),
+            nn.ELU(),
+            nn.Linear(64, 9)
+        )
+
+    def act(self, x) -> np.ndarray:
+        with torch.no_grad():
+            action = self.forward(x).max(-1)[1].numpy()
+        return action
+
+    def forward(self, x):
+        return self.net(x)
 
 
 def soft_update(local_model, target_model, tau):
@@ -154,10 +175,11 @@ class BaseQlearner:
                 print(f'Step: {step} ({(step/n_steps)*100:.2f}%)\tRunning reward: {sum(list(self.running_reward))/len(self.running_reward):.2f}\t'
                       f' eps: {self.eps:.4f}\tRunning loss: {sum(list(self.running_loss))/len(self.running_loss):.4f}\tUpdates:{self._n_updates}')
 
-    def _training_routine(self, obs, next_obs, action, reward):
+    def _training_routine(self, obs, next_obs, action):
         current_q_values = self.q_net(obs)
         current_q_values = torch.gather(current_q_values, dim=-1, index=action)
         next_q_values_raw = self.target_q_net(next_obs).max(dim=-1)[0].reshape(-1, 1).detach()
+        #print(current_q_values.shape, next_q_values_raw.shape)
         return current_q_values, next_q_values_raw
 
     def _backprop_loss(self, loss):
@@ -174,22 +196,21 @@ class BaseQlearner:
         for _ in range(self.n_grad_steps):
 
             experience = self.buffer.sample(self.batch_size, cer=self.train_every_n_steps)
-
             if self.n_agents <= 1:
                 pred_q, target_q_raw = self._training_routine(experience.observation,
-                                                                      experience.next_observation,
-                                                                      experience.action,
-                                                                      experience.reward)
+                                                              experience.next_observation,
+                                                              experience.action)
+
             else:
-                pred_q, target_q_raw, reward = [torch.zeros((self.batch_size, 1))]*3
+                pred_q, target_q_raw = torch.zeros((self.batch_size, 1)), torch.zeros((self.batch_size, 1))
                 for agent_i in range(self.n_agents):
                     q_values, next_q_values_raw = self._training_routine(experience.observation[:, agent_i],
-                                                                                   experience.next_observation[:, agent_i],
-                                                                                   experience.action[:, agent_i].unsqueeze(-1),
-                                                                                   experience.reward)
+                                                                         experience.next_observation[:, agent_i],
+                                                                         experience.action[:, agent_i].unsqueeze(-1))
                     pred_q += q_values
                     target_q_raw += next_q_values_raw
             target_q = experience.reward  + (1 - experience.done) * self.gamma * target_q_raw
+            #print(pred_q[0], target_q_raw[0], target_q[0], experience.reward[0])
             loss = torch.mean(self.reg_weight * pred_q + torch.pow(pred_q - target_q, 2))
             self._backprop_loss(loss)
 
@@ -245,7 +266,7 @@ class MDQN(BaseQlearner):
 if __name__ == '__main__':
     from environments.factory.simple_factory import SimpleFactory, DirtProperties, MovementProperties
 
-    N_AGENTS = 1
+    N_AGENTS = 2
 
     dirt_props = DirtProperties(clean_amount=3, gain_amount=0.2, max_global_amount=30,
                                 max_local_amount=5, spawn_frequency=1, max_spawn_ratio=0.05)
@@ -255,6 +276,6 @@ if __name__ == '__main__':
     env = SimpleFactory(dirt_properties=dirt_props, movement_properties=move_props, n_agents=N_AGENTS, pomdp_radius=2,  max_steps=400, omit_agent_slice_in_obs=False, combin_agent_slices_in_obs=True)
 
     dqn, target_dqn = BaseDQN(), BaseDQN()
-    learner = MDQN(dqn, target_dqn, env, BaseBuffer(40000), target_update=3500, lr=0.0007, gamma=0.99, n_agents=N_AGENTS, tau=0.95, max_grad_norm=10,
+    learner = BaseQlearner(dqn, target_dqn, env, BaseBuffer(40000), target_update=3500, lr=0.0007, gamma=0.99, n_agents=N_AGENTS, tau=0.95, max_grad_norm=10,
                    train_every_n_steps=4, eps_end=0.025, n_grad_steps=1, reg_weight=0.1, exploration_fraction=0.25, batch_size=64)
     learner.learn(100000)
