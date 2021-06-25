@@ -128,7 +128,7 @@ if __name__ == '__main__':
     from algorithms.common import BaseDDQN
     from algorithms.vdn_learner import VDNLearner
 
-    N_AGENTS = 1
+    N_AGENTS = 2
 
     dirt_props = DirtProperties(clean_amount=3, gain_amount=0.2, max_global_amount=30,
                                 max_local_amount=5, spawn_frequency=1, max_spawn_ratio=0.05)
@@ -138,7 +138,7 @@ if __name__ == '__main__':
     env = SimpleFactory(dirt_properties=dirt_props, movement_properties=move_props, n_agents=N_AGENTS, pomdp_radius=2,  max_steps=400, omit_agent_slice_in_obs=False, combin_agent_slices_in_obs=True)
 
     dqn, target_dqn = BaseDDQN(), BaseDDQN()
-    learner = QLearner(dqn, target_dqn, env, 40000, target_update=3500, lr=0.0007, gamma=0.99, n_agents=N_AGENTS, tau=0.95, max_grad_norm=10,
+    learner = VDNLearner(dqn, target_dqn, env, 40000, target_update=3500, lr=0.0007, gamma=0.99, n_agents=N_AGENTS, tau=0.95, max_grad_norm=10,
                        train_every_n_steps=4, eps_end=0.025, n_grad_steps=1, reg_weight=0.1, exploration_fraction=0.25, batch_size=64)
     #learner.save(Path(__file__).parent / 'test' / 'testexperiment1337')
     learner.learn(100000)
