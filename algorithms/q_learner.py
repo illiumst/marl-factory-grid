@@ -11,9 +11,9 @@ from algorithms.common import BaseLearner, BaseBuffer, soft_update, Experience
 
 class QLearner(BaseLearner):
     def __init__(self, q_net, target_q_net, env, buffer_size=1e5, target_update=3000, eps_end=0.05, n_agents=1,
-                 gamma=0.99, train_every_n_steps=4, n_grad_steps=1, tau=1.0, max_grad_norm=10, weight_decay=1e-2,
+                 gamma=0.99, train_every=('step', 4), n_grad_steps=1, tau=1.0, max_grad_norm=10, weight_decay=1e-2,
                  exploration_fraction=0.2, batch_size=64, lr=1e-4, reg_weight=0.0, eps_start=1):
-        super(QLearner, self).__init__(env, n_agents, lr)
+        super(QLearner, self).__init__(env, n_agents, train_every, n_grad_steps)
         self.q_net = q_net
         self.target_q_net = target_q_net
         self.target_q_net.eval()
@@ -26,11 +26,10 @@ class QLearner(BaseLearner):
         self.exploration_fraction = exploration_fraction
         self.batch_size = batch_size
         self.gamma = gamma
-        self.train_every_n_steps = train_every_n_steps
-        self.n_grad_steps = n_grad_steps
         self.tau = tau
         self.reg_weight = reg_weight
         self.weight_decay = weight_decay
+        self.lr = lr
         self.optimizer = torch.optim.AdamW(self.q_net.parameters(),
                                            lr=self.lr,
                                            weight_decay=self.weight_decay)
@@ -64,36 +63,14 @@ class QLearner(BaseLearner):
             action = np.array([self.env.action_space.sample() for _ in range(self.n_agents)])
         return action
 
-    def learn(self, n_steps):
-        step = 0
-        while step < n_steps:
-            obs, done = self.env.reset(), False
-            total_reward = 0
-            while not done:
+    def on_new_experience(self, experience):
+        self.buffer.add(experience)
 
-                action = self.get_action(obs)
-
-                next_obs, reward, done, info = self.env.step(action if not len(action) == 1 else action[0])
-
-                experience = Experience(observation=obs, next_observation=next_obs, action=action, reward=reward, done=done)  # do we really need to copy?
-                self.buffer.add(experience)
-                # end of step routine
-                obs = next_obs
-                step += 1
-                total_reward += reward
-                self.anneal_eps(step, n_steps)
-
-                if step % self.train_every_n_steps == 0:
-                    self.train()
-                    self.n_updates += 1
-                if step % self.target_update == 0:
-                    print('UPDATE')
-                    soft_update(self.q_net, self.target_q_net, tau=self.tau)
-
-            self.running_reward.append(total_reward)
-            if step % 10 == 0:
-                print(f'Step: {step} ({(step/n_steps)*100:.2f}%)\tRunning reward: {sum(list(self.running_reward))/len(self.running_reward):.2f}\t'
-                      f' eps: {self.eps:.4f}\tRunning loss: {sum(list(self.running_loss))/len(self.running_loss):.4f}\tUpdates:{self.n_updates}')
+    def on_step_end(self, n_steps):
+        self.anneal_eps(self.step, n_steps)
+        if self.step % self.target_update == 0:
+            print('UPDATE')
+            soft_update(self.q_net, self.target_q_net, tau=self.tau)
 
     def _training_routine(self, obs, next_obs, action):
         current_q_values = self.q_net(obs)
@@ -113,7 +90,7 @@ class QLearner(BaseLearner):
     def train(self):
         if len(self.buffer) < self.batch_size: return
         for _ in range(self.n_grad_steps):
-            experience = self.buffer.sample(self.batch_size, cer=self.train_every_n_steps)
+            experience = self.buffer.sample(self.batch_size, cer=self.train_every[-1])
             pred_q, target_q_raw = self._training_routine(experience.observation,
                                                           experience.next_observation,
                                                           experience.action)
@@ -127,8 +104,9 @@ if __name__ == '__main__':
     from environments.factory.simple_factory import SimpleFactory, DirtProperties, MovementProperties
     from algorithms.common import BaseDDQN
     from algorithms.vdn_learner import VDNLearner
+    from algorithms.udr_learner import UDRLearner
 
-    N_AGENTS = 2
+    N_AGENTS = 1
 
     dirt_props = DirtProperties(clean_amount=3, gain_amount=0.2, max_global_amount=30,
                                 max_local_amount=5, spawn_frequency=1, max_spawn_ratio=0.05)
@@ -138,7 +116,7 @@ if __name__ == '__main__':
     env = SimpleFactory(dirt_properties=dirt_props, movement_properties=move_props, n_agents=N_AGENTS, pomdp_radius=2,  max_steps=400, omit_agent_slice_in_obs=False, combin_agent_slices_in_obs=True)
 
     dqn, target_dqn = BaseDDQN(), BaseDDQN()
-    learner = VDNLearner(dqn, target_dqn, env, 40000, target_update=3500, lr=0.0007, gamma=0.99, n_agents=N_AGENTS, tau=0.95, max_grad_norm=10,
-                       train_every_n_steps=4, eps_end=0.025, n_grad_steps=1, reg_weight=0.1, exploration_fraction=0.25, batch_size=64)
+    learner = QLearner(dqn, target_dqn, env, 40000, target_update=3500, lr=0.0007, gamma=0.99, n_agents=N_AGENTS, tau=0.95, max_grad_norm=10,
+                       train_every=('step', 4), eps_end=0.025, n_grad_steps=1, reg_weight=0.1, exploration_fraction=0.25, batch_size=64)
     #learner.save(Path(__file__).parent / 'test' / 'testexperiment1337')
     learner.learn(100000)
