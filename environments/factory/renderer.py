@@ -39,7 +39,7 @@ class Renderer:
 
         now = time.time()
         self.font = pygame.font.Font(None, 20)
-        self.font.set_bold(1.0)
+        self.font.set_bold(1)
         print('Loading System font with pygame.font.Font took', time.time() - now)
 
     def fill_bg(self):

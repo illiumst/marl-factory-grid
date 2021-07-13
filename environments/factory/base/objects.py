@@ -196,7 +196,7 @@ class Door(Entity):
     def encoding(self):
         return 1 if self.is_closed else -1
 
-    def __init__(self, *args, context, closed_on_init=True, auto_close_interval=500):
+    def __init__(self, *args, context, closed_on_init=True, auto_close_interval=10):
         super(Door, self).__init__(*args)
         self._state = c.IS_CLOSED_DOOR
         self.auto_close_interval = auto_close_interval

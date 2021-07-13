@@ -3,9 +3,8 @@ import random
 
 import numpy as np
 
-
-from environments import helpers as h
 from environments.helpers import Constants as c
+from environments import helpers as h
 from environments.factory.base.base_factory import BaseFactory
 from environments.factory.base.objects import Agent, Action, Object, Slice
 from environments.factory.base.registers import Entities
@@ -18,12 +17,13 @@ CLEAN_UP_ACTION = 'clean_up'
 
 
 class DirtProperties(NamedTuple):
-    clean_amount: int = 2            # How much does the robot clean with one actions.
-    max_spawn_ratio: float = 0.2       # On max how much tiles does the dirt spawn in percent.
-    gain_amount: float = 0.5           # How much dirt does spawn per tile
-    spawn_frequency: int = 5         # Spawn Frequency in Steps
-    max_local_amount: int = 1        # Max dirt amount per tile.
-    max_global_amount: int = 20      # Max dirt amount in the whole environment.
+    clean_amount: int = 1               # How much does the robot clean with one actions.
+    max_spawn_ratio: float = 0.2        # On max how much tiles does the dirt spawn in percent.
+    gain_amount: float = 0.3            # How much dirt does spawn per tile
+    spawn_frequency: int = 5            # Spawn Frequency in Steps
+    max_local_amount: int = 2           # Max dirt amount per tile.
+    max_global_amount: int = 20         # Max dirt amount in the whole environment.
+    dirt_smear_amount: float = 0.2      # Agents smear dirt, when not cleaning up in place
 
 
 # noinspection PyAttributeOutsideInit
@@ -116,6 +116,17 @@ class SimpleFactory(BaseFactory):
             return False
 
     def post_step(self) -> dict:
+        if smear_amount := self.dirt_properties.dirt_smear_amount:
+            dirt_slice = self._slices.by_name(DIRT).slice
+            for agent in self._agents:
+                if agent.temp_valid and agent.last_pos != h.NO_POS:
+                    if dirt := dirt_slice[agent.last_pos]:
+                        if smeared_dirt := round(dirt * smear_amount, 2):
+                            dirt_slice[agent.last_pos] = max(0, dirt_slice[agent.last_pos]-smeared_dirt)
+                            dirt_slice[agent.pos] = min((self.dirt_properties.max_local_amount,
+                                                         dirt_slice[agent.pos] + smeared_dirt)
+                                                        )
+
         if not self._next_dirt_spawn:
             self.spawn_dirt()
             self._next_dirt_spawn = self.dirt_properties.spawn_frequency
@@ -170,6 +181,7 @@ class SimpleFactory(BaseFactory):
                     reward -= 0.01
                     self.print(f'{agent.name} just tried to clean up some dirt at {agent.pos}, but failed.')
                     info_dict.update({f'{agent.name}_failed_action': 1})
+                    info_dict.update({f'{agent.name}_failed_action': 1})
                     info_dict.update({f'{agent.name}_failed_dirt_cleanup': 1})
 
             elif self._actions.is_moving_action(agent.temp_action):
@@ -210,11 +222,11 @@ class SimpleFactory(BaseFactory):
 
 
 if __name__ == '__main__':
-    render = False
+    render = True
 
     move_props = MovementProperties(allow_diagonal_movement=True, allow_square_movement=True)
-    dirt_props = DirtProperties()
-    factory = SimpleFactory(movement_properties=move_props, dirt_properties=dirt_props, n_agents=10,
+    dirt_props = DirtProperties(dirt_smear_amount=0.2)
+    factory = SimpleFactory(movement_properties=move_props, dirt_properties=dirt_props, n_agents=1,
                             combin_agent_slices_in_obs=False, level_name='rooms', parse_doors=True,
                             pomdp_radius=3)
 
