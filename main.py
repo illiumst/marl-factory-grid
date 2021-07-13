@@ -9,11 +9,12 @@ import pandas as pd
 
 from stable_baselines3.common.callbacks import CallbackList
 
-from environments.factory.base_factory import MovementProperties
 from environments.factory.simple_factory import DirtProperties, SimpleFactory
 from environments.helpers import IGNORED_DF_COLUMNS
 from environments.logging.monitor import MonitorCallback
 from environments.logging.plotting import prepare_plot
+from environments.logging.recorder import RecorderCallback
+from environments.utility_classes import MovementProperties
 
 warnings.filterwarnings('ignore', category=FutureWarning)
 warnings.filterwarnings('ignore', category=UserWarning)
@@ -91,8 +92,8 @@ if __name__ == '__main__':
     from algorithms.reg_dqn import RegDQN
     # from sb3_contrib import QRDQN
 
-    dirt_props = DirtProperties(clean_amount=3, gain_amount=0.2, max_global_amount=30,
-                                max_local_amount=5, spawn_frequency=1, max_spawn_ratio=0.05)
+    dirt_props = DirtProperties(clean_amount=3, gain_amount=1, max_global_amount=30,
+                                max_local_amount=5, spawn_frequency=3, max_spawn_ratio=0.05)
     move_props = MovementProperties(allow_diagonal_movement=True,
                                     allow_square_movement=True,
                                     allow_no_op=False)
@@ -103,9 +104,10 @@ if __name__ == '__main__':
     for modeL_type in [A2C, PPO, RegDQN, DQN]:  # , QRDQN]:
         for seed in range(3):
 
-            with SimpleFactory(n_agents=1, dirt_properties=dirt_props, pomdp_radius=2, max_steps=400,
+            with SimpleFactory(n_agents=1, dirt_properties=dirt_props, pomdp_radius=2, max_steps=400, parse_doors=False,
                                movement_properties=move_props, level_name='rooms', frames_to_stack=4,
-                               omit_agent_slice_in_obs=False, combin_agent_slices_in_obs=True) as env:
+                               omit_agent_slice_in_obs=False, combin_agent_slices_in_obs=True, record_episodes=False
+                               ) as env:
 
                 if modeL_type.__name__ in ["PPO", "A2C"]:
                     kwargs = dict(ent_coef=0.01)
@@ -127,10 +129,13 @@ if __name__ == '__main__':
                 out_path /= identifier
 
                 callbacks = CallbackList(
-                    [MonitorCallback(filepath=out_path / f'monitor_{identifier}.pick', plotting=False)]
+                    [MonitorCallback(filepath=out_path / f'monitor_{identifier}.pick', plotting=False),
+                     RecorderCallback(filepath=out_path / f'recorder_{identifier}.json', occupation_map=False,
+                                      trajectory_map=False
+                                      )]
                 )
 
-                model.learn(total_timesteps=int(1e5), callback=callbacks)
+                model.learn(total_timesteps=int(5e5), callback=callbacks)
 
                 save_path = out_path / f'model_{identifier}.zip'
                 save_path.parent.mkdir(parents=True, exist_ok=True)

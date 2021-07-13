@@ -53,7 +53,7 @@ class Renderer:
 
     def blit_params(self, entity):
         r, c = entity.pos
-        img = self.assets[entity.name]
+        img = self.assets[entity.name.lower()]
         if entity.value_operation == 'opacity':
             img.set_alpha(255*entity.value)
         elif entity.value_operation == 'scale':

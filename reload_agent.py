@@ -14,7 +14,7 @@ warnings.filterwarnings('ignore', category=UserWarning)
 
 if __name__ == '__main__':
 
-    model_name = 'A2C_1623923982'
+    model_name = 'PPO_1626075586'
     run_id = 0
     out_path = Path(__file__).parent / 'debug_out'
     model_path = out_path / model_name

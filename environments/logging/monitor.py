@@ -1,5 +1,6 @@
 import pickle
 from pathlib import Path
+from typing import List, Dict
 
 from stable_baselines3.common.callbacks import BaseCallback
 
@@ -66,13 +67,15 @@ class MonitorCallback(BaseCallback):
                 print('Plotting done.')
             self.closed = True
 
-    def _on_step(self) -> bool:
-        for _, info in enumerate(self.locals.get('infos', [])):
+    def _on_step(self, alt_infos: List[Dict] = None, alt_dones: List[bool] = None) -> bool:
+        infos = alt_infos or self.locals.get('infos', [])
+        dones = alt_dones or self.locals.get('dones', None) or self.locals.get('done', [None])
+        for _, info in enumerate(infos):
             self._monitor_dict[self.num_timesteps] = {key: val for key, val in info.items()
-                                                      if key not in ['terminal_observation', 'episode']}
+                                                      if key not in ['terminal_observation', 'episode']
+                                                      and not key.startswith('rec_')}
 
-        for env_idx, done in list(enumerate(self.locals.get('dones', []))) + \
-                             list(enumerate(self.locals.get('done', []))):
+        for env_idx, done in enumerate(dones):
             if done:
                 env_monitor_df = pd.DataFrame.from_dict(self._monitor_dict, orient='index')
                 self._monitor_dict = dict()

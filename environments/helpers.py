@@ -1,27 +1,46 @@
 from collections import defaultdict
-from typing import Tuple
+from enum import Enum, auto
+from typing import Tuple, Union
 
 import numpy as np
 from pathlib import Path
 
+
 # Constants
-WALL = '#'
-DOOR = 'D'
-DANGER_ZONE = 'x'
+class Constants(Enum):
+    WALL = '#'
+    DOOR = 'D'
+    DANGER_ZONE = 'x'
+    LEVEL = 'level'
+    AGENT = 'Agent'
+    FREE_CELL = 0
+    OCCUPIED_CELL = 1
+
+    DOORS = 'doors'
+    IS_CLOSED_DOOR = 1
+    IS_OPEN_DOOR = -1
+
+    LEVEL_IDX = 0
+
+    ACTION = auto()
+    COLLISIONS = auto()
+    VALID = True
+    NOT_VALID = False
+
+    def __bool__(self):
+        return bool(self.value)
+
+
 LEVELS_DIR = 'levels'
-LEVEL = 'level'
-AGENT = 'agent'
-IS_FREE_CELL = 0
-IS_OCCUPIED_CELL = 1
-
-DOORS = 'doors'
-IS_CLOSED_DOOR = IS_OCCUPIED_CELL
-IS_OPEN_DOOR = -1
-
-LEVEL_IDX = 0
 
 TO_BE_AVERAGED = ['dirt_amount', 'dirty_tiles']
-IGNORED_DF_COLUMNS = ['Episode', 'Run', 'train_step', 'step', 'index', 'dirt_amount', 'dirty_tile_count']
+IGNORED_DF_COLUMNS = ['Episode', 'Run', 'train_step', 'step', 'index', 'dirt_amount',
+                      'dirty_tile_count', 'terminal_observation', 'episode']
+
+MANHATTAN_MOVES = ['north', 'east', 'south', 'west']
+DIAGONAL_MOVES = ['north_east', 'south_east', 'south_west', 'north_west']
+
+NO_POS = (-9999, -9999)
 
 ACTIONMAP = defaultdict(lambda: (0, 0), dict(north=(-1, 0), east=(0, 1),
                                              south=(1, 0), west=(0, -1),
@@ -38,8 +57,7 @@ HORIZONTAL_DOOR_ZONE_2 = np.asarray([[0, 0, 0], [0, 0, 0], [1, 1, 1]])
 VERTICAL_DOOR_ZONE_1 = np.asarray([[1, 0, 0], [0, 0, 0], [0, 0, 1]])
 VERTICAL_DOOR_ZONE_2 = np.asarray([[1, 0, 0], [0, 0, 0], [0, 0, 1]])
 
-NOT_VALID = False
-VALID = True
+
 
 
 # Utility functions
@@ -51,10 +69,13 @@ def parse_level(path):
     return level
 
 
-def one_hot_level(level, wall_char=WALL):
+def one_hot_level(level, wall_char: Union[Constants, str] = Constants.WALL):
     grid = np.array(level)
     binary_grid = np.zeros(grid.shape, dtype=np.int8)
-    binary_grid[grid == wall_char] = 1
+    if wall_char in Constants:
+        binary_grid[grid == wall_char.value] = Constants.OCCUPIED_CELL.value
+    else:
+        binary_grid[grid == wall_char] = Constants.OCCUPIED_CELL.value
     return binary_grid
 
 
@@ -70,7 +91,7 @@ def check_position(slice_to_check_against: np.ndarray, position_to_check: Tuple[
 
     # Check for collision with level walls
     valid = valid and not slice_to_check_against[x_pos, y_pos]
-    return valid
+    return Constants.VALID if valid else Constants.NOT_VALID
 
 
 if __name__ == '__main__':
