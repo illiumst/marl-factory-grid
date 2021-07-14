@@ -146,6 +146,7 @@ class Entity(Object):
     def __init__(self, identifier, tile: Tile, **kwargs):
         super(Entity, self).__init__(identifier, **kwargs)
         self._tile = tile
+        tile.enter(self)
 
     def summarize_state(self):
         return self.__dict__.copy()

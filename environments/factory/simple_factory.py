@@ -190,7 +190,7 @@ class SimpleFactory(BaseFactory):
                     reward -= 0.00
                 else:
                     # self.print('collision')
-                    reward -= 0.05
+                    reward -= 0.01
                     self.print(f'{agent.name} just hit the wall at {agent.pos}.')
                     info_dict.update({f'{agent.name}_vs_LEVEL': 1})
 
@@ -224,8 +224,12 @@ class SimpleFactory(BaseFactory):
 if __name__ == '__main__':
     render = True
 
-    move_props = MovementProperties(allow_diagonal_movement=True, allow_square_movement=True)
-    dirt_props = DirtProperties(dirt_smear_amount=0.2)
+    dirt_props = DirtProperties(clean_amount=3, gain_amount=0.3, max_global_amount=20,
+                                max_local_amount=2, spawn_frequency=3, max_spawn_ratio=0.05,
+                                dirt_smear_amount=0.0)
+    move_props = MovementProperties(allow_diagonal_movement=True,
+                                    allow_square_movement=True,
+                                    allow_no_op=False)
     factory = SimpleFactory(movement_properties=move_props, dirt_properties=dirt_props, n_agents=1,
                             combin_agent_slices_in_obs=False, level_name='rooms', parse_doors=True,
                             pomdp_radius=3)

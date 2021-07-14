@@ -26,8 +26,14 @@ class BaseFactory(gym.Env):
 
     @property
     def observation_space(self):
-        agent_slice = self.n_agents if self.omit_agent_slice_in_obs else 0
-        agent_slice = (self.n_agents - 1) if self.combin_agent_slices_in_obs else agent_slice
+        if self.combin_agent_slices_in_obs:
+            agent_slice = 1
+        else:       # not self.combin_agent_slices_in_obs:
+            if self.omit_agent_slice_in_obs:
+                agent_slice = self.n_agents - 1
+            else:   # not self.omit_agent_slice_in_obs:
+                agent_slice = self.n_agents
+
         if self.pomdp_radius:
             shape = (self._obs_cube.shape[0] - agent_slice, self.pomdp_radius * 2 + 1, self.pomdp_radius * 2 + 1)
             space = spaces.Box(low=0, high=1, shape=shape, dtype=np.float32)
@@ -289,7 +295,7 @@ class BaseFactory(gym.Env):
             return obs
         else:
             if self.omit_agent_slice_in_obs:
-                obs_new = obs[[key for key, val in self._slices.items() if c.AGENT.value not in val.name]]
+                obs_new = obs[[key for key, val in self._slices.items() if val.name != agent.name]]
                 return obs_new
             else:
                 return obs
