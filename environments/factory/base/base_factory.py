@@ -27,19 +27,19 @@ class BaseFactory(gym.Env):
     @property
     def observation_space(self):
         if self.combin_agent_slices_in_obs:
-            agent_slice = 1
+            n_agent_slices = 1
         else:       # not self.combin_agent_slices_in_obs:
             if self.omit_agent_slice_in_obs:
-                agent_slice = self.n_agents - 1
+                n_agent_slices = self.n_agents - 1
             else:   # not self.omit_agent_slice_in_obs:
-                agent_slice = self.n_agents
+                n_agent_slices = self.n_agents
 
         if self.pomdp_radius:
-            shape = (self._obs_cube.shape[0] - agent_slice, self.pomdp_radius * 2 + 1, self.pomdp_radius * 2 + 1)
+            shape = (self._slices.n - n_agent_slices, self.pomdp_radius * 2 + 1, self.pomdp_radius * 2 + 1)
             space = spaces.Box(low=0, high=1, shape=shape, dtype=np.float32)
             return space
         else:
-            shape = [x-agent_slice if idx == 0 else x for idx, x in enumerate(self._obs_cube.shape)]
+            shape = [x-n_agent_slices if idx == 0 else x for idx, x in enumerate(self._level_shape)]
             space = spaces.Box(low=0, high=1, shape=shape, dtype=np.float32)
             return space
 
@@ -133,7 +133,7 @@ class BaseFactory(gym.Env):
         # Agents
         agents = []
         for i in range(self.n_agents):
-            agents.append(Slice(f'{c.AGENT.name}#{i}', np.zeros_like(level[0].slice)))
+            agents.append(Slice(f'{c.AGENT.name}#{i}', np.zeros_like(level[0].slice, dtype=np.float32)))
         state_slices.register_additional_items(level+doors+agents)
 
         # Additional Slices from SubDomains
@@ -143,12 +143,14 @@ class BaseFactory(gym.Env):
 
     def _init_obs_cube(self) -> np.ndarray:
         x, y = self._slices.by_enum(c.LEVEL).shape
-        state = np.zeros((len(self._slices), x, y))
+        state = np.zeros((len(self._slices), x, y), dtype=np.float32)
         state[0] = self._slices.by_enum(c.LEVEL).slice
         if r := self.pomdp_radius:
-            self._padded_obs_cube = np.full((len(self._slices), x + r*2, y + r*2), c.FREE_CELL.value)
+            self._padded_obs_cube = np.full((len(self._slices), x + r*2, y + r*2), c.FREE_CELL.value, dtype=np.float32)
             self._padded_obs_cube[0] = c.OCCUPIED_CELL.value
             self._padded_obs_cube[:, r:r+x, r:r+y] = state
+        if self.combin_agent_slices_in_obs and self.n_agents > 1:
+            self._combined_obs_cube = np.zeros(self.observation_space.shape, dtype=np.float32)
         return state
 
     def _init_entities(self):
@@ -177,17 +179,24 @@ class BaseFactory(gym.Env):
         self._slices = self._init_state_slices()
         self._obs_cube = self._init_obs_cube()
         self._entitites = self._init_entities()
+        self.do_additional_reset()
         self._flush_state()
         self._steps = 0
 
-        info = self._summarize_state() if self.record_episodes else {}
-        return None, None, None, info
+        obs = self._get_observations()
+        return obs
 
     def pre_step(self) -> None:
         pass
 
-    def post_step(self) -> dict:
+    def do_additional_reset(self) -> None:
         pass
+
+    def do_additional_step(self) -> dict:
+        return {}
+
+    def post_step(self) -> dict:
+        return {}
 
     def step(self, actions):
         actions = [actions] if isinstance(actions, int) or np.isscalar(actions) else actions
@@ -219,6 +228,10 @@ class BaseFactory(gym.Env):
             agent.temp_action = action
             agent.temp_valid = valid
 
+        # In-between step Hook for later use
+        info = self.do_additional_step()
+
+        # Write to observation cube
         self._flush_state()
 
         tiles_with_collisions = self.get_all_tiles_with_collisions()
@@ -237,7 +250,8 @@ class BaseFactory(gym.Env):
             self._doors.tick_doors()
 
         # Finalize
-        reward, info = self.calculate_reward()
+        reward, reward_info = self.calculate_reward()
+        info.update(reward_info)
         if self._steps >= self.max_steps:
             done = True
         info.update(step_reward=reward, step=self._steps)
@@ -255,10 +269,10 @@ class BaseFactory(gym.Env):
         self._obs_cube[np.arange(len(self._slices)) != self._slices.get_idx(c.LEVEL)] = c.FREE_CELL.value
         if self.parse_doors:
             for door in self._doors:
-                if door.is_open:
-                    self._obs_cube[self._slices.get_idx(c.DOORS)][door.pos] = c.IS_OPEN_DOOR.value
-                else:
-                    self._obs_cube[self._slices.get_idx(c.DOORS)][door.pos] = c.IS_CLOSED_DOOR.value
+                if door.is_open and self._obs_cube[self._slices.get_idx(c.DOORS)][door.pos] != c.OPEN_DOOR.value:
+                    self._obs_cube[self._slices.get_idx(c.DOORS)][door.pos] = c.OPEN_DOOR.value
+                elif door.is_closed and self._obs_cube[self._slices.get_idx(c.DOORS)][door.pos] != c.CLOSED_DOOR.value:
+                    self._obs_cube[self._slices.get_idx(c.DOORS)][door.pos] = c.CLOSED_DOOR.value
         for agent in self._agents:
             self._obs_cube[self._slices.get_idx_by_name(agent.name)][agent.pos] = c.OCCUPIED_CELL.value
             if agent.last_pos != h.NO_POS:

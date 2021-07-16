@@ -99,7 +99,7 @@ class SimpleFactory(BaseFactory):
             free_for_dirt = self._tiles.empty_tiles
 
             # randomly distribute dirt across the grid
-            n_dirt_tiles = int(random.uniform(0, self.dirt_properties.max_spawn_ratio) * len(free_for_dirt))
+            n_dirt_tiles = max(0, int(random.uniform(0, self.dirt_properties.max_spawn_ratio) * len(free_for_dirt)))
             for tile in free_for_dirt[:n_dirt_tiles]:
                 new_value = dirt_slice[tile.pos] + self.dirt_properties.gain_amount
                 dirt_slice[tile.pos] = min(new_value, self.dirt_properties.max_local_amount)
@@ -115,7 +115,7 @@ class SimpleFactory(BaseFactory):
         else:
             return False
 
-    def post_step(self) -> dict:
+    def do_additional_step(self) -> dict:
         if smear_amount := self.dirt_properties.dirt_smear_amount:
             dirt_slice = self._slices.by_name(DIRT).slice
             for agent in self._agents:
@@ -144,12 +144,9 @@ class SimpleFactory(BaseFactory):
         else:
             raise RuntimeError('This should not happen!!!')
 
-    def reset(self) -> (np.ndarray, int, bool, dict):
-        _ = super().reset()  # state, reward, done, info ... =
+    def do_additional_reset(self) -> None:
         self.spawn_dirt()
         self._next_dirt_spawn = self.dirt_properties.spawn_frequency
-        obs = self._get_observations()
-        return obs
 
     def calculate_reward(self) -> (int, dict):
         info_dict = dict()
@@ -174,7 +171,7 @@ class SimpleFactory(BaseFactory):
 
             if self._is_clean_up_action(agent.temp_action):
                 if agent.temp_valid:
-                    reward += 1
+                    reward += 0.5
                     self.print(f'{agent.name} did just clean up some dirt at {agent.pos}.')
                     info_dict.update(dirt_cleaned=1)
                 else:

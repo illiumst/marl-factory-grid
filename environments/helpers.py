@@ -17,8 +17,8 @@ class Constants(Enum):
     OCCUPIED_CELL = 1
 
     DOORS = 'doors'
-    IS_CLOSED_DOOR = 1
-    IS_OPEN_DOOR = -1
+    CLOSED_DOOR = 1
+    OPEN_DOOR = -1
 
     LEVEL_IDX = 0
 

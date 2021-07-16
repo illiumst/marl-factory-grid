@@ -92,8 +92,8 @@ if __name__ == '__main__':
     from algorithms.reg_dqn import RegDQN
     # from sb3_contrib import QRDQN
 
-    dirt_props = DirtProperties(clean_amount=6, gain_amount=1, max_global_amount=30,
-                                max_local_amount=5, spawn_frequency=5, max_spawn_ratio=0.05,
+    dirt_props = DirtProperties(clean_amount=1, gain_amount=0.1, max_global_amount=20,
+                                max_local_amount=1, spawn_frequency=5, max_spawn_ratio=0.05,
                                 dirt_smear_amount=0.0)
     move_props = MovementProperties(allow_diagonal_movement=True,
                                     allow_square_movement=True,
@@ -102,11 +102,11 @@ if __name__ == '__main__':
 
     out_path = None
 
-    for modeL_type in [A2C, PPO, RegDQN, DQN]:  # , QRDQN]:
+    for modeL_type in [A2C]:  # , PPO, RegDQN, DQN]:  # , QRDQN]:
         for seed in range(3):
 
-            with SimpleFactory(n_agents=1, dirt_properties=dirt_props, pomdp_radius=2, max_steps=400, parse_doors=False,
-                               movement_properties=move_props, level_name='rooms', frames_to_stack=4,
+            with SimpleFactory(n_agents=1, dirt_properties=dirt_props, pomdp_radius=2, max_steps=400, parse_doors=True,
+                               movement_properties=move_props, level_name='rooms', frames_to_stack=0,
                                omit_agent_slice_in_obs=True, combin_agent_slices_in_obs=True, record_episodes=False
                                ) as env:
 

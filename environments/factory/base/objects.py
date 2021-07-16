@@ -199,7 +199,7 @@ class Door(Entity):
 
     def __init__(self, *args, context, closed_on_init=True, auto_close_interval=10):
         super(Door, self).__init__(*args)
-        self._state = c.IS_CLOSED_DOOR
+        self._state = c.CLOSED_DOOR
         self.auto_close_interval = auto_close_interval
         self.time_to_close = -1
         neighbor_pos = list(itertools.product([-1, 1, 0], repeat=2))[:-1]
@@ -215,18 +215,18 @@ class Door(Entity):
 
     @property
     def is_closed(self):
-        return self._state == c.IS_CLOSED_DOOR
+        return self._state == c.CLOSED_DOOR
 
     @property
     def is_open(self):
-        return self._state == c.IS_OPEN_DOOR
+        return self._state == c.OPEN_DOOR
 
     @property
     def status(self):
         return self._state
 
     def use(self):
-        if self._state == c.IS_OPEN_DOOR:
+        if self._state == c.OPEN_DOOR:
             self._close()
         else:
             self._open()
@@ -239,12 +239,12 @@ class Door(Entity):
 
     def _open(self):
         self.connectivity.add_edges_from([(self.pos, x) for x in self.connectivity.nodes])
-        self._state = c.IS_OPEN_DOOR
+        self._state = c.OPEN_DOOR
         self.time_to_close = self.auto_close_interval
 
     def _close(self):
         self.connectivity.remove_node(self.pos)
-        self._state = c.IS_CLOSED_DOOR
+        self._state = c.CLOSED_DOOR
 
     def is_linked(self, old_pos, new_pos):
         try:
