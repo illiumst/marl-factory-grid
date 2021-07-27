@@ -3,7 +3,7 @@ import numpy as np
 from pathlib import Path
 from collections import deque
 import pygame
-from typing import NamedTuple
+from typing import NamedTuple, Any
 import time
 
 
@@ -14,6 +14,7 @@ class Entity(NamedTuple):
     value_operation: str = 'none'
     state: str = None
     id: int = 0
+    aux:Any=None
 
 
 class Renderer:
@@ -73,6 +74,20 @@ class Renderer:
         asset = pygame.transform.smoothscale(asset, (s, s))
         return asset
 
+    def visibility_rects(self, bp, view):
+        rects = []
+        for i in range(-self.view_radius, self.view_radius+1):
+            for j in range(-self.view_radius, self.view_radius+1):
+                if bool(view[self.view_radius+j, self.view_radius+i]):
+                    visibility_rect = bp['dest'].copy()
+                    visibility_rect.centerx += i*self.cell_size
+                    visibility_rect.centery += j*self.cell_size
+                    shape_surf = pygame.Surface(visibility_rect.size, pygame.SRCALPHA)
+                    pygame.draw.rect(shape_surf, self.AGENT_VIEW_COLOR, shape_surf.get_rect())
+                    shape_surf.set_alpha(64)
+                    rects.append(dict(source=shape_surf, dest=visibility_rect))
+        return rects
+
     def render(self, entities):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -88,13 +103,8 @@ class Renderer:
             blits.append(bp)
             if entity.name.lower() == 'agent':
                 if self.view_radius > 0:
-                    visibility_rect = bp['dest'].inflate(
-                        (self.view_radius*2)*self.cell_size, (self.view_radius*2)*self.cell_size
-                    )
-                    shape_surf = pygame.Surface(visibility_rect.size, pygame.SRCALPHA)
-                    pygame.draw.rect(shape_surf, self.AGENT_VIEW_COLOR, shape_surf.get_rect())
-                    shape_surf.set_alpha(64)
-                    blits.appendleft(dict(source=shape_surf, dest=visibility_rect))
+                    vis_rects = self.visibility_rects(bp, entity.aux)
+                    blits.extendleft(vis_rects)
                 if entity.state != 'blank':
                     agent_state_blits = self.blit_params(
                         Entity(entity.state, (entity.pos[0]+0.12, entity.pos[1]), 0.48, 'scale')

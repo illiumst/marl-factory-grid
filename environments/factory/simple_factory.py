@@ -83,7 +83,7 @@ class SimpleFactory(BaseFactory):
         agents = []
         for i, agent in enumerate(self._agents):
             name, state = asset_str(agent)
-            agents.append(Entity(name, agent.pos, 1, 'none', state, i+1))
+            agents.append(Entity(name, agent.pos, 1, 'none', state, i+1, agent.temp_light_map))
         doors = []
         if self.parse_doors:
             for i, door in enumerate(self._doors):
@@ -229,7 +229,7 @@ if __name__ == '__main__':
                                     allow_no_op=False)
     factory = SimpleFactory(movement_properties=move_props, dirt_properties=dirt_props, n_agents=1,
                             combin_agent_slices_in_obs=False, level_name='rooms', parse_doors=True,
-                            pomdp_radius=3, cast_shadows=True)
+                            pomdp_radius=2, cast_shadows=True)
 
     n_actions = factory.action_space.n - 1
     _ = factory.observation_space

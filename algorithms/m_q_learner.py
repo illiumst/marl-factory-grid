@@ -25,7 +25,7 @@ class MQLearner(QLearner):
         if len(self.buffer) < self.batch_size: return
         for _ in range(self.n_grad_steps):
 
-            experience = self.buffer.sample(self.batch_size, cer=self.train_every_n_steps)
+            experience = self.buffer.sample(self.batch_size, cer=self.train_every[-1])
 
             with torch.no_grad():
                 q_target_next = self.target_q_net(experience.next_observation)
