@@ -98,7 +98,7 @@ if __name__ == '__main__':
     move_props = MovementProperties(allow_diagonal_movement=True,
                                     allow_square_movement=True,
                                     allow_no_op=False)
-    train_steps = 2e5
+    train_steps = 5e6
     time_stamp = int(time.time())
 
     out_path = None
@@ -106,7 +106,7 @@ if __name__ == '__main__':
     for modeL_type in [A2C, PPO, RegDQN, DQN]:  # , QRDQN]:
         for seed in range(3):
 
-            with SimpleFactory(n_agents=1, dirt_properties=dirt_props, pomdp_radius=2, max_steps=400, parse_doors=True,
+            with SimpleFactory(n_agents=1, dirt_properties=dirt_props, pomdp_radius=4, max_steps=400, parse_doors=True,
                                movement_properties=move_props, level_name='rooms', frames_to_stack=0,
                                omit_agent_slice_in_obs=True, combin_agent_slices_in_obs=True, record_episodes=False,
                                cast_shadows=True,
