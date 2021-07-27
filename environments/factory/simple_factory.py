@@ -229,7 +229,7 @@ if __name__ == '__main__':
                                     allow_no_op=False)
     factory = SimpleFactory(movement_properties=move_props, dirt_properties=dirt_props, n_agents=1,
                             combin_agent_slices_in_obs=False, level_name='rooms', parse_doors=True,
-                            pomdp_radius=3)
+                            pomdp_radius=3, cast_shadows=True)
 
     n_actions = factory.action_space.n - 1
     _ = factory.observation_space

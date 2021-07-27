@@ -98,16 +98,18 @@ if __name__ == '__main__':
     move_props = MovementProperties(allow_diagonal_movement=True,
                                     allow_square_movement=True,
                                     allow_no_op=False)
+    train_steps = 2e5
     time_stamp = int(time.time())
 
     out_path = None
 
-    for modeL_type in [A2C]:  # , PPO, RegDQN, DQN]:  # , QRDQN]:
+    for modeL_type in [A2C, PPO, RegDQN, DQN]:  # , QRDQN]:
         for seed in range(3):
 
-            with SimpleFactory(n_agents=1, dirt_properties=dirt_props, pomdp_radius=2, max_steps=400, parse_doors=True,
+            with SimpleFactory(n_agents=1, dirt_properties=dirt_props, pomdp_radius=4, max_steps=400, parse_doors=False,
                                movement_properties=move_props, level_name='rooms', frames_to_stack=0,
-                               omit_agent_slice_in_obs=True, combin_agent_slices_in_obs=True, record_episodes=False
+                               omit_agent_slice_in_obs=True, combin_agent_slices_in_obs=True, record_episodes=False,
+                               cast_shadows=True,
                                ) as env:
 
                 if modeL_type.__name__ in ["PPO", "A2C"]:
@@ -136,7 +138,7 @@ if __name__ == '__main__':
                                       )]
                 )
 
-                model.learn(total_timesteps=int(2e5), callback=callbacks)
+                model.learn(total_timesteps=int(train_steps), callback=callbacks)
 
                 save_path = out_path / f'model_{identifier}.zip'
                 save_path.parent.mkdir(parents=True, exist_ok=True)

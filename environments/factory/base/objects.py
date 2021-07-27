@@ -57,9 +57,10 @@ class Slice(Object):
     def free_tiles(self):
         return np.argwhere(self.slice == c.FREE_CELL.value)
 
-    def __init__(self, identifier, arrayslice):
+    def __init__(self, identifier, arrayslice, is_blocking_light=False):
         super(Slice, self).__init__(identifier)
         self.slice = arrayslice
+        self.is_blocking_light = is_blocking_light
 
 
 class Wall(Object):

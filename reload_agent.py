@@ -33,5 +33,5 @@ if __name__ == '__main__':
         this_model = model_files[0]
 
         model = PPO.load(this_model)
-        evaluation_result = evaluate_policy(model, env, n_eval_episodes=100, deterministic=False, render=True)
+        evaluation_result = evaluate_policy(model, env, n_eval_episodes=100, deterministic=True, render=True)
         print(evaluation_result)
