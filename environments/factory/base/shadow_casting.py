@@ -17,13 +17,13 @@ class Map(object):
     def __init__(self, map_array: np.ndarray):
         self.data = map_array
         self.width, self.height = map_array.shape
-        self.light = np.zeros_like(self.data)
-        self.flag = 0
+        self.light = np.full_like(self.data, c.FREE_CELL.value)
+        self.flag = c.FREE_CELL.value
 
     def blocked(self, x, y):
         return (x < 0 or y < 0
                 or x >= self.width or y >= self.height
-                or self.data[x, y] == c.OCCUPIED_CELL)
+                or self.data[x, y] == c.OCCUPIED_CELL.value)
 
     def lit(self, x, y):
         return self.light[x, y] == self.flag
@@ -82,4 +82,5 @@ class Map(object):
             self._cast_light(x, y, 1, 1.0, 0.0, radius,
                              mult_array[0, oct], mult_array[1, oct],
                              mult_array[2, oct], mult_array[3, oct], 0)
+        self.light[x, y] = self.flag
         return self.light

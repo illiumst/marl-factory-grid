@@ -263,6 +263,9 @@ class Agent(MoveableEntity):
 
     # noinspection PyAttributeOutsideInit
     def clear_temp_sate(self):
+        # for attr in self.__dict__:
+        #   if attr.startswith('temp'):
         self.temp_collisions = []
         self.temp_valid = None
         self.temp_action = -1
+        self.temp_light_map = None

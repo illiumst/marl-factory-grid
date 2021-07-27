@@ -306,10 +306,12 @@ class BaseFactory(gym.Env):
             obs = self._obs_cube
 
         if self.cast_shadows:
-            slices = [l_slice.slice != c.OCCUPIED_CELL.value for l_slice in self._slices if l_slice.is_blocking_light]
-            light_block_map = Map((np.prod(slices, axis=0) != True).astype(int))
-            light_block_map = light_block_map.do_fov(*agent.pos, max(self._level_shape))
-            obs = ((obs * light_block_map)).astype(int)
+            obs_block_light = [obs[idx] != c.OCCUPIED_CELL.value for idx, slice
+                               in enumerate(self._slices) if slice.is_blocking_light]
+            light_block_map = Map((np.prod(obs_block_light, axis=0) != True).astype(int))
+            light_block_map = light_block_map.do_fov(self.pomdp_radius, self.pomdp_radius, max(self._level_shape))
+            agent.temp_light_map = light_block_map
+            obs = (obs * light_block_map) - ((1 - light_block_map) * obs[self._slices.get_idx_by_name(c.LEVEL.name)])
 
         if self.combin_agent_slices_in_obs and self.n_agents > 1:
             agent_obs = np.sum(obs[[key for key, l_slice in self._slices.items() if c.AGENT.name in l_slice.name and

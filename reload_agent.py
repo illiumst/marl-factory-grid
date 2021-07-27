@@ -14,7 +14,7 @@ warnings.filterwarnings('ignore', category=UserWarning)
 
 if __name__ == '__main__':
 
-    model_name = 'PPO_1626384768'
+    model_name = 'A2C_1627392692'
     run_id = 0
     out_path = Path(__file__).parent / 'debug_out'
     model_path = out_path / model_name
@@ -33,5 +33,5 @@ if __name__ == '__main__':
         this_model = model_files[0]
 
         model = PPO.load(this_model)
-        evaluation_result = evaluate_policy(model, env, n_eval_episodes=100, deterministic=True, render=True)
+        evaluation_result = evaluate_policy(model, env, n_eval_episodes=100, deterministic=False, render=True)
         print(evaluation_result)
