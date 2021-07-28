@@ -20,8 +20,6 @@ class Constants(Enum):
     CLOSED_DOOR = 1
     OPEN_DOOR = -1
 
-    LEVEL_IDX = 0
-
     ACTION = auto()
     COLLISIONS = auto()
     VALID = True

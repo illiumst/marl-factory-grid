@@ -211,6 +211,10 @@ class Door(Entity):
         for a, b in possible_connections:
             if not max(abs(np.subtract(a, b))) > 1:
                 self.connectivity.add_edge(a, b)
+        self.connectivity_subgroups = list(nx.algorithms.components.connected_components(self.connectivity))
+        for idx, group in enumerate(self.connectivity_subgroups):
+            for tile_pos in group:
+                self.connectivity.add_edge(tile_pos, idx)
         if not closed_on_init:
             self._open()
 
@@ -239,7 +243,7 @@ class Door(Entity):
             self.use()
 
     def _open(self):
-        self.connectivity.add_edges_from([(self.pos, x) for x in self.connectivity.nodes])
+        self.connectivity.add_edges_from([(self.pos, x) for x in range(len(self.connectivity_subgroups))])
         self._state = c.OPEN_DOOR
         self.time_to_close = self.auto_close_interval
 

@@ -60,7 +60,7 @@ class SimpleFactory(BaseFactory):
 
         if not self._renderer:  # lazy init
             height, width = self._obs_cube.shape[1:]
-            self._renderer = Renderer(width, height, view_radius=self.pomdp_radius, fps=5)
+            self._renderer = Renderer(width, height, view_radius=self.pomdp_r, fps=5)
         dirt_slice = self._slices.by_name(DIRT).slice
         dirt = [Entity('dirt', tile.pos, min(0.15 + dirt_slice[tile.pos], 1.5), 'scale')
                 for tile in [tile for tile in self._tiles if dirt_slice[tile.pos]]]

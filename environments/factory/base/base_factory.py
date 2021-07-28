@@ -39,13 +39,13 @@ class BaseFactory(gym.Env):
         elif not self.combin_agent_slices_in_obs and not self.omit_agent_slice_in_obs:
             slices = self._slices.n
 
-        level_shape = (self.pomdp_radius * 2 + 1, self.pomdp_radius * 2 + 1) if self.pomdp_radius else self._level_shape
+        level_shape = (self.pomdp_r * 2 + 1, self.pomdp_r * 2 + 1) if self.pomdp_r else self._level_shape
         space = spaces.Box(low=0, high=1, shape=(slices, *level_shape), dtype=np.float32)
         return space
 
     @property
     def pomdp_diameter(self):
-        return self.pomdp_radius * 2 + 1
+        return self.pomdp_r * 2 + 1
 
     @property
     def movement_actions(self):
@@ -100,7 +100,7 @@ class BaseFactory(gym.Env):
 
         self.n_agents = n_agents
         self.max_steps = max_steps
-        self.pomdp_radius = pomdp_radius
+        self.pomdp_r = pomdp_radius
         self.combin_agent_slices_in_obs = combin_agent_slices_in_obs
         self.omit_agent_slice_in_obs = omit_agent_slice_in_obs
         self.cast_shadows = cast_shadows
@@ -149,7 +149,7 @@ class BaseFactory(gym.Env):
         x, y = self._slices.by_enum(c.LEVEL).shape
         state = np.zeros((len(self._slices), x, y), dtype=np.float32)
         state[0] = self._slices.by_enum(c.LEVEL).slice
-        if r := self.pomdp_radius:
+        if r := self.pomdp_r:
             self._padded_obs_cube = np.full((len(self._slices), x + r*2, y + r*2), c.FREE_CELL.value, dtype=np.float32)
             self._padded_obs_cube[0] = c.OCCUPIED_CELL.value
             self._padded_obs_cube[:, r:r+x, r:r+y] = state
@@ -293,14 +293,14 @@ class BaseFactory(gym.Env):
 
     def _build_per_agent_obs(self, agent: Agent) -> np.ndarray:
         first_agent_slice = self._slices.AGENTSTARTIDX
-        if r := self.pomdp_radius:
+        if r := self.pomdp_r:
             x, y = self._level_shape
             self._padded_obs_cube[:, r:r + x, r:r + y] = self._obs_cube
             global_x, global_y = agent.pos
             global_x += r
             global_y += r
-            x0, x1 = max(0, global_x - self.pomdp_radius), global_x + self.pomdp_radius + 1
-            y0, y1 = max(0, global_y - self.pomdp_radius), global_y + self.pomdp_radius + 1
+            x0, x1 = max(0, global_x - self.pomdp_r), global_x + self.pomdp_r + 1
+            y0, y1 = max(0, global_y - self.pomdp_r), global_y + self.pomdp_r + 1
             obs = self._padded_obs_cube[:, x0:x1, y0:y1]
         else:
             obs = self._obs_cube
@@ -308,10 +308,29 @@ class BaseFactory(gym.Env):
         if self.cast_shadows:
             obs_block_light = [obs[idx] != c.OCCUPIED_CELL.value for idx, slice
                                in enumerate(self._slices) if slice.is_blocking_light]
+            door_shadowing = False
+            if door := self._doors.by_pos(agent.pos):
+                if door.is_closed:
+                    for group in door.connectivity_subgroups:
+                        if agent.last_pos not in group:
+                            door_shadowing = True
+                            if self.pomdp_r:
+                                blocking = [tuple(np.subtract(x, agent.pos) + (self.pomdp_r, self.pomdp_r))
+                                            for x in group]
+                                xs, ys = zip(*blocking)
+                            else:
+                                xs, ys = zip(*group)
+                            obs_block_light[self._slices.get_idx(c.LEVEL)][xs, ys] = False
+
             light_block_map = Map((np.prod(obs_block_light, axis=0) != True).astype(int))
-            light_block_map = light_block_map.do_fov(self.pomdp_radius, self.pomdp_radius, max(self._level_shape))
+            if self.pomdp_r:
+                light_block_map = light_block_map.do_fov(self.pomdp_r, self.pomdp_r, max(self._level_shape))
+            else:
+                light_block_map = light_block_map.do_fov(*agent.pos, max(self._level_shape))
+            if door_shadowing:
+                light_block_map[xs, ys] = 0
             agent.temp_light_map = light_block_map
-            obs = (obs * light_block_map) - ((1 - light_block_map) * obs[self._slices.get_idx_by_name(c.LEVEL.name)])
+            obs = (obs * light_block_map) - ((1 - light_block_map) * obs[self._slices.get_idx(c.LEVEL)])
 
         if self.combin_agent_slices_in_obs and self.n_agents > 1:
             agent_obs = np.sum(obs[[key for key, l_slice in self._slices.items() if c.AGENT.name in l_slice.name and

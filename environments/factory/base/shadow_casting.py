@@ -2,7 +2,6 @@ import numpy as np
 
 from environments.helpers import Constants as c
 
-FOV_RADIUS = 10
 mult_array = np.asarray([
     [1,  0,  0, -1, -1,  0,  0,  1],
     [0,  1, -1,  0,  0, -1,  1,  0],
@@ -14,11 +13,12 @@ mult_array = np.asarray([
 class Map(object):
     # Multipliers for transforming coordinates to other octants:
 
-    def __init__(self, map_array: np.ndarray):
+    def __init__(self, map_array: np.ndarray, diamond_slope: float = 0.9):
         self.data = map_array
         self.width, self.height = map_array.shape
         self.light = np.full_like(self.data, c.FREE_CELL.value)
         self.flag = c.FREE_CELL.value
+        self.d_slope = diamond_slope
 
     def blocked(self, x, y):
         return (x < 0 or y < 0
@@ -47,7 +47,7 @@ class Map(object):
                 X, Y = cx + dx * xx + dy * xy, cy + dx * yx + dy * yy
                 # l_slope and r_slope store the slopes of the left and right
                 # extremities of the square we're considering:
-                l_slope, r_slope = (dx-0.5)/(dy+0.5), (dx+0.5)/(dy-0.5)
+                l_slope, r_slope = (dx-self.d_slope)/(dy+self.d_slope), (dx+self.d_slope)/(dy-self.d_slope)
                 if start < r_slope:
                     continue
                 elif end > l_slope:
