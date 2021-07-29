@@ -87,20 +87,22 @@ class BaseFactory(gym.Env):
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
 
-    def __init__(self, level_name='simple', n_agents=1, max_steps=int(5e2), pomdp_radius: Union[None, int] = 0,
+    def __init__(self, level_name='simple', n_agents=1, max_steps=int(5e2), pomdp_r: Union[None, int] = 0,
                  movement_properties: MovementProperties = MovementProperties(), parse_doors=False,
                  combin_agent_slices_in_obs: bool = False, frames_to_stack=0, record_episodes=False,
-                 omit_agent_slice_in_obs=False, done_at_collision=False, cast_shadows=True, **kwargs):
+                 omit_agent_slice_in_obs=False, done_at_collision=False, cast_shadows=True,
+                 verbose=False, **kwargs):
         assert frames_to_stack != 1 and frames_to_stack >= 0, "'frames_to_stack' cannot be negative or 1."
 
         # Attribute Assignment
         self.movement_properties = movement_properties
         self.level_name = level_name
         self._level_shape = None
+        self.verbose = verbose
 
         self.n_agents = n_agents
         self.max_steps = max_steps
-        self.pomdp_r = pomdp_radius
+        self.pomdp_r = pomdp_r
         self.combin_agent_slices_in_obs = combin_agent_slices_in_obs
         self.omit_agent_slice_in_obs = omit_agent_slice_in_obs
         self.cast_shadows = cast_shadows
@@ -115,6 +117,7 @@ class BaseFactory(gym.Env):
         if additional_actions := self.additional_actions:
             self._actions.register_additional_items(additional_actions)
 
+        # Reset
         self.reset()
 
     def _init_state_slices(self) -> StateSlices:
@@ -345,7 +348,7 @@ class BaseFactory(gym.Env):
             else:
                 return obs
 
-    def do_additional_actions(self, agent_i: int, action: int) -> bool:
+    def do_additional_actions(self, agent: Agent, action: int) -> bool:
         raise NotImplementedError
 
     def get_all_tiles_with_collisions(self) -> List[Tile]:
@@ -418,3 +421,7 @@ class BaseFactory(gym.Env):
             if hasattr(entity, 'summarize_state'):
                 summary.update({f'{REC_TAC}_{entity.name}': entity.summarize_state()})
         return summary
+
+    def print(self, string):
+        if self.verbose:
+            print(string)
