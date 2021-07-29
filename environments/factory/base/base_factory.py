@@ -91,7 +91,7 @@ class BaseFactory(gym.Env):
                  movement_properties: MovementProperties = MovementProperties(), parse_doors=False,
                  combin_agent_slices_in_obs: bool = False, frames_to_stack=0, record_episodes=False,
                  omit_agent_slice_in_obs=False, done_at_collision=False, cast_shadows=True,
-                 verbose=False, **kwargs):
+                 verbose=False, doors_have_area=True, **kwargs):
         assert frames_to_stack != 1 and frames_to_stack >= 0, "'frames_to_stack' cannot be negative or 1."
 
         # Attribute Assignment
@@ -111,6 +111,7 @@ class BaseFactory(gym.Env):
         self.done_at_collision = done_at_collision
         self.record_episodes = record_episodes
         self.parse_doors = parse_doors
+        self.doors_have_area = doors_have_area
 
         # Actions
         self._actions = Actions(self.movement_properties, can_use_doors=self.parse_doors)
@@ -223,8 +224,12 @@ class BaseFactory(gym.Env):
             elif self._actions.is_no_op(action):
                 valid = c.VALID.value
             elif self._actions.is_door_usage(action):
-                # Check if agent raly stands on a door:
-                if door := self._doors.by_pos(agent.pos):
+                # Check if agent really is standing on a door:
+                if self.doors_have_area:
+                    door = self._doors.get_near_position(agent.pos)
+                else:
+                    door = self._doors.by_pos(agent.pos)
+                if door:
                     door.use()
                     valid = c.VALID.value
                 # When he doesn't...
@@ -384,6 +389,11 @@ class BaseFactory(gym.Env):
             return tile, valid
 
         if self.parse_doors and agent.last_pos != h.NO_POS:
+            if door := self._doors.by_pos(new_tile.pos):
+                if door.can_collide:
+                    pass
+                else:  # door.is_closed:
+                    return agent.tile, c.NOT_VALID
             if door := self._doors.by_pos(agent.pos):
                 if door.is_open:
                     pass

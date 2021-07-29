@@ -164,6 +164,9 @@ class Agents(Register):
 class Doors(EntityRegister):
     _accepted_objects = Door
 
+    def get_near_position(self, position: (int, int)):
+        return [door for door in self if position in door.access_area][0]
+
     def tick_doors(self):
         for door in self:
             door.tick()
