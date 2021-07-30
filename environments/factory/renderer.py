@@ -15,7 +15,7 @@ class Entity(NamedTuple):
     value_operation: str = 'none'
     state: str = None
     id: int = 0
-    aux:Any=None
+    aux: Any = None
 
 
 class Renderer:

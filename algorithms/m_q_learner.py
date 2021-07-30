@@ -51,3 +51,21 @@ class MQLearner(QLearner):
             # Compute loss
             loss = torch.mean(self.reg_weight * pred_q + torch.pow(pred_q - m_q_target, 2))
             self._backprop_loss(loss)
+
+from tqdm import trange
+class MQICMLearner(MQLearner):
+    def __init__(self, *args, icm, **kwargs):
+        super(MQICMLearner, self).__init__(*args, **kwargs)
+        self.icm = icm
+        self.icm_optimizer = torch.optim.Adam(self.icm.parameters())
+
+    def on_all_done(self):
+        for b in trange(50000):
+            batch = self.buffer.sample(128, 0)
+            s0, s1, a = batch.observation,  batch.next_observation, batch.action
+            loss = self.icm(s0, s1, a.squeeze())['loss']
+            self.icm_optimizer.zero_grad()
+            loss.backward()
+            self.icm_optimizer.step()
+            if b%100 == 0:
+                print(loss.item())
