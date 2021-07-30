@@ -228,15 +228,14 @@ class SimpleFactory(BaseFactory):
 if __name__ == '__main__':
     render = True
 
-    dirt_props = DirtProperties(clean_amount=3, gain_amount=0.3, max_global_amount=20,
-                                max_local_amount=2, spawn_frequency=3, max_spawn_ratio=0.05,
-                                dirt_smear_amount=0.0)
-    move_props = MovementProperties(allow_diagonal_movement=True,
-                                    allow_square_movement=True,
-                                    allow_no_op=False)
-    factory = SimpleFactory(movement_properties=move_props, dirt_properties=dirt_props, n_agents=1,
-                            combin_agent_slices_in_obs=False, level_name='rooms', parse_doors=True,
-                            doors_have_area=True, pomdp_radius=2, cast_shadows=True)
+    dirt_props = DirtProperties(1, 0.05, 0.1, 3, 1, 20, 0.0)
+    move_props = MovementProperties(True, True, False)
+
+    factory = SimpleFactory(n_agents=1, done_at_collision=False, frames_to_stack=0,
+                            level_name='rooms', max_steps=400,
+                            omit_agent_slice_in_obs=True, parse_doors=True, pomdp_r=3,
+                            record_episodes=False, verbose=False
+                            )
 
     n_actions = factory.action_space.n - 1
     _ = factory.observation_space

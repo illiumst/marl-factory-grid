@@ -35,7 +35,7 @@ class BaseFactory(gym.Env):
         elif self.combin_agent_slices_in_obs and not self.omit_agent_slice_in_obs:
             slices = self._slices.n - (self._agents.n - 1)
         elif not self.combin_agent_slices_in_obs and self.omit_agent_slice_in_obs:
-            slices = self._slices.n - (self._agents.n - 1)
+            slices = self._slices.n - self._agents.n
         elif not self.combin_agent_slices_in_obs and not self.omit_agent_slice_in_obs:
             slices = self._slices.n
         else:
