@@ -18,27 +18,31 @@ class RecorderCallback(BaseCallback):
         self.filepath = Path(filepath)
         self._recorder_dict = dict()
         self._recorder_df = pd.DataFrame()
+        self.do_record: bool
         self.started = False
         self.closed = False
 
     def _on_step(self) -> bool:
-        for _, info in enumerate(self.locals.get('infos', [])):
-            self._recorder_dict[self.num_timesteps] = {key: val for key, val in info.items()
-                                                       if not key.startswith(f'{REC_TAC}_')}
+        if self.do_record and self.started:
+            for _, info in enumerate(self.locals.get('infos', [])):
+                self._recorder_dict[self.num_timesteps] = {key: val for key, val in info.items()
+                                                           if not key.startswith(f'{REC_TAC}_')}
 
-        for env_idx, done in list(enumerate(self.locals.get('dones', []))) + \
-                             list(enumerate(self.locals.get('done', []))):
-            if done:
-                env_monitor_df = pd.DataFrame.from_dict(self._recorder_dict, orient='index')
-                self._recorder_dict = dict()
-                columns = [col for col in env_monitor_df.columns if col not in IGNORED_DF_COLUMNS]
-                env_monitor_df = env_monitor_df.aggregate(
-                    {col: 'mean' if col.endswith('ount') else 'sum' for col in columns}
-                )
-                env_monitor_df['episode'] = len(self._recorder_df)
-                self._recorder_df = self._recorder_df.append([env_monitor_df])
-            else:
-                pass
+            for env_idx, done in list(enumerate(self.locals.get('dones', []))) + \
+                                 list(enumerate(self.locals.get('done', []))):
+                if done:
+                    env_monitor_df = pd.DataFrame.from_dict(self._recorder_dict, orient='index')
+                    self._recorder_dict = dict()
+                    columns = [col for col in env_monitor_df.columns if col not in IGNORED_DF_COLUMNS]
+                    env_monitor_df = env_monitor_df.aggregate(
+                        {col: 'mean' if col.endswith('ount') else 'sum' for col in columns}
+                    )
+                    env_monitor_df['episode'] = len(self._recorder_df)
+                    self._recorder_df = self._recorder_df.append([env_monitor_df])
+                else:
+                    pass
+        else:
+            pass
         return True
 
     def __enter__(self):
@@ -51,24 +55,35 @@ class RecorderCallback(BaseCallback):
         if self.started:
             pass
         else:
-            self.filepath.parent.mkdir(exist_ok=True, parents=True)
-            self.started = True
+            if hasattr(self.training_env, 'record_episodes'):
+                if self.training_env.record_episodes:
+                    self.do_record = True
+                    self.filepath.parent.mkdir(exist_ok=True, parents=True)
+                    self.started = True
+                else:
+                    self.do_record = False
+            else:
+                self.do_record = False
         pass
 
     def _on_training_end(self) -> None:
         if self.closed:
             pass
         else:
-            # self.out_file.unlink(missing_ok=True)
-            with self.filepath.open('w') as f:
-                json_df = self._recorder_df.to_json(orient="table")
-                parsed = json.loads(json_df)
-                json.dump(parsed, f, indent=4)
+            if self.do_record and self.started:
+                # self.out_file.unlink(missing_ok=True)
+                with self.filepath.open('w') as f:
+                    json_df = self._recorder_df.to_json(orient="table")
+                    parsed = json.loads(json_df)
+                    json.dump(parsed, f, indent=4)
 
-            if self.occupation_map:
-                print('Recorder files were dumped to disk, now plotting the occupation map...')
+                if self.occupation_map:
+                    print('Recorder files were dumped to disk, now plotting the occupation map...')
 
-            if self.trajectory_map:
-                print('Recorder files were dumped to disk, now plotting the occupation map...')
+                if self.trajectory_map:
+                    print('Recorder files were dumped to disk, now plotting the occupation map...')
 
-            self.closed = True
+                self.closed = True
+                self.started = False
+            else:
+                pass

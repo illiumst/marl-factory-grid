@@ -93,7 +93,7 @@ if __name__ == '__main__':
     # from sb3_contrib import QRDQN
 
     dirt_props = DirtProperties(clean_amount=1, gain_amount=0.1, max_global_amount=20,
-                                max_local_amount=1, spawn_frequency=10, max_spawn_ratio=0.05,
+                                max_local_amount=1, spawn_frequency=5, max_spawn_ratio=0.05,
                                 dirt_smear_amount=0.0)
     move_props = MovementProperties(allow_diagonal_movement=True,
                                     allow_square_movement=True,
@@ -109,7 +109,7 @@ if __name__ == '__main__':
             with SimpleFactory(n_agents=1, dirt_properties=dirt_props, pomdp_radius=2, max_steps=400, parse_doors=True,
                                movement_properties=move_props, level_name='rooms', frames_to_stack=3,
                                omit_agent_slice_in_obs=True, combin_agent_slices_in_obs=True, record_episodes=False,
-                               cast_shadows=True,
+                               cast_shadows=True, doors_have_area=True
                                ) as env:
 
                 if modeL_type.__name__ in ["PPO", "A2C"]:
