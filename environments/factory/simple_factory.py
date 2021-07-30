@@ -172,7 +172,7 @@ class SimpleFactory(BaseFactory):
 
         try:
             # penalty = current_dirt_amount
-            reward = dirt_distribution_score
+            reward = 0
         except (ZeroDivisionError, RuntimeWarning):
             reward = 0
 

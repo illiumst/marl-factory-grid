@@ -99,9 +99,11 @@ class Register:
 class EntityRegister(Register):
 
     @classmethod
-    def from_argwhere_coordinates(cls, argwhere_coordinates):
+    def from_argwhere_coordinates(cls, argwhere_coordinates, **kwargs):
         tiles = cls()
-        tiles.register_additional_items([cls._accepted_objects(i, pos) for i, pos in enumerate(argwhere_coordinates)])
+        tiles.register_additional_items(
+            [cls._accepted_objects(i, pos, **kwargs) for i, pos in enumerate(argwhere_coordinates)]
+        )
         return tiles
 
     def __init__(self):
@@ -164,8 +166,11 @@ class Agents(Register):
 class Doors(EntityRegister):
     _accepted_objects = Door
 
-    def get_near_position(self, position: (int, int)):
-        return [door for door in self if position in door.access_area][0]
+    def get_near_position(self, position: (int, int)) -> Union[None, Door]:
+        if found_doors := [door for door in self if position in door.access_area]:
+            return found_doors[0]
+        else:
+            return None
 
     def tick_doors(self):
         for door in self:

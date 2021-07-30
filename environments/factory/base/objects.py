@@ -192,7 +192,10 @@ class Door(Entity):
 
     @property
     def can_collide(self):
-        return False if self.is_open else True
+        if self.has_area:
+            return False if self.is_open else True
+        else:
+            return False
 
     @property
     def encoding(self):
@@ -200,11 +203,13 @@ class Door(Entity):
 
     @property
     def access_area(self):
-        return [node for node in self.connectivity.nodes if node not in range(len(self.connectivity_subgroups))]
+        return [node for node in self.connectivity.nodes
+                if node not in range(len(self.connectivity_subgroups)) and node != self.pos]
 
-    def __init__(self, *args, context, closed_on_init=True, auto_close_interval=10):
+    def __init__(self, *args, context, closed_on_init=True, auto_close_interval=10, has_area=False):
         super(Door, self).__init__(*args)
         self._state = c.CLOSED_DOOR
+        self.has_area = has_area
         self.auto_close_interval = auto_close_interval
         self.time_to_close = -1
         neighbor_pos = list(itertools.product([-1, 1, 0], repeat=2))[:-1]

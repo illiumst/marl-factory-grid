@@ -93,7 +93,7 @@ if __name__ == '__main__':
     # from sb3_contrib import QRDQN
 
     dirt_props = DirtProperties(clean_amount=1, gain_amount=0.1, max_global_amount=20,
-                                max_local_amount=1, spawn_frequency=5, max_spawn_ratio=0.05,
+                                max_local_amount=1, spawn_frequency=10, max_spawn_ratio=0.05,
                                 dirt_smear_amount=0.0)
     move_props = MovementProperties(allow_diagonal_movement=True,
                                     allow_square_movement=True,

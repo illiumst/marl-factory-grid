@@ -38,6 +38,8 @@ class BaseFactory(gym.Env):
             slices = self._slices.n - (self._agents.n - 1)
         elif not self.combin_agent_slices_in_obs and not self.omit_agent_slice_in_obs:
             slices = self._slices.n
+        else:
+            raise RuntimeError('This should not happen!')
 
         level_shape = (self.pomdp_r * 2 + 1, self.pomdp_r * 2 + 1) if self.pomdp_r else self._level_shape
         space = spaces.Box(low=0, high=1, shape=(slices, *level_shape), dtype=np.float32)
@@ -168,7 +170,7 @@ class BaseFactory(gym.Env):
         # Door Init
         if self.parse_doors:
             tiles = [self._tiles.by_pos(x) for x in self._slices.by_enum(c.DOORS).occupied_tiles]
-            self._doors = Doors.from_tiles(tiles, context=self._tiles)
+            self._doors = Doors.from_tiles(tiles, context=self._tiles, has_area=self.doors_have_area)
 
         # Agent Init on random positions
         self._agents = Agents.from_tiles(np.random.choice(self._tiles, self.n_agents))
@@ -229,7 +231,7 @@ class BaseFactory(gym.Env):
                     door = self._doors.get_near_position(agent.pos)
                 else:
                     door = self._doors.by_pos(agent.pos)
-                if door:
+                if door is not None:
                     door.use()
                     valid = c.VALID.value
                 # When he doesn't...
@@ -391,9 +393,10 @@ class BaseFactory(gym.Env):
         if self.parse_doors and agent.last_pos != h.NO_POS:
             if door := self._doors.by_pos(new_tile.pos):
                 if door.can_collide:
-                    pass
-                else:  # door.is_closed:
                     return agent.tile, c.NOT_VALID
+                else:  # door.is_closed:
+                    pass
+
             if door := self._doors.by_pos(agent.pos):
                 if door.is_open:
                     pass
