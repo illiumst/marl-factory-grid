@@ -1,3 +1,4 @@
+import time
 from pathlib import Path
 from typing import List, Union, Iterable
 
@@ -97,6 +98,7 @@ class BaseFactory(gym.Env):
         assert frames_to_stack != 1 and frames_to_stack >= 0, "'frames_to_stack' cannot be negative or 1."
 
         # Attribute Assignment
+        self._base_rng = np.random.default_rng(kwargs.get('seed', default=time.time_ns()))
         self.movement_properties = movement_properties
         self.level_name = level_name
         self._level_shape = None
@@ -173,7 +175,7 @@ class BaseFactory(gym.Env):
             self._doors = Doors.from_tiles(tiles, context=self._tiles, has_area=self.doors_have_area)
 
         # Agent Init on random positions
-        self._agents = Agents.from_tiles(np.random.choice(self._tiles, self.n_agents))
+        self._agents = Agents.from_tiles(self._base_rng.choice(self._tiles, self.n_agents))
         entities = Entities()
         entities.register_additional_items([self._agents])
 

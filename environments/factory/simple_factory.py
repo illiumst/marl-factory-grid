@@ -1,3 +1,4 @@
+import time
 from typing import List, Union, NamedTuple
 import random
 
@@ -59,6 +60,7 @@ class SimpleFactory(BaseFactory):
     def __init__(self, *args, dirt_properties: DirtProperties = DirtProperties(), **kwargs):
         self.dirt_properties = dirt_properties
         self._renderer = None  # expensive - don't use it when not required !
+        self._dirt_rng = np.random.default_rng(kwargs.get('seed', default=time.time_ns()))
         super(SimpleFactory, self).__init__(*args, **kwargs)
 
     def _flush_state(self):
@@ -108,7 +110,8 @@ class SimpleFactory(BaseFactory):
             free_for_dirt = self._tiles.empty_tiles
 
             # randomly distribute dirt across the grid
-            n_dirt_tiles = max(0, int(random.uniform(0, self.dirt_properties.max_spawn_ratio) * len(free_for_dirt)))
+            new_spawn = self._dirt_rng.uniform(0, self.dirt_properties.max_spawn_ratio)
+            n_dirt_tiles = max(0, int(new_spawn * len(free_for_dirt)))
             for tile in free_for_dirt[:n_dirt_tiles]:
                 new_value = dirt_slice[tile.pos] + self.dirt_properties.gain_amount
                 dirt_slice[tile.pos] = min(new_value, self.dirt_properties.max_local_amount)
