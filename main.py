@@ -9,6 +9,7 @@ import pandas as pd
 
 from stable_baselines3.common.callbacks import CallbackList
 
+from environments.factory.double_task_factory import DoubleTaskFactory, ItemProperties
 from environments.factory.simple_factory import DirtProperties, SimpleFactory
 from environments.helpers import IGNORED_DF_COLUMNS
 from environments.logging.monitor import MonitorCallback
@@ -94,11 +95,12 @@ if __name__ == '__main__':
 
     dirt_props = DirtProperties(clean_amount=1, gain_amount=0.1, max_global_amount=20,
                                 max_local_amount=1, spawn_frequency=5, max_spawn_ratio=0.05,
-                                dirt_smear_amount=0.0)
+                                dirt_smear_amount=0.0, agent_can_interact=False)
+    item_props = ItemProperties(n_items=5, agent_can_interact=True)
     move_props = MovementProperties(allow_diagonal_movement=True,
                                     allow_square_movement=True,
                                     allow_no_op=False)
-    train_steps = 2.5e6
+    train_steps = 6e5
     time_stamp = int(time.time())
 
     out_path = None
@@ -106,11 +108,13 @@ if __name__ == '__main__':
     for modeL_type in [A2C, PPO, DQN]:  # ,RegDQN, QRDQN]:
         for seed in range(3):
 
-            with SimpleFactory(n_agents=1, dirt_properties=dirt_props, pomdp_radius=2, max_steps=400, parse_doors=True,
-                               movement_properties=move_props, level_name='rooms', frames_to_stack=3,
-                               omit_agent_slice_in_obs=True, combin_agent_slices_in_obs=True, record_episodes=False,
-                               cast_shadows=True, doors_have_area=False, seed=seed
-                               ) as env:
+            with DoubleTaskFactory(n_agents=1, with_dirt=False,
+                                   item_properties=item_props, dirt_properties=None, movement_properties=move_props,
+                                   pomdp_radius=2, max_steps=500, parse_doors=True,
+                                   level_name='rooms', frames_to_stack=3,
+                                   omit_agent_slice_in_obs=True, combin_agent_slices_in_obs=True, record_episodes=False,
+                                   cast_shadows=True, doors_have_area=False, seed=seed
+                                   ) as env:
 
                 if modeL_type.__name__ in ["PPO", "A2C"]:
                     kwargs = dict(ent_coef=0.01)

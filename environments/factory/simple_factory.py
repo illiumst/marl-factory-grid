@@ -1,4 +1,5 @@
 import time
+from enum import Enum
 from typing import List, Union, NamedTuple
 import random
 
@@ -7,24 +8,32 @@ import numpy as np
 from environments.helpers import Constants as c
 from environments import helpers as h
 from environments.factory.base.base_factory import BaseFactory
-from environments.factory.base.objects import Agent, Action, Object, Slice
+from environments.factory.base.objects import Agent, Action, Slice
 from environments.factory.base.registers import Entities
 
-from environments.factory.renderer import Renderer, Entity
+from environments.factory.renderer import RenderEntity
 from environments.utility_classes import MovementProperties
 
-DIRT = "dirt"
-CLEAN_UP_ACTION = 'clean_up'
+
+CLEAN_UP_ACTION = h.EnvActions.CLEAN_UP
+
+
+class ObsSlice(Enum):
+    OWN = -1
+    LEVEL = c.LEVEL.value
+    AGENT = c.AGENT.value
 
 
 class DirtProperties(NamedTuple):
     clean_amount: int = 1               # How much does the robot clean with one actions.
     max_spawn_ratio: float = 0.2        # On max how much tiles does the dirt spawn in percent.
-    gain_amount: float = 0.3            # How much dirt does spawn per tile
-    spawn_frequency: int = 5            # Spawn Frequency in Steps
+    gain_amount: float = 0.3            # How much dirt does spawn per tile.
+    spawn_frequency: int = 5            # Spawn Frequency in Steps.
     max_local_amount: int = 2           # Max dirt amount per tile.
     max_global_amount: int = 20         # Max dirt amount in the whole environment.
-    dirt_smear_amount: float = 0.2      # Agents smear dirt, when not cleaning up in place
+    dirt_smear_amount: float = 0.2      # Agents smear dirt, when not cleaning up in place.
+    agent_can_interact: bool = True     # Whether the agents can interact with the dirt in this environment.
+    on_obs_slice: Enum = ObsSlice.LEVEL
 
 
 def softmax(x):
@@ -41,69 +50,50 @@ def entropy(x):
 class SimpleFactory(BaseFactory):
 
     @property
-    def additional_actions(self) -> List[Object]:
-        return [Action(CLEAN_UP_ACTION)]
+    def additional_actions(self) -> Union[Action, List[Action]]:
+        super_actions = super(SimpleFactory, self).additional_actions
+        if self.dirt_properties.agent_can_interact:
+            super_actions.append(Action(CLEAN_UP_ACTION))
+        return super_actions
 
     @property
     def additional_entities(self) -> Union[Entities, List[Entities]]:
-        return []
+        super_entities = super(SimpleFactory, self).additional_entities
+        return super_entities
 
     @property
     def additional_slices(self) -> List[Slice]:
-        return [Slice('dirt', np.zeros(self._level_shape))]
+        super_slices = super(SimpleFactory, self).additional_slices
+        super_slices.extend([Slice(c.DIRT, np.zeros(self._level_shape))])
+        return super_slices
 
-    def _is_clean_up_action(self, action: Union[str, int]):
-        if isinstance(action, str):
-            action = self._actions.by_name(action)
-        return self._actions[action].name == CLEAN_UP_ACTION
+    def _is_clean_up_action(self, action: Union[str, Action, int]):
+        if isinstance(action, int):
+            action = self._actions[action]
+        if isinstance(action, Action):
+            action = action.name
+        return action == CLEAN_UP_ACTION.name
 
-    def __init__(self, *args, dirt_properties: DirtProperties = DirtProperties(), **kwargs):
+    def __init__(self, *args, dirt_properties: DirtProperties = DirtProperties(), env_seed=time.time_ns(), **kwargs):
         self.dirt_properties = dirt_properties
-        self._renderer = None  # expensive - don't use it when not required !
-        self._dirt_rng = np.random.default_rng(kwargs.get('seed', default=time.time_ns()))
+        self._dirt_rng = np.random.default_rng(env_seed)
+        kwargs.update(env_seed=env_seed)
         super(SimpleFactory, self).__init__(*args, **kwargs)
 
     def _flush_state(self):
         super(SimpleFactory, self)._flush_state()
-        self._obs_cube[self._slices.get_idx_by_name(DIRT)] = self._slices.by_name(DIRT).slice
+        self._obs_cube[self._slices.get_idx(c.DIRT)] = self._slices.by_enum(c.DIRT).slice
 
-    def render(self, mode='human'):
-
-        if not self._renderer:  # lazy init
-            height, width = self._obs_cube.shape[1:]
-            self._renderer = Renderer(width, height, view_radius=self.pomdp_r, fps=5)
-        dirt_slice = self._slices.by_name(DIRT).slice
-        dirt = [Entity('dirt', tile.pos, min(0.15 + dirt_slice[tile.pos], 1.5), 'scale')
+    def render_additional_assets(self, mode='human'):
+        additional_assets = super(SimpleFactory, self).render_additional_assets()
+        dirt_slice = self._slices.by_enum(c.DIRT).slice
+        dirt = [RenderEntity('dirt', tile.pos, min(0.15 + dirt_slice[tile.pos], 1.5), 'scale')
                 for tile in [tile for tile in self._tiles if dirt_slice[tile.pos]]]
-        walls = [Entity('wall', pos)
-                 for pos in np.argwhere(self._slices.by_enum(c.LEVEL).slice == c.OCCUPIED_CELL.value)]
-
-        def asset_str(agent):
-            # What does this abonimation do?
-            # if any([x is None for x in [self._slices[j] for j in agent.collisions]]):
-            #     print('error')
-            col_names = [x.name for x in agent.temp_collisions]
-            if c.AGENT.value in col_names:
-                return 'agent_collision', 'blank'
-            elif not agent.temp_valid or c.LEVEL.name in col_names or c.AGENT.name in col_names:
-                return c.AGENT.value, 'invalid'
-            elif self._is_clean_up_action(agent.temp_action):
-                return c.AGENT.value, 'valid'
-            else:
-                return c.AGENT.value, 'idle'
-        agents = []
-        for i, agent in enumerate(self._agents):
-            name, state = asset_str(agent)
-            agents.append(Entity(name, agent.pos, 1, 'none', state, i+1, agent.temp_light_map))
-        doors = []
-        if self.parse_doors:
-            for i, door in enumerate(self._doors):
-                name, state = 'door_open' if door.is_open else 'door_closed', 'blank'
-                agents.append(Entity(name, door.pos, 1, 'none', state, i+1))
-        self._renderer.render(dirt+walls+agents+doors)
+        additional_assets.extend(dirt)
+        return additional_assets
 
     def spawn_dirt(self) -> None:
-        dirt_slice = self._slices.by_name(DIRT).slice
+        dirt_slice = self._slices.by_enum(c.DIRT).slice
         # dirty_tiles = [tile for tile in self._tiles if dirt_slice[tile.pos]]
         curr_dirt_amount = dirt_slice.sum()
         if not curr_dirt_amount > self.dirt_properties.max_global_amount:
@@ -119,7 +109,7 @@ class SimpleFactory(BaseFactory):
             pass
 
     def clean_up(self, agent: Agent) -> bool:
-        dirt_slice = self._slices.by_name(DIRT).slice
+        dirt_slice = self._slices.by_enum(c.DIRT).slice
         if old_dirt_amount := dirt_slice[agent.pos]:
             new_dirt_amount = old_dirt_amount - self.dirt_properties.clean_amount
             dirt_slice[agent.pos] = max(new_dirt_amount, c.FREE_CELL.value)
@@ -128,10 +118,11 @@ class SimpleFactory(BaseFactory):
             return False
 
     def do_additional_step(self) -> dict:
+        info_dict = super(SimpleFactory, self).do_additional_step()
         if smear_amount := self.dirt_properties.dirt_smear_amount:
-            dirt_slice = self._slices.by_name(DIRT).slice
+            dirt_slice = self._slices.by_enum(c.DIRT).slice
             for agent in self._agents:
-                if agent.temp_valid and agent.last_pos != h.NO_POS:
+                if agent.temp_valid and agent.last_pos != c.NO_POS:
                     if dirt := dirt_slice[agent.last_pos]:
                         if smeared_dirt := round(dirt * smear_amount, 2):
                             dirt_slice[agent.last_pos] = max(0, dirt_slice[agent.last_pos]-smeared_dirt)
@@ -144,23 +135,30 @@ class SimpleFactory(BaseFactory):
             self._next_dirt_spawn = self.dirt_properties.spawn_frequency
         else:
             self._next_dirt_spawn -= 1
-        return {}
+        return info_dict
 
-    def do_additional_actions(self, agent: Agent, action: int) -> bool:
-        if self._is_clean_up_action(action):
-            valid = self.clean_up(agent)
-            return valid
+    def do_additional_actions(self, agent: Agent, action: int) -> Union[None, bool]:
+        valid = super(SimpleFactory, self).do_additional_actions(agent, action)
+        if valid is None:
+            if self._is_clean_up_action(action):
+                if self.dirt_properties.agent_can_interact:
+                    valid = self.clean_up(agent)
+                    return valid
+                else:
+                    return False
+            else:
+                return None
         else:
-            return c.NOT_VALID.value
+            return valid
 
     def do_additional_reset(self) -> None:
+        super(SimpleFactory, self).do_additional_reset()
         self.spawn_dirt()
         self._next_dirt_spawn = self.dirt_properties.spawn_frequency
 
-    def calculate_reward(self) -> (int, dict):
-        info_dict = dict()
-
-        dirt_slice = self._slices.by_name(DIRT).slice
+    def calculate_additional_reward(self, agent: Agent) -> (int, dict):
+        reward, info_dict = super(SimpleFactory, self).calculate_additional_reward(agent)
+        dirt_slice = self._slices.by_enum(c.DIRT).slice
         dirty_tiles = [dirt_slice[tile.pos] for tile in self._tiles if dirt_slice[tile.pos]]
         current_dirt_amount = sum(dirty_tiles)
         dirty_tile_count = len(dirty_tiles)
@@ -173,56 +171,21 @@ class SimpleFactory(BaseFactory):
         info_dict.update(dirty_tile_count=dirty_tile_count)
         info_dict.update(dirt_distribution_score=dirt_distribution_score)
 
-        try:
-            # penalty = current_dirt_amount
-            reward = 0
-        except (ZeroDivisionError, RuntimeWarning):
-            reward = 0
+        if agent.temp_collisions:
+            self.print(f't = {self._steps}\t{agent.name} has collisions with {agent.temp_collisions}')
 
-        for agent in self._agents:
-            if agent.temp_collisions:
-                self.print(f't = {self._steps}\t{agent.name} has collisions with {agent.temp_collisions}')
-
-            if self._is_clean_up_action(agent.temp_action):
-                if agent.temp_valid:
-                    reward += 0.5
-                    self.print(f'{agent.name} did just clean up some dirt at {agent.pos}.')
-                    info_dict.update(dirt_cleaned=1)
-                else:
-                    reward -= 0.01
-                    self.print(f'{agent.name} just tried to clean up some dirt at {agent.pos}, but failed.')
-                    info_dict.update({f'{agent.name}_failed_action': 1})
-                    info_dict.update({f'{agent.name}_failed_action': 1})
-                    info_dict.update({f'{agent.name}_failed_dirt_cleanup': 1})
-
-            elif self._actions.is_moving_action(agent.temp_action):
-                if agent.temp_valid:
-                    # info_dict.update(movement=1)
-                    reward -= 0.00
-                else:
-                    # self.print('collision')
-                    reward -= 0.01
-                    self.print(f'{agent.name} just hit the wall at {agent.pos}.')
-                    info_dict.update({f'{agent.name}_vs_LEVEL': 1})
-
-            elif self._actions.is_door_usage(agent.temp_action):
-                if agent.temp_valid:
-                    self.print(f'{agent.name} did just use the door at {agent.pos}.')
-                    info_dict.update(door_used=1)
-                else:
-                    reward -= 0.01
-                    self.print(f'{agent.name} just tried to use a door at {agent.pos}, but failed.')
-                    info_dict.update({f'{agent.name}_failed_action': 1})
-                    info_dict.update({f'{agent.name}_failed_door_open': 1})
-
+        if self._is_clean_up_action(agent.temp_action):
+            if agent.temp_valid:
+                reward += 0.5
+                self.print(f'{agent.name} did just clean up some dirt at {agent.pos}.')
+                info_dict.update(dirt_cleaned=1)
             else:
-                info_dict.update(no_op=1)
-                reward -= 0.00
+                reward -= 0.01
+                self.print(f'{agent.name} just tried to clean up some dirt at {agent.pos}, but failed.')
+                info_dict.update({f'{agent.name}_failed_action': 1})
+                info_dict.update({f'{agent.name}_failed_action': 1})
+                info_dict.update({f'{agent.name}_failed_dirt_cleanup': 1})
 
-            for other_agent in agent.temp_collisions:
-                info_dict.update({f'{agent.name}_vs_{other_agent.name}': 1})
-
-        self.print(f"reward is {reward}")
         # Potential based rewards ->
         #  track the last reward , minus the current reward = potential
         return reward, info_dict

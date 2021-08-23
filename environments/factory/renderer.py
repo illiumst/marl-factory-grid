@@ -8,7 +8,7 @@ from typing import NamedTuple, Any
 import time
 
 
-class Entity(NamedTuple):
+class RenderEntity(NamedTuple):
     name: str
     pos: np.array
     value: float = 1
@@ -108,7 +108,7 @@ class Renderer:
                     blits.extendleft(vis_rects)
                 if entity.state != 'blank':
                     agent_state_blits = self.blit_params(
-                        Entity(entity.state, (entity.pos[0]+0.12, entity.pos[1]), 0.48, 'scale')
+                        RenderEntity(entity.state, (entity.pos[0] + 0.12, entity.pos[1]), 0.48, 'scale')
                     )
                     textsurface = self.font.render(str(entity.id), False, (0, 0, 0))
                     text_blit = dict(source=textsurface, dest=(bp['dest'].center[0]-.07*self.cell_size,
@@ -125,6 +125,6 @@ class Renderer:
 if __name__ == '__main__':
     renderer = Renderer(fps=2, cell_size=40)
     for i in range(15):
-        entity_1 = Entity('agent', [5, i], 1, 'idle', 'idle')
+        entity_1 = RenderEntity('agent', [5, i], 1, 'idle', 'idle')
         renderer.render([entity_1])
 

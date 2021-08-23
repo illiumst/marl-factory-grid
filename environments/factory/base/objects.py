@@ -1,8 +1,5 @@
-import itertools
-
 import networkx as nx
 import numpy as np
-from environments import helpers as h
 from environments.helpers import Constants as c
 import itertools
 
@@ -17,33 +14,30 @@ class Object:
         return True
 
     @property
-    def i(self):
-        return self._identifier
-
-    @property
     def name(self):
-        return self._identifier
+        return self._name
 
-    def __init__(self, identifier, **kwargs):
-        self._identifier = identifier
+    def __init__(self, name, name_is_identifier=False, **kwargs):
+        name = name.name if hasattr(name, 'name') else name
+        self._name = f'{self.__class__.__name__}#{name}' if name_is_identifier else name
         if kwargs:
             print(f'Following kwargs were passed, but ignored: {kwargs}')
 
     def __repr__(self):
-        return f'{self.__class__.__name__}({self._identifier})'
+        return f'{self.__class__.__name__}({self.name})'
 
 
 class Action(Object):
-
-    @property
-    def name(self):
-        return self.i
 
     def __init__(self, *args):
         super(Action, self).__init__(*args)
 
 
 class Slice(Object):
+
+    @property
+    def is_observable(self):
+        return self._is_observable
 
     @property
     def shape(self):
@@ -57,10 +51,16 @@ class Slice(Object):
     def free_tiles(self):
         return np.argwhere(self.slice == c.FREE_CELL.value)
 
-    def __init__(self, identifier, arrayslice, is_blocking_light=False):
+    def __init__(self, identifier, arrayslice, is_blocking_light=False, can_be_shadowed=True, is_observable=True):
         super(Slice, self).__init__(identifier)
         self.slice = arrayslice
         self.is_blocking_light = is_blocking_light
+        self.can_be_shadowed = can_be_shadowed
+        self._is_observable = is_observable
+
+    def set_slice(self, new_slice: np.ndarray):
+        assert self.slice.shape == new_slice.shape
+        self.slice = new_slice
 
 
 class Wall(Object):
@@ -89,8 +89,8 @@ class Tile(Object):
     def pos(self):
         return self._pos
 
-    def __init__(self, i, pos):
-        super(Tile, self).__init__(i)
+    def __init__(self, i, pos, **kwargs):
+        super(Tile, self).__init__(i, **kwargs)
         self._guests = dict()
         self._pos = tuple(pos)
 
@@ -164,7 +164,7 @@ class MoveableEntity(Entity):
         if self._last_tile:
             return self._last_tile.pos
         else:
-            return h.NO_POS
+            return c.NO_POS
 
     @property
     def direction_of_view(self):
@@ -206,8 +206,8 @@ class Door(Entity):
         return [node for node in self.connectivity.nodes
                 if node not in range(len(self.connectivity_subgroups)) and node != self.pos]
 
-    def __init__(self, *args, context, closed_on_init=True, auto_close_interval=10, has_area=False):
-        super(Door, self).__init__(*args)
+    def __init__(self, *args, context, closed_on_init=True, auto_close_interval=10, has_area=False, **kwargs):
+        super(Door, self).__init__(*args, **kwargs)
         self._state = c.CLOSED_DOOR
         self.has_area = has_area
         self.auto_close_interval = auto_close_interval
@@ -270,8 +270,8 @@ class Door(Entity):
 
 class Agent(MoveableEntity):
 
-    def __init__(self, *args):
-        super(Agent, self).__init__(*args)
+    def __init__(self, *args, **kwargs):
+        super(Agent, self).__init__(*args, **kwargs)
         self.clear_temp_sate()
 
     # noinspection PyAttributeOutsideInit
@@ -280,5 +280,5 @@ class Agent(MoveableEntity):
         #   if attr.startswith('temp'):
         self.temp_collisions = []
         self.temp_valid = None
-        self.temp_action = -1
+        self.temp_action = None
         self.temp_light_map = None
