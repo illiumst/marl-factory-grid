@@ -157,7 +157,7 @@ class BaseFactory(gym.Env):
             entities.register_additional_items([self._doors])
 
         if additional_entities := self.additional_entities:
-            entities.register_additional_items([additional_entities])
+            entities.register_additional_items(additional_entities)
 
         return entities
 

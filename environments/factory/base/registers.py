@@ -93,6 +93,10 @@ class Register:
 
 class EntityRegister(Register):
 
+    @property
+    def positions(self):
+        return [agent.pos for agent in self]
+
     def __init__(self):
         super(EntityRegister, self).__init__()
         self._tiles = dict()
@@ -150,7 +154,7 @@ class FloorTiles(EntityRegister):
         return tiles
 
 
-class Agents(Register):
+class Agents(EntityRegister):
 
     _accepted_objects = Agent
 

@@ -7,6 +7,7 @@ from stable_baselines3 import PPO
 from stable_baselines3.common.evaluation import evaluate_policy
 
 from environments.factory.simple_factory import DirtProperties, SimpleFactory
+from environments.factory.double_task_factory import ItemProperties, DoubleTaskFactory
 
 warnings.filterwarnings('ignore', category=FutureWarning)
 warnings.filterwarnings('ignore', category=UserWarning)
@@ -14,7 +15,7 @@ warnings.filterwarnings('ignore', category=UserWarning)
 
 if __name__ == '__main__':
 
-    model_name = 'A2C_1627491061'
+    model_name = 'A2C_1629467677'
     run_id = 0
     out_path = Path(__file__).parent / 'debug_out'
     model_path = out_path / model_name
@@ -26,7 +27,7 @@ if __name__ == '__main__':
                                                          max_local_amount=1, spawn_frequency=5, max_spawn_ratio=0.05,
                                                          dirt_smear_amount=0.5),
                           combin_agent_slices_in_obs=True, omit_agent_slice_in_obs=True)
-    with SimpleFactory(**env_kwargs) as env:
+    with DoubleTaskFactory(**env_kwargs) as env:
 
         # Edit THIS:
         model_files = list(natsorted((model_path / f'{run_id}_{model_name}').rglob('model_*.zip')))
