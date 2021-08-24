@@ -82,7 +82,8 @@ class SimpleFactory(BaseFactory):
 
     def _flush_state(self):
         super(SimpleFactory, self)._flush_state()
-        self._obs_cube[self._slices.get_idx(c.DIRT)] = self._slices.by_enum(c.DIRT).slice
+        dirt_slice_idx = self._slices.get_idx(c.DIRT)
+        self._obs_cube[dirt_slice_idx] = self._slices[dirt_slice_idx].slice
 
     def render_additional_assets(self, mode='human'):
         additional_assets = super(SimpleFactory, self).render_additional_assets()
