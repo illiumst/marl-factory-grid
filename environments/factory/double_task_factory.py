@@ -1,22 +1,21 @@
 import time
-from collections import deque
+from collections import deque, UserList
 from enum import Enum
-from typing import List, Union, NamedTuple
+from typing import List, Union, NamedTuple, Dict
 import numpy as np
 
 from environments.factory.simple_factory import SimpleFactory
 from environments.helpers import Constants as c
 from environments import helpers as h
-from environments.factory.base.objects import Agent, Slice, Entity, Action
-from environments.factory.base.registers import Entities, Register, EntityRegister
+from environments.factory.base.objects import Agent, Entity, Action, Tile, MoveableEntity
+from environments.factory.base.registers import Entities, EntityObjectRegister, ObjectRegister, \
+    MovingEntityObjectRegister
 
 from environments.factory.renderer import RenderEntity
 
 
-PICK_UP = 'pick_up'
-DROP_OFF = 'drop_off'
 NO_ITEM = 0
-ITEM_DROP_OFF = -1
+ITEM_DROP_OFF = 1
 
 
 def inventory_slice_name(agent_i):
@@ -26,7 +25,105 @@ def inventory_slice_name(agent_i):
         return f'{c.INVENTORY.name}_{agent_i}'
 
 
+class Item(MoveableEntity):
+
+    @property
+    def can_collide(self):
+        return False
+
+    def encoding(self):
+        # Edit this if you want items to be drawn in the ops differntly
+        return 1
+
+
+class ItemRegister(MovingEntityObjectRegister):
+
+    def as_array(self):
+        self._array[:] = c.FREE_CELL.value
+        for item in self:
+            if item.pos != c.NO_POS.value:
+                self._array[0, item.x, item.y] = item.encoding()
+        return self._array
+
+    _accepted_objects = Item
+
+    def spawn_items(self, tiles: List[Tile]):
+        items = [Item(idx, tile) for idx, tile in enumerate(tiles)]
+        self.register_additional_items(items)
+
+
+class Inventory(UserList):
+
+    @property
+    def is_blocking_light(self):
+        return False
+
+    @property
+    def name(self):
+        return self.agent.name
+
+    def __init__(self, pomdp_r: int, level_shape: (int, int), agent: Agent, capacity: int):
+        super(Inventory, self).__init__()
+        self.agent = agent
+        self.capacity = capacity
+        self.pomdp_r = pomdp_r
+        self._level_shape = level_shape
+        self._array = np.zeros((1, *self._level_shape))
+
+    def as_array(self):
+        self._array[:] = c.FREE_CELL.value
+        max_x = self.pomdp_r * 2 + 1 if self.pomdp_r else self._level_shape[0]
+        if self.pomdp_r:
+            x, y = max(self.agent.x - self.pomdp_r, 0), max(self.agent.y - self.pomdp_r, 0)
+        else:
+            x, y = (0, 0)
+
+        for item_idx, item in enumerate(self):
+            x_diff, y_diff = divmod(item_idx, max_x)
+            self._array[0].slice[int(x + x_diff), int(y + y_diff)] = item.encoding
+        return self._array
+
+    def __repr__(self):
+        return f'{self.__class__.__name__}[{self.agent.name}]({self.data})'
+
+    def append(self, item) -> None:
+        if len(self) < self.capacity:
+            super(Inventory, self).append(item)
+        else:
+            raise RuntimeError('Inventory is full')
+
+
+class Inventories(ObjectRegister):
+
+    _accepted_objects = Inventory
+    is_blocking_light = False
+    can_be_shadowed = False
+
+    def __init__(self, *args, **kwargs):
+        super(Inventories, self).__init__(*args, is_per_agent=True, **kwargs)
+        self.is_observable = True
+
+    def as_array(self):
+        # self._array[:] = c.FREE_CELL.value
+        for inv_idx, inventory in enumerate(self):
+            self._array[inv_idx] = inventory.as_array()
+        return self._array
+
+    def spawn_inventories(self, agents, pomdp_r, capacity):
+        inventories = [self._accepted_objects(pomdp_r, self._level_shape, agent, capacity)
+                       for _, agent in enumerate(agents)]
+        self.register_additional_items(inventories)
+
+
 class DropOffLocation(Entity):
+
+    @property
+    def can_collide(self):
+        return False
+
+    @property
+    def encoding(self):
+        return ITEM_DROP_OFF
 
     def __init__(self, *args, storage_size_until_full: int = 5, **kwargs):
         super(DropOffLocation, self).__init__(*args, **kwargs)
@@ -45,8 +142,16 @@ class DropOffLocation(Entity):
         return False if not self.storage.maxlen else self.storage.maxlen == len(self.storage)
 
 
-class DropOffLocations(EntityRegister):
+class DropOffLocations(EntityObjectRegister):
+
     _accepted_objects = DropOffLocation
+
+    def as_array(self):
+        self._array[:] = c.FREE_CELL.value
+        for item in self:
+            if item.pos != c.NO_POS.value:
+                self._array[0, item.x, item.y] = item.encoding
+        return self._array
 
 
 class ItemProperties(NamedTuple):
@@ -54,11 +159,11 @@ class ItemProperties(NamedTuple):
     spawn_frequency:           int  = 5     # Spawn Frequency in Steps
     n_drop_off_locations:       int  = 5     # How many DropOff locations are there at the same time
     max_dropoff_storage_size:  int  = 0     # How many items are needed until the drop off is full
-    max_agent_storage_size:    int  = 5     # How many items are needed until the agent inventory is full
+    max_agent_inventory_capacity:    int  = 5     # How many items are needed until the agent inventory is full
     agent_can_interact:        bool = True  # Whether agents have the possibility to interact with the domain items
 
 
-# noinspection PyAttributeOutsideInit,PyUnresolvedReferences
+# noinspection PyAttributeOutsideInit, PyAbstractClass
 class DoubleTaskFactory(SimpleFactory):
     # noinspection PyMissingConstructor
     def __init__(self, item_properties: ItemProperties, *args, with_dirt=False, env_seed=time.time_ns(), **kwargs):
@@ -66,48 +171,34 @@ class DoubleTaskFactory(SimpleFactory):
         kwargs.update(env_seed=env_seed)
         self._item_rng = np.random.default_rng(env_seed)
         assert item_properties.n_items < kwargs.get('pomdp_r', 0) ** 2 or not kwargs.get('pomdp_r', 0)
-        self._super = self.__class__ if with_dirt else SimpleFactory
+        self._super = DoubleTaskFactory if with_dirt else SimpleFactory
         super(self._super, self).__init__(*args, **kwargs)
 
     @property
     def additional_actions(self) -> Union[Action, List[Action]]:
+        # noinspection PyUnresolvedReferences
         super_actions = super(self._super, self).additional_actions
         super_actions.append(Action(h.EnvActions.ITEM_ACTION))
         return super_actions
 
     @property
-    def additional_entities(self) -> Union[Entities, List[Entities]]:
+    def additional_entities(self) -> Dict[(Enum, Entities)]:
+        # noinspection PyUnresolvedReferences
         super_entities = super(self._super, self).additional_entities
-        self._drop_offs = self.spawn_drop_off_location()
-        return super_entities + [self._drop_offs]
 
-    @property
-    def additional_slices(self) -> Union[Slice, List[Slice]]:
-        super_slices = super(self._super, self).additional_slices
-        super_slices.append(Slice(c.ITEM, np.zeros(self._level_shape)))
-        super_slices.extend([Slice(inventory_slice_name(agent_i), np.zeros(self._level_shape), can_be_shadowed=False)
-                             for agent_i in range(self.n_agents)])
-        return super_slices
+        empty_tiles = self._entities[c.FLOOR].empty_tiles[:self.item_properties.n_drop_off_locations]
+        drop_offs = DropOffLocations.from_tiles(empty_tiles, self._level_shape,
+                                                storage_size_until_full=self.item_properties.max_dropoff_storage_size)
+        item_register = ItemRegister(self._level_shape)
+        empty_tiles = self._entities[c.FLOOR].empty_tiles[:self.item_properties.n_items]
+        item_register.spawn_items(empty_tiles)
 
-    def _flush_state(self):
-        super(self._super, self)._flush_state()
+        inventories = Inventories(self._level_shape)
+        inventories.spawn_inventories(self._entities[c.AGENT], self.pomdp_r,
+                                      self.item_properties.max_agent_inventory_capacity)
 
-        # Flush environmental item state
-        slice_idx = self._slices.get_idx(c.ITEM)
-        self._obs_cube[slice_idx] = self._slices[slice_idx].slice
-
-        # Flush per agent inventory state
-        for agent in self._agents:
-            agent_slice_idx = self._slices.get_idx_by_name(inventory_slice_name(agent.name))
-            # Hard reset the Inventory Stat in OBS cube
-            self._slices[agent_slice_idx].slice[:] = 0
-            if len(agent.inventory) > 0:
-                max_x = self.pomdp_r * 2 + 1 if self.pomdp_r else self._level_shape[0]
-                x, y = (0, 0) if not self.pomdp_r else (max(agent.x - self.pomdp_r, 0), max(agent.y - self.pomdp_r, 0))
-                for item_idx, item in enumerate(agent.inventory):
-                    x_diff, y_diff = divmod(item_idx, max_x)
-                    self._slices[agent_slice_idx].slice[int(x+x_diff), int(y+y_diff)] = item
-            self._obs_cube[agent_slice_idx] = self._slices[agent_slice_idx].slice
+        super_entities.update({c.DROP_OFF: drop_offs, c.ITEM: item_register, c.INVENTORY: inventories})
+        return super_entities
 
     def _is_item_action(self, action):
         if isinstance(action, int):
@@ -117,29 +208,25 @@ class DoubleTaskFactory(SimpleFactory):
         return action == h.EnvActions.ITEM_ACTION.name
 
     def do_item_action(self, agent: Agent):
-        item_slice = self._slices.by_enum(c.ITEM).slice
-
-        if item := item_slice[agent.pos]:
-            if item == ITEM_DROP_OFF:
-                if agent.inventory:
-                    drop_off = self._drop_offs.by_pos(agent.pos)
-                    valid = drop_off.place_item(agent.inventory.pop(0))
-                    return valid
-                else:
-                    return c.NOT_VALID
-
-            elif item != NO_ITEM:
-                max_sto_size = self.item_properties.max_agent_storage_size or np.prod(self.observation_space.shape[1:])
-                if len(agent.inventory) < max_sto_size:
-                    agent.inventory.append(item_slice[agent.pos])
-                    item_slice[agent.pos] = NO_ITEM
-                else:
-                    return c.NOT_VALID
-            return c.VALID
+        inventory = self._entities[c.INVENTORY].by_name(agent.name)
+        if drop_off := self._entities[c.DROP_OFF].by_pos(agent.pos):
+            if inventory:
+                valid = drop_off.place_item(inventory.pop(0))
+                return valid
+            else:
+                return c.NOT_VALID
+        elif item := self._entities[c.ITEM].by_pos(agent.pos):
+            try:
+                inventory.append(item)
+                item.move(self.NO_POS_TILE)
+                return c.VALID
+            except RuntimeError:
+                return c.NOT_VALID
         else:
             return c.NOT_VALID
 
     def do_additional_actions(self, agent: Agent, action: int) -> Union[None, bool]:
+        # noinspection PyUnresolvedReferences
         valid = super(self._super, self).do_additional_actions(agent, action)
         if valid is None:
             if self._is_item_action(action):
@@ -154,38 +241,35 @@ class DoubleTaskFactory(SimpleFactory):
             return valid
 
     def do_additional_reset(self) -> None:
+        # noinspection PyUnresolvedReferences
         super(self._super, self).do_additional_reset()
-        self.spawn_items(self.item_properties.n_items)
         self._next_item_spawn = self.item_properties.spawn_frequency
-        for agent in self._agents:
-            agent.inventory = list()
+        self.trigger_item_spawn()
+
+    def trigger_item_spawn(self):
+        if item_to_spawns := max(0, (self.item_properties.n_items - len(self._entities[c.ITEM]))):
+            empty_tiles = self._entities[c.FLOOR].empty_tiles[:item_to_spawns]
+            self._entities[c.ITEM].spawn_items(empty_tiles)
+            self._next_item_spawn = self.item_properties.spawn_frequency
+            self.print(f'{item_to_spawns} new items have been spawned; next spawn in {self._next_item_spawn}')
+        else:
+            self.print('No Items are spawning, limit is reached.')
 
     def do_additional_step(self) -> dict:
+        # noinspection PyUnresolvedReferences
         info_dict = super(self._super, self).do_additional_step()
         if not self._next_item_spawn:
-            if item_to_spawns := max(0, (self.item_properties.n_items -
-                                         (np.sum(self._slices.by_enum(c.ITEM).slice.astype(bool)) - 1))):
-                self.spawn_items(item_to_spawns)
-                self._next_item_spawn = self.item_properties.spawn_frequency
-            else:
-                self.print('No Items are spawning, limit is reached.')
+            self.trigger_item_spawn()
         else:
             self._next_item_spawn -= 1
         return info_dict
 
-    def spawn_drop_off_location(self):
-        empty_tiles = self._tiles.empty_tiles[:self.item_properties.n_drop_off_locations]
-        drop_offs = DropOffLocations.from_tiles(empty_tiles,
-                                                storage_size_until_full=self.item_properties.max_dropoff_storage_size)
-        xs, ys = zip(*[drop_off.pos for drop_off in drop_offs])
-        self._slices.by_enum(c.ITEM).slice[xs, ys] = ITEM_DROP_OFF
-        return drop_offs
-
     def calculate_additional_reward(self, agent: Agent) -> (int, dict):
+        # noinspection PyUnresolvedReferences
         reward, info_dict = super(self._super, self).calculate_additional_reward(agent)
         if self._is_item_action(agent.temp_action):
             if agent.temp_valid:
-                if agent.pos in self._drop_offs.positions:
+                if self._entities[c.DROP_OFF].by_pos(agent.pos):
                     info_dict.update({f'{agent.name}_item_dropoff': 1})
 
                     reward += 1
@@ -198,20 +282,13 @@ class DoubleTaskFactory(SimpleFactory):
         return reward, info_dict
 
     def render_additional_assets(self, mode='human'):
+        # noinspection PyUnresolvedReferences
         additional_assets = super(self._super, self).render_additional_assets()
-        item_slice = self._slices.by_enum(c.ITEM).slice
-        items = [RenderEntity(DROP_OFF if item_slice[tile.pos] == ITEM_DROP_OFF else c.ITEM.value, tile.pos)
-                 for tile in [tile for tile in self._tiles if item_slice[tile.pos] != NO_ITEM]]
+        items = [RenderEntity(c.ITEM.value, item.tile.pos) for item in self._entities[c.ITEM]]
         additional_assets.extend(items)
+        drop_offs = [RenderEntity(c.DROP_OFF.value, drop_off.tile.pos) for drop_off in self._entities[c.DROP_OFF]]
+        additional_assets.extend(drop_offs)
         return additional_assets
-
-    def spawn_items(self, n_items):
-        tiles = self._tiles.empty_tiles[:n_items]
-        item_slice = self._slices.by_enum(c.ITEM).slice
-        # when all items should be 1
-        xs, ys = zip(*[tile.pos for tile in tiles])
-        item_slice[xs, ys] = 1
-        pass
 
 
 if __name__ == '__main__':
@@ -226,6 +303,7 @@ if __name__ == '__main__':
                                 record_episodes=False, verbose=False
                                 )
 
+    # noinspection DuplicatedCode
     n_actions = factory.action_space.n - 1
     _ = factory.observation_space
 

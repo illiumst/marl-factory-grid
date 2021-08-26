@@ -4,22 +4,23 @@ from environments.helpers import Constants as c
 import itertools
 
 
-def sub(p, q):
-    return p - q
-
-
 class Object:
 
     def __bool__(self):
         return True
 
     @property
+    def is_blocking_light(self):
+        return self._is_blocking_light
+
+    @property
     def name(self):
         return self._name
 
-    def __init__(self, name, name_is_identifier=False, **kwargs):
+    def __init__(self, name, name_is_identifier=False, is_blocking_light=False, **kwargs):
         name = name.name if hasattr(name, 'name') else name
         self._name = f'{self.__class__.__name__}#{name}' if name_is_identifier else name
+        self._is_blocking_light = is_blocking_light
         if kwargs:
             print(f'Following kwargs were passed, but ignored: {kwargs}')
 
@@ -31,40 +32,6 @@ class Action(Object):
 
     def __init__(self, *args):
         super(Action, self).__init__(*args)
-
-
-class Slice(Object):
-
-    @property
-    def is_observable(self):
-        return self._is_observable
-
-    @property
-    def shape(self):
-        return self.slice.shape
-
-    @property
-    def occupied_tiles(self):
-        return np.argwhere(self.slice == c.OCCUPIED_CELL.value)
-
-    @property
-    def free_tiles(self):
-        return np.argwhere(self.slice == c.FREE_CELL.value)
-
-    def __init__(self, identifier, arrayslice, is_blocking_light=False, can_be_shadowed=True, is_observable=True):
-        super(Slice, self).__init__(identifier)
-        self.slice = arrayslice
-        self.is_blocking_light = is_blocking_light
-        self.can_be_shadowed = can_be_shadowed
-        self._is_observable = is_observable
-
-    def set_slice(self, new_slice: np.ndarray):
-        assert self.slice.shape == new_slice.shape
-        self.slice = new_slice
-
-
-class Wall(Object):
-    pass
 
 
 class Tile(Object):
@@ -118,6 +85,10 @@ class Tile(Object):
         return True
 
 
+class Wall(Tile):
+    pass
+
+
 class Entity(Object):
 
     @property
@@ -151,41 +122,6 @@ class Entity(Object):
 
     def summarize_state(self):
         return self.__dict__.copy()
-
-
-class MoveableEntity(Entity):
-
-    @property
-    def last_tile(self):
-        return self._last_tile
-
-    @property
-    def last_pos(self):
-        if self._last_tile:
-            return self._last_tile.pos
-        else:
-            return c.NO_POS
-
-    @property
-    def direction_of_view(self):
-        last_x, last_y = self.last_pos
-        curr_x, curr_y = self.pos
-        return last_x-curr_x, last_y-curr_y
-
-    def __init__(self, *args, **kwargs):
-        super(MoveableEntity, self).__init__(*args, **kwargs)
-        self._last_tile = None
-
-    def move(self, next_tile):
-        curr_tile = self.tile
-        if curr_tile != next_tile:
-            next_tile.enter(self)
-            curr_tile.leave(self)
-            self._tile = next_tile
-            self._last_tile = curr_tile
-            return True
-        else:
-            return False
 
 
 class Door(Entity):
@@ -265,6 +201,41 @@ class Door(Entity):
             _ = nx.shortest_path(self.connectivity, old_pos, new_pos)
             return True
         except nx.exception.NetworkXNoPath:
+            return False
+
+
+class MoveableEntity(Entity):
+
+    @property
+    def last_tile(self):
+        return self._last_tile
+
+    @property
+    def last_pos(self):
+        if self._last_tile:
+            return self._last_tile.pos
+        else:
+            return c.NO_POS
+
+    @property
+    def direction_of_view(self):
+        last_x, last_y = self.last_pos
+        curr_x, curr_y = self.pos
+        return last_x-curr_x, last_y-curr_y
+
+    def __init__(self, *args, **kwargs):
+        super(MoveableEntity, self).__init__(*args, **kwargs)
+        self._last_tile = None
+
+    def move(self, next_tile):
+        curr_tile = self.tile
+        if curr_tile != next_tile:
+            next_tile.enter(self)
+            curr_tile.leave(self)
+            self._tile = next_tile
+            self._last_tile = curr_tile
+            return True
+        else:
             return False
 
 

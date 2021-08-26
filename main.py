@@ -108,13 +108,16 @@ if __name__ == '__main__':
     for modeL_type in [A2C, PPO, DQN]:  # ,RegDQN, QRDQN]:
         for seed in range(3):
 
-            with DoubleTaskFactory(n_agents=1, with_dirt=False,
-                                   item_properties=item_props, dirt_properties=None, movement_properties=move_props,
-                                   pomdp_radius=2, max_steps=500, parse_doors=True,
-                                   level_name='rooms', frames_to_stack=3,
-                                   omit_agent_slice_in_obs=True, combin_agent_slices_in_obs=True, record_episodes=False,
-                                   cast_shadows=True, doors_have_area=False, seed=seed
-                                   ) as env:
+            with SimpleFactory(n_agents=1,
+                               # with_dirt=True,
+                               # item_properties=item_props,
+                               dirt_properties=dirt_props,
+                               movement_properties=move_props,
+                               pomdp_radius=2, max_steps=500, parse_doors=True,
+                               level_name='rooms', frames_to_stack=3,
+                               omit_agent_slice_in_obs=True, combin_agent_slices_in_obs=True, record_episodes=False,
+                               cast_shadows=True, doors_have_area=False, seed=seed
+                               ) as env:
 
                 if modeL_type.__name__ in ["PPO", "A2C"]:
                     kwargs = dict(ent_coef=0.01)

@@ -1,6 +1,6 @@
 import time
 from enum import Enum
-from typing import List, Union, NamedTuple
+from typing import List, Union, NamedTuple, Dict
 import random
 
 import numpy as np
@@ -8,8 +8,8 @@ import numpy as np
 from environments.helpers import Constants as c
 from environments import helpers as h
 from environments.factory.base.base_factory import BaseFactory
-from environments.factory.base.objects import Agent, Action, Slice
-from environments.factory.base.registers import Entities
+from environments.factory.base.objects import Agent, Action, Entity
+from environments.factory.base.registers import Entities, MovingEntityObjectRegister
 
 from environments.factory.renderer import RenderEntity
 from environments.utility_classes import MovementProperties
@@ -36,6 +36,70 @@ class DirtProperties(NamedTuple):
     on_obs_slice: Enum = ObsSlice.LEVEL
 
 
+class Dirt(Entity):
+
+    @property
+    def can_collide(self):
+        return False
+
+    @property
+    def amount(self):
+        return self._amount
+
+    def encoding(self):
+        # Edit this if you want items to be drawn in the ops differntly
+        return self._amount
+
+    def __init__(self, *args, amount=None, **kwargs):
+        super(Dirt, self).__init__(*args, **kwargs)
+        self._amount = amount
+
+    def set_new_amount(self, amount):
+        self._amount = amount
+
+
+class DirtRegister(MovingEntityObjectRegister):
+
+    def as_array(self):
+        if self._array is not None:
+            self._array[:] = c.FREE_CELL.value
+            for key, dirt in self.items():
+                if dirt.amount == 0:
+                    self.delete_item(key)
+                self._array[0, dirt.x, dirt.y] = dirt.amount
+        else:
+            self._array = np.zeros((1, *self._level_shape))
+        return self._array
+
+    _accepted_objects = Dirt
+
+    @property
+    def amount(self):
+        return sum([dirt.amount for dirt in self])
+
+    @property
+    def dirt_properties(self):
+        return self._dirt_properties
+
+    def __init__(self, dirt_properties, *args):
+        super(DirtRegister, self).__init__(*args)
+        self._dirt_properties: DirtProperties = dirt_properties
+
+    def spawn_dirt(self, then_dirty_tiles) -> None:
+        if not self.amount > self.dirt_properties.max_global_amount:
+            # randomly distribute dirt across the grid
+            for tile in then_dirty_tiles:
+                dirt = self.by_pos(tile.pos)
+                if dirt is None:
+                    dirt = Dirt(0, tile, amount=self.dirt_properties.gain_amount)
+                    self.register_item(dirt)
+                else:
+                    new_value = dirt.amount + self.dirt_properties.gain_amount
+                    dirt.set_new_amount(min(new_value, self.dirt_properties.max_local_amount))
+        else:
+            pass
+
+
 def softmax(x):
     """Compute softmax values for each sets of scores in x."""
     e_x = np.exp(x - np.max(x))
@@ -46,7 +110,7 @@ def entropy(x):
     return -(x * np.log(x + 1e-8)).sum()
 
 
-# noinspection PyAttributeOutsideInit
+# noinspection PyAttributeOutsideInit, PyAbstractClass
 class SimpleFactory(BaseFactory):
 
     @property
@@ -57,15 +121,11 @@ class SimpleFactory(BaseFactory):
         return super_actions
 
     @property
-    def additional_entities(self) -> Union[Entities, List[Entities]]:
+    def additional_entities(self) -> Dict[(Enum, Entities)]:
         super_entities = super(SimpleFactory, self).additional_entities
+        dirt_register = DirtRegister(self.dirt_properties, self._level_shape)
+        super_entities.update(({c.DIRT: dirt_register}))
         return super_entities
-
-    @property
-    def additional_slices(self) -> List[Slice]:
-        super_slices = super(SimpleFactory, self).additional_slices
-        super_slices.extend([Slice(c.DIRT, np.zeros(self._level_shape))])
-        return super_slices
 
     def _is_clean_up_action(self, action: Union[str, Action, int]):
         if isinstance(action, int):
@@ -77,62 +137,48 @@ class SimpleFactory(BaseFactory):
     def __init__(self, *args, dirt_properties: DirtProperties = DirtProperties(), env_seed=time.time_ns(), **kwargs):
         self.dirt_properties = dirt_properties
         self._dirt_rng = np.random.default_rng(env_seed)
+        self._dirt: DirtRegister
         kwargs.update(env_seed=env_seed)
         super(SimpleFactory, self).__init__(*args, **kwargs)
 
-    def _flush_state(self):
-        super(SimpleFactory, self)._flush_state()
-        dirt_slice_idx = self._slices.get_idx(c.DIRT)
-        self._obs_cube[dirt_slice_idx] = self._slices[dirt_slice_idx].slice
-
     def render_additional_assets(self, mode='human'):
         additional_assets = super(SimpleFactory, self).render_additional_assets()
-        dirt_slice = self._slices.by_enum(c.DIRT).slice
-        dirt = [RenderEntity('dirt', tile.pos, min(0.15 + dirt_slice[tile.pos], 1.5), 'scale')
-                for tile in [tile for tile in self._tiles if dirt_slice[tile.pos]]]
+        dirt = [RenderEntity('dirt', dirt.tile.pos, min(0.15 + dirt.amount, 1.5), 'scale')
+                for dirt in self._entities[c.DIRT]]
         additional_assets.extend(dirt)
         return additional_assets
 
-    def spawn_dirt(self) -> None:
-        dirt_slice = self._slices.by_enum(c.DIRT).slice
-        # dirty_tiles = [tile for tile in self._tiles if dirt_slice[tile.pos]]
-        curr_dirt_amount = dirt_slice.sum()
-        if not curr_dirt_amount > self.dirt_properties.max_global_amount:
-            free_for_dirt = self._tiles.empty_tiles
-
-            # randomly distribute dirt across the grid
-            new_spawn = self._dirt_rng.uniform(0, self.dirt_properties.max_spawn_ratio)
-            n_dirt_tiles = max(0, int(new_spawn * len(free_for_dirt)))
-            for tile in free_for_dirt[:n_dirt_tiles]:
-                new_value = dirt_slice[tile.pos] + self.dirt_properties.gain_amount
-                dirt_slice[tile.pos] = min(new_value, self.dirt_properties.max_local_amount)
-        else:
-            pass
-
     def clean_up(self, agent: Agent) -> bool:
-        dirt_slice = self._slices.by_enum(c.DIRT).slice
-        if old_dirt_amount := dirt_slice[agent.pos]:
-            new_dirt_amount = old_dirt_amount - self.dirt_properties.clean_amount
-            dirt_slice[agent.pos] = max(new_dirt_amount, c.FREE_CELL.value)
+        if dirt := self._entities[c.DIRT].by_pos(agent.pos):
+            new_dirt_amount = dirt.amount - self.dirt_properties.clean_amount
+            dirt.set_new_amount(max(new_dirt_amount, c.FREE_CELL.value))
             return True
         else:
             return False
 
+    def trigger_dirt_spawn(self):
+        free_for_dirt = self._entities[c.FLOOR].empty_tiles
+        new_spawn = self._dirt_rng.uniform(0, self.dirt_properties.max_spawn_ratio)
+        n_dirt_tiles = max(0, int(new_spawn * len(free_for_dirt)))
+        self._entities[c.DIRT].spawn_dirt(free_for_dirt[:n_dirt_tiles])
+
     def do_additional_step(self) -> dict:
         info_dict = super(SimpleFactory, self).do_additional_step()
         if smear_amount := self.dirt_properties.dirt_smear_amount:
-            dirt_slice = self._slices.by_enum(c.DIRT).slice
-            for agent in self._agents:
+            for agent in self._entities[c.AGENT]:
                 if agent.temp_valid and agent.last_pos != c.NO_POS:
-                    if dirt := dirt_slice[agent.last_pos]:
-                        if smeared_dirt := round(dirt * smear_amount, 2):
-                            dirt_slice[agent.last_pos] = max(0, dirt_slice[agent.last_pos]-smeared_dirt)
-                            dirt_slice[agent.pos] = min((self.dirt_properties.max_local_amount,
-                                                         dirt_slice[agent.pos] + smeared_dirt)
-                                                        )
+                    if old_pos_dirt := self._entities[c.DIRT].by_pos(agent.last_pos):
+                        if smeared_dirt := round(old_pos_dirt.amount * smear_amount, 2):
+                            old_pos_dirt.set_new_amount(max(0, old_pos_dirt.amount-smeared_dirt))
+                            if new_pos_dirt := self._entities[c.DIRT].by_pos(agent.pos):
+                                new_pos_dirt.set_new_amount(max(0, new_pos_dirt.amount + smeared_dirt))
+                            else:
+                                self._entities[c.Dirt].spawn_dirt(agent.tile)
+                                new_pos_dirt = self._entities[c.DIRT].by_pos(agent.pos)
+                                new_pos_dirt.set_new_amount(max(0, new_pos_dirt.amount + smeared_dirt))
 
         if not self._next_dirt_spawn:
-            self.spawn_dirt()
+            self.trigger_dirt_spawn()
             self._next_dirt_spawn = self.dirt_properties.spawn_frequency
         else:
             self._next_dirt_spawn -= 1
@@ -154,17 +200,16 @@ class SimpleFactory(BaseFactory):
 
     def do_additional_reset(self) -> None:
         super(SimpleFactory, self).do_additional_reset()
-        self.spawn_dirt()
+        self.trigger_dirt_spawn()
         self._next_dirt_spawn = self.dirt_properties.spawn_frequency
 
     def calculate_additional_reward(self, agent: Agent) -> (int, dict):
         reward, info_dict = super(SimpleFactory, self).calculate_additional_reward(agent)
-        dirt_slice = self._slices.by_enum(c.DIRT).slice
-        dirty_tiles = [dirt_slice[tile.pos] for tile in self._tiles if dirt_slice[tile.pos]]
-        current_dirt_amount = sum(dirty_tiles)
-        dirty_tile_count = len(dirty_tiles)
+        dirt = [dirt.amount for dirt in self._entities[c.DIRT]]
+        current_dirt_amount = sum(dirt)
+        dirty_tile_count = len(dirt)
         if dirty_tile_count:
-            dirt_distribution_score = entropy(softmax(dirt_slice)) / dirty_tile_count
+            dirt_distribution_score = entropy(softmax(np.asarray(dirt)) / dirty_tile_count)
         else:
             dirt_distribution_score = 0
 
@@ -204,6 +249,7 @@ if __name__ == '__main__':
                             record_episodes=False, verbose=False
                             )
 
+    # noinspection DuplicatedCode
     n_actions = factory.action_space.n - 1
     _ = factory.observation_space
 

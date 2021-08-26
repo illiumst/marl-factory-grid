@@ -15,15 +15,18 @@ IGNORED_DF_COLUMNS = ['Episode', 'Run', 'train_step', 'step', 'index', 'dirt_amo
 # Constants
 class Constants(Enum):
     WALL            = '#'
+    WALLS           = 'Walls'
+    FLOOR           = 'Floor'
     DOOR            = 'D'
     DANGER_ZONE     = 'x'
-    LEVEL           = 'level'
+    LEVEL           = 'Level'
     AGENT           = 'Agent'
     FREE_CELL       = 0
     OCCUPIED_CELL   = 1
+    SHADOWED_CELL   = -1
     NO_POS          = (-9999, -9999)
 
-    DOORS           = 'doors'
+    DOORS           = 'Doors'
     CLOSED_DOOR     = 1
     OPEN_DOOR       = -1
 
@@ -33,11 +36,12 @@ class Constants(Enum):
     NOT_VALID       = False
 
     # Dirt Env
-    DIRT            = 'dirt'
+    DIRT            = 'Dirt'
 
     # Item Env
-    ITEM            = 'item'
-    INVENTORY       = 'inventory'
+    ITEM            = 'Item'
+    INVENTORY       = 'Inventory'
+    DROP_OFF        = 'Drop_Off'
 
     def __bool__(self):
         return bool(self.value)
