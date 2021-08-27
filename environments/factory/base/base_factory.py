@@ -27,7 +27,7 @@ class BaseFactory(gym.Env):
 
     @property
     def action_space(self):
-        return spaces.Discrete(self._actions.n)
+        return spaces.Discrete(len(self._actions))
 
     @property
     def observation_space(self):
@@ -69,6 +69,7 @@ class BaseFactory(gym.Env):
         self._level_shape = None
         self.verbose = verbose
         self._renderer = None  # expensive - don't use it when not required !
+        self._entities = Entities()
 
         self.n_agents = n_agents
 
@@ -91,6 +92,9 @@ class BaseFactory(gym.Env):
 
         # Reset
         self.reset()
+
+    def __getitem__(self, item):
+        return self._entities[item]
 
     def _base_init_env(self):
         # Objects
@@ -116,7 +120,7 @@ class BaseFactory(gym.Env):
         entities.update({c.FLOOR: floor})
 
         # NOPOS
-        self.NO_POS_TILE = Tile(c.NO_POS, c.NO_POS.value)
+        self.NO_POS_TILE = Tile(c.NO_POS.value)
 
         # Doors
         parsed_doors = h.one_hot_level(parsed_level, c.DOOR)
@@ -145,7 +149,7 @@ class BaseFactory(gym.Env):
 
         if self.omit_agent_in_obs and self.n_agents == 1:
             del arrays[c.AGENT]
-        obs_cube_z = sum([a.shape[0] if not self._entities[key].is_per_agent else 1 for key, a in arrays.items()])
+        obs_cube_z = sum([a.shape[0] if not self[key].is_per_agent else 1 for key, a in arrays.items()])
         self._obs_cube = np.zeros((obs_cube_z, *self._level_shape), dtype=np.float32)
 
         # Optionally Pad this obs cube for pomdp cases
@@ -175,14 +179,14 @@ class BaseFactory(gym.Env):
         self.hook_pre_step()
 
         # Move this in a seperate function?
-        for action, agent in zip(actions, self._entities[c.AGENT]):
+        for action, agent in zip(actions, self[c.AGENT]):
             agent.clear_temp_sate()
             action_obj = self._actions[action]
             if self._actions.is_moving_action(action_obj):
                 valid = self._move_or_colide(agent, action_obj)
-            elif self._actions.is_no_op(action_obj):
-                valid = c.VALID.value
-            elif self._actions.is_door_usage(action_obj):
+            elif h.EnvActions.NOOP == agent.temp_action:
+                valid = c.VALID
+            elif h.EnvActions.USE_DOOR == action_obj:
                 valid = self._handle_door_interaction(agent)
             else:
                 valid = self.do_additional_actions(agent, action_obj)
@@ -206,7 +210,7 @@ class BaseFactory(gym.Env):
 
         # Step the door close intervall
         if self.parse_doors:
-            self._entities[c.DOORS].tick_doors()
+            self[c.DOORS].tick_doors()
 
         # Finalize
         reward, reward_info = self.calculate_reward()
@@ -224,52 +228,60 @@ class BaseFactory(gym.Env):
 
         return obs, reward, done, info
 
-    def _handle_door_interaction(self, agent):
+    def _handle_door_interaction(self, agent) -> c:
         # Check if agent really is standing on a door:
         if self.doors_have_area:
-            door = self._entities[c.DOORS].get_near_position(agent.pos)
+            door = self[c.DOORS].get_near_position(agent.pos)
         else:
-            door = self._entities[c.DOORS].by_pos(agent.pos)
+            door = self[c.DOORS].by_pos(agent.pos)
         if door is not None:
             door.use()
-            return c.VALID.value
+            return c.VALID
         # When he doesn't...
         else:
-            return c.NOT_VALID.value
+            return c.NOT_VALID
 
     def _get_observations(self) -> np.ndarray:
+        state_array_dict = self._entities.arrays
         if self.n_agents == 1:
-            obs = self._build_per_agent_obs(self._entities[c.AGENT][0])
+            obs = self._build_per_agent_obs(self[c.AGENT][0], state_array_dict)
         elif self.n_agents >= 2:
-            obs = np.stack([self._build_per_agent_obs(agent) for agent in self._entities[c.AGENT]])
+            obs = np.stack([self._build_per_agent_obs(agent, state_array_dict) for agent in self[c.AGENT]])
         else:
             raise ValueError('n_agents cannot be smaller than 1!!')
         return obs
 
-    def _build_per_agent_obs(self, agent: Agent) -> np.ndarray:
-        plain_arrays = self._entities.arrays
+    def _build_per_agent_obs(self, agent: Agent, state_array_dict) -> np.ndarray:
+        agent_pos_is_omitted = False
         if self.omit_agent_in_obs and self.n_agents == 1:
-            del plain_arrays[c.AGENT]
+            del state_array_dict[c.AGENT]
+        elif self.omit_agent_in_obs and self.combin_agent_obs and self.n_agents > 1:
+            state_array_dict[c.AGENT][0, agent.x, agent.y] -= agent.encoding
+            agent_pos_is_omitted = True
 
         running_idx, shadowing_idxs, can_be_shadowed_idxs = 0, [], []
 
-        for key, array in plain_arrays.items():
-            if self._entities[key].is_per_agent:
-                per_agent_idx = self._entities[key].get_idx_by_name(agent.name)
+        for key, array in state_array_dict.items():
+            # Flush state array object representation to obs cube
+            if self[key].is_per_agent:
+                per_agent_idx = self[key].get_idx_by_name(agent.name)
                 z = 1
-                self._obs_cube[running_idx: z] = array[per_agent_idx]
+                self._obs_cube[running_idx: running_idx+z] = array[per_agent_idx]
             else:
                 z = array.shape[0]
-                self._obs_cube[running_idx: z] = array
+                self._obs_cube[running_idx: running_idx+z] = array
             # Define which OBS SLices cast a Shadow
-            if self._entities[key].is_blocking_light:
+            if self[key].is_blocking_light:
                 for i in range(z):
                     shadowing_idxs.append(running_idx + i)
             # Define which OBS SLices are effected by shadows
-            if self._entities[key].can_be_shadowed:
+            if self[key].can_be_shadowed:
                 for i in range(z):
                     can_be_shadowed_idxs.append(running_idx + i)
             running_idx += z
+
+        if agent_pos_is_omitted:
+            state_array_dict[c.AGENT][0, agent.x, agent.y] += agent.encoding
 
         if r := self.pomdp_r:
             x, y = self._level_shape
@@ -284,7 +296,7 @@ class BaseFactory(gym.Env):
         if self.cast_shadows:
             obs_block_light = [obs[idx] != c.OCCUPIED_CELL.value for idx in shadowing_idxs]
             door_shadowing = False
-            if door := self._entities[c.DOORS].by_pos(agent.pos):
+            if door := self[c.DOORS].by_pos(agent.pos):
                 if door.is_closed:
                     for group in door.connectivity_subgroups:
                         if agent.last_pos not in group:
@@ -319,7 +331,7 @@ class BaseFactory(gym.Env):
 
     def get_all_tiles_with_collisions(self) -> List[Tile]:
         tiles_with_collisions = list()
-        for tile in self._entities[c.FLOOR]:
+        for tile in self[c.FLOOR]:
             if tile.is_occupied():
                 guests = [guest for guest in tile.guests if guest.can_collide]
                 if len(guests) >= 2:
@@ -337,11 +349,11 @@ class BaseFactory(gym.Env):
 
     def _check_agent_move(self, agent, action: Action) -> (Tile, bool):
         # Actions
-        x_diff, y_diff = h.ACTIONMAP[action.name]
+        x_diff, y_diff = h.ACTIONMAP[action.identifier]
         x_new = agent.x + x_diff
         y_new = agent.y + y_diff
 
-        new_tile = self._entities[c.FLOOR].by_pos((x_new, y_new))
+        new_tile = self[c.FLOOR].by_pos((x_new, y_new))
         if new_tile:
             valid = c.VALID
         else:
@@ -350,13 +362,13 @@ class BaseFactory(gym.Env):
             return tile, valid
 
         if self.parse_doors and agent.last_pos != c.NO_POS:
-            if door := self._entities[c.DOORS].by_pos(new_tile.pos):
+            if door := self[c.DOORS].by_pos(new_tile.pos):
                 if door.can_collide:
                     return agent.tile, c.NOT_VALID
                 else:  # door.is_closed:
                     pass
 
-            if door := self._entities[c.DOORS].by_pos(agent.pos):
+            if door := self[c.DOORS].by_pos(agent.pos):
                 if door.is_open:
                     pass
                 else:  # door.is_closed:
@@ -376,7 +388,7 @@ class BaseFactory(gym.Env):
         info_dict = dict()
         reward = 0
 
-        for agent in self._entities[c.AGENT]:
+        for agent in self[c.AGENT]:
             if self._actions.is_moving_action(agent.temp_action):
                 if agent.temp_valid:
                     # info_dict.update(movement=1)
@@ -387,7 +399,7 @@ class BaseFactory(gym.Env):
                     self.print(f'{agent.name} just hit the wall at {agent.pos}.')
                     info_dict.update({f'{agent.name}_vs_LEVEL': 1})
 
-            elif self._actions.is_door_usage(agent.temp_action):
+            elif h.EnvActions.USE_DOOR == agent.temp_action:
                 if agent.temp_valid:
                     self.print(f'{agent.name} did just use the door at {agent.pos}.')
                     info_dict.update(door_used=1)
@@ -396,7 +408,7 @@ class BaseFactory(gym.Env):
                     self.print(f'{agent.name} just tried to use a door at {agent.pos}, but failed.')
                     info_dict.update({f'{agent.name}_failed_action': 1})
                     info_dict.update({f'{agent.name}_failed_door_open': 1})
-            elif self._actions.is_no_op(agent.temp_action):
+            elif h.EnvActions.NOOP == agent.temp_action:
                 info_dict.update(no_op=1)
                 reward -= 0.00
 
@@ -415,15 +427,15 @@ class BaseFactory(gym.Env):
             height, width = self._obs_cube.shape[1:]
             self._renderer = Renderer(width, height, view_radius=self.pomdp_r, fps=5)
 
-        walls = [RenderEntity('wall', wall.pos) for wall in self._entities[c.WALLS]]
+        walls = [RenderEntity('wall', wall.pos) for wall in self[c.WALLS]]
 
         agents = []
-        for i, agent in enumerate(self._entities[c.AGENT]):
+        for i, agent in enumerate(self[c.AGENT]):
             name, state = h.asset_str(agent)
             agents.append(RenderEntity(name, agent.pos, 1, 'none', state, i + 1, agent.temp_light_map))
         doors = []
         if self.parse_doors:
-            for i, door in enumerate(self._entities[c.DOORS]):
+            for i, door in enumerate(self[c.DOORS]):
                 name, state = 'door_open' if door.is_open else 'door_closed', 'blank'
                 doors.append(RenderEntity(name, door.pos, 1, 'none', state, i + 1))
         additional_assets = self.render_additional_assets()
@@ -442,7 +454,7 @@ class BaseFactory(gym.Env):
     def _summarize_state(self):
         summary = {f'{REC_TAC}_step': self._steps}
 
-        self._entities[c.WALLS].summarize_state()
+        self[c.WALLS].summarize_state()
         for entity in self._entities:
             if hasattr(entity, 'summarize_state'):
                 summary.update({f'{REC_TAC}_{entity.name}': entity.summarize_state()})
@@ -484,7 +496,7 @@ class BaseFactory(gym.Env):
         return {}
 
     @abc.abstractmethod
-    def do_additional_actions(self, agent: Agent, action: int) -> Union[None, bool]:
+    def do_additional_actions(self, agent: Agent, action: Action) -> Union[None, c]:
         return None
 
     @abc.abstractmethod

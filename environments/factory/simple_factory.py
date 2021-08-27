@@ -8,7 +8,7 @@ import numpy as np
 from environments.helpers import Constants as c
 from environments import helpers as h
 from environments.factory.base.base_factory import BaseFactory
-from environments.factory.base.objects import Agent, Action, Entity
+from environments.factory.base.objects import Agent, Action, Entity, Tile
 from environments.factory.base.registers import Entities, MovingEntityObjectRegister
 
 from environments.factory.renderer import RenderEntity
@@ -85,19 +85,21 @@ class DirtRegister(MovingEntityObjectRegister):
         super(DirtRegister, self).__init__(*args)
         self._dirt_properties: DirtProperties = dirt_properties
 
-    def spawn_dirt(self, then_dirty_tiles) -> None:
-        if not self.amount > self.dirt_properties.max_global_amount:
-            # randomly distribute dirt across the grid
-            for tile in then_dirty_tiles:
+    def spawn_dirt(self, then_dirty_tiles) -> c:
+        if isinstance(then_dirty_tiles, Tile):
+            then_dirty_tiles = [then_dirty_tiles]
+        for tile in then_dirty_tiles:
+            if not self.amount > self.dirt_properties.max_global_amount:
                 dirt = self.by_pos(tile.pos)
                 if dirt is None:
-                    dirt = Dirt(0, tile, amount=self.dirt_properties.gain_amount)
+                    dirt = Dirt(tile, amount=self.dirt_properties.gain_amount)
                     self.register_item(dirt)
                 else:
                     new_value = dirt.amount + self.dirt_properties.gain_amount
                     dirt.set_new_amount(min(new_value, self.dirt_properties.max_local_amount))
-        else:
-            pass
+            else:
+                return c.NOT_VALID
+        return c.VALID
 
 
 def softmax(x):
@@ -117,7 +119,7 @@ class SimpleFactory(BaseFactory):
     def additional_actions(self) -> Union[Action, List[Action]]:
         super_actions = super(SimpleFactory, self).additional_actions
         if self.dirt_properties.agent_can_interact:
-            super_actions.append(Action(CLEAN_UP_ACTION))
+            super_actions.append(Action(enum_ident=CLEAN_UP_ACTION))
         return super_actions
 
     @property
@@ -126,13 +128,6 @@ class SimpleFactory(BaseFactory):
         dirt_register = DirtRegister(self.dirt_properties, self._level_shape)
         super_entities.update(({c.DIRT: dirt_register}))
         return super_entities
-
-    def _is_clean_up_action(self, action: Union[str, Action, int]):
-        if isinstance(action, int):
-            action = self._actions[action]
-        if isinstance(action, Action):
-            action = action.name
-        return action == CLEAN_UP_ACTION.name
 
     def __init__(self, *args, dirt_properties: DirtProperties = DirtProperties(), env_seed=time.time_ns(), **kwargs):
         self.dirt_properties = dirt_properties
@@ -144,38 +139,43 @@ class SimpleFactory(BaseFactory):
     def render_additional_assets(self, mode='human'):
         additional_assets = super(SimpleFactory, self).render_additional_assets()
         dirt = [RenderEntity('dirt', dirt.tile.pos, min(0.15 + dirt.amount, 1.5), 'scale')
-                for dirt in self._entities[c.DIRT]]
+                for dirt in self[c.DIRT]]
         additional_assets.extend(dirt)
         return additional_assets
 
-    def clean_up(self, agent: Agent) -> bool:
-        if dirt := self._entities[c.DIRT].by_pos(agent.pos):
+    def clean_up(self, agent: Agent) -> c:
+        if dirt := self[c.DIRT].by_pos(agent.pos):
             new_dirt_amount = dirt.amount - self.dirt_properties.clean_amount
-            dirt.set_new_amount(max(new_dirt_amount, c.FREE_CELL.value))
-            return True
+
+            if new_dirt_amount <= 0:
+                self[c.DIRT].delete_item(dirt)
+            else:
+                dirt.set_new_amount(max(new_dirt_amount, c.FREE_CELL.value))
+            return c.VALID
         else:
-            return False
+            return c.NOT_VALID
 
     def trigger_dirt_spawn(self):
-        free_for_dirt = self._entities[c.FLOOR].empty_tiles
+        free_for_dirt = self[c.FLOOR].empty_tiles
         new_spawn = self._dirt_rng.uniform(0, self.dirt_properties.max_spawn_ratio)
         n_dirt_tiles = max(0, int(new_spawn * len(free_for_dirt)))
-        self._entities[c.DIRT].spawn_dirt(free_for_dirt[:n_dirt_tiles])
+        self[c.DIRT].spawn_dirt(free_for_dirt[:n_dirt_tiles])
 
     def do_additional_step(self) -> dict:
         info_dict = super(SimpleFactory, self).do_additional_step()
         if smear_amount := self.dirt_properties.dirt_smear_amount:
-            for agent in self._entities[c.AGENT]:
+            for agent in self[c.AGENT]:
                 if agent.temp_valid and agent.last_pos != c.NO_POS:
-                    if old_pos_dirt := self._entities[c.DIRT].by_pos(agent.last_pos):
-                        if smeared_dirt := round(old_pos_dirt.amount * smear_amount, 2):
-                            old_pos_dirt.set_new_amount(max(0, old_pos_dirt.amount-smeared_dirt))
-                            if new_pos_dirt := self._entities[c.DIRT].by_pos(agent.pos):
-                                new_pos_dirt.set_new_amount(max(0, new_pos_dirt.amount + smeared_dirt))
-                            else:
-                                self._entities[c.Dirt].spawn_dirt(agent.tile)
-                                new_pos_dirt = self._entities[c.DIRT].by_pos(agent.pos)
-                                new_pos_dirt.set_new_amount(max(0, new_pos_dirt.amount + smeared_dirt))
+                    if self._actions.is_moving_action(agent.temp_action):
+                        if old_pos_dirt := self[c.DIRT].by_pos(agent.last_pos):
+                            if smeared_dirt := round(old_pos_dirt.amount * smear_amount, 2):
+                                old_pos_dirt.set_new_amount(max(0, old_pos_dirt.amount-smeared_dirt))
+                                if new_pos_dirt := self[c.DIRT].by_pos(agent.pos):
+                                    new_pos_dirt.set_new_amount(max(0, new_pos_dirt.amount + smeared_dirt))
+                                else:
+                                    if self[c.DIRT].spawn_dirt(agent.tile):
+                                        new_pos_dirt = self[c.DIRT].by_pos(agent.pos)
+                                        new_pos_dirt.set_new_amount(max(0, new_pos_dirt.amount + smeared_dirt))
 
         if not self._next_dirt_spawn:
             self.trigger_dirt_spawn()
@@ -184,15 +184,15 @@ class SimpleFactory(BaseFactory):
             self._next_dirt_spawn -= 1
         return info_dict
 
-    def do_additional_actions(self, agent: Agent, action: int) -> Union[None, bool]:
+    def do_additional_actions(self, agent: Agent, action: Action) -> Union[None, c]:
         valid = super(SimpleFactory, self).do_additional_actions(agent, action)
         if valid is None:
-            if self._is_clean_up_action(action):
+            if action == CLEAN_UP_ACTION:
                 if self.dirt_properties.agent_can_interact:
                     valid = self.clean_up(agent)
                     return valid
                 else:
-                    return False
+                    return c.NOT_VALID
             else:
                 return None
         else:
@@ -205,7 +205,7 @@ class SimpleFactory(BaseFactory):
 
     def calculate_additional_reward(self, agent: Agent) -> (int, dict):
         reward, info_dict = super(SimpleFactory, self).calculate_additional_reward(agent)
-        dirt = [dirt.amount for dirt in self._entities[c.DIRT]]
+        dirt = [dirt.amount for dirt in self[c.DIRT]]
         current_dirt_amount = sum(dirt)
         dirty_tile_count = len(dirt)
         if dirty_tile_count:
@@ -220,7 +220,7 @@ class SimpleFactory(BaseFactory):
         if agent.temp_collisions:
             self.print(f't = {self._steps}\t{agent.name} has collisions with {agent.temp_collisions}')
 
-        if self._is_clean_up_action(agent.temp_action):
+        if agent.temp_action == CLEAN_UP_ACTION:
             if agent.temp_valid:
                 reward += 0.5
                 self.print(f'{agent.name} did just clean up some dirt at {agent.pos}.')
@@ -245,7 +245,7 @@ if __name__ == '__main__':
 
     factory = SimpleFactory(n_agents=1, done_at_collision=False, frames_to_stack=0,
                             level_name='rooms', max_steps=400,
-                            omit_agent_slice_in_obs=True, parse_doors=True, pomdp_r=3,
+                            omit_agent_slice_in_obs=True, parse_doors=True, pomdp_r=2,
                             record_episodes=False, verbose=False
                             )
 

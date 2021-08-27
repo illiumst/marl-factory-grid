@@ -100,7 +100,7 @@ class Inventories(ObjectRegister):
     can_be_shadowed = False
 
     def __init__(self, *args, **kwargs):
-        super(Inventories, self).__init__(*args, is_per_agent=True, **kwargs)
+        super(Inventories, self).__init__(*args, is_per_agent=True, individual_slices=True, **kwargs)
         self.is_observable = True
 
     def as_array(self):
@@ -132,10 +132,10 @@ class DropOffLocation(Entity):
     def place_item(self, item):
         if self.is_full:
             raise RuntimeWarning("There is currently no way to clear the storage or make it unfull.")
-            return False
+            return c.NOT_VALID
         else:
             self.storage.append(item)
-            return True
+            return c.VALID
 
     @property
     def is_full(self):
@@ -166,56 +166,48 @@ class ItemProperties(NamedTuple):
 # noinspection PyAttributeOutsideInit, PyAbstractClass
 class DoubleTaskFactory(SimpleFactory):
     # noinspection PyMissingConstructor
-    def __init__(self, item_properties: ItemProperties, *args, with_dirt=False, env_seed=time.time_ns(), **kwargs):
+    def __init__(self, item_properties: ItemProperties, *args, env_seed=time.time_ns(), **kwargs):
         self.item_properties = item_properties
         kwargs.update(env_seed=env_seed)
         self._item_rng = np.random.default_rng(env_seed)
         assert item_properties.n_items < kwargs.get('pomdp_r', 0) ** 2 or not kwargs.get('pomdp_r', 0)
-        self._super = DoubleTaskFactory if with_dirt else SimpleFactory
-        super(self._super, self).__init__(*args, **kwargs)
+        super(DoubleTaskFactory, self).__init__(*args, **kwargs)
 
     @property
     def additional_actions(self) -> Union[Action, List[Action]]:
         # noinspection PyUnresolvedReferences
-        super_actions = super(self._super, self).additional_actions
-        super_actions.append(Action(h.EnvActions.ITEM_ACTION))
+        super_actions = super(DoubleTaskFactory, self).additional_actions
+        super_actions.append(Action(enum_ident=h.EnvActions.ITEM_ACTION))
         return super_actions
 
     @property
     def additional_entities(self) -> Dict[(Enum, Entities)]:
         # noinspection PyUnresolvedReferences
-        super_entities = super(self._super, self).additional_entities
+        super_entities = super(DoubleTaskFactory, self).additional_entities
 
-        empty_tiles = self._entities[c.FLOOR].empty_tiles[:self.item_properties.n_drop_off_locations]
+        empty_tiles = self[c.FLOOR].empty_tiles[:self.item_properties.n_drop_off_locations]
         drop_offs = DropOffLocations.from_tiles(empty_tiles, self._level_shape,
                                                 storage_size_until_full=self.item_properties.max_dropoff_storage_size)
         item_register = ItemRegister(self._level_shape)
-        empty_tiles = self._entities[c.FLOOR].empty_tiles[:self.item_properties.n_items]
+        empty_tiles = self[c.FLOOR].empty_tiles[:self.item_properties.n_items]
         item_register.spawn_items(empty_tiles)
 
         inventories = Inventories(self._level_shape)
-        inventories.spawn_inventories(self._entities[c.AGENT], self.pomdp_r,
+        inventories.spawn_inventories(self[c.AGENT], self.pomdp_r,
                                       self.item_properties.max_agent_inventory_capacity)
 
         super_entities.update({c.DROP_OFF: drop_offs, c.ITEM: item_register, c.INVENTORY: inventories})
         return super_entities
 
-    def _is_item_action(self, action):
-        if isinstance(action, int):
-            action = self._actions[action]
-        if isinstance(action, Action):
-            action = action.name
-        return action == h.EnvActions.ITEM_ACTION.name
-
     def do_item_action(self, agent: Agent):
-        inventory = self._entities[c.INVENTORY].by_name(agent.name)
-        if drop_off := self._entities[c.DROP_OFF].by_pos(agent.pos):
+        inventory = self[c.INVENTORY].by_name(agent.name)
+        if drop_off := self[c.DROP_OFF].by_pos(agent.pos):
             if inventory:
                 valid = drop_off.place_item(inventory.pop(0))
                 return valid
             else:
                 return c.NOT_VALID
-        elif item := self._entities[c.ITEM].by_pos(agent.pos):
+        elif item := self[c.ITEM].by_pos(agent.pos):
             try:
                 inventory.append(item)
                 item.move(self.NO_POS_TILE)
@@ -225,16 +217,16 @@ class DoubleTaskFactory(SimpleFactory):
         else:
             return c.NOT_VALID
 
-    def do_additional_actions(self, agent: Agent, action: int) -> Union[None, bool]:
+    def do_additional_actions(self, agent: Agent, action: Action) -> Union[None, c]:
         # noinspection PyUnresolvedReferences
-        valid = super(self._super, self).do_additional_actions(agent, action)
+        valid = super(DoubleTaskFactory, self).do_additional_actions(agent, action)
         if valid is None:
-            if self._is_item_action(action):
+            if action == h.EnvActions.ITEM_ACTION:
                 if self.item_properties.agent_can_interact:
                     valid = self.do_item_action(agent)
-                    return bool(valid)
+                    return valid
                 else:
-                    return False
+                    return c.NOT_VALID
             else:
                 return None
         else:
@@ -242,14 +234,14 @@ class DoubleTaskFactory(SimpleFactory):
 
     def do_additional_reset(self) -> None:
         # noinspection PyUnresolvedReferences
-        super(self._super, self).do_additional_reset()
+        super(DoubleTaskFactory, self).do_additional_reset()
         self._next_item_spawn = self.item_properties.spawn_frequency
         self.trigger_item_spawn()
 
     def trigger_item_spawn(self):
-        if item_to_spawns := max(0, (self.item_properties.n_items - len(self._entities[c.ITEM]))):
-            empty_tiles = self._entities[c.FLOOR].empty_tiles[:item_to_spawns]
-            self._entities[c.ITEM].spawn_items(empty_tiles)
+        if item_to_spawns := max(0, (self.item_properties.n_items - len(self[c.ITEM]))):
+            empty_tiles = self[c.FLOOR].empty_tiles[:item_to_spawns]
+            self[c.ITEM].spawn_items(empty_tiles)
             self._next_item_spawn = self.item_properties.spawn_frequency
             self.print(f'{item_to_spawns} new items have been spawned; next spawn in {self._next_item_spawn}')
         else:
@@ -257,7 +249,7 @@ class DoubleTaskFactory(SimpleFactory):
 
     def do_additional_step(self) -> dict:
         # noinspection PyUnresolvedReferences
-        info_dict = super(self._super, self).do_additional_step()
+        info_dict = super(DoubleTaskFactory, self).do_additional_step()
         if not self._next_item_spawn:
             self.trigger_item_spawn()
         else:
@@ -266,10 +258,10 @@ class DoubleTaskFactory(SimpleFactory):
 
     def calculate_additional_reward(self, agent: Agent) -> (int, dict):
         # noinspection PyUnresolvedReferences
-        reward, info_dict = super(self._super, self).calculate_additional_reward(agent)
-        if self._is_item_action(agent.temp_action):
+        reward, info_dict = super(DoubleTaskFactory, self).calculate_additional_reward(agent)
+        if h.EnvActions.ITEM_ACTION == agent.temp_action:
             if agent.temp_valid:
-                if self._entities[c.DROP_OFF].by_pos(agent.pos):
+                if self[c.DROP_OFF].by_pos(agent.pos):
                     info_dict.update({f'{agent.name}_item_dropoff': 1})
 
                     reward += 1
@@ -283,10 +275,10 @@ class DoubleTaskFactory(SimpleFactory):
 
     def render_additional_assets(self, mode='human'):
         # noinspection PyUnresolvedReferences
-        additional_assets = super(self._super, self).render_additional_assets()
-        items = [RenderEntity(c.ITEM.value, item.tile.pos) for item in self._entities[c.ITEM]]
+        additional_assets = super(DoubleTaskFactory, self).render_additional_assets()
+        items = [RenderEntity(c.ITEM.value, item.tile.pos) for item in self[c.ITEM]]
         additional_assets.extend(items)
-        drop_offs = [RenderEntity(c.DROP_OFF.value, drop_off.tile.pos) for drop_off in self._entities[c.DROP_OFF]]
+        drop_offs = [RenderEntity(c.DROP_OFF.value, drop_off.tile.pos) for drop_off in self[c.DROP_OFF]]
         additional_assets.extend(drop_offs)
         return additional_assets
 
@@ -297,8 +289,8 @@ if __name__ == '__main__':
 
     item_props = ItemProperties()
 
-    factory = DoubleTaskFactory(item_props, n_agents=1, done_at_collision=False, frames_to_stack=0,
-                                level_name='rooms', max_steps=400,
+    factory = DoubleTaskFactory(item_props, n_agents=3, done_at_collision=False, frames_to_stack=0,
+                                level_name='rooms', max_steps=4000,
                                 omit_agent_slice_in_obs=True, parse_doors=True, pomdp_r=3,
                                 record_episodes=False, verbose=False
                                 )

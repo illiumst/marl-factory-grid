@@ -27,13 +27,13 @@ class Constants(Enum):
     NO_POS          = (-9999, -9999)
 
     DOORS           = 'Doors'
-    CLOSED_DOOR     = 1
-    OPEN_DOOR       = -1
+    CLOSED_DOOR     = 'closed'
+    OPEN_DOOR       = 'open'
 
-    ACTION          = auto()
-    COLLISIONS      = auto()
-    VALID           = True
-    NOT_VALID       = False
+    ACTION          = 'action'
+    COLLISIONS      = 'collision'
+    VALID           = 'valid'
+    NOT_VALID       = 'not_valid'
 
     # Dirt Env
     DIRT            = 'Dirt'
@@ -44,7 +44,10 @@ class Constants(Enum):
     DROP_OFF        = 'Drop_Off'
 
     def __bool__(self):
-        return bool(self.value)
+        if 'not_' in self.value:
+            return False
+        else:
+            return bool(self.value)
 
 
 class ManhattanMoves(Enum):
@@ -72,10 +75,10 @@ d = DiagonalMoves
 m = ManhattanMoves
 c = Constants
 
-ACTIONMAP = defaultdict(lambda: (0, 0), {m.NORTH.name: (-1, 0), d.NORTHEAST.name: (-1, +1),
-                                         m.EAST.name: (0, 1),   d.SOUTHEAST.name: (1, 1),
-                                         m.SOUTH.name: (1, 0),  d.SOUTHWEST.name: (+1, -1),
-                                         m.WEST.name: (0, -1),  d.NORTHWEST.name: (-1, -1)
+ACTIONMAP = defaultdict(lambda: (0, 0), {m.NORTH: (-1, 0), d.NORTHEAST: (-1, +1),
+                                         m.EAST: (0, 1),   d.SOUTHEAST: (1, 1),
+                                         m.SOUTH: (1, 0),  d.SOUTHWEST: (+1, -1),
+                                         m.WEST: (0, -1),  d.NORTHWEST: (-1, -1)
                                          }
                         )
 

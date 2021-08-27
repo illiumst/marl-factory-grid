@@ -1,3 +1,6 @@
+from enum import Enum
+from typing import Union
+
 import networkx as nx
 import numpy as np
 from environments.helpers import Constants as c
@@ -5,6 +8,8 @@ import itertools
 
 
 class Object:
+
+    _u_idx = 0
 
     def __bool__(self):
         return True
@@ -17,21 +22,41 @@ class Object:
     def name(self):
         return self._name
 
-    def __init__(self, name, name_is_identifier=False, is_blocking_light=False, **kwargs):
-        name = name.name if hasattr(name, 'name') else name
-        self._name = f'{self.__class__.__name__}#{name}' if name_is_identifier else name
+    @property
+    def identifier(self):
+        return self._enum_ident
+
+    def __init__(self, enum_ident: Union[Enum, None] = None, is_blocking_light=False, **kwargs):
+        self._enum_ident = enum_ident
+        if self._enum_ident is not None:
+            self._name = f'{self.__class__.__name__}[{self._enum_ident.name}]'
+        else:
+            self._name = f'{self.__class__.__name__}#{self._u_idx}'
+        Object._u_idx += 1
         self._is_blocking_light = is_blocking_light
         if kwargs:
             print(f'Following kwargs were passed, but ignored: {kwargs}')
 
     def __repr__(self):
-        return f'{self.__class__.__name__}({self.name})'
+        return f'{self.name}'
+
+    def __eq__(self, other) -> bool:
+        if self._enum_ident is not None:
+            if isinstance(other, Enum):
+                return other == self._enum_ident
+            elif isinstance(other, Object):
+                return other._enum_ident == self._enum_ident
+            else:
+                raise ValueError('Must be evaluated against an Enunm Identifier or Object with such.')
+        else:
+            assert isinstance(other, Object), ' This Object can only be compared to other Objects.'
+            return other.name == self.name
 
 
 class Action(Object):
 
-    def __init__(self, *args):
-        super(Action, self).__init__(*args)
+    def __init__(self, *args, **kwargs):
+        super(Action, self).__init__(*args, **kwargs)
 
 
 class Tile(Object):
@@ -56,8 +81,8 @@ class Tile(Object):
     def pos(self):
         return self._pos
 
-    def __init__(self, i, pos, **kwargs):
-        super(Tile, self).__init__(i, **kwargs)
+    def __init__(self, pos, **kwargs):
+        super(Tile, self).__init__(**kwargs)
         self._guests = dict()
         self._pos = tuple(pos)
 
@@ -84,6 +109,9 @@ class Tile(Object):
             return False
         return True
 
+    def __repr__(self):
+        return f'{self.name}(@{self.pos})'
+
 
 class Wall(Tile):
     pass
@@ -97,7 +125,7 @@ class Entity(Object):
 
     @property
     def encoding(self):
-        return 1
+        return c.OCCUPIED_CELL.value
 
     @property
     def x(self):
@@ -115,13 +143,16 @@ class Entity(Object):
     def tile(self):
         return self._tile
 
-    def __init__(self, identifier, tile: Tile, **kwargs):
-        super(Entity, self).__init__(identifier, **kwargs)
+    def __init__(self, tile: Tile, **kwargs):
+        super(Entity, self).__init__(**kwargs)
         self._tile = tile
         tile.enter(self)
 
     def summarize_state(self):
         return self.__dict__.copy()
+
+    def __repr__(self):
+        return f'{self.name}(@{self.pos})'
 
 
 class Door(Entity):

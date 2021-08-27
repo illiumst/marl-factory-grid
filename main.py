@@ -116,7 +116,7 @@ if __name__ == '__main__':
                                pomdp_radius=2, max_steps=500, parse_doors=True,
                                level_name='rooms', frames_to_stack=3,
                                omit_agent_slice_in_obs=True, combin_agent_slices_in_obs=True, record_episodes=False,
-                               cast_shadows=True, doors_have_area=False, seed=seed
+                               cast_shadows=True, doors_have_area=False, seed=seed, verbose=True,
                                ) as env:
 
                 if modeL_type.__name__ in ["PPO", "A2C"]:
