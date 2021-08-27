@@ -48,7 +48,7 @@ class Register:
         return self._register.items()
 
     def __getitem__(self, item):
-        if isinstance(item, int):
+        if isinstance(item, (int, np.int64, np.int32)):
             try:
                 return next(v for i, v in enumerate(self._register.values()) if i == item)
             except StopIteration:

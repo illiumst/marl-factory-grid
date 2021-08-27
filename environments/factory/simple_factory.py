@@ -18,12 +18,6 @@ from environments.utility_classes import MovementProperties
 CLEAN_UP_ACTION = h.EnvActions.CLEAN_UP
 
 
-class ObsSlice(Enum):
-    OWN = -1
-    LEVEL = c.LEVEL.value
-    AGENT = c.AGENT.value
-
-
 class DirtProperties(NamedTuple):
     clean_amount: int = 1               # How much does the robot clean with one actions.
     max_spawn_ratio: float = 0.2        # On max how much tiles does the dirt spawn in percent.
@@ -33,7 +27,6 @@ class DirtProperties(NamedTuple):
     max_global_amount: int = 20         # Max dirt amount in the whole environment.
     dirt_smear_amount: float = 0.2      # Agents smear dirt, when not cleaning up in place.
     agent_can_interact: bool = True     # Whether the agents can interact with the dirt in this environment.
-    on_obs_slice: Enum = ObsSlice.LEVEL
 
 
 class Dirt(Entity):
@@ -217,16 +210,13 @@ class SimpleFactory(BaseFactory):
         info_dict.update(dirty_tile_count=dirty_tile_count)
         info_dict.update(dirt_distribution_score=dirt_distribution_score)
 
-        if agent.temp_collisions:
-            self.print(f't = {self._steps}\t{agent.name} has collisions with {agent.temp_collisions}')
-
         if agent.temp_action == CLEAN_UP_ACTION:
             if agent.temp_valid:
                 reward += 0.5
                 self.print(f'{agent.name} did just clean up some dirt at {agent.pos}.')
                 info_dict.update(dirt_cleaned=1)
             else:
-                reward -= 0.01
+                reward -= 0.00
                 self.print(f'{agent.name} just tried to clean up some dirt at {agent.pos}, but failed.')
                 info_dict.update({f'{agent.name}_failed_action': 1})
                 info_dict.update({f'{agent.name}_failed_action': 1})
@@ -244,9 +234,9 @@ if __name__ == '__main__':
     move_props = MovementProperties(True, True, False)
 
     factory = SimpleFactory(n_agents=1, done_at_collision=False, frames_to_stack=0,
-                            level_name='rooms', max_steps=400,
-                            omit_agent_slice_in_obs=True, parse_doors=True, pomdp_r=2,
-                            record_episodes=False, verbose=False
+                            level_name='rooms', max_steps=400, combin_agent_obs=True,
+                            omit_agent_in_obs=True, parse_doors=True, pomdp_r=2,
+                            record_episodes=False, verbose=True
                             )
 
     # noinspection DuplicatedCode

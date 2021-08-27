@@ -115,8 +115,8 @@ if __name__ == '__main__':
                                movement_properties=move_props,
                                pomdp_radius=2, max_steps=500, parse_doors=True,
                                level_name='rooms', frames_to_stack=3,
-                               omit_agent_slice_in_obs=True, combin_agent_slices_in_obs=True, record_episodes=False,
-                               cast_shadows=True, doors_have_area=False, seed=seed, verbose=True,
+                               omit_agent_in_obs=True, combin_agent_slices_in_obs=True, record_episodes=False,
+                               cast_shadows=True, doors_have_area=False, seed=seed, verbose=False,
                                ) as env:
 
                 if modeL_type.__name__ in ["PPO", "A2C"]:
@@ -151,8 +151,11 @@ if __name__ == '__main__':
                 save_path.parent.mkdir(parents=True, exist_ok=True)
                 model.save(save_path)
                 env.save_params(out_path.parent / f'env_{model.__class__.__name__}_{time_stamp}.yaml')
+                print("Model Trained and saved")
+        print("Model Group Done.. Plotting...")
 
         if out_path:
             combine_runs(out_path.parent)
+    print("All Models Done... Evaluating")
     if out_path:
         compare_runs(Path('debug_out'), time_stamp, 'step_reward')

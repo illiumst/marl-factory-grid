@@ -291,7 +291,7 @@ if __name__ == '__main__':
 
     factory = DoubleTaskFactory(item_props, n_agents=3, done_at_collision=False, frames_to_stack=0,
                                 level_name='rooms', max_steps=4000,
-                                omit_agent_slice_in_obs=True, parse_doors=True, pomdp_r=3,
+                                omit_agent_in_obs=True, parse_doors=True, pomdp_r=3,
                                 record_episodes=False, verbose=False
                                 )
 

@@ -181,7 +181,7 @@ class BaseFactory(gym.Env):
         # Move this in a seperate function?
         for action, agent in zip(actions, self[c.AGENT]):
             agent.clear_temp_sate()
-            action_obj = self._actions[action]
+            action_obj = self._actions[int(action)]
             if self._actions.is_moving_action(action_obj):
                 valid = self._move_or_colide(agent, action_obj)
             elif h.EnvActions.NOOP == agent.temp_action:
@@ -285,6 +285,7 @@ class BaseFactory(gym.Env):
 
         if r := self.pomdp_r:
             x, y = self._level_shape
+            self._padded_obs_cube[:] = c.SHADOWED_CELL.value
             self._padded_obs_cube[:, r:r + x, r:r + y] = self._obs_cube
             global_x, global_y = map(sum, zip(agent.pos, (r, r)))
             x0, x1 = max(0, global_x - self.pomdp_r), global_x + self.pomdp_r + 1
@@ -321,9 +322,7 @@ class BaseFactory(gym.Env):
                 light_block_map[xs, ys] = 0
             agent.temp_light_map = light_block_map
             for obs_idx in can_be_shadowed_idxs:
-                obs[obs_idx] = (obs[obs_idx] * light_block_map) - (
-                        (1 - light_block_map) * obs[0]
-                )
+                obs[obs_idx] = ((obs[obs_idx] * light_block_map) + 0.) - (1 - light_block_map)  # * obs[0])
 
             return obs
         else:
@@ -404,7 +403,7 @@ class BaseFactory(gym.Env):
                     self.print(f'{agent.name} did just use the door at {agent.pos}.')
                     info_dict.update(door_used=1)
                 else:
-                    reward -= 0.01
+                    reward -= 0.00
                     self.print(f'{agent.name} just tried to use a door at {agent.pos}, but failed.')
                     info_dict.update({f'{agent.name}_failed_action': 1})
                     info_dict.update({f'{agent.name}_failed_door_open': 1})
@@ -415,6 +414,9 @@ class BaseFactory(gym.Env):
             additional_reward, additional_info_dict = self.calculate_additional_reward(agent)
             reward += additional_reward
             info_dict.update(additional_info_dict)
+
+            if agent.temp_collisions:
+                self.print(f't = {self._steps}\t{agent.name} has collisions with {agent.temp_collisions}')
 
             for other_agent in agent.temp_collisions:
                 info_dict.update({f'{agent.name}_vs_{other_agent.name}': 1})
