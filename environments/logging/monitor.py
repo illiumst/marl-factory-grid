@@ -1,4 +1,5 @@
 import pickle
+from collections import defaultdict
 from pathlib import Path
 from typing import List, Dict
 
@@ -17,7 +18,7 @@ class MonitorCallback(BaseCallback):
         super(MonitorCallback, self).__init__()
         self.filepath = Path(filepath)
         self._monitor_df = pd.DataFrame()
-        self._monitor_dict = dict()
+        self._monitor_dicts = defaultdict(dict)
         self.plotting = plotting
         self.started = False
         self.closed = False
@@ -69,16 +70,22 @@ class MonitorCallback(BaseCallback):
 
     def _on_step(self, alt_infos: List[Dict] = None, alt_dones: List[bool] = None) -> bool:
         infos = alt_infos or self.locals.get('infos', [])
-        dones = alt_dones or self.locals.get('dones', None) or self.locals.get('done', [None])
-        for _, info in enumerate(infos):
-            self._monitor_dict[self.num_timesteps] = {key: val for key, val in info.items()
-                                                      if key not in ['terminal_observation', 'episode']
-                                                      and not key.startswith('rec_')}
+        if alt_dones is not None:
+            dones = alt_dones
+        elif self.locals.get('dones', None) is not None:
+            dones =self.locals.get('dones', None)
+        elif self.locals.get('dones', None) is not None:
+            dones = self.locals.get('done', [None])
+        else:
+            dones = []
 
-        for env_idx, done in enumerate(dones):
+        for env_idx, (info, done) in enumerate(zip(infos, dones)):
+            self._monitor_dicts[env_idx][self.num_timesteps - env_idx] = {key: val for key, val in info.items()
+                                                                if key not in ['terminal_observation', 'episode']
+                                                                and not key.startswith('rec_')}
             if done:
-                env_monitor_df = pd.DataFrame.from_dict(self._monitor_dict, orient='index')
-                self._monitor_dict = dict()
+                env_monitor_df = pd.DataFrame.from_dict(self._monitor_dicts[env_idx], orient='index')
+                self._monitor_dicts[env_idx] = dict()
                 columns = [col for col in env_monitor_df.columns if col not in IGNORED_DF_COLUMNS]
                 env_monitor_df = env_monitor_df.aggregate(
                     {col: 'mean' if col.endswith('ount') else 'sum' for col in columns}

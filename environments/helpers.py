@@ -50,18 +50,27 @@ class Constants(Enum):
             return bool(self.value)
 
 
-class ManhattanMoves(Enum):
+class MovingAction(Enum):
     NORTH = 'north'
     EAST = 'east'
     SOUTH = 'south'
     WEST = 'west'
-
-
-class DiagonalMoves(Enum):
     NORTHEAST = 'north_east'
     SOUTHEAST = 'south_east'
     SOUTHWEST = 'south_west'
     NORTHWEST = 'north_west'
+
+    @classmethod
+    def is_member(cls, other):
+        return any([other == direction for direction in cls])
+
+    @classmethod
+    def square(cls):
+        return [cls.NORTH, cls.EAST, cls.SOUTH, cls.WEST]
+
+    @classmethod
+    def diagonal(cls):
+        return [cls.NORTHEAST, cls.SOUTHEAST, cls.SOUTHWEST, cls.NORTHWEST]
 
 
 class EnvActions(Enum):
@@ -71,14 +80,13 @@ class EnvActions(Enum):
     ITEM_ACTION = 'item_action'
 
 
-d = DiagonalMoves
-m = ManhattanMoves
+m = MovingAction
 c = Constants
 
-ACTIONMAP = defaultdict(lambda: (0, 0), {m.NORTH: (-1, 0), d.NORTHEAST: (-1, +1),
-                                         m.EAST: (0, 1),   d.SOUTHEAST: (1, 1),
-                                         m.SOUTH: (1, 0),  d.SOUTHWEST: (+1, -1),
-                                         m.WEST: (0, -1),  d.NORTHWEST: (-1, -1)
+ACTIONMAP = defaultdict(lambda: (0, 0), {m.NORTH: (-1, 0), m.NORTHEAST: (-1, +1),
+                                         m.EAST: (0, 1),   m.SOUTHEAST: (1, 1),
+                                         m.SOUTH: (1, 0),  m.SOUTHWEST: (+1, -1),
+                                         m.WEST: (0, -1),  m.NORTHWEST: (-1, -1)
                                          }
                         )
 
@@ -126,8 +134,10 @@ def asset_str(agent):
         return 'agent_collision', 'blank'
     elif not agent.temp_valid or c.LEVEL.name in col_names or c.AGENT.name in col_names:
         return c.AGENT.value, 'invalid'
-    elif agent.temp_valid:
+    elif agent.temp_valid and not MovingAction.is_member(agent.temp_action):
         return c.AGENT.value, 'valid'
+    elif agent.temp_valid and MovingAction.is_member(agent.temp_action):
+        return c.AGENT.value, 'move'
     else:
         return c.AGENT.value, 'idle'
 

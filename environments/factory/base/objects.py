@@ -24,15 +24,27 @@ class Object:
 
     @property
     def identifier(self):
-        return self._enum_ident
-
-    def __init__(self, enum_ident: Union[Enum, None] = None, is_blocking_light=False, **kwargs):
-        self._enum_ident = enum_ident
         if self._enum_ident is not None:
-            self._name = f'{self.__class__.__name__}[{self._enum_ident.name}]'
+            return self._enum_ident
+        elif self._str_ident is not None:
+            return self._str_ident
         else:
+            return self._name
+
+    def __init__(self, str_ident: Union[str, None] = None, enum_ident: Union[Enum, None] = None, is_blocking_light=False, **kwargs):
+        self._str_ident = str_ident
+        self._enum_ident = enum_ident
+
+        if self._enum_ident is not None and self._str_ident is None:
+            self._name = f'{self.__class__.__name__}[{self._enum_ident.name}]'
+        elif self._str_ident is not None and self._enum_ident is None:
+            self._name = f'{self.__class__.__name__}[{self._str_ident}]'
+        elif self._str_ident is None and self._enum_ident is None:
             self._name = f'{self.__class__.__name__}#{self._u_idx}'
-        Object._u_idx += 1
+            Object._u_idx += 1
+        else:
+            raise ValueError('Please use either of the idents.')
+
         self._is_blocking_light = is_blocking_light
         if kwargs:
             print(f'Following kwargs were passed, but ignored: {kwargs}')
@@ -166,7 +178,7 @@ class Door(Entity):
 
     @property
     def encoding(self):
-        return 1 if self.is_closed else -1
+        return 1 if self.is_closed else 0.5
 
     @property
     def access_area(self):
@@ -274,10 +286,10 @@ class Agent(MoveableEntity):
 
     def __init__(self, *args, **kwargs):
         super(Agent, self).__init__(*args, **kwargs)
-        self.clear_temp_sate()
+        self.clear_temp_state()
 
     # noinspection PyAttributeOutsideInit
-    def clear_temp_sate(self):
+    def clear_temp_state(self):
         # for attr in self.__dict__:
         #   if attr.startswith('temp'):
         self.temp_collisions = []

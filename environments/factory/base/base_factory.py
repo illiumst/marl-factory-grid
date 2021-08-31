@@ -60,9 +60,12 @@ class BaseFactory(gym.Env):
                  omit_agent_in_obs=False, done_at_collision=False, cast_shadows=True,
                  verbose=False, doors_have_area=True, env_seed=time.time_ns(), **kwargs):
         assert frames_to_stack != 1 and frames_to_stack >= 0, "'frames_to_stack' cannot be negative or 1."
+        if kwargs:
+            print(f'Following kwargs were passed, but ignored: {kwargs}')
 
         # Attribute Assignment
         self.env_seed = env_seed
+        self.seed(env_seed)
         self._base_rng = np.random.default_rng(self.env_seed)
         self.movement_properties = movement_properties
         self.level_name = level_name
@@ -84,11 +87,6 @@ class BaseFactory(gym.Env):
         self.record_episodes = record_episodes
         self.parse_doors = parse_doors
         self.doors_have_area = doors_have_area
-
-        # Actions
-        self._actions = Actions(self.movement_properties, can_use_doors=self.parse_doors)
-        if additional_actions := self.additional_actions:
-            self._actions.register_additional_items(additional_actions)
 
         # Reset
         self.reset()
@@ -123,11 +121,17 @@ class BaseFactory(gym.Env):
         self.NO_POS_TILE = Tile(c.NO_POS.value)
 
         # Doors
-        parsed_doors = h.one_hot_level(parsed_level, c.DOOR)
-        if np.any(parsed_doors):
-            door_tiles = [floor.by_pos(pos) for pos in np.argwhere(parsed_doors == c.OCCUPIED_CELL.value)]
-            doors = Doors.from_tiles(door_tiles, self._level_shape, context=floor, is_blocking_light=True)
-            entities.update({c.DOORS: doors})
+        if self.parse_doors:
+            parsed_doors = h.one_hot_level(parsed_level, c.DOOR)
+            if np.any(parsed_doors):
+                door_tiles = [floor.by_pos(pos) for pos in np.argwhere(parsed_doors == c.OCCUPIED_CELL.value)]
+                doors = Doors.from_tiles(door_tiles, self._level_shape, context=floor, is_blocking_light=True)
+                entities.update({c.DOORS: doors})
+
+        # Actions
+        self._actions = Actions(self.movement_properties, can_use_doors=self.parse_doors)
+        if additional_actions := self.additional_actions:
+            self._actions.register_additional_items(additional_actions)
 
         # Agents
         agents = Agents.from_tiles(floor.empty_tiles[:self.n_agents], self._level_shape)
@@ -155,8 +159,8 @@ class BaseFactory(gym.Env):
         # Optionally Pad this obs cube for pomdp cases
         if r := self.pomdp_r:
             x, y = self._level_shape
+            # was c.SHADOW
             self._padded_obs_cube = np.full((obs_cube_z, x + r*2, y + r*2), c.SHADOWED_CELL.value, dtype=np.float32)
-            # self._padded_obs_cube[0] = c.OCCUPIED_CELL.value
             self._padded_obs_cube[:, r:r+x, r:r+y] = self._obs_cube
 
     def reset(self) -> (np.ndarray, int, bool, dict):
@@ -170,7 +174,10 @@ class BaseFactory(gym.Env):
         return obs
 
     def step(self, actions):
-        actions = [actions] if isinstance(actions, int) or np.isscalar(actions) else actions
+
+        if self.n_agents == 1:
+            actions = [int(actions)]
+
         assert isinstance(actions, Iterable), f'"actions" has to be in [{int, list}]'
         self._steps += 1
         done = False
@@ -180,9 +187,10 @@ class BaseFactory(gym.Env):
 
         # Move this in a seperate function?
         for action, agent in zip(actions, self[c.AGENT]):
-            agent.clear_temp_sate()
+            agent.clear_temp_state()
             action_obj = self._actions[int(action)]
-            if self._actions.is_moving_action(action_obj):
+            self.print(f'Action #{action} has been resolved to: {action_obj}')
+            if h.MovingAction.is_member(action_obj):
                 valid = self._move_or_colide(agent, action_obj)
             elif h.EnvActions.NOOP == agent.temp_action:
                 valid = c.VALID
@@ -210,7 +218,8 @@ class BaseFactory(gym.Env):
 
         # Step the door close intervall
         if self.parse_doors:
-            self[c.DOORS].tick_doors()
+            if doors := self[c.DOORS]:
+                doors.tick_doors()
 
         # Finalize
         reward, reward_info = self.calculate_reward()
@@ -229,15 +238,18 @@ class BaseFactory(gym.Env):
         return obs, reward, done, info
 
     def _handle_door_interaction(self, agent) -> c:
-        # Check if agent really is standing on a door:
-        if self.doors_have_area:
-            door = self[c.DOORS].get_near_position(agent.pos)
-        else:
-            door = self[c.DOORS].by_pos(agent.pos)
-        if door is not None:
-            door.use()
-            return c.VALID
-        # When he doesn't...
+        if doors := self[c.DOORS]:
+            # Check if agent really is standing on a door:
+            if self.doors_have_area:
+                door = doors.get_near_position(agent.pos)
+            else:
+                door = doors.by_pos(agent.pos)
+            if door is not None:
+                door.use()
+                return c.VALID
+            # When he doesn't...
+            else:
+                return c.NOT_VALID
         else:
             return c.NOT_VALID
 
@@ -284,8 +296,9 @@ class BaseFactory(gym.Env):
             state_array_dict[c.AGENT][0, agent.x, agent.y] += agent.encoding
 
         if r := self.pomdp_r:
+            self._padded_obs_cube[:] = c.SHADOWED_CELL.value   # Was c.SHADOW
+            # self._padded_obs_cube[0] = c.OCCUPIED_CELL.value
             x, y = self._level_shape
-            self._padded_obs_cube[:] = c.SHADOWED_CELL.value
             self._padded_obs_cube[:, r:r + x, r:r + y] = self._obs_cube
             global_x, global_y = map(sum, zip(agent.pos, (r, r)))
             x0, x1 = max(0, global_x - self.pomdp_r), global_x + self.pomdp_r + 1
@@ -297,20 +310,22 @@ class BaseFactory(gym.Env):
         if self.cast_shadows:
             obs_block_light = [obs[idx] != c.OCCUPIED_CELL.value for idx in shadowing_idxs]
             door_shadowing = False
-            if door := self[c.DOORS].by_pos(agent.pos):
-                if door.is_closed:
-                    for group in door.connectivity_subgroups:
-                        if agent.last_pos not in group:
-                            door_shadowing = True
-                            if self.pomdp_r:
-                                blocking = [tuple(np.subtract(x, agent.pos) + (self.pomdp_r, self.pomdp_r))
-                                            for x in group]
-                                xs, ys = zip(*blocking)
-                            else:
-                                xs, ys = zip(*group)
+            if self.parse_doors:
+                if doors := self[c.DOORS]:
+                    if door := doors.by_pos(agent.pos):
+                        if door.is_closed:
+                            for group in door.connectivity_subgroups:
+                                if agent.last_pos not in group:
+                                    door_shadowing = True
+                                    if self.pomdp_r:
+                                        blocking = [tuple(np.subtract(x, agent.pos) + (self.pomdp_r, self.pomdp_r))
+                                                    for x in group]
+                                        xs, ys = zip(*blocking)
+                                    else:
+                                        xs, ys = zip(*group)
 
-                            # noinspection PyUnresolvedReferences
-                            obs_block_light[0][xs, ys] = False
+                                    # noinspection PyUnresolvedReferences
+                                    obs_block_light[0][xs, ys] = False
 
             light_block_map = Map((np.prod(obs_block_light, axis=0) != True).astype(int))
             if self.pomdp_r:
@@ -361,22 +376,24 @@ class BaseFactory(gym.Env):
             return tile, valid
 
         if self.parse_doors and agent.last_pos != c.NO_POS:
-            if door := self[c.DOORS].by_pos(new_tile.pos):
-                if door.can_collide:
-                    return agent.tile, c.NOT_VALID
-                else:  # door.is_closed:
-                    pass
+            if doors := self[c.DOORS]:
+                if self.doors_have_area:
+                    if door := doors.by_pos(new_tile.pos):
+                        if door.can_collide:
+                            return agent.tile, c.NOT_VALID
+                        else:  # door.is_closed:
+                            pass
 
-            if door := self[c.DOORS].by_pos(agent.pos):
-                if door.is_open:
-                    pass
-                else:  # door.is_closed:
-                    if door.is_linked(agent.last_pos, new_tile.pos):
+                if door := doors.by_pos(agent.pos):
+                    if door.is_open:
                         pass
-                    else:
-                        return agent.tile, c.NOT_VALID
-            else:
-                pass
+                    else:  # door.is_closed:
+                        if door.is_linked(agent.last_pos, new_tile.pos):
+                            pass
+                        else:
+                            return agent.tile, c.NOT_VALID
+                else:
+                    pass
         else:
             pass
 
@@ -391,7 +408,9 @@ class BaseFactory(gym.Env):
             if self._actions.is_moving_action(agent.temp_action):
                 if agent.temp_valid:
                     # info_dict.update(movement=1)
-                    reward -= 0.00
+                    # info_dict.update({f'{agent.name}_failed_action': 1})
+                    # reward += 0.00
+                    pass
                 else:
                     # self.print('collision')
                     reward -= 0.01
@@ -400,16 +419,17 @@ class BaseFactory(gym.Env):
 
             elif h.EnvActions.USE_DOOR == agent.temp_action:
                 if agent.temp_valid:
+                    # reward += 0.00
                     self.print(f'{agent.name} did just use the door at {agent.pos}.')
                     info_dict.update(door_used=1)
                 else:
-                    reward -= 0.00
+                    # reward -= 0.00
                     self.print(f'{agent.name} just tried to use a door at {agent.pos}, but failed.')
                     info_dict.update({f'{agent.name}_failed_action': 1})
                     info_dict.update({f'{agent.name}_failed_door_open': 1})
             elif h.EnvActions.NOOP == agent.temp_action:
                 info_dict.update(no_op=1)
-                reward -= 0.00
+                # reward -= 0.00
 
             additional_reward, additional_info_dict = self.calculate_additional_reward(agent)
             reward += additional_reward

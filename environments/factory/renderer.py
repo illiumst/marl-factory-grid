@@ -79,14 +79,15 @@ class Renderer:
         rects = []
         for i, j in product(range(-self.view_radius, self.view_radius+1),
                             range(-self.view_radius, self.view_radius+1)):
-            if bool(view[self.view_radius+j, self.view_radius+i]):
-                visibility_rect = bp['dest'].copy()
-                visibility_rect.centerx += i*self.cell_size
-                visibility_rect.centery += j*self.cell_size
-                shape_surf = pygame.Surface(visibility_rect.size, pygame.SRCALPHA)
-                pygame.draw.rect(shape_surf, self.AGENT_VIEW_COLOR, shape_surf.get_rect())
-                shape_surf.set_alpha(64)
-                rects.append(dict(source=shape_surf, dest=visibility_rect))
+            if view is not None:
+                if bool(view[self.view_radius+j, self.view_radius+i]):
+                    visibility_rect = bp['dest'].copy()
+                    visibility_rect.centerx += i*self.cell_size
+                    visibility_rect.centery += j*self.cell_size
+                    shape_surf = pygame.Surface(visibility_rect.size, pygame.SRCALPHA)
+                    pygame.draw.rect(shape_surf, self.AGENT_VIEW_COLOR, shape_surf.get_rect())
+                    shape_surf.set_alpha(64)
+                    rects.append(dict(source=shape_surf, dest=visibility_rect))
         return rects
 
     def render(self, entities):

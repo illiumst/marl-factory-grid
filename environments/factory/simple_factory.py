@@ -94,6 +94,10 @@ class DirtRegister(MovingEntityObjectRegister):
                 return c.NOT_VALID
         return c.VALID
 
+    def __repr__(self):
+        s = super(DirtRegister, self).__repr__()
+        return f'{s[:-1]}, {self.amount})'
+
 
 def softmax(x):
     """Compute softmax values for each sets of scores in x."""
@@ -149,7 +153,10 @@ class SimpleFactory(BaseFactory):
             return c.NOT_VALID
 
     def trigger_dirt_spawn(self):
-        free_for_dirt = self[c.FLOOR].empty_tiles
+        free_for_dirt = [x for x in self[c.FLOOR]
+                         if len(x.guests) == 0 or (len(x.guests) == 1 and isinstance(next(y for y in x.guests), Dirt))
+                         ]
+        self._dirt_rng.shuffle(free_for_dirt)
         new_spawn = self._dirt_rng.uniform(0, self.dirt_properties.max_spawn_ratio)
         n_dirt_tiles = max(0, int(new_spawn * len(free_for_dirt)))
         self[c.DIRT].spawn_dirt(free_for_dirt[:n_dirt_tiles])
@@ -216,7 +223,7 @@ class SimpleFactory(BaseFactory):
                 self.print(f'{agent.name} did just clean up some dirt at {agent.pos}.')
                 info_dict.update(dirt_cleaned=1)
             else:
-                reward -= 0.00
+                reward -= 0.01
                 self.print(f'{agent.name} just tried to clean up some dirt at {agent.pos}, but failed.')
                 info_dict.update({f'{agent.name}_failed_action': 1})
                 info_dict.update({f'{agent.name}_failed_action': 1})
@@ -235,8 +242,8 @@ if __name__ == '__main__':
 
     factory = SimpleFactory(n_agents=1, done_at_collision=False, frames_to_stack=0,
                             level_name='rooms', max_steps=400, combin_agent_obs=True,
-                            omit_agent_in_obs=True, parse_doors=True, pomdp_r=2,
-                            record_episodes=False, verbose=True
+                            omit_agent_in_obs=True, parse_doors=False, pomdp_r=2,
+                            record_episodes=False, verbose=True, cast_shadows=False
                             )
 
     # noinspection DuplicatedCode

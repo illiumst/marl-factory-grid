@@ -53,7 +53,10 @@ class Register:
                 return next(v for i, v in enumerate(self._register.values()) if i == item)
             except StopIteration:
                 return None
-        return self._register[item]
+        try:
+            return self._register[item]
+        except KeyError:
+            return None
 
     def __repr__(self):
         return f'{self.__class__.__name__}({self._register})'
@@ -84,8 +87,8 @@ class EntityObjectRegister(ObjectRegister, ABC):
     @classmethod
     def from_tiles(cls, tiles, *args, **kwargs):
         # objects_name = cls._accepted_objects.__name__
-        entities = [cls._accepted_objects(tile, **kwargs)
-                    for tile in tiles]
+        entities = [cls._accepted_objects(tile, str_ident=i, **kwargs)
+                    for i, tile in enumerate(tiles)]
         register_obj = cls(*args)
         register_obj.register_additional_items(entities)
         return register_obj
@@ -294,10 +297,10 @@ class Actions(Register):
 
         if self.allow_square_movement:
             self.register_additional_items([self._accepted_objects(enum_ident=direction)
-                                            for direction in h.ManhattanMoves])
+                                            for direction in h.MovingAction.square()])
         if self.allow_diagonal_movement:
             self.register_additional_items([self._accepted_objects(enum_ident=direction)
-                                            for direction in h.DiagonalMoves])
+                                            for direction in h.MovingAction.diagonal()])
         self._movement_actions = self._register.copy()
         if self.can_use_doors:
             self.register_additional_items([self._accepted_objects(enum_ident=h.EnvActions.USE_DOOR)])
