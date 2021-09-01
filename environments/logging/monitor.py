@@ -74,13 +74,13 @@ class MonitorCallback(BaseCallback):
             dones = alt_dones
         elif self.locals.get('dones', None) is not None:
             dones =self.locals.get('dones', None)
-        elif self.locals.get('dones', None) is not None:
+        elif self.locals.get('done', None) is not None:
             dones = self.locals.get('done', [None])
         else:
             dones = []
 
         for env_idx, (info, done) in enumerate(zip(infos, dones)):
-            self._monitor_dicts[env_idx][self.num_timesteps - env_idx] = {key: val for key, val in info.items()
+            self._monitor_dicts[env_idx][len(self._monitor_dicts[env_idx])] = {key: val for key, val in info.items()
                                                                 if key not in ['terminal_observation', 'episode']
                                                                 and not key.startswith('rec_')}
             if done:
