@@ -6,8 +6,8 @@ from natsort import natsorted
 from stable_baselines3 import PPO, DQN, A2C
 from stable_baselines3.common.evaluation import evaluate_policy
 
-from environments.factory.simple_factory import DirtProperties, SimpleFactory
-from environments.factory.double_task_factory import ItemProperties, DoubleTaskFactory
+from environments.factory.factory_dirt import DirtProperties, DirtFactory
+from environments.factory.factory_item import ItemProperties, ItemFactory
 
 warnings.filterwarnings('ignore', category=FutureWarning)
 warnings.filterwarnings('ignore', category=UserWarning)
@@ -30,7 +30,7 @@ if __name__ == '__main__':
                                                          max_local_amount=1, spawn_frequency=5, max_spawn_ratio=0.05,
                                                          dirt_smear_amount=0.5),
                           combin_agent_slices_in_obs=True, omit_agent_slice_in_obs=True)
-    with SimpleFactory(**env_kwargs) as env:
+    with DirtFactory(**env_kwargs) as env:
 
         # Edit THIS:
         env.seed(seed)

@@ -10,7 +10,7 @@ from stable_baselines3.common.callbacks import CallbackList
 from stable_baselines3 import PPO, DQN, A2C
 
 # our imports
-from environments.factory.simple_factory import SimpleFactory, DirtProperties
+from environments.factory.factory_dirt import DirtFactory, DirtProperties
 from environments.logging.monitor import MonitorCallback
 from algorithms.reg_dqn import RegDQN
 from main import compare_runs, combine_runs
@@ -49,7 +49,7 @@ if __name__ == '__main__':
         dirt_props = DirtProperties(clean_amount=3, gain_amount=0.2, max_global_amount=30,
                                     max_local_amount=3, spawn_frequency=1, max_spawn_ratio=0.05)
         # env_kwargs.update(n_agents=1, dirt_properties=dirt_props)
-        env = SimpleFactory(**env_kwargs)
+        env = DirtFactory(**env_kwargs)
 
         env = FrameStack(env, 4)
 

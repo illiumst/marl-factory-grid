@@ -279,7 +279,7 @@ class BaseFactory(gym.Env):
         for key, array in state_array_dict.items():
             # Flush state array object representation to obs cube
             if self[key].is_per_agent:
-                per_agent_idx = self[key].get_idx_by_name(agent.name)
+                per_agent_idx = self[key].idx_by_entity(agent)
                 z = 1
                 self._obs_cube[running_idx: running_idx+z] = array[per_agent_idx]
             else:

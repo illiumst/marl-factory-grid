@@ -182,7 +182,7 @@ class Door(Entity):
 
     @property
     def encoding(self):
-        return 1 if self.is_closed else 0.5
+        return 1 if self.is_closed else 2
 
     @property
     def str_state(self):

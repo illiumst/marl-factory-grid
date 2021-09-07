@@ -116,18 +116,18 @@ def entropy(x):
 
 
 # noinspection PyAttributeOutsideInit, PyAbstractClass
-class SimpleFactory(BaseFactory):
+class DirtFactory(BaseFactory):
 
     @property
     def additional_actions(self) -> Union[Action, List[Action]]:
-        super_actions = super(SimpleFactory, self).additional_actions
+        super_actions = super().additional_actions
         if self.dirt_properties.agent_can_interact:
             super_actions.append(Action(enum_ident=CLEAN_UP_ACTION))
         return super_actions
 
     @property
     def additional_entities(self) -> Dict[(Enum, Entities)]:
-        super_entities = super(SimpleFactory, self).additional_entities
+        super_entities = super().additional_entities
         dirt_register = DirtRegister(self.dirt_properties, self._level_shape)
         super_entities.update(({c.DIRT: dirt_register}))
         return super_entities
@@ -139,10 +139,10 @@ class SimpleFactory(BaseFactory):
         self._dirt_rng = np.random.default_rng(env_seed)
         self._dirt: DirtRegister
         kwargs.update(env_seed=env_seed)
-        super(SimpleFactory, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def render_additional_assets(self, mode='human'):
-        additional_assets = super(SimpleFactory, self).render_additional_assets()
+        additional_assets = super().render_additional_assets()
         dirt = [RenderEntity('dirt', dirt.tile.pos, min(0.15 + dirt.amount, 1.5), 'scale')
                 for dirt in self[c.DIRT]]
         additional_assets.extend(dirt)
@@ -170,7 +170,7 @@ class SimpleFactory(BaseFactory):
         self[c.DIRT].spawn_dirt(free_for_dirt[:n_dirt_tiles])
 
     def do_additional_step(self) -> dict:
-        info_dict = super(SimpleFactory, self).do_additional_step()
+        info_dict = super().do_additional_step()
         if smear_amount := self.dirt_properties.dirt_smear_amount:
             for agent in self[c.AGENT]:
                 if agent.temp_valid and agent.last_pos != c.NO_POS:
@@ -193,7 +193,7 @@ class SimpleFactory(BaseFactory):
         return info_dict
 
     def do_additional_actions(self, agent: Agent, action: Action) -> Union[None, c]:
-        valid = super(SimpleFactory, self).do_additional_actions(agent, action)
+        valid = super().do_additional_actions(agent, action)
         if valid is None:
             if action == CLEAN_UP_ACTION:
                 if self.dirt_properties.agent_can_interact:
@@ -207,12 +207,12 @@ class SimpleFactory(BaseFactory):
             return valid
 
     def do_additional_reset(self) -> None:
-        super(SimpleFactory, self).do_additional_reset()
+        super().do_additional_reset()
         self.trigger_dirt_spawn()
         self._next_dirt_spawn = self.dirt_properties.spawn_frequency
 
     def calculate_additional_reward(self, agent: Agent) -> (int, dict):
-        reward, info_dict = super(SimpleFactory, self).calculate_additional_reward(agent)
+        reward, info_dict = super().calculate_additional_reward(agent)
         dirt = [dirt.amount for dirt in self[c.DIRT]]
         current_dirt_amount = sum(dirt)
         dirty_tile_count = len(dirt)
@@ -253,12 +253,12 @@ if __name__ == '__main__':
     with RecorderCallback(filepath=Path('debug_out') / f'recorder_xxxx.json', occupation_map=False,
                           trajectory_map=False) as recorder:
 
-        factory = SimpleFactory(n_agents=1, done_at_collision=False, frames_to_stack=0,
-                                level_name='rooms', max_steps=400, combin_agent_obs=True,
-                                omit_agent_in_obs=True, parse_doors=True, pomdp_r=3,
-                                record_episodes=True, verbose=True, cast_shadows=True,
-                                movement_properties=move_props, dirt_properties=dirt_props
-                                )
+        factory = DirtFactory(n_agents=1, done_at_collision=False, frames_to_stack=0,
+                              level_name='rooms', max_steps=400, combin_agent_obs=True,
+                              omit_agent_in_obs=True, parse_doors=True, pomdp_r=3,
+                              record_episodes=True, verbose=True, cast_shadows=True,
+                              movement_properties=move_props, dirt_properties=dirt_props
+                              )
 
         # noinspection DuplicatedCode
         n_actions = factory.action_space.n - 1

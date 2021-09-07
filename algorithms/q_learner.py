@@ -99,7 +99,7 @@ class QLearner(BaseLearner):
 
 
 if __name__ == '__main__':
-    from environments.factory.simple_factory import SimpleFactory, DirtProperties, MovementProperties
+    from environments.factory.factory_dirt import DirtFactory, DirtProperties, MovementProperties
     from algorithms.common import BaseDDQN, BaseICM
     from algorithms.m_q_learner import MQLearner, MQICMLearner
     from algorithms.vdn_learner import VDNLearner
@@ -109,7 +109,7 @@ if __name__ == '__main__':
     with (Path(f'../environments/factory/env_default_param.yaml')).open('r') as f:
         env_kwargs = yaml.load(f, Loader=yaml.FullLoader)
 
-    env = SimpleFactory(**env_kwargs)
+    env = DirtFactory(**env_kwargs)
     obs_shape = np.prod(env.observation_space.shape)
     n_actions = env.action_space.n
 

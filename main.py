@@ -10,8 +10,9 @@ import pandas as pd
 from stable_baselines3.common.callbacks import CallbackList
 from stable_baselines3.common.vec_env import SubprocVecEnv
 
-from environments.factory.double_task_factory import DoubleTaskFactory, ItemProperties
-from environments.factory.simple_factory import DirtProperties, SimpleFactory
+from environments.factory.factory_dirt_item import DirtItemFactory
+from environments.factory.factory_item import ItemFactory, ItemProperties
+from environments.factory.factory_dirt import DirtProperties, DirtFactory
 from environments.helpers import IGNORED_DF_COLUMNS
 from environments.logging.monitor import MonitorCallback
 from environments.logging.plotting import prepare_plot
@@ -94,7 +95,7 @@ def compare_runs(run_path: Path, run_identifier: int, parameter: Union[str, List
 def make_env(env_kwargs_dict):
 
     def _init():
-        with SimpleFactory(**env_kwargs_dict) as init_env:
+        with DirtItemFactory(**env_kwargs_dict) as init_env:
             return init_env
 
     return _init
@@ -128,7 +129,7 @@ if __name__ == '__main__':
         for seed in range(3):
             env_kwargs = dict(n_agents=1,
                               # with_dirt=True,
-                              # item_properties=item_props,
+                              item_properties=item_props,
                               dirt_properties=dirt_props,
                               movement_properties=move_props,
                               pomdp_r=2, max_steps=400, parse_doors=True,
@@ -139,7 +140,7 @@ if __name__ == '__main__':
 
             if modeL_type.__name__ in ["PPO", "A2C"]:
                 kwargs = dict(ent_coef=0.01)
-                env = SubprocVecEnv([make_env(env_kwargs) for _ in range(10)], start_method="spawn")
+                env = SubprocVecEnv([make_env(env_kwargs) for _ in range(1)], start_method="spawn")
             elif modeL_type.__name__ in ["RegDQN", "DQN", "QRDQN"]:
                 env = make_env(env_kwargs)()
                 kwargs = dict(buffer_size=50000,
