@@ -167,6 +167,8 @@ class ItemProperties(NamedTuple):
 class DoubleTaskFactory(SimpleFactory):
     # noinspection PyMissingConstructor
     def __init__(self, item_properties: ItemProperties, *args, env_seed=time.time_ns(), **kwargs):
+        if isinstance(item_properties, dict):
+            item_properties = ItemProperties(**item_properties)
         self.item_properties = item_properties
         kwargs.update(env_seed=env_seed)
         self._item_rng = np.random.default_rng(env_seed)
@@ -210,7 +212,7 @@ class DoubleTaskFactory(SimpleFactory):
         elif item := self[c.ITEM].by_pos(agent.pos):
             try:
                 inventory.append(item)
-                item.move(self.NO_POS_TILE)
+                item.move(self._NO_POS_TILE)
                 return c.VALID
             except RuntimeError:
                 return c.NOT_VALID

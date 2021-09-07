@@ -124,6 +124,9 @@ class Tile(Object):
     def __repr__(self):
         return f'{self.name}(@{self.pos})'
 
+    def summarize_state(self):
+        return dict(name=self.name, x=self.x, y=self.y)
+
 
 class Wall(Tile):
     pass
@@ -160,8 +163,9 @@ class Entity(Object):
         self._tile = tile
         tile.enter(self)
 
-    def summarize_state(self):
-        return self.__dict__.copy()
+    def summarize_state(self) -> dict:
+        return dict(name=str(self.name), x=int(self.x), y=int(self.y),
+                    tile=str(self.tile.name), can_collide=bool(self.can_collide))
 
     def __repr__(self):
         return f'{self.name}(@{self.pos})'
@@ -179,6 +183,10 @@ class Door(Entity):
     @property
     def encoding(self):
         return 1 if self.is_closed else 0.5
+
+    @property
+    def str_state(self):
+        return 'open' if self.is_open else 'closed'
 
     @property
     def access_area(self):
@@ -205,6 +213,11 @@ class Door(Entity):
                 self.connectivity.add_edge(tile_pos, idx)
         if not closed_on_init:
             self._open()
+
+    def summarize_state(self):
+        state_dict = super().summarize_state()
+        state_dict.update(state=str(self.str_state), time_to_close=int(self.time_to_close))
+        return state_dict
 
     @property
     def is_closed(self):
@@ -296,3 +309,8 @@ class Agent(MoveableEntity):
         self.temp_valid = None
         self.temp_action = None
         self.temp_light_map = None
+
+    def summarize_state(self):
+        state_dict = super().summarize_state()
+        state_dict.update(valid=bool(self.temp_valid), action=str(self.temp_action))
+        return state_dict

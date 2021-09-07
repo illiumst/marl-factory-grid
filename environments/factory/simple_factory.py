@@ -1,5 +1,6 @@
 import time
 from enum import Enum
+from pathlib import Path
 from typing import List, Union, NamedTuple, Dict
 import random
 
@@ -12,7 +13,7 @@ from environments.factory.base.objects import Agent, Action, Entity, Tile
 from environments.factory.base.registers import Entities, MovingEntityObjectRegister
 
 from environments.factory.renderer import RenderEntity
-from environments.utility_classes import MovementProperties
+from environments.logging.recorder import RecorderCallback
 
 
 CLEAN_UP_ACTION = h.EnvActions.CLEAN_UP
@@ -49,6 +50,11 @@ class Dirt(Entity):
 
     def set_new_amount(self, amount):
         self._amount = amount
+
+    def summarize_state(self):
+        state_dict = super().summarize_state()
+        state_dict.update(amount=float(self.amount))
+        return state_dict
 
 
 class DirtRegister(MovingEntityObjectRegister):
@@ -127,6 +133,8 @@ class SimpleFactory(BaseFactory):
         return super_entities
 
     def __init__(self, *args, dirt_properties: DirtProperties = DirtProperties(), env_seed=time.time_ns(), **kwargs):
+        if isinstance(dirt_properties, dict):
+            dirt_properties = DirtProperties(**dirt_properties)
         self.dirt_properties = dirt_properties
         self._dirt_rng = np.random.default_rng(env_seed)
         self._dirt: DirtRegister
@@ -235,30 +243,41 @@ class SimpleFactory(BaseFactory):
 
 
 if __name__ == '__main__':
-    render = True
+    render = False
 
     dirt_props = DirtProperties(1, 0.05, 0.1, 3, 1, 20, 0.0)
-    move_props = MovementProperties(True, True, False)
+    move_props = {'allow_square_movement': True,
+  'allow_diagonal_movement': False,
+  'allow_no_op': False} #MovementProperties(True, True, False)
 
-    factory = SimpleFactory(n_agents=1, done_at_collision=False, frames_to_stack=0,
-                            level_name='rooms', max_steps=400, combin_agent_obs=True,
-                            omit_agent_in_obs=True, parse_doors=False, pomdp_r=2,
-                            record_episodes=False, verbose=True, cast_shadows=False
-                            )
+    with RecorderCallback(filepath=Path('debug_out') / f'recorder_xxxx.json', occupation_map=False,
+                          trajectory_map=False) as recorder:
 
-    # noinspection DuplicatedCode
-    n_actions = factory.action_space.n - 1
-    _ = factory.observation_space
+        factory = SimpleFactory(n_agents=1, done_at_collision=False, frames_to_stack=0,
+                                level_name='rooms', max_steps=400, combin_agent_obs=True,
+                                omit_agent_in_obs=True, parse_doors=True, pomdp_r=3,
+                                record_episodes=True, verbose=True, cast_shadows=True,
+                                movement_properties=move_props, dirt_properties=dirt_props
+                                )
 
-    for epoch in range(100):
-        random_actions = [[random.randint(0, n_actions) for _ in range(factory.n_agents)] for _ in range(200)]
-        env_state = factory.reset()
-        r = 0
-        for agent_i_action in random_actions:
-            env_state, step_r, done_bool, info_obj = factory.step(agent_i_action)
-            r += step_r
-            if render:
-                factory.render()
-            if done_bool:
-                break
-        print(f'Factory run {epoch} done, reward is:\n    {r}')
+        # noinspection DuplicatedCode
+        n_actions = factory.action_space.n - 1
+        _ = factory.observation_space
+
+        for epoch in range(4):
+            random_actions = [[random.randint(0, n_actions) for _
+                               in range(factory.n_agents)] for _
+                              in range(factory.max_steps+1)]
+            env_state = factory.reset()
+            r = 0
+            for agent_i_action in random_actions:
+                env_state, step_r, done_bool, info_obj = factory.step(agent_i_action)
+                recorder.read_info(0, info_obj)
+                r += step_r
+                if render:
+                    factory.render()
+                if done_bool:
+                    recorder.read_done(0, done_bool)
+                    break
+            print(f'Factory run {epoch} done, reward is:\n    {r}')
+    pass

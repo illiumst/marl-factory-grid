@@ -15,7 +15,7 @@ class Register:
 
     @property
     def name(self):
-        return self.__class__.__name__
+        return f'{self.__class__.__name__}'
 
     def __init__(self, *args, **kwargs):
         self._register = dict()
@@ -77,6 +77,9 @@ class ObjectRegister(Register):
         else:
             if self.individual_slices:
                 self._array = np.concatenate((self._array, np.zeros((1, *self._level_shape))))
+
+    def summarize_states(self):
+        return [val.summarize_state() for val in self.values()]
 
 
 class EntityObjectRegister(ObjectRegister, ABC):
@@ -154,8 +157,8 @@ class Entities(Register):
     def __init__(self):
         super(Entities, self).__init__()
 
-    def __iter__(self):
-        return iter([x for sublist in self.values() for x in sublist])
+    def iter_individual_entitites(self):
+        return iter((x for sublist in self.values() for x in sublist))
 
     def register_item(self, other: dict):
         assert not any([key for key in other.keys() if key in self.keys()]), \
