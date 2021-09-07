@@ -63,6 +63,9 @@ class Register:
 
 
 class ObjectRegister(Register):
+
+    hide_from_obs_builder = False
+
     def __init__(self, level_shape: (int, int), *args, individual_slices=False, is_per_agent=False, **kwargs):
         super(ObjectRegister, self).__init__(*args, **kwargs)
         self.is_per_agent = is_per_agent
@@ -76,7 +79,7 @@ class ObjectRegister(Register):
             self._array = np.zeros((1, *self._level_shape))
         else:
             if self.individual_slices:
-                self._array = np.concatenate((self._array, np.zeros((1, *self._level_shape))))
+                self._array = np.concatenate((self._array, np.zeros((1, *self._array.shape[1:]))))
 
     def summarize_states(self):
         return [val.summarize_state() for val in self.values()]

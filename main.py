@@ -95,7 +95,7 @@ def compare_runs(run_path: Path, run_identifier: int, parameter: Union[str, List
 def make_env(env_kwargs_dict):
 
     def _init():
-        with DirtItemFactory(**env_kwargs_dict) as init_env:
+        with ItemFactory(**env_kwargs_dict) as init_env:
             return init_env
 
     return _init
@@ -128,11 +128,10 @@ if __name__ == '__main__':
     for modeL_type in [A2C, PPO, DQN]:  # ,RegDQN, QRDQN]:
         for seed in range(3):
             env_kwargs = dict(n_agents=1,
-                              # with_dirt=True,
                               item_properties=item_props,
-                              dirt_properties=dirt_props,
+                              # dirt_properties=dirt_props,
                               movement_properties=move_props,
-                              pomdp_r=2, max_steps=400, parse_doors=True,
+                              pomdp_r=2, max_steps=400, parse_doors=False,
                               level_name='rooms', frames_to_stack=3,
                               omit_agent_in_obs=True, combin_agent_obs=True, record_episodes=False,
                               cast_shadows=True, doors_have_area=False, env_seed=seed, verbose=False,
@@ -140,7 +139,7 @@ if __name__ == '__main__':
 
             if modeL_type.__name__ in ["PPO", "A2C"]:
                 kwargs = dict(ent_coef=0.01)
-                env = SubprocVecEnv([make_env(env_kwargs) for _ in range(1)], start_method="spawn")
+                env = SubprocVecEnv([make_env(env_kwargs) for _ in range(10)], start_method="spawn")
             elif modeL_type.__name__ in ["RegDQN", "DQN", "QRDQN"]:
                 env = make_env(env_kwargs)()
                 kwargs = dict(buffer_size=50000,
