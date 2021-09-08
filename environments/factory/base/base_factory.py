@@ -195,7 +195,7 @@ class BaseFactory(gym.Env):
         for action, agent in zip(actions, self[c.AGENT]):
             agent.clear_temp_state()
             action_obj = self._actions[int(action)]
-            self.print(f'Action #{action} has been resolved to: {action_obj}')
+            # self.print(f'Action #{action} has been resolved to: {action_obj}')
             if h.MovingAction.is_member(action_obj):
                 valid = self._move_or_colide(agent, action_obj)
             elif h.EnvActions.NOOP == agent.temp_action:

@@ -4,7 +4,7 @@ from typing import List, Union, Dict
 
 import numpy as np
 
-from environments.factory.base.objects import Entity, Tile, Agent, Door, Action, Wall, Object
+from environments.factory.base.objects import Entity, Tile, Agent, Door, Action, Wall, Object, PlaceHolder
 from environments.utility_classes import MovementProperties
 from environments import helpers as h
 from environments.helpers import Constants as c
@@ -156,6 +156,25 @@ class MovingEntityObjectRegister(EntityObjectRegister, ABC):
         del self[name]
 
 
+class PlaceHolderRegister(MovingEntityObjectRegister):
+
+    _accepted_objects = PlaceHolder
+
+    # noinspection DuplicatedCode
+    def as_array(self):
+        self._array[:] = c.FREE_CELL.value
+        # noinspection PyTupleAssignmentBalance
+        for z, x, y, v in zip(range(len(self)), *zip(*[x.pos for x in self]), [x.encoding for x in self]):
+            if self.individual_slices:
+                self._array[z, x, y] += v
+            else:
+                self._array[0, x, y] += v
+        if self.individual_slices:
+            return self._array
+        else:
+            return self._array.sum(axis=0, keepdims=True)
+
+
 class Entities(Register):
 
     _accepted_objects = EntityObjectRegister
@@ -256,6 +275,9 @@ class FloorTiles(WallTiles):
 
 class Agents(MovingEntityObjectRegister):
 
+    _accepted_objects = Agent
+
+    # noinspection DuplicatedCode
     def as_array(self):
         self._array[:] = c.FREE_CELL.value
         # noinspection PyTupleAssignmentBalance
@@ -268,8 +290,6 @@ class Agents(MovingEntityObjectRegister):
             return self._array
         else:
             return self._array.sum(axis=0, keepdims=True)
-
-    _accepted_objects = Agent
 
     @property
     def positions(self):

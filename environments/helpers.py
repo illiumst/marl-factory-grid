@@ -5,6 +5,8 @@ from typing import Tuple, Union
 import numpy as np
 from pathlib import Path
 
+from stable_baselines3 import PPO, DQN, A2C
+
 LEVELS_DIR = 'levels'
 
 TO_BE_AVERAGED = ['dirt_amount', 'dirty_tiles']
@@ -141,6 +143,8 @@ def asset_str(agent):
     else:
         return c.AGENT.value, 'idle'
 
+
+model_map = dict(PPO=PPO, DQN=DQN, A2C=A2C)
 
 if __name__ == '__main__':
     parsed_level = parse_level(Path(__file__).parent / 'factory' / 'levels' / 'simple.txt')

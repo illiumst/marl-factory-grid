@@ -311,15 +311,17 @@ class ItemFactory(BaseFactory):
         reward, info_dict = super().calculate_additional_reward(agent)
         if h.EnvActions.ITEM_ACTION == agent.temp_action:
             if agent.temp_valid:
-                if self[c.DROP_OFF].by_pos(agent.pos):
+                if drop_off := self[c.DROP_OFF].by_pos(agent.pos):
                     info_dict.update({f'{agent.name}_item_dropoff': 1})
-
+                    self.print(f'{agent.name} just dropped of an item at {drop_off.pos}.')
                     reward += 0.5
                 else:
                     info_dict.update({f'{agent.name}_item_pickup': 1})
+                    self.print(f'{agent.name} just picked up an item at {agent.pos}')
                     reward += 0.1
             else:
                 info_dict.update({f'{agent.name}_failed_item_action': 1})
+                self.print(f'{agent.name} just tried to pick up an item at {agent.pos}, but failed.')
                 reward -= 0.1
         return reward, info_dict
 

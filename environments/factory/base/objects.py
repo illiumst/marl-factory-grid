@@ -66,10 +66,88 @@ class Object:
             return other.name == self.name
 
 
+class Entity(Object):
+
+    @property
+    def can_collide(self):
+        return True
+
+    @property
+    def encoding(self):
+        return c.OCCUPIED_CELL.value
+
+    @property
+    def x(self):
+        return self.pos[0]
+
+    @property
+    def y(self):
+        return self.pos[1]
+
+    @property
+    def pos(self):
+        return self._tile.pos
+
+    @property
+    def tile(self):
+        return self._tile
+
+    def __init__(self, tile, **kwargs):
+        super(Entity, self).__init__(**kwargs)
+        self._tile = tile
+        tile.enter(self)
+
+    def summarize_state(self) -> dict:
+        return dict(name=str(self.name), x=int(self.x), y=int(self.y),
+                    tile=str(self.tile.name), can_collide=bool(self.can_collide))
+
+    def __repr__(self):
+        return f'{self.name}(@{self.pos})'
+
+
+class MoveableEntity(Entity):
+
+    @property
+    def last_tile(self):
+        return self._last_tile
+
+    @property
+    def last_pos(self):
+        if self._last_tile:
+            return self._last_tile.pos
+        else:
+            return c.NO_POS
+
+    @property
+    def direction_of_view(self):
+        last_x, last_y = self.last_pos
+        curr_x, curr_y = self.pos
+        return last_x-curr_x, last_y-curr_y
+
+    def __init__(self, *args, **kwargs):
+        super(MoveableEntity, self).__init__(*args, **kwargs)
+        self._last_tile = None
+
+    def move(self, next_tile):
+        curr_tile = self.tile
+        if curr_tile != next_tile:
+            next_tile.enter(self)
+            curr_tile.leave(self)
+            self._tile = next_tile
+            self._last_tile = curr_tile
+            return True
+        else:
+            return False
+
+
 class Action(Object):
 
     def __init__(self, *args, **kwargs):
         super(Action, self).__init__(*args, **kwargs)
+
+
+class PlaceHolder(MoveableEntity):
+    pass
 
 
 class Tile(Object):
@@ -131,45 +209,6 @@ class Tile(Object):
 
 class Wall(Tile):
     pass
-
-
-class Entity(Object):
-
-    @property
-    def can_collide(self):
-        return True
-
-    @property
-    def encoding(self):
-        return c.OCCUPIED_CELL.value
-
-    @property
-    def x(self):
-        return self.pos[0]
-
-    @property
-    def y(self):
-        return self.pos[1]
-
-    @property
-    def pos(self):
-        return self._tile.pos
-
-    @property
-    def tile(self):
-        return self._tile
-
-    def __init__(self, tile: Tile, **kwargs):
-        super(Entity, self).__init__(**kwargs)
-        self._tile = tile
-        tile.enter(self)
-
-    def summarize_state(self) -> dict:
-        return dict(name=str(self.name), x=int(self.x), y=int(self.y),
-                    tile=str(self.tile.name), can_collide=bool(self.can_collide))
-
-    def __repr__(self):
-        return f'{self.name}(@{self.pos})'
 
 
 class Door(Entity):
@@ -258,41 +297,6 @@ class Door(Entity):
             _ = nx.shortest_path(self.connectivity, old_pos, new_pos)
             return True
         except nx.exception.NetworkXNoPath:
-            return False
-
-
-class MoveableEntity(Entity):
-
-    @property
-    def last_tile(self):
-        return self._last_tile
-
-    @property
-    def last_pos(self):
-        if self._last_tile:
-            return self._last_tile.pos
-        else:
-            return c.NO_POS
-
-    @property
-    def direction_of_view(self):
-        last_x, last_y = self.last_pos
-        curr_x, curr_y = self.pos
-        return last_x-curr_x, last_y-curr_y
-
-    def __init__(self, *args, **kwargs):
-        super(MoveableEntity, self).__init__(*args, **kwargs)
-        self._last_tile = None
-
-    def move(self, next_tile):
-        curr_tile = self.tile
-        if curr_tile != next_tile:
-            next_tile.enter(self)
-            curr_tile.leave(self)
-            self._tile = next_tile
-            self._last_tile = curr_tile
-            return True
-        else:
             return False
 
 

@@ -139,7 +139,7 @@ if __name__ == '__main__':
 
             if modeL_type.__name__ in ["PPO", "A2C"]:
                 kwargs = dict(ent_coef=0.01)
-                env = SubprocVecEnv([make_env(env_kwargs) for _ in range(10)], start_method="spawn")
+                env = SubprocVecEnv([make_env(env_kwargs) for _ in range(1)], start_method="spawn")
             elif modeL_type.__name__ in ["RegDQN", "DQN", "QRDQN"]:
                 env = make_env(env_kwargs)()
                 kwargs = dict(buffer_size=50000,
@@ -147,7 +147,8 @@ if __name__ == '__main__':
                               batch_size=64,
                               target_update_interval=5000,
                               exploration_fraction=0.25,
-                              exploration_final_eps=0.025)
+                              exploration_final_eps=0.025
+                              )
             else:
                 raise NameError(f'The model "{modeL_type.__name__}" has the wrong name.')
 
