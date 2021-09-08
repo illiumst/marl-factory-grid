@@ -4,7 +4,7 @@ from typing import List, Union, Dict
 
 import numpy as np
 
-from environments.factory.base.objects import Entity, Tile, Agent, Door, Action, Wall
+from environments.factory.base.objects import Entity, Tile, Agent, Door, Action, Wall, Object
 from environments.utility_classes import MovementProperties
 from environments import helpers as h
 from environments.helpers import Constants as c
@@ -93,9 +93,13 @@ class EntityObjectRegister(ObjectRegister, ABC):
     @classmethod
     def from_tiles(cls, tiles, *args, **kwargs):
         # objects_name = cls._accepted_objects.__name__
+        register_obj = cls(*args, **kwargs)
+        try:
+            del kwargs['individual_slices']
+        except KeyError:
+            pass
         entities = [cls._accepted_objects(tile, str_ident=i, **kwargs)
                     for i, tile in enumerate(tiles)]
-        register_obj = cls(*args)
         register_obj.register_additional_items(entities)
         return register_obj
 
@@ -139,10 +143,17 @@ class MovingEntityObjectRegister(EntityObjectRegister, ABC):
         except StopIteration:
             return None
 
+    def __delitem__(self, name):
+        idx = next(i for i, entity in enumerate(self) if entity.name == name)
+        del self._register[name]
+        if self.individual_slices:
+            self._array = np.delete(self._array, idx, axis=0)
+
     def delete_item(self, item):
-        if not isinstance(item, str):
-            item = item.name
-        del self._register[item]
+        self.delete_item_by_name(item.name)
+
+    def delete_item_by_name(self, name):
+        del self[name]
 
 
 class Entities(Register):
@@ -150,8 +161,12 @@ class Entities(Register):
     _accepted_objects = EntityObjectRegister
 
     @property
-    def arrays(self):
+    def observable_arrays(self):
         return {key: val.as_array() for key, val in self.items() if val.is_observable}
+
+    @property
+    def obs_arrays(self):
+        return {key: val.as_array() for key, val in self.items() if val.is_observable and not val.hide_from_obs_builder}
 
     @property
     def names(self):

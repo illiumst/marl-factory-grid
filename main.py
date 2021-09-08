@@ -46,8 +46,8 @@ def combine_runs(run_path: Union[str, PathLike]):
                                                                 value_vars=columns, var_name="Measurement",
                                                                 value_name="Score")
 
-    if df_melted['Episode'].max() > 80:
-        skip_n = round(df_melted['Episode'].max() * 0.02, 2)
+    if df_melted['Episode'].max() > 800:
+        skip_n = round(df_melted['Episode'].max() * 0.02)
         df_melted = df_melted[df_melted['Episode'] % skip_n == 0]
 
     prepare_plot(run_path / f'{run_path.name}_monitor_lineplot.png', df_melted)

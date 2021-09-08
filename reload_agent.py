@@ -16,7 +16,7 @@ model_map = dict(PPO=PPO, DQN=DQN, A2C=A2C)
 
 if __name__ == '__main__':
 
-    model_name = 'A2C_1630414444'
+    model_name = 'PPO_1631029150'
     run_id = 0
     seed=69
     out_path = Path(__file__).parent / 'debug_out'
@@ -30,7 +30,7 @@ if __name__ == '__main__':
                                                          max_local_amount=1, spawn_frequency=5, max_spawn_ratio=0.05,
                                                          dirt_smear_amount=0.5),
                           combin_agent_slices_in_obs=True, omit_agent_slice_in_obs=True)
-    with DirtFactory(**env_kwargs) as env:
+    with ItemFactory(**env_kwargs) as env:
 
         # Edit THIS:
         env.seed(seed)

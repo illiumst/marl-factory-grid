@@ -27,14 +27,25 @@ def inventory_slice_name(agent_i):
 
 class Item(MoveableEntity):
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._auto_despawn = -1
+
+    @property
+    def auto_despawn(self):
+        return self._auto_despawn
+
     @property
     def can_collide(self):
         return False
 
     @property
     def encoding(self):
-        # Edit this if you want items to be drawn in the ops differntly
+        # Edit this if you want items to be drawn in the ops differently
         return 1
+
+    def set_auto_despawn(self, auto_despawn):
+        self._auto_despawn = auto_despawn
 
 
 class ItemRegister(MovingEntityObjectRegister):
@@ -51,6 +62,11 @@ class ItemRegister(MovingEntityObjectRegister):
     def spawn_items(self, tiles: List[Tile]):
         items = [Item(tile) for tile in tiles]
         self.register_additional_items(items)
+
+    def despawn_items(self, items: List[Item]):
+        items = [items] if isinstance(items, Item) else items
+        for item in items:
+            del self[item]
 
 
 class Inventory(UserList):
@@ -142,16 +158,18 @@ class DropOffLocation(Entity):
     def encoding(self):
         return ITEM_DROP_OFF
 
-    def __init__(self, *args, storage_size_until_full: int = 5, **kwargs):
+    def __init__(self, *args, storage_size_until_full: int = 5, auto_item_despawn_interval: int = 5, **kwargs):
         super(DropOffLocation, self).__init__(*args, **kwargs)
+        self.auto_item_despawn_interval = auto_item_despawn_interval
         self.storage = deque(maxlen=storage_size_until_full or None)
 
-    def place_item(self, item):
+    def place_item(self, item: Item):
         if self.is_full:
             raise RuntimeWarning("There is currently no way to clear the storage or make it unfull.")
             return c.NOT_VALID
         else:
             self.storage.append(item)
+            item.set_auto_despawn(self.auto_item_despawn_interval)
             return c.VALID
 
     @property
@@ -173,7 +191,7 @@ class DropOffLocations(EntityObjectRegister):
 
 class ItemProperties(NamedTuple):
     n_items:                   int  = 5     # How many items are there at the same time
-    spawn_frequency:           int  = 5     # Spawn Frequency in Steps
+    spawn_frequency:           int  = 10     # Spawn Frequency in Steps
     n_drop_off_locations:       int  = 5     # How many DropOff locations are there at the same time
     max_dropoff_storage_size:  int  = 0     # How many items are needed until the drop off is full
     max_agent_inventory_capacity:    int  = 5     # How many items are needed until the agent inventory is full
@@ -218,10 +236,10 @@ class ItemFactory(BaseFactory):
         super_entities.update({c.DROP_OFF: drop_offs, c.ITEM: item_register, c.INVENTORY: inventories})
         return super_entities
 
-    def additional_obs_build(self) -> List[np.ndarray]:
-        super_additional_obs_build = super().additional_obs_build()
-        super_additional_obs_build.append(self[c.INVENTORY].as_array())
-        return super_additional_obs_build
+    def additional_per_agent_obs_build(self, agent) -> List[np.ndarray]:
+        additional_per_agent_obs_build = super().additional_per_agent_obs_build(agent)
+        additional_per_agent_obs_build.append(self[c.INVENTORY].by_entity(agent).as_array())
+        return additional_per_agent_obs_build
 
     def do_item_action(self, agent: Agent):
         inventory = self[c.INVENTORY].by_entity(agent)
@@ -274,10 +292,18 @@ class ItemFactory(BaseFactory):
     def do_additional_step(self) -> dict:
         # noinspection PyUnresolvedReferences
         info_dict = super().do_additional_step()
+        for item in list(self[c.ITEM].values()):
+            if item.auto_despawn >= 1:
+                item.set_auto_despawn(item.auto_despawn-1)
+            elif not item.auto_despawn:
+                self[c.ITEM].delete_item(item)
+            else:
+                pass
+
         if not self._next_item_spawn:
             self.trigger_item_spawn()
         else:
-            self._next_item_spawn -= 1
+            self._next_item_spawn = max(0, self._next_item_spawn-1)
         return info_dict
 
     def calculate_additional_reward(self, agent: Agent) -> (int, dict):
@@ -309,7 +335,7 @@ class ItemFactory(BaseFactory):
 
 if __name__ == '__main__':
     import random
-    render = True
+    render = False
 
     item_props = ItemProperties()
 

@@ -1,3 +1,4 @@
+from collections import defaultdict
 from enum import Enum
 from typing import Union
 
@@ -9,7 +10,7 @@ import itertools
 
 class Object:
 
-    _u_idx = 0
+    _u_idx = defaultdict(lambda: 0)
 
     def __bool__(self):
         return True
@@ -40,8 +41,8 @@ class Object:
         elif self._str_ident is not None and self._enum_ident is None:
             self._name = f'{self.__class__.__name__}[{self._str_ident}]'
         elif self._str_ident is None and self._enum_ident is None:
-            self._name = f'{self.__class__.__name__}#{self._u_idx}'
-            Object._u_idx += 1
+            self._name = f'{self.__class__.__name__}#{self._u_idx[self.__class__.__name__]}'
+            Object._u_idx[self.__class__.__name__] += 1
         else:
             raise ValueError('Please use either of the idents.')
 
