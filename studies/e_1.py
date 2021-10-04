@@ -1,130 +1,234 @@
-import itertools
-import random
+import sys
 from pathlib import Path
 
+try:
+    # noinspection PyUnboundLocalVariable
+    if __package__ is None:
+        DIR = Path(__file__).resolve().parent
+        sys.path.insert(0, str(DIR.parent))
+        __package__ = DIR.name
+    else:
+        DIR = None
+except NameError:
+    DIR = None
+    pass
+
+import time
+
+
 import simplejson
-from stable_baselines3 import DQN, PPO, A2C
+from stable_baselines3.common.vec_env import SubprocVecEnv
 
+from environments import helpers as h
 from environments.factory.factory_dirt import DirtProperties, DirtFactory
+from environments.factory.factory_dirt_item import DirtItemFactory
 from environments.factory.factory_item import ItemProperties, ItemFactory
+from environments.logging.monitor import MonitorCallback
+from environments.utility_classes import MovementProperties
+from plotting.compare_runs import compare_seed_runs, compare_model_runs, compare_all_parameter_runs
+
+# Define a global studi save path
+start_time = 1631709932  # int(time.time())
+study_root_path = (Path('..') if not DIR else Path()) / 'study_out' / f'{Path(__file__).stem}_{start_time}'
+
+"""
+In this studie, we want to explore the macro behaviour of multi agents which are trained on the same task, 
+but never saw each other in training.
+Those agents learned 
+
+
+We start with training a single policy on a single task (dirt cleanup / item pickup).
+Then multiple agent equipped with the same policy are deployed in the same environment.
+
+There are further distinctions to be made:
+
+1. No Observation - ['no_obs']:
+- Agent do not see each other but their consequences of their combined actions
+- Agents can collide
+
+2. Observation in seperate slice - [['seperate_0'], ['seperate_1'], ['seperate_N']]:
+- Agents see other entitys on a seperate slice
+- This slice has been filled with $0 | 1 | \mathbb{N}(0, 1)$
+-- Depending ob the fill value, agents will react diffently
+   -> TODO: Test this! 
+
+3. Observation in level slice - ['in_lvl_obs']:
+- This tells the agent to treat other agents as obstacle. 
+- However, the state space is altered since moving obstacles are not part the original agent observation. 
+- We are out of distribution.
+"""
+
+
+def policy_model_kwargs():
+    return dict(ent_coef=0.01)
+
+
+def dqn_model_kwargs():
+    return dict(buffer_size=50000,
+                learning_starts=64,
+                batch_size=64,
+                target_update_interval=5000,
+                exploration_fraction=0.25,
+                exploration_final_eps=0.025
+                )
+
+
+def encapsule_env_factory(env_fctry, env_kwrgs):
+
+    def _init():
+        with env_fctry(**env_kwrgs) as init_env:
+            return init_env
+
+    return _init
+
 
 if __name__ == '__main__':
-    """
-    In this studie, we want to explore the macro behaviour of multi agents which are trained on the same task, 
-    but never saw each other in training.
-    Those agents learned 
-    
-    
-    We start with training a single policy on a single task (dirt cleanup / item pickup).
-    Then multiple agent equipped with the same policy are deployed in the same environment.
-    
-    There are further distinctions to be made:
-    
-    1. No Observation - ['no_obs']:
-    - Agent do not see each other but their consequences of their combined actions
-    - Agents can collide
-    
-    2. Observation in seperate slice - [['seperate_0'], ['seperate_1'], ['seperate_N']]:
-    - Agents see other entitys on a seperate slice
-    - This slice has been filled with $0 | 1 | \mathbb{N}(0, 1)$
-    -- Depending ob the fill value, agents will react diffently
-       -> TODO: Test this! 
-    
-    3. Observation in level slice - ['in_lvl_obs']:
-    - This tells the agent to treat other agents as obstacle. 
-    - However, the state space is altered since moving obstacles are not part the original agent observation. 
-    - We are out of distribution.
-    """
+    train_steps = 5e5
 
-
-def bundle_model(model_class):
-    if model_class.__class__.__name__ in ["PPO", "A2C"]:
-        kwargs = dict(ent_coef=0.01)
-    elif model_class.__class__.__name__ in ["RegDQN", "DQN", "QRDQN"]:
-        kwargs = dict(buffer_size=50000,
-                      learning_starts=64,
-                      batch_size=64,
-                      target_update_interval=5000,
-                      exploration_fraction=0.25,
-                      exploration_final_eps=0.025
-                      )
-    return lambda: model_class(kwargs)
-
-
-if __name__ == '__main__':
-    # Define a global studi save path
-    study_root_path = Path(Path(__file__).stem) / 'out'
-
-    # TODO: Define Global Env Parameters
-    factory_kwargs = {
-
-
-    }
-
-    # TODO: Define global model parameters
-
-
-    # TODO: Define parameters for both envs
-    dirt_props = DirtProperties()
-    item_props = ItemProperties()
+    # Define Global Env Parameters
+    # Define properties object parameters
+    move_props = MovementProperties(allow_diagonal_movement=True,
+                                    allow_square_movement=True,
+                                    allow_no_op=False)
+    dirt_props = DirtProperties(clean_amount=2, gain_amount=0.1, max_global_amount=20,
+                                max_local_amount=1, spawn_frequency=15, max_spawn_ratio=0.05,
+                                dirt_smear_amount=0.0, agent_can_interact=True)
+    item_props = ItemProperties(n_items=10, agent_can_interact=True,
+                                spawn_frequency=30, n_drop_off_locations=2,
+                                max_agent_inventory_capacity=15)
+    factory_kwargs = dict(n_agents=1,
+                          pomdp_r=2, max_steps=400, parse_doors=False,
+                          level_name='rooms', frames_to_stack=3,
+                          omit_agent_in_obs=True, combin_agent_obs=True, record_episodes=False,
+                          cast_shadows=True, doors_have_area=False, verbose=False,
+                          movement_properties=move_props
+                          )
 
     # Bundle both environments with global kwargs and parameters
-    env_bundles = [lambda: ('dirt', DirtFactory(factory_kwargs, dirt_properties=dirt_props)),
-                   lambda: ('item', ItemFactory(factory_kwargs, item_properties=item_props))]
+    env_map = {'dirt': (DirtFactory, dict(dirt_properties=dirt_props, **factory_kwargs)),
+               'item': (ItemFactory, dict(item_properties=item_props, **factory_kwargs)),
+               'itemdirt': (DirtItemFactory, dict(dirt_properties=dirt_props, item_properties=item_props,
+                                                  **factory_kwargs))}
+    env_names = list(env_map.keys())
 
     # Define parameter versions according with #1,2[1,0,N],3
-    observation_modes = ['no_obs', 'seperate_0', 'seperate_1', 'seperate_N', 'in_lvl_obs']
-
-    # Define RL-Models
-    model_bundles = [bundle_model(model) for model in [A2C, PPO, DQN]]
-
-    # Zip parameters, parameter versions, Env Classes and models
-    combinations = itertools.product(model_bundles, env_bundles)
+    observation_modes = {
+        #  Fill-value = 0
+        'seperate_0': dict(additional_env_kwargs=dict(additional_agent_placeholder=0)),
+        #  Fill-value = 1
+        'seperate_1': dict(additional_env_kwargs=dict(additional_agent_placeholder=1)),
+        #  Fill-value = N(0, 1)
+        'seperate_N': dict(additional_env_kwargs=dict(additional_agent_placeholder='N')),
+        #  Further Adjustments are done post-training
+        'in_lvl_obs': dict(post_training_kwargs=dict(other_agent_obs='in_lvl')),
+        #  No further adjustment needed
+        'no_obs': None
+    }
 
     # Train starts here ############################################################
-    # Build Major Loop
-    for model, (env_identifier, env_bundle) in combinations:
-        for observation_mode in observation_modes:
-            # TODO: Create an identifier, which is unique for every combination and easy to read in filesystem
-            identifier = f'{model.name}_{observation_mode}_{env_identifier}'
-            # Train each combination per seed
-            for seed in range(3):
-                # TODO: Output folder
-                # TODO: Monitor Init
-                # TODO: Env Init
-                # TODO: Model Init
-                # TODO: Model train
-                # TODO: Model save
-                pass
-            # TODO: Seed Compare Plot
+    # Build Major Loop  parameters, parameter versions, Env Classes and models
+    if False:
+        for observation_mode in observation_modes.keys():
+            for env_name in env_names:
+                for model_cls in h.MODEL_MAP.values():
+                    # Create an identifier, which is unique for every combination and easy to read in filesystem
+                    identifier = f'{model_cls.__name__}_{start_time}'
+                    # Train each combination per seed
+                    combination_path = study_root_path / observation_mode / env_name / identifier
+                    env_class, env_kwargs = env_map[env_name]
+                    # Retrieve and set the observation mode specific env parameters
+                    if observation_mode_kwargs := observation_modes.get(observation_mode, None):
+                        if additional_env_kwargs := observation_mode_kwargs.get("additional_env_kwargs", None):
+                            env_kwargs.update(additional_env_kwargs)
+                    for seed in range(5):
+                        env_kwargs.update(env_seed=seed)
+                        # Output folder
+                        seed_path = combination_path / f'{str(seed)}_{identifier}'
+                        seed_path.mkdir(parents=True, exist_ok=True)
+
+                        # Monitor Init
+                        callbacks = [MonitorCallback(seed_path / 'monitor.pick')]
+
+                        # Env Init & Model kwargs definition
+                        if model_cls.__name__ in ["PPO", "A2C"]:
+                            env = env_class(**env_kwargs)
+
+                            # env = SubprocVecEnv([encapsule_env_factory(env_class, env_kwargs) for _ in range(1)],
+                            #                    start_method="spawn")
+                            model_kwargs = policy_model_kwargs()
+
+                        elif model_cls.__name__ in ["RegDQN", "DQN", "QRDQN"]:
+                            env = env_class(**env_kwargs)
+                            model_kwargs = dqn_model_kwargs()
+
+                        else:
+                            raise NameError(f'The model "{model_cls.__name__}" has the wrong name.')
+
+                        param_path = seed_path / f'env_params.json'
+                        try:
+                            env.env_method('save_params', param_path)
+                        except AttributeError:
+                            env.save_params(param_path)
+
+                        # Model Init
+                        model = model_cls("MlpPolicy", env, verbose=1, seed=seed, device='cpu', **model_kwargs)
+
+                        # Model train
+                        model.learn(total_timesteps=int(train_steps), callback=callbacks)
+
+                        # Model save
+                        save_path = seed_path / f'model.zip'
+                        model.save(save_path)
+                        pass
+                    # Compare perfoormance runs, for each seed within a model
+                    compare_seed_runs(combination_path)
+                # Compare performance runs, for each model
+                # FIXME: Check THIS!!!!
+                compare_model_runs(study_root_path / observation_mode / env_name, f'{start_time}', 'step_reward')
     # Train ends here ############################################################
 
     # Evaluation starts here #####################################################
     # Iterate Observation Modes
-    for observation_mode in observation_modes:
-        # TODO: For trained policy in study_root_path / identifier
-        for policy_group in (x for x in study_root_path.iterdir() if x.is_dir()):
-            # TODO: Pick random seed or iterate over available seeds
-            policy_seed = next((y for y in study_root_path.iterdir() if y.is_dir()))
-            # TODO: retrieve model class
-            # TODO: Load both agents
-            models = []
-            # TODO: Evaluation Loop for i in range(100) Episodes
-            for episode in range(100):
-                with next(policy_seed.glob('*.yaml')).open('r') as f:
-                    env_kwargs = simplejson.load(f)
-                # TODO: Monitor Init
-                env = None  # TODO: Init Env
-                for step in range(400):
-                    random_actions = [[random.randint(0, env.n_actions) for _ in range(len(models))] for _ in range(200)]
-                    env_state = env.reset()
-                    rew = 0
-                    for agent_i_action in random_actions:
-                        env_state, step_r, done_bool, info_obj = env.step(agent_i_action)
-                        rew += step_r
-                        if done_bool:
-                            break
-                print(f'Factory run {episode} done, reward is:\n    {rew}')
-            # TODO: Plotting
 
-    pass
+    for observation_mode in observation_modes:
+        obs_mode_path = next(x for x in study_root_path.iterdir() if x.is_dir() and x.name == observation_mode)
+        # For trained policy in study_root_path / identifier
+        for env_path in [x for x in obs_mode_path.iterdir() if x.is_dir()]:
+            for policy_path in [x for x in env_path.iterdir() if x. is_dir()]:
+                # TODO: Pick random seed or iterate over available seeds
+                # First seed path version
+                # seed_path = next((y for y in policy_path.iterdir() if y.is_dir()))
+                # Iteration
+                for seed_path in (y for y in policy_path.iterdir() if y.is_dir()):
+                    # retrieve model class
+                    for model_cls in (val for key, val in h.MODEL_MAP.items() if key in policy_path.name):
+                        # Load both agents
+                        models = [model_cls.load(seed_path / 'model.zip') for _ in range(2)]
+                        # Load old env kwargs
+                        with next(seed_path.glob('*.json')).open('r') as f:
+                            env_kwargs = simplejson.load(f)
+                            env_kwargs.update(n_agents=2, additional_agent_placeholder=None,
+                                              **observation_modes[observation_mode].get('post_training_env_kwargs', {}))
+
+                        # Monitor Init
+                        with MonitorCallback(filepath=seed_path / f'e_1_monitor.pick') as monitor:
+                            # Init Env
+                            env = env_map[env_path.name][0](**env_kwargs)
+                            # Evaluation Loop for i in range(n Episodes)
+                            for episode in range(50):
+                                obs = env.reset()
+                                rew, done_bool = 0, False
+                                while not done_bool:
+                                    actions = [model.predict(obs[i], deterministic=False)[0]
+                                               for i, model in enumerate(models)]
+                                    env_state, step_r, done_bool, info_obj = env.step(actions)
+                                    monitor.read_info(0, info_obj)
+                                    rew += step_r
+                                    if done_bool:
+                                        monitor.read_done(0, done_bool)
+                                        break
+                                print(f'Factory run {episode} done, reward is:\n    {rew}')
+                            # Eval monitor outputs are automatically stored by the monitor object
+
+                            # TODO: Plotting
+        pass

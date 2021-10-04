@@ -7,7 +7,10 @@ from pathlib import Path
 
 from stable_baselines3 import PPO, DQN, A2C
 
+MODEL_MAP = dict(PPO=PPO, DQN=DQN, A2C=A2C)
+
 LEVELS_DIR = 'levels'
+STEPS_START = 1
 
 TO_BE_AVERAGED = ['dirt_amount', 'dirty_tiles']
 IGNORED_DF_COLUMNS = ['Episode', 'Run', 'train_step', 'step', 'index', 'dirt_amount',
@@ -16,34 +19,35 @@ IGNORED_DF_COLUMNS = ['Episode', 'Run', 'train_step', 'step', 'index', 'dirt_amo
 
 # Constants
 class Constants(Enum):
-    WALL            = '#'
-    WALLS           = 'Walls'
-    FLOOR           = 'Floor'
-    DOOR            = 'D'
-    DANGER_ZONE     = 'x'
-    LEVEL           = 'Level'
-    AGENT           = 'Agent'
-    FREE_CELL       = 0
-    OCCUPIED_CELL   = 1
-    SHADOWED_CELL   = -1
-    NO_POS          = (-9999, -9999)
+    WALL                = '#'
+    WALLS               = 'Walls'
+    FLOOR               = 'Floor'
+    DOOR                = 'D'
+    DANGER_ZONE         = 'x'
+    LEVEL               = 'Level'
+    AGENT               = 'Agent'
+    AGENT_PLACEHOLDER   = 'AGENT_PLACEHOLDER'
+    FREE_CELL           = 0
+    OCCUPIED_CELL       = 1
+    SHADOWED_CELL       = -1
+    NO_POS              = (-9999, -9999)
 
-    DOORS           = 'Doors'
-    CLOSED_DOOR     = 'closed'
-    OPEN_DOOR       = 'open'
+    DOORS               = 'Doors'
+    CLOSED_DOOR         = 'closed'
+    OPEN_DOOR           = 'open'
 
-    ACTION          = 'action'
-    COLLISIONS      = 'collision'
-    VALID           = 'valid'
-    NOT_VALID       = 'not_valid'
+    ACTION              = 'action'
+    COLLISIONS          = 'collision'
+    VALID               = 'valid'
+    NOT_VALID           = 'not_valid'
 
     # Dirt Env
-    DIRT            = 'Dirt'
+    DIRT                = 'Dirt'
 
     # Item Env
-    ITEM            = 'Item'
-    INVENTORY       = 'Inventory'
-    DROP_OFF        = 'Drop_Off'
+    ITEM                = 'Item'
+    INVENTORY           = 'Inventory'
+    DROP_OFF            = 'Drop_Off'
 
     def __bool__(self):
         if 'not_' in self.value:
@@ -143,8 +147,6 @@ def asset_str(agent):
     else:
         return c.AGENT.value, 'idle'
 
-
-model_map = dict(PPO=PPO, DQN=DQN, A2C=A2C)
 
 if __name__ == '__main__':
     parsed_level = parse_level(Path(__file__).parent / 'factory' / 'levels' / 'simple.txt')

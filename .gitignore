@@ -701,3 +701,4 @@ $RECYCLE.BIN/
 *.lnk
 
 # End of https://www.toptal.com/developers/gitignore/api/linux,unity,macos,python,windows,pycharm,notepadpp,visualstudiocode,latex
+/studies/e_1/

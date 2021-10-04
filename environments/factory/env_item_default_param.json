@@ -1,0 +1,29 @@
+{
+    "item_properties": {
+        "n_items": 5,
+        "spawn_frequency": 10,
+        "n_drop_off_locations": 5,
+        "max_dropoff_storage_size": 0,
+        "max_agent_inventory_capacity": 5,
+        "agent_can_interact": true
+    },
+    "env_seed": 2,
+    "movement_properties": {
+        "allow_square_movement": true,
+        "allow_diagonal_movement": true,
+        "allow_no_op": false
+    },
+    "level_name": "rooms",
+    "verbose": false,
+    "n_agents": 1,
+    "max_steps": 400,
+    "pomdp_r": 2,
+    "combin_agent_obs": true,
+    "omit_agent_in_obs": true,
+    "cast_shadows": true,
+    "frames_to_stack": 3,
+    "done_at_collision": false,
+    "record_episodes": false,
+    "parse_doors": false,
+    "doors_have_area": false
+}

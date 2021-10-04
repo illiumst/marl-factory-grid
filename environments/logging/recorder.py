@@ -3,11 +3,10 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Union
 
-import pandas as pd
+import simplejson
 from stable_baselines3.common.callbacks import BaseCallback
 
 from environments.factory.base.base_factory import REC_TAC
-from environments.helpers import IGNORED_DF_COLUMNS
 
 
 # noinspection PyAttributeOutsideInit
@@ -18,8 +17,8 @@ class RecorderCallback(BaseCallback):
         self.trajectory_map = trajectory_map
         self.occupation_map = occupation_map
         self.filepath = Path(filepath)
-        self._recorder_dict = defaultdict(dict)
-        self._recorder_json_list = list()
+        self._recorder_dict = defaultdict(list)
+        self._recorder_out_list = list()
         self.do_record: bool
         self.started = False
         self.closed = False
@@ -27,15 +26,15 @@ class RecorderCallback(BaseCallback):
     def read_info(self, env_idx, info: dict):
         if info_dict := {key.replace(REC_TAC, ''): val for key, val in info.items() if key.startswith(f'{REC_TAC}')}:
             info_dict.update(episode=(self.num_timesteps + env_idx))
-            self._recorder_dict[env_idx][len(self._recorder_dict[env_idx])] = info_dict
+            self._recorder_dict[env_idx].append(info_dict)
         else:
             pass
         return
 
     def read_done(self, env_idx, done):
         if done:
-            self._recorder_json_list.append(json.dumps(self._recorder_dict[env_idx]))
-            self._recorder_dict[env_idx] = dict()
+            self._recorder_out_list.append({'steps': self._recorder_dict[env_idx]})
+            self._recorder_dict[env_idx] = list()
         else:
             pass
 
@@ -51,8 +50,11 @@ class RecorderCallback(BaseCallback):
         if self.do_record and self.started:
             # self.out_file.unlink(missing_ok=True)
             with self.filepath.open('w') as f:
-                json_list = self._recorder_json_list
-                json.dump(json_list, f, indent=4)
+                out_dict = {'episodes': self._recorder_out_list}
+                try:
+                    simplejson.dump(out_dict, f, indent=4)
+                except TypeError:
+                    print('Shit')
 
             if self.occupation_map:
                 print('Recorder files were dumped to disk, now plotting the occupation map...')

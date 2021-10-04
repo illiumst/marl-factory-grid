@@ -51,8 +51,8 @@ class Dirt(Entity):
     def set_new_amount(self, amount):
         self._amount = amount
 
-    def summarize_state(self):
-        state_dict = super().summarize_state()
+    def summarize_state(self, **kwargs):
+        state_dict = super().summarize_state(**kwargs)
         state_dict.update(amount=float(self.amount))
         return state_dict
 

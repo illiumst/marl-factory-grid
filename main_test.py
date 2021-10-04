@@ -13,7 +13,7 @@ from stable_baselines3 import PPO, DQN, A2C
 from environments.factory.factory_dirt import DirtFactory, DirtProperties
 from environments.logging.monitor import MonitorCallback
 from algorithms.reg_dqn import RegDQN
-from main import compare_runs, combine_runs
+from main import compare_model_runs, compare_seed_runs
 
 warnings.filterwarnings('ignore', category=FutureWarning)
 warnings.filterwarnings('ignore', category=UserWarning)
@@ -55,7 +55,7 @@ if __name__ == '__main__':
 
         exp_out_path = model_path / 'exp'
         callbacks = CallbackList(
-            [MonitorCallback(filepath=exp_out_path / f'future_exp_name', plotting=True)]
+            [MonitorCallback(filepath=exp_out_path / f'future_exp_name')]
         )
 
         n_actions = env.action_space.n
@@ -83,4 +83,4 @@ if __name__ == '__main__':
             print(f'Factory run {epoch} done, reward is:\n    {r}')
 
     if out_path:
-        combine_runs(out_path.parent)
+        compare_seed_runs(out_path.parent)

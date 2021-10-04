@@ -13,8 +13,8 @@ from environments.factory.base.shadow_casting import Map
 from environments.factory.renderer import Renderer, RenderEntity
 from environments.helpers import Constants as c, Constants
 from environments import helpers as h
-from environments.factory.base.objects import Agent, Tile, Action, Wall
-from environments.factory.base.registers import Actions, Entities, Agents, Doors, FloorTiles, WallTiles
+from environments.factory.base.objects import Agent, Tile, Action
+from environments.factory.base.registers import Actions, Entities, Agents, Doors, FloorTiles, WallTiles, PlaceHolders
 from environments.utility_classes import MovementProperties
 
 import simplejson
@@ -58,7 +58,7 @@ class BaseFactory(gym.Env):
     def __init__(self, level_name='simple', n_agents=1, max_steps=int(5e2), pomdp_r: Union[None, int] = 0,
                  movement_properties: MovementProperties = MovementProperties(), parse_doors=False,
                  combin_agent_obs: bool = False, frames_to_stack=0, record_episodes=False,
-                 omit_agent_in_obs=False, done_at_collision=False, cast_shadows=True,
+                 omit_agent_in_obs=False, done_at_collision=False, cast_shadows=True, additional_agent_placeholder=None,
                  verbose=False, doors_have_area=True, env_seed=time.time_ns(), **kwargs):
         assert frames_to_stack != 1 and frames_to_stack >= 0, "'frames_to_stack' cannot be negative or 1."
         if kwargs:
@@ -74,6 +74,7 @@ class BaseFactory(gym.Env):
         self.level_name = level_name
         self._level_shape = None
         self.verbose = verbose
+        self.additional_agent_placeholder = additional_agent_placeholder
         self._renderer = None  # expensive - don't use it when not required !
         self._entities = Entities()
 
@@ -141,6 +142,14 @@ class BaseFactory(gym.Env):
                                    individual_slices=not self.combin_agent_obs)
         entities.update({c.AGENT: agents})
 
+        if self.additional_agent_placeholder is not None:
+
+            # Empty Observations with either [0, 1, N(0, 1)]
+            placeholder = PlaceHolders.from_tiles([self._NO_POS_TILE], self._level_shape,
+                                                  fill_value=self.additional_agent_placeholder)
+
+            entities.update({c.AGENT_PLACEHOLDER: placeholder})
+
         # All entities
         self._entities = Entities()
         self._entities.register_additional_items(entities)
@@ -155,10 +164,12 @@ class BaseFactory(gym.Env):
     def _init_obs_cube(self):
         arrays = self._entities.observable_arrays
 
+        # FIXME: Move logic to Register
         if self.omit_agent_in_obs and self.n_agents == 1:
             del arrays[c.AGENT]
-        elif self.omit_agent_in_obs:
-            arrays[c.AGENT] = np.delete(arrays[c.AGENT], 0, axis=0)
+        # This does not seem to be necesarry, because this case is allready handled by the Agent Register Class
+        # elif self.omit_agent_in_obs:
+        #    arrays[c.AGENT] = np.delete(arrays[c.AGENT], 0, axis=0)
         obs_cube_z = sum([a.shape[0] if not self[key].is_per_agent else 1 for key, a in arrays.items()])
         self._obs_cube = np.zeros((obs_cube_z, *self._level_shape), dtype=np.float32)
 
@@ -273,6 +284,7 @@ class BaseFactory(gym.Env):
         agent_pos_is_omitted = False
         agent_omit_idx = None
         if self.omit_agent_in_obs and self.n_agents == 1:
+            # There is only a single agent and we want to omit the agent obs, so just remove the array.
             del state_array_dict[c.AGENT]
         elif self.omit_agent_in_obs and self.combin_agent_obs and self.n_agents > 1:
             state_array_dict[c.AGENT][0, agent.x, agent.y] -= agent.encoding
@@ -295,6 +307,9 @@ class BaseFactory(gym.Env):
                         for array_idx in range(array.shape[0]):
                             self._obs_cube[running_idx: running_idx+z] = array[[x for x in range(array.shape[0])
                                                                                 if x != agent_omit_idx]]
+                    elif key == c.AGENT and self.omit_agent_in_obs and self.combin_agent_obs:
+                        z = 1
+                        self._obs_cube[running_idx: running_idx + z] = array
                     else:
                         z = array.shape[0]
                         self._obs_cube[running_idx: running_idx+z] = array
@@ -499,12 +514,8 @@ class BaseFactory(gym.Env):
     def _summarize_state(self):
         summary = {f'{REC_TAC}step': self._steps}
 
-        if self._steps == 0:
-            summary.update({f'{REC_TAC}{self[c.WALLS].name}': {self[c.WALLS].summarize_states()},
-                           'FactoryName': self.__class__.__name__})
         for entity_group in self._entities:
-            if not isinstance(entity_group, WallTiles):
-                summary.update({f'{REC_TAC}{entity_group.name}': entity_group.summarize_states()})
+            summary.update({f'{REC_TAC}{entity_group.name}': entity_group.summarize_states(n_steps=self._steps)})
         return summary
 
     def print(self, string):

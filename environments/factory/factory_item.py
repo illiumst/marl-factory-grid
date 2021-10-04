@@ -109,8 +109,10 @@ class Inventory(UserList):
     def belongs_to_entity(self, entity):
         return self.agent == entity
 
-    def summarize_state(self):
-        return {val.name: val.summarize_state() for val in self}
+    def summarize_state(self, **kwargs):
+        attr_dict = {key: str(val) for key, val in self.__dict__.items() if not key.startswith('_') and key != 'data'}
+        attr_dict.update({val.name: val.summarize_state(**kwargs) for val in self})
+        return attr_dict
 
 
 class Inventories(ObjectRegister):
@@ -175,6 +177,10 @@ class DropOffLocation(Entity):
     @property
     def is_full(self):
         return False if not self.storage.maxlen else self.storage.maxlen == len(self.storage)
+
+    def summarize_state(self, n_steps=None) -> dict:
+        if n_steps == h.STEPS_START:
+            return super().summarize_state(n_steps=n_steps)
 
 
 class DropOffLocations(EntityObjectRegister):

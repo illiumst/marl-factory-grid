@@ -93,11 +93,11 @@ class Entity(Object):
         return self._tile
 
     def __init__(self, tile, **kwargs):
-        super(Entity, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self._tile = tile
         tile.enter(self)
 
-    def summarize_state(self) -> dict:
+    def summarize_state(self, **_) -> dict:
         return dict(name=str(self.name), x=int(self.x), y=int(self.y),
                     tile=str(self.tile.name), can_collide=bool(self.can_collide))
 
@@ -125,7 +125,7 @@ class MoveableEntity(Entity):
         return last_x-curr_x, last_y-curr_y
 
     def __init__(self, *args, **kwargs):
-        super(MoveableEntity, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self._last_tile = None
 
     def move(self, next_tile):
@@ -143,11 +143,34 @@ class MoveableEntity(Entity):
 class Action(Object):
 
     def __init__(self, *args, **kwargs):
-        super(Action, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
 
 class PlaceHolder(MoveableEntity):
-    pass
+
+    def __init__(self, *args, fill_value=0, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._fill_value = fill_value
+
+    @property
+    def last_tile(self):
+        return self.tile
+
+    @property
+    def direction_of_view(self):
+        return self.pos
+
+    @property
+    def can_collide(self):
+        return False
+
+    @property
+    def encoding(self):
+        return c.NO_POS.value[0]
+
+    @property
+    def name(self):
+        return "PlaceHolder"
 
 
 class Tile(Object):
@@ -203,8 +226,8 @@ class Tile(Object):
     def __repr__(self):
         return f'{self.name}(@{self.pos})'
 
-    def summarize_state(self):
-        return dict(name=self.name, x=self.x, y=self.y)
+    def summarize_state(self, **_):
+        return dict(name=self.name, x=int(self.x), y=int(self.y))
 
 
 class Wall(Tile):
@@ -254,8 +277,8 @@ class Door(Entity):
         if not closed_on_init:
             self._open()
 
-    def summarize_state(self):
-        state_dict = super().summarize_state()
+    def summarize_state(self, **kwargs):
+        state_dict = super().summarize_state(**kwargs)
         state_dict.update(state=str(self.str_state), time_to_close=int(self.time_to_close))
         return state_dict
 
@@ -315,7 +338,7 @@ class Agent(MoveableEntity):
         self.temp_action = None
         self.temp_light_map = None
 
-    def summarize_state(self):
-        state_dict = super().summarize_state()
+    def summarize_state(self, **kwargs):
+        state_dict = super().summarize_state(**kwargs)
         state_dict.update(valid=bool(self.temp_valid), action=str(self.temp_action))
         return state_dict
