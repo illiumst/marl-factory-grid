@@ -1,6 +1,7 @@
 import sys
 from pathlib import Path
 from matplotlib import pyplot as plt
+import numpy as np
 
 try:
     # noinspection PyUnboundLocalVariable
@@ -32,7 +33,7 @@ import pandas as pd
 import seaborn as sns
 
 # Define a global studi save path
-start_time = int(time.time())
+start_time = 1634134997  # int(time.time())
 study_root_path = Path(__file__).parent.parent / 'study_out' / f'{Path(__file__).stem}_{start_time}'
 
 """
@@ -136,7 +137,7 @@ if __name__ == '__main__':
 
     # Train starts here ############################################################
     # Build Major Loop  parameters, parameter versions, Env Classes and models
-    if True:
+    if False:
         for observation_mode in observation_modes.keys():
             for env_name in env_names:
                 for model_cls in h.MODEL_MAP.values():
@@ -210,12 +211,12 @@ if __name__ == '__main__':
         pass
     pass
     # Train ends here ############################################################
-    exit()
+
     # Evaluation starts here #####################################################
     # First Iterate over every model and monitor "as trained"
     baseline_monitor_file = 'e_1_baseline_monitor.pick'
-    if True:
-        render = True
+    if False:
+        render = False
         for observation_mode in observation_modes:
             obs_mode_path = next(x for x in study_root_path.iterdir() if x.is_dir() and x.name == observation_mode)
             # For trained policy in study_root_path / identifier
@@ -233,22 +234,22 @@ if __name__ == '__main__':
                             # Monitor Init
                             with MonitorCallback(filepath=seed_path / baseline_monitor_file) as monitor:
                                 # Init Env
-                                env_factory = env_map[env_path.name][0](**env_kwargs)
-                                # Evaluation Loop for i in range(n Episodes)
-                                for episode in range(100):
-                                    obs = env_factory.reset()
-                                    rew, done_bool = 0, False
-                                    while not done_bool:
-                                        action = model.predict(obs, deterministic=True)[0]
-                                        env_state, step_r, done_bool, info_obj = env_factory.step(action)
-                                        monitor.read_info(0, info_obj)
-                                        rew += step_r
-                                        if render:
-                                            env_factory.render()
-                                        if done_bool:
-                                            monitor.read_done(0, done_bool)
-                                            break
-                                    print(f'Factory run {episode} done, reward is:\n    {rew}')
+                                with env_map[env_path.name][0](**env_kwargs) as env_factory:
+                                    # Evaluation Loop for i in range(n Episodes)
+                                    for episode in range(100):
+                                        env_state = env_factory.reset()
+                                        rew, done_bool = 0, False
+                                        while not done_bool:
+                                            action = model.predict(env_state, deterministic=True)[0]
+                                            env_state, step_r, done_bool, info_obj = env_factory.step(action)
+                                            monitor.read_info(0, info_obj)
+                                            rew += step_r
+                                            if render:
+                                                env_factory.render()
+                                            if done_bool:
+                                                monitor.read_done(0, done_bool)
+                                                break
+                                        print(f'Factory run {episode} done, reward is:\n    {rew}')
                                 # Eval monitor outputs are automatically stored by the monitor object
                             del model, env_kwargs, env_factory
                             import gc
@@ -256,7 +257,9 @@ if __name__ == '__main__':
                             gc.collect()
 
     # Then iterate over every model and monitor "ood behavior" - "is it ood?"
-    ood_monitor_file = 'e_1_monitor.pick'
+    n_agents = 4
+    ood_monitor_file = f'e_1_monitor_{n_agents}_agents.pick'
+
     if True:
         for observation_mode in observation_modes:
             obs_mode_path = next(x for x in study_root_path.iterdir() if x.is_dir() and x.name == observation_mode)
@@ -268,17 +271,17 @@ if __name__ == '__main__':
                     # seed_path = next((y for y in policy_path.iterdir() if y.is_dir()))
                     # Iteration
                     for seed_path in (y for y in policy_path.iterdir() if y.is_dir()):
-                        if (seed_path / f'e_1_monitor.pick').exists():
+                        if (seed_path / ood_monitor_file).exists():
                             continue
                         # retrieve model class
                         for model_cls in (val for key, val in h.MODEL_MAP.items() if key in policy_path.name):
                             # Load both agents
-                            models = [model_cls.load(seed_path / 'model.zip') for _ in range(2)]
+                            models = [model_cls.load(seed_path / 'model.zip') for _ in range(n_agents)]
                             # Load old env kwargs
                             with next(seed_path.glob('*.json')).open('r') as f:
                                 env_kwargs = simplejson.load(f)
                                 env_kwargs.update(
-                                    n_agents=2, additional_agent_placeholder=None,
+                                    n_agents=n_agents, additional_agent_placeholder=None,
                                     **observation_modes[observation_mode].get('post_training_env_kwargs', {}))
 
                             # Monitor Init
@@ -287,11 +290,12 @@ if __name__ == '__main__':
                                 with env_map[env_path.name][0](**env_kwargs) as env_factory:
                                     # Evaluation Loop for i in range(n Episodes)
                                     for episode in range(50):
-                                        obs = env_factory.reset()
+                                        env_state = env_factory.reset()
                                         rew, done_bool = 0, False
                                         while not done_bool:
-                                            actions = [model.predict(obs[i], deterministic=False)[0]
-                                                       for i, model in enumerate(models)]
+                                            actions = [model.predict(
+                                                np.stack([env_state[i][j] for i in range(env_state.shape[0])]),
+                                                deterministic=False)[0] for j, model in enumerate(models)]
                                             env_state, step_r, done_bool, info_obj = env_factory.step(actions)
                                             monitor.read_info(0, info_obj)
                                             rew += step_r
@@ -352,6 +356,6 @@ if __name__ == '__main__':
                         kind="box", height=4, aspect=.7, legend_out=True)
         c.set_xticklabels(rotation=65, horizontalalignment='right')
         plt.tight_layout(pad=2)
-        plt.show()
+        plt.savefig(study_root_path / f'results_{n_agents}_agents.png')
 
     pass
