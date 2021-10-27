@@ -10,7 +10,7 @@ from environments.helpers import IGNORED_DF_COLUMNS, MODEL_MAP
 from plotting.plotting import prepare_plot
 
 
-def compare_seed_runs(run_path: Union[str, PathLike]):
+def compare_seed_runs(run_path: Union[str, PathLike], use_tex: bool = False):
     run_path = Path(run_path)
     df_list = list()
     for run, monitor_file in enumerate(run_path.rglob('monitor*.pick')):
@@ -37,11 +37,12 @@ def compare_seed_runs(run_path: Union[str, PathLike]):
         skip_n = round(df_melted['Episode'].max() * 0.02)
         df_melted = df_melted[df_melted['Episode'] % skip_n == 0]
 
-    prepare_plot(run_path / f'{run_path.name}_monitor_lineplot.png', df_melted)
+    prepare_plot(run_path / f'{run_path.name}_monitor_lineplot.png', df_melted, use_tex=use_tex)
     print('Plotting done.')
 
 
-def compare_model_runs(run_path: Path, run_identifier: Union[str, int], parameter: Union[str, List[str]]):
+def compare_model_runs(run_path: Path, run_identifier: Union[str, int], parameter: Union[str, List[str]],
+                       use_tex: bool = False):
     run_path = Path(run_path)
     df_list = list()
     parameter = [parameter] if isinstance(parameter, str) else parameter
@@ -75,12 +76,13 @@ def compare_model_runs(run_path: Path, run_identifier: Union[str, int], paramete
         df_melted = df_melted[df_melted['Episode'] % skip_n == 0]
 
     style = 'Measurement' if len(columns) > 1 else None
-    prepare_plot(run_path / f'{run_identifier}_compare_{parameter}.png', df_melted, hue='Model', style=style)
+    prepare_plot(run_path / f'{run_identifier}_compare_{parameter}.png', df_melted, hue='Model', style=style,
+                 use_tex=use_tex)
     print('Plotting done.')
 
 
 def compare_all_parameter_runs(run_root_path: Path, parameter: Union[str, List[str]],
-                               param_names: Union[List[str], None] = None, str_to_ignore=''):
+                               param_names: Union[List[str], None] = None, str_to_ignore='', use_tex: bool = False):
     run_root_path = Path(run_root_path)
     df_list = list()
     parameter = [parameter] if isinstance(parameter, str) else parameter
@@ -151,5 +153,6 @@ def compare_all_parameter_runs(run_root_path: Path, parameter: Union[str, List[s
                                       value_name="Score")
 
     style = 'Measurement' if len(columns) > 1 else None
-    prepare_plot(run_root_path / f'compare_{parameter}.png', df_melted, hue='Parameter Combination', style=style)
+    prepare_plot(run_root_path / f'compare_{parameter}.png', df_melted, hue='Parameter Combination',
+                 style=style, use_tex=use_tex)
     print('Plotting done.')

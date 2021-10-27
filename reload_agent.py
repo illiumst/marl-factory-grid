@@ -1,6 +1,7 @@
 import warnings
 from pathlib import Path
 
+import numpy as np
 import yaml
 
 from environments import helpers as h
@@ -14,36 +15,42 @@ warnings.filterwarnings('ignore', category=UserWarning)
 
 if __name__ == '__main__':
 
-    model_name = 'PPO_1631187073'
+    model_name = 'DQN_1631187073'
     run_id = 0
     seed = 69
-    out_path = Path(__file__).parent / 'study_out' / 'e_1_1631709932' / 'no_obs' / 'dirt' / 'A2C_1631709932' / '0_A2C_1631709932'
-    model_path = out_path / model_name
+    out_path = Path('debug_out/DQN_1635176929/0_DQN_1635176929')
+    model_path = out_path
 
     with (out_path / f'env_params.json').open('r') as f:
         env_kwargs = yaml.load(f, Loader=yaml.FullLoader)
-        env_kwargs.update(additional_agent_placeholder=None)
-        # env_kwargs.update(verbose=False, env_seed=seed, record_episodes=True, parse_doors=True)
+        env_kwargs.update(additional_agent_placeholder=None, n_agents=4)
+        if gain_amount := env_kwargs.get('dirt_properties', {}).get('gain_amount', None):
+            env_kwargs['dirt_properties']['max_spawn_amount'] = gain_amount
+            del env_kwargs['dirt_properties']['gain_amount']
+
+        env_kwargs.update(record_episodes=True)
 
     this_model = out_path / 'model.zip'
 
     model_cls = next(val for key, val in h.MODEL_MAP.items() if key in model_name)
-    model = model_cls.load(this_model)
+    models = [model_cls.load(this_model) for _ in range(4)]
 
-    with RecorderCallback(filepath=Path() / 'recorder_out_doors.json') as recorder:
+    with RecorderCallback(filepath=Path() / 'recorder_out_DQN.json') as recorder:
         # Init Env
-        with DirtFactory(**env_kwargs) as env:
+        with DirtItemFactory(**env_kwargs) as env:
             obs_shape = env.observation_space.shape
             # Evaluation Loop for i in range(n Episodes)
             for episode in range(5):
-                obs = env.reset()
+                env_state = env.reset()
                 rew, done_bool = 0, False
                 while not done_bool:
-                    action = model.predict(obs, deterministic=False)[0]
-                    env_state, step_r, done_bool, info_obj = env.step(action[0])
+                    actions = [model.predict(
+                        np.stack([env_state[i][j] for i in range(env_state.shape[0])]),
+                        deterministic=True)[0] for j, model in enumerate(models)]
+                    env_state, step_r, done_bool, info_obj = env.step(actions)
                     recorder.read_info(0, info_obj)
                     rew += step_r
-                    env.render()
+                    # env.render()
                     if done_bool:
                         recorder.read_done(0, done_bool)
                         break

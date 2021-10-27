@@ -25,7 +25,7 @@ if __name__ == '__main__':
                                         allow_square_movement=True,
                                         allow_no_op=False)
 
-        render = False
+        render = True
 
         factory = DirtItemFactory(n_agents=1, done_at_collision=False, frames_to_stack=0,
                               level_name='rooms', max_steps=200, combin_agent_obs=True,
@@ -46,12 +46,12 @@ if __name__ == '__main__':
             r = 0
             for agent_i_action in random_actions:
                 env_state, step_r, done_bool, info_obj = factory.step(agent_i_action)
-                recorder.read_info(0, info_obj)
+                # recorder.read_info(0, info_obj)
                 r += step_r
                 if render:
                     factory.render()
                 if done_bool:
-                    recorder.read_done(0, done_bool)
+                    # recorder.read_done(0, done_bool)
                     break
             print(f'Factory run {epoch} done, reward is:\n    {r}')
         pass

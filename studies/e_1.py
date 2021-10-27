@@ -33,7 +33,7 @@ import pandas as pd
 import seaborn as sns
 
 # Define a global studi save path
-start_time = 1634134997  # int(time.time())
+start_time = 163519000  # int(time.time())
 study_root_path = Path(__file__).parent.parent / 'study_out' / f'{Path(__file__).stem}_{start_time}'
 
 """
@@ -70,7 +70,7 @@ There are further distinctions to be made:
 
 
 def policy_model_kwargs():
-    return dict(ent_coef=0.01)
+    return dict(ent_coef=0.05)
 
 
 def dqn_model_kwargs():
@@ -93,21 +93,23 @@ def encapsule_env_factory(env_fctry, env_kwrgs):
 
 
 if __name__ == '__main__':
-    train_steps = 5e5
+    train_steps = 8e5
 
     # Define Global Env Parameters
     # Define properties object parameters
     move_props = MovementProperties(allow_diagonal_movement=True,
                                     allow_square_movement=True,
                                     allow_no_op=False)
-    dirt_props = DirtProperties(clean_amount=2, gain_amount=0.1, max_global_amount=20,
-                                max_local_amount=1, spawn_frequency=15, max_spawn_ratio=0.05,
+    dirt_props = DirtProperties(initial_dirt_ratio=0.35, initial_dirt_spawn_r_var=0.1,
+                                clean_amount=0.34,
+                                max_spawn_amount=0.1, max_global_amount=20,
+                                max_local_amount=1, spawn_frequency=0, max_spawn_ratio=0.05,
                                 dirt_smear_amount=0.0, agent_can_interact=True)
     item_props = ItemProperties(n_items=10, agent_can_interact=True,
                                 spawn_frequency=30, n_drop_off_locations=2,
                                 max_agent_inventory_capacity=15)
     factory_kwargs = dict(n_agents=1,
-                          pomdp_r=2, max_steps=400, parse_doors=False,
+                          pomdp_r=2, max_steps=400, parse_doors=True,
                           level_name='rooms', frames_to_stack=3,
                           omit_agent_in_obs=True, combin_agent_obs=True, record_episodes=False,
                           cast_shadows=True, doors_have_area=False, verbose=False,
@@ -124,9 +126,9 @@ if __name__ == '__main__':
     # Define parameter versions according with #1,2[1,0,N],3
     observation_modes = {
         #  Fill-value = 0
-        'seperate_0': dict(additional_env_kwargs=dict(additional_agent_placeholder=0)),
+         # DEACTIVATED 'seperate_0': dict(additional_env_kwargs=dict(additional_agent_placeholder=0)),
         #  Fill-value = 1
-        'seperate_1': dict(additional_env_kwargs=dict(additional_agent_placeholder=1)),
+        # DEACTIVATED 'seperate_1': dict(additional_env_kwargs=dict(additional_agent_placeholder=1)),
         #  Fill-value = N(0, 1)
         'seperate_N': dict(additional_env_kwargs=dict(additional_agent_placeholder='N')),
         #  Further Adjustments are done post-training
@@ -137,10 +139,10 @@ if __name__ == '__main__':
 
     # Train starts here ############################################################
     # Build Major Loop  parameters, parameter versions, Env Classes and models
-    if False:
+    if True:
         for observation_mode in observation_modes.keys():
             for env_name in env_names:
-                for model_cls in h.MODEL_MAP.values():
+                for model_cls in [h.MODEL_MAP['A2C'], h.MODEL_MAP['DQN']]:
                     # Create an identifier, which is unique for every combination and easy to read in filesystem
                     identifier = f'{model_cls.__name__}_{start_time}'
                     # Train each combination per seed
@@ -154,6 +156,8 @@ if __name__ == '__main__':
                         env_kwargs.update(env_seed=seed)
                         # Output folder
                         seed_path = combination_path / f'{str(seed)}_{identifier}'
+                        if (seed_path / 'monitor.pick').exists():
+                            continue
                         seed_path.mkdir(parents=True, exist_ok=True)
 
                         # Monitor Init
@@ -163,7 +167,7 @@ if __name__ == '__main__':
                         if model_cls.__name__ in ["PPO", "A2C"]:
                             # env_factory = env_class(**env_kwargs)
                             env_factory = SubprocVecEnv([encapsule_env_factory(env_class, env_kwargs)
-                                                         for _ in range(1)], start_method="spawn")
+                                                         for _ in range(6)], start_method="spawn")
                             model_kwargs = policy_model_kwargs()
 
                         elif model_cls.__name__ in ["RegDQN", "DQN", "QRDQN"]:
@@ -197,15 +201,20 @@ if __name__ == '__main__':
                         gc.collect()
 
                     # Compare performance runs, for each seed within a model
-                    compare_seed_runs(combination_path)
+                    compare_seed_runs(combination_path, use_tex=False)
                     # Better be save then sorry: Clean up!
-                    del model_kwargs, env_kwargs
-                    import gc
-                    gc.collect()
+                    try:
+                        del env_kwargs
+                        del model_kwargs
+                        import gc
+                        gc.collect()
+                    except NameError:
+                        pass
 
                 # Compare performance runs, for each model
                 # FIXME: Check THIS!!!!
-                compare_model_runs(study_root_path / observation_mode / env_name, f'{start_time}', 'step_reward')
+                compare_model_runs(study_root_path / observation_mode / env_name, f'{start_time}', 'step_reward',
+                                   use_tex=False)
                 pass
             pass
         pass
@@ -215,7 +224,7 @@ if __name__ == '__main__':
     # Evaluation starts here #####################################################
     # First Iterate over every model and monitor "as trained"
     baseline_monitor_file = 'e_1_baseline_monitor.pick'
-    if False:
+    if True:
         render = False
         for observation_mode in observation_modes:
             obs_mode_path = next(x for x in study_root_path.iterdir() if x.is_dir() and x.name == observation_mode)
@@ -312,8 +321,9 @@ if __name__ == '__main__':
     # Plotting
     if True:
         # TODO: Plotting
-        df_list = list()
+
         for observation_folder in (x for x in study_root_path.iterdir() if x.is_dir()):
+            df_list = list()
             for env_folder in (x for x in observation_folder.iterdir() if x.is_dir()):
                 for model_folder in (x for x in env_folder.iterdir() if x.is_dir()):
                     # Gather per seed results in this list
@@ -334,28 +344,48 @@ if __name__ == '__main__':
                             monitor_df['obs_mode'] = monitor_df['obs_mode'].astype(str)
                             monitor_df['model'] = model_folder.name.split('_')[0]
 
-
                             df_list.append(monitor_df)
 
-        id_cols = ['monitor', 'env', 'obs_mode', 'model']
+            id_cols = ['monitor', 'env', 'obs_mode', 'model']
 
-        df = pd.concat(df_list, ignore_index=True)
-        df = df.fillna(0)
+            df = pd.concat(df_list, ignore_index=True)
+            df = df.fillna(0)
 
-        for id_col in id_cols:
-            df[id_col] = df[id_col].astype(str)
+            for id_col in id_cols:
+                df[id_col] = df[id_col].astype(str)
 
-        df_grouped = df.groupby(id_cols + ['seed']
-                                ).agg({key: 'sum' if "Agent" in key else 'mean' for key in df.columns
-                                       if key not in (id_cols + ['seed'])})
-        df_melted = df_grouped.reset_index().melt(id_vars=id_cols,
-                                                  value_vars='step_reward', var_name="Measurement",
-                                                  value_name="Score")
+            if True:
+                # df['fail_sum'] = df.loc[:, df.columns.str.contains("failed")].sum(1)
+                df['pick_up'] = df.loc[:, df.columns.str.contains("]_item_pickup")].sum(1)
+                df['drop_off'] = df.loc[:, df.columns.str.contains("]_item_dropoff")].sum(1)
+                df['failed_item_action'] = df.loc[:, df.columns.str.contains("]_failed_item_action")].sum(1)
+                df['failed_cleanup'] = df.loc[:, df.columns.str.contains("]_failed_dirt_cleanup")].sum(1)
+                df['coll_lvl'] = df.loc[:, df.columns.str.contains("]_vs_LEVEL")].sum(1)
+                df['coll_agent'] = df.loc[:, df.columns.str.contains("]_vs_Agent")].sum(1) / 2
+                # df['collisions'] = df['coll_lvl'] + df['coll_agent']
 
-        c = sns.catplot(data=df_melted, x='obs_mode', hue='monitor', row='model', col='env', y='Score', sharey=False,
-                        kind="box", height=4, aspect=.7, legend_out=True)
-        c.set_xticklabels(rotation=65, horizontalalignment='right')
-        plt.tight_layout(pad=2)
-        plt.savefig(study_root_path / f'results_{n_agents}_agents.png')
+            value_vars = ['pick_up', 'drop_off', 'failed_item_action', 'failed_cleanup',
+                          'coll_lvl', 'coll_agent', 'dirt_cleaned']
 
-    pass
+            df_grouped = df.groupby(id_cols + ['seed']
+                                    ).agg({key: 'sum' if "Agent" in key else 'mean' for key in df.columns
+                                           if key not in (id_cols + ['seed'])})
+            df_melted = df_grouped.reset_index().melt(id_vars=id_cols,
+                                                      value_vars=value_vars,  # 'step_reward',
+                                                      var_name="Measurement",
+                                                      value_name="Score")
+            # df_melted["Measurements"] = df_melted["Measurement"] + " " + df_melted["monitor"]
+
+            # Plotting
+            fig, ax = plt.subplots(figsize=(11.7, 8.27))
+
+            c = sns.catplot(data=df_melted[df_melted['obs_mode'] == observation_folder.name],
+                            x='Measurement', hue='monitor', row='model', col='env', y='Score',
+                            sharey=False, kind="box", height=4, aspect=.7, legend_out=True,
+                            showfliers=False)
+            c.set_xticklabels(rotation=65, horizontalalignment='right')
+            c.fig.subplots_adjust(top=0.9)  # adjust the Figure in rp
+            c.fig.suptitle(f"Cat plot for {observation_folder.name}")
+            plt.tight_layout(pad=2)
+            plt.savefig(study_root_path / f'results_{n_agents}_agents_{observation_folder.name}.png')
+        pass

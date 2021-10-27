@@ -20,14 +20,17 @@ CLEAN_UP_ACTION = h.EnvActions.CLEAN_UP
 
 
 class DirtProperties(NamedTuple):
-    clean_amount: int = 1               # How much does the robot clean with one actions.
-    max_spawn_ratio: float = 0.2        # On max how much tiles does the dirt spawn in percent.
-    gain_amount: float = 0.3            # How much dirt does spawn per tile.
-    spawn_frequency: int = 5            # Spawn Frequency in Steps.
-    max_local_amount: int = 2           # Max dirt amount per tile.
-    max_global_amount: int = 20         # Max dirt amount in the whole environment.
-    dirt_smear_amount: float = 0.2      # Agents smear dirt, when not cleaning up in place.
-    agent_can_interact: bool = True     # Whether the agents can interact with the dirt in this environment.
+    initial_dirt_ratio: float = 0.3         # On INIT, on max how much tiles does the dirt spawn in percent.
+    initial_dirt_spawn_r_var: float = 0.05   # How much does the dirt spawn amount vary?
+    clean_amount: float = 1                 # How much does the robot clean with one actions.
+    max_spawn_ratio: float = 0.20           # On max how much tiles does the dirt spawn in percent.
+    max_spawn_amount: float = 0.3           # How much dirt does spawn per tile at max.
+    spawn_frequency: int = 0                # Spawn Frequency in Steps.
+    max_local_amount: int = 2               # Max dirt amount per tile.
+    max_global_amount: int = 20             # Max dirt amount in the whole environment.
+    dirt_smear_amount: float = 0.2          # Agents smear dirt, when not cleaning up in place.
+    agent_can_interact: bool = True         # Whether the agents can interact with the dirt in this environment.
+    done_when_clean = True
 
 
 class Dirt(Entity):
@@ -91,10 +94,10 @@ class DirtRegister(MovingEntityObjectRegister):
             if not self.amount > self.dirt_properties.max_global_amount:
                 dirt = self.by_pos(tile.pos)
                 if dirt is None:
-                    dirt = Dirt(tile, amount=self.dirt_properties.gain_amount)
+                    dirt = Dirt(tile, amount=self.dirt_properties.max_spawn_amount)
                     self.register_item(dirt)
                 else:
-                    new_value = dirt.amount + self.dirt_properties.gain_amount
+                    new_value = dirt.amount + self.dirt_properties.max_spawn_amount
                     dirt.set_new_amount(min(new_value, self.dirt_properties.max_local_amount))
             else:
                 return c.NOT_VALID
@@ -160,12 +163,17 @@ class DirtFactory(BaseFactory):
         else:
             return c.NOT_VALID
 
-    def trigger_dirt_spawn(self):
+    def trigger_dirt_spawn(self, initial_spawn=False):
+        dirt_rng = self._dirt_rng
         free_for_dirt = [x for x in self[c.FLOOR]
                          if len(x.guests) == 0 or (len(x.guests) == 1 and isinstance(next(y for y in x.guests), Dirt))
                          ]
         self._dirt_rng.shuffle(free_for_dirt)
-        new_spawn = self._dirt_rng.uniform(0, self.dirt_properties.max_spawn_ratio)
+        if initial_spawn:
+            var = self.dirt_properties.initial_dirt_spawn_r_var
+            new_spawn = self.dirt_properties.initial_dirt_ratio + dirt_rng.uniform(-var, var)
+        else:
+            new_spawn = dirt_rng.uniform(0, self.dirt_properties.max_spawn_ratio)
         n_dirt_tiles = max(0, int(new_spawn * len(free_for_dirt)))
         self[c.DIRT].spawn_dirt(free_for_dirt[:n_dirt_tiles])
 
@@ -184,8 +192,9 @@ class DirtFactory(BaseFactory):
                                     if self[c.DIRT].spawn_dirt(agent.tile):
                                         new_pos_dirt = self[c.DIRT].by_pos(agent.pos)
                                         new_pos_dirt.set_new_amount(max(0, new_pos_dirt.amount + smeared_dirt))
-
-        if not self._next_dirt_spawn:
+        if self._next_dirt_spawn < 0:
+            pass  # No Dirt Spawn
+        elif not self._next_dirt_spawn:
             self.trigger_dirt_spawn()
             self._next_dirt_spawn = self.dirt_properties.spawn_frequency
         else:
@@ -208,8 +217,13 @@ class DirtFactory(BaseFactory):
 
     def do_additional_reset(self) -> None:
         super().do_additional_reset()
-        self.trigger_dirt_spawn()
-        self._next_dirt_spawn = self.dirt_properties.spawn_frequency
+        self.trigger_dirt_spawn(initial_spawn=True)
+        self._next_dirt_spawn = self.dirt_properties.spawn_frequency if self.dirt_properties.spawn_frequency else -1
+
+    def check_additional_done(self):
+        super_done = super().check_additional_done()
+        done = self.dirt_properties.done_when_clean and (len(self[c.DIRT]) == 0)
+        return super_done or done
 
     def calculate_additional_reward(self, agent: Agent) -> (int, dict):
         reward, info_dict = super().calculate_additional_reward(agent)
@@ -233,9 +247,8 @@ class DirtFactory(BaseFactory):
             else:
                 reward -= 0.01
                 self.print(f'{agent.name} just tried to clean up some dirt at {agent.pos}, but failed.')
-                info_dict.update({f'{agent.name}_failed_action': 1})
-                info_dict.update({f'{agent.name}_failed_action': 1})
                 info_dict.update({f'{agent.name}_failed_dirt_cleanup': 1})
+                info_dict.update(failed_dirt_clean=1)
 
         # Potential based rewards ->
         #  track the last reward , minus the current reward = potential
@@ -243,12 +256,12 @@ class DirtFactory(BaseFactory):
 
 
 if __name__ == '__main__':
-    render = False
+    render = True
 
     dirt_props = DirtProperties(1, 0.05, 0.1, 3, 1, 20, 0.0)
     move_props = {'allow_square_movement': True,
-  'allow_diagonal_movement': False,
-  'allow_no_op': False} #MovementProperties(True, True, False)
+                  'allow_diagonal_movement': False,
+                  'allow_no_op': False} #MovementProperties(True, True, False)
 
     with RecorderCallback(filepath=Path('debug_out') / f'recorder_xxxx.json', occupation_map=False,
                           trajectory_map=False) as recorder:
@@ -272,12 +285,12 @@ if __name__ == '__main__':
             r = 0
             for agent_i_action in random_actions:
                 env_state, step_r, done_bool, info_obj = factory.step(agent_i_action)
-                recorder.read_info(0, info_obj)
+                #recorder.read_info(0, info_obj)
                 r += step_r
                 if render:
                     factory.render()
                 if done_bool:
-                    recorder.read_done(0, done_bool)
+                #    recorder.read_done(0, done_bool)
                     break
             print(f'Factory run {epoch} done, reward is:\n    {r}')
     pass

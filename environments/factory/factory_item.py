@@ -318,17 +318,26 @@ class ItemFactory(BaseFactory):
         if h.EnvActions.ITEM_ACTION == agent.temp_action:
             if agent.temp_valid:
                 if drop_off := self[c.DROP_OFF].by_pos(agent.pos):
-                    info_dict.update({f'{agent.name}_item_dropoff': 1})
+                    info_dict.update({f'{agent.name}_item_drop_off': 1})
+                    info_dict.update(item_drop_off=1)
                     self.print(f'{agent.name} just dropped of an item at {drop_off.pos}.')
                     reward += 0.5
                 else:
                     info_dict.update({f'{agent.name}_item_pickup': 1})
+                    info_dict.update(item_pickup=1)
                     self.print(f'{agent.name} just picked up an item at {agent.pos}')
                     reward += 0.1
             else:
-                info_dict.update({f'{agent.name}_failed_item_action': 1})
-                self.print(f'{agent.name} just tried to pick up an item at {agent.pos}, but failed.')
-                reward -= 0.1
+                if self[c.DROP_OFF].by_pos(agent.pos):
+                    info_dict.update({f'{agent.name}_failed_drop_off': 1})
+                    info_dict.update(failed_drop_off=1)
+                    self.print(f'{agent.name} just tried to drop off at {agent.pos}, but failed.')
+                    reward -= 0.1
+                else:
+                    info_dict.update({f'{agent.name}_failed_item_action': 1})
+                    info_dict.update(failed_pick_up=1)
+                    self.print(f'{agent.name} just tried to pick up an item at {agent.pos}, but failed.')
+                    reward -= 0.1
         return reward, info_dict
 
     def render_additional_assets(self, mode='human'):
@@ -343,7 +352,7 @@ class ItemFactory(BaseFactory):
 
 if __name__ == '__main__':
     import random
-    render = False
+    render = True
 
     item_props = ItemProperties()
 

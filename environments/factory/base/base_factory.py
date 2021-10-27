@@ -1,5 +1,6 @@
 import abc
 import time
+from collections import defaultdict
 from enum import Enum
 from pathlib import Path
 from typing import List, Union, Iterable, Dict
@@ -230,8 +231,9 @@ class BaseFactory(gym.Env):
                 del this_collisions[i]
                 guest.temp_collisions = this_collisions
 
-        if self.done_at_collision and tiles_with_collisions:
-            done = True
+        done = self.done_at_collision and tiles_with_collisions
+
+        done = done or self.check_additional_done()
 
         # Step the door close intervall
         if self.parse_doors:
@@ -440,48 +442,61 @@ class BaseFactory(gym.Env):
 
     def calculate_reward(self) -> (int, dict):
         # Returns: Reward, Info
-        info_dict = dict()
+        per_agent_info_dict = defaultdict(dict)
         reward = 0
 
         for agent in self[c.AGENT]:
             if self._actions.is_moving_action(agent.temp_action):
                 if agent.temp_valid:
                     # info_dict.update(movement=1)
-                    # info_dict.update({f'{agent.name}_failed_action': 1})
                     # reward += 0.00
                     pass
                 else:
-                    # self.print('collision')
                     reward -= 0.01
                     self.print(f'{agent.name} just hit the wall at {agent.pos}.')
-                    info_dict.update({f'{agent.name}_vs_LEVEL': 1})
+                    per_agent_info_dict[agent.name].update({f'{agent.name}_vs_LEVEL': 1})
 
             elif h.EnvActions.USE_DOOR == agent.temp_action:
                 if agent.temp_valid:
                     # reward += 0.00
                     self.print(f'{agent.name} did just use the door at {agent.pos}.')
-                    info_dict.update(door_used=1)
+                    per_agent_info_dict[agent.name].update(door_used=1)
                 else:
                     # reward -= 0.00
                     self.print(f'{agent.name} just tried to use a door at {agent.pos}, but failed.')
-                    info_dict.update({f'{agent.name}_failed_action': 1})
-                    info_dict.update({f'{agent.name}_failed_door_open': 1})
+                    per_agent_info_dict[agent.name].update({f'{agent.name}_failed_door_open': 1})
             elif h.EnvActions.NOOP == agent.temp_action:
-                info_dict.update(no_op=1)
+                per_agent_info_dict[agent.name].update(no_op=1)
                 # reward -= 0.00
+
+            # Monitor Notes
+            if agent.temp_valid:
+                per_agent_info_dict[agent.name].update(valid_action=1)
+                per_agent_info_dict[agent.name].update({f'{agent.name}_valid_action': 1})
+            else:
+                per_agent_info_dict[agent.name].update(failed_action=1)
+                per_agent_info_dict[agent.name].update({f'{agent.name}_failed_action': 1})
 
             additional_reward, additional_info_dict = self.calculate_additional_reward(agent)
             reward += additional_reward
-            info_dict.update(additional_info_dict)
+            per_agent_info_dict[agent.name].update(additional_info_dict)
 
             if agent.temp_collisions:
                 self.print(f't = {self._steps}\t{agent.name} has collisions with {agent.temp_collisions}')
+                per_agent_info_dict[agent.name].update(collisions=1)
 
-            for other_agent in agent.temp_collisions:
-                info_dict.update({f'{agent.name}_vs_{other_agent.name}': 1})
+                for other_agent in agent.temp_collisions:
+                    per_agent_info_dict[agent.name].update({f'{agent.name}_vs_{other_agent.name}': 1})
+
+        # Combine the per_agent_info_dict:
+        combined_info_dict = defaultdict(lambda: 0)
+        for info_dict in per_agent_info_dict.values():
+            for key, value in info_dict.items():
+                combined_info_dict[key] += value
+        combined_info_dict = dict(combined_info_dict)
 
         self.print(f"reward is {reward}")
-        return reward, info_dict
+        return reward, combined_info_dict
 
     def render(self, mode='human'):
         if not self._renderer:  # lazy init
@@ -564,6 +579,10 @@ class BaseFactory(gym.Env):
     @abc.abstractmethod
     def do_additional_actions(self, agent: Agent, action: Action) -> Union[None, c]:
         return None
+
+    @abc.abstractmethod
+    def check_additional_done(self) -> bool:
+        return False
 
     @abc.abstractmethod
     def calculate_additional_reward(self, agent: Agent) -> (int, dict):

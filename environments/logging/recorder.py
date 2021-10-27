@@ -33,7 +33,8 @@ class RecorderCallback(BaseCallback):
 
     def read_done(self, env_idx, done):
         if done:
-            self._recorder_out_list.append({'steps': self._recorder_dict[env_idx]})
+            self._recorder_out_list.append({'steps': self._recorder_dict[env_idx],
+                                            'episode': len(self._recorder_out_list)})
             self._recorder_dict[env_idx] = list()
         else:
             pass
