@@ -14,7 +14,7 @@ from environments.factory.base.registers import Entities, MovingEntityObjectRegi
 
 from environments.factory.renderer import RenderEntity
 from environments.logging.recorder import RecorderCallback
-
+from environments.utility_classes import ObservationProperties
 
 CLEAN_UP_ACTION = h.EnvActions.CLEAN_UP
 
@@ -65,9 +65,9 @@ class DirtRegister(MovingEntityObjectRegister):
     def as_array(self):
         if self._array is not None:
             self._array[:] = c.FREE_CELL.value
-            for key, dirt in self.items():
+            for dirt in self.values():
                 if dirt.amount == 0:
-                    self.delete_item(key)
+                    self.delete_item(dirt)
                 self._array[0, dirt.x, dirt.y] = dirt.amount
         else:
             self._array = np.zeros((1, *self._level_shape))
@@ -124,21 +124,21 @@ class DirtFactory(BaseFactory):
     @property
     def additional_actions(self) -> Union[Action, List[Action]]:
         super_actions = super().additional_actions
-        if self.dirt_properties.agent_can_interact:
+        if self.dirt_prop.agent_can_interact:
             super_actions.append(Action(enum_ident=CLEAN_UP_ACTION))
         return super_actions
 
     @property
     def additional_entities(self) -> Dict[(Enum, Entities)]:
         super_entities = super().additional_entities
-        dirt_register = DirtRegister(self.dirt_properties, self._level_shape)
+        dirt_register = DirtRegister(self.dirt_prop, self._level_shape)
         super_entities.update(({c.DIRT: dirt_register}))
         return super_entities
 
-    def __init__(self, *args, dirt_properties: DirtProperties = DirtProperties(), env_seed=time.time_ns(), **kwargs):
-        if isinstance(dirt_properties, dict):
-            dirt_properties = DirtProperties(**dirt_properties)
-        self.dirt_properties = dirt_properties
+    def __init__(self, *args, dirt_prop: DirtProperties = DirtProperties(), env_seed=time.time_ns(), **kwargs):
+        if isinstance(dirt_prop, dict):
+            dirt_prop = DirtProperties(**dirt_prop)
+        self.dirt_prop = dirt_prop
         self._dirt_rng = np.random.default_rng(env_seed)
         self._dirt: DirtRegister
         kwargs.update(env_seed=env_seed)
@@ -153,7 +153,7 @@ class DirtFactory(BaseFactory):
 
     def clean_up(self, agent: Agent) -> c:
         if dirt := self[c.DIRT].by_pos(agent.pos):
-            new_dirt_amount = dirt.amount - self.dirt_properties.clean_amount
+            new_dirt_amount = dirt.amount - self.dirt_prop.clean_amount
 
             if new_dirt_amount <= 0:
                 self[c.DIRT].delete_item(dirt)
@@ -170,16 +170,16 @@ class DirtFactory(BaseFactory):
                          ]
         self._dirt_rng.shuffle(free_for_dirt)
         if initial_spawn:
-            var = self.dirt_properties.initial_dirt_spawn_r_var
-            new_spawn = self.dirt_properties.initial_dirt_ratio + dirt_rng.uniform(-var, var)
+            var = self.dirt_prop.initial_dirt_spawn_r_var
+            new_spawn = self.dirt_prop.initial_dirt_ratio + dirt_rng.uniform(-var, var)
         else:
-            new_spawn = dirt_rng.uniform(0, self.dirt_properties.max_spawn_ratio)
+            new_spawn = dirt_rng.uniform(0, self.dirt_prop.max_spawn_ratio)
         n_dirt_tiles = max(0, int(new_spawn * len(free_for_dirt)))
         self[c.DIRT].spawn_dirt(free_for_dirt[:n_dirt_tiles])
 
     def do_additional_step(self) -> dict:
         info_dict = super().do_additional_step()
-        if smear_amount := self.dirt_properties.dirt_smear_amount:
+        if smear_amount := self.dirt_prop.dirt_smear_amount:
             for agent in self[c.AGENT]:
                 if agent.temp_valid and agent.last_pos != c.NO_POS:
                     if self._actions.is_moving_action(agent.temp_action):
@@ -196,7 +196,7 @@ class DirtFactory(BaseFactory):
             pass  # No Dirt Spawn
         elif not self._next_dirt_spawn:
             self.trigger_dirt_spawn()
-            self._next_dirt_spawn = self.dirt_properties.spawn_frequency
+            self._next_dirt_spawn = self.dirt_prop.spawn_frequency
         else:
             self._next_dirt_spawn -= 1
         return info_dict
@@ -205,7 +205,7 @@ class DirtFactory(BaseFactory):
         valid = super().do_additional_actions(agent, action)
         if valid is None:
             if action == CLEAN_UP_ACTION:
-                if self.dirt_properties.agent_can_interact:
+                if self.dirt_prop.agent_can_interact:
                     valid = self.clean_up(agent)
                     return valid
                 else:
@@ -218,11 +218,11 @@ class DirtFactory(BaseFactory):
     def do_additional_reset(self) -> None:
         super().do_additional_reset()
         self.trigger_dirt_spawn(initial_spawn=True)
-        self._next_dirt_spawn = self.dirt_properties.spawn_frequency if self.dirt_properties.spawn_frequency else -1
+        self._next_dirt_spawn = self.dirt_prop.spawn_frequency if self.dirt_prop.spawn_frequency else -1
 
     def check_additional_done(self):
         super_done = super().check_additional_done()
-        done = self.dirt_properties.done_when_clean and (len(self[c.DIRT]) == 0)
+        done = self.dirt_prop.done_when_clean and (len(self[c.DIRT]) == 0)
         return super_done or done
 
     def calculate_additional_reward(self, agent: Agent) -> (int, dict):
@@ -256,41 +256,40 @@ class DirtFactory(BaseFactory):
 
 
 if __name__ == '__main__':
+    from environments.utility_classes import AgentRenderOptions as ARO
     render = True
 
-    dirt_props = DirtProperties(1, 0.05, 0.1, 3, 1, 20, 0.0)
+    dirt_props = DirtProperties(1, 0.05, 0.1, 3, 1, 20, 0)
+
+    obs_props = ObservationProperties(render_agents=ARO.COMBINED, omit_agent_self=True, pomdp_r=2, additional_agent_placeholder=None)
+
     move_props = {'allow_square_movement': True,
                   'allow_diagonal_movement': False,
-                  'allow_no_op': False} #MovementProperties(True, True, False)
+                  'allow_no_op': False}
 
-    with RecorderCallback(filepath=Path('debug_out') / f'recorder_xxxx.json', occupation_map=False,
-                          trajectory_map=False) as recorder:
+    factory = DirtFactory(n_agents=3, done_at_collision=False,
+                          level_name='rooms', max_steps=400,
+                          obs_prop=obs_props, parse_doors=True,
+                          record_episodes=True, verbose=True,
+                          mv_prop=move_props, dirt_prop=dirt_props
+                          )
 
-        factory = DirtFactory(n_agents=1, done_at_collision=False, frames_to_stack=0,
-                              level_name='rooms', max_steps=400, combin_agent_obs=True,
-                              omit_agent_in_obs=True, parse_doors=True, pomdp_r=3,
-                              record_episodes=True, verbose=True, cast_shadows=True,
-                              movement_properties=move_props, dirt_properties=dirt_props
-                              )
+    # noinspection DuplicatedCode
+    n_actions = factory.action_space.n - 1
+    _ = factory.observation_space
 
-        # noinspection DuplicatedCode
-        n_actions = factory.action_space.n - 1
-        _ = factory.observation_space
-
-        for epoch in range(4):
-            random_actions = [[random.randint(0, n_actions) for _
-                               in range(factory.n_agents)] for _
-                              in range(factory.max_steps+1)]
-            env_state = factory.reset()
-            r = 0
-            for agent_i_action in random_actions:
-                env_state, step_r, done_bool, info_obj = factory.step(agent_i_action)
-                #recorder.read_info(0, info_obj)
-                r += step_r
-                if render:
-                    factory.render()
-                if done_bool:
-                #    recorder.read_done(0, done_bool)
-                    break
-            print(f'Factory run {epoch} done, reward is:\n    {r}')
-    pass
+    for epoch in range(4):
+        random_actions = [[random.randint(0, n_actions) for _
+                           in range(factory.n_agents)] for _
+                          in range(factory.max_steps+1)]
+        env_state = factory.reset()
+        r = 0
+        for agent_i_action in random_actions:
+            env_state, step_r, done_bool, info_obj = factory.step(agent_i_action)
+            r += step_r
+            if render:
+                factory.render()
+            if done_bool:
+                break
+        print(f'Factory run {epoch} done, reward is:\n    {r}')
+pass

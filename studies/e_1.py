@@ -26,15 +26,11 @@ from environments.factory.factory_dirt import DirtProperties, DirtFactory
 from environments.factory.factory_dirt_item import DirtItemFactory
 from environments.factory.factory_item import ItemProperties, ItemFactory
 from environments.logging.monitor import MonitorCallback
-from environments.utility_classes import MovementProperties
+from environments.utility_classes import MovementProperties, ObservationProperties, AgentRenderOptions
 import pickle
 from plotting.compare_runs import compare_seed_runs, compare_model_runs, compare_all_parameter_runs
 import pandas as pd
 import seaborn as sns
-
-# Define a global studi save path
-start_time = 163519000  # int(time.time())
-study_root_path = Path(__file__).parent.parent / 'study_out' / f'{Path(__file__).stem}_{start_time}'
 
 """
 In this studie, we want to explore the macro behaviour of multi agents which are trained on the same task, 
@@ -68,6 +64,10 @@ There are further distinctions to be made:
 - We are out of distribution.
 """
 
+n_agents = 4
+ood_monitor_file = f'e_1_monitor_{n_agents}_agents.pick'
+baseline_monitor_file = 'e_1_baseline_monitor.pick'
+
 
 def policy_model_kwargs():
     return dict(ent_coef=0.05)
@@ -92,11 +92,96 @@ def encapsule_env_factory(env_fctry, env_kwrgs):
     return _init
 
 
+def load_model_run_baseline(seed_path, env_to_run):
+    # retrieve model class
+    model_cls = next(val for key, val in h.MODEL_MAP.items() if key in seed_path.parent.name)
+    # Load both agents
+    model = model_cls.load(seed_path / 'model.zip')
+    # Load old env kwargs
+    with next(seed_path.glob('*.json')).open('r') as f:
+        env_kwargs = simplejson.load(f)
+    # Monitor Init
+    with MonitorCallback(filepath=seed_path / baseline_monitor_file) as monitor:
+        # Init Env
+        with env_to_run(**env_kwargs) as env_factory:
+            # Evaluation Loop for i in range(n Episodes)
+            for episode in range(100):
+                env_state = env_factory.reset()
+                rew, done_bool = 0, False
+                while not done_bool:
+                    action = model.predict(env_state, deterministic=True)[0]
+                    env_state, step_r, done_bool, info_obj = env_factory.step(action)
+                    monitor.read_info(0, info_obj)
+                    rew += step_r
+                    if done_bool:
+                        monitor.read_done(0, done_bool)
+                        break
+                print(f'Factory run {episode} done, reward is:\n    {rew}')
+        # Eval monitor outputs are automatically stored by the monitor object
+        # del model, env_kwargs, env_factory
+        # import gc
+        # gc.collect()
+
+
+def load_model_run_study(seed_path, env_to_run, additional_kwargs_dict):
+    global model_cls
+    # retrieve model class
+    model_cls = next(val for key, val in h.MODEL_MAP.items() if key in seed_path.parent.name)
+    # Load both agents
+    models = [model_cls.load(seed_path / 'model.zip') for _ in range(n_agents)]
+    # Load old env kwargs
+    with next(seed_path.glob('*.json')).open('r') as f:
+        env_kwargs = simplejson.load(f)
+        env_kwargs.update(
+            n_agents=n_agents,
+            **additional_kwargs_dict.get('post_training_kwargs', {}))
+    # Monitor Init
+    with MonitorCallback(filepath=seed_path / ood_monitor_file) as monitor:
+        # Init Env
+        with env_to_run(**env_kwargs) as env_factory:
+            # Evaluation Loop for i in range(n Episodes)
+            for episode in range(50):
+                env_state = env_factory.reset()
+                rew, done_bool = 0, False
+                while not done_bool:
+                    try:
+                        actions = [model.predict(
+                            np.stack([env_state[i][j] for i in range(env_state.shape[0])]),
+                            deterministic=False)[0] for j, model in enumerate(models)]
+                    except ValueError as e:
+                        print(e)
+                        print('Env_Kwargs are:\n')
+                        print(env_kwargs)
+                        print('Path is:\n')
+                        print(seed_path)
+                        exit()
+                    env_state, step_r, done_bool, info_obj = env_factory.step(actions)
+                    monitor.read_info(0, info_obj)
+                    rew += step_r
+                    if done_bool:
+                        monitor.read_done(0, done_bool)
+                        break
+                print(f'Factory run {episode} done, reward is:\n    {rew}')
+    # Eval monitor outputs are automatically stored by the monitor object
+    del models, env_kwargs, env_factory
+    import gc
+    gc.collect()
+
+
 if __name__ == '__main__':
     train_steps = 8e5
 
+    # Define a global studi save path
+    start_time = '900000'  # int(time.time())
+    study_root_path = Path(__file__).parent.parent / 'study_out' / f'{Path(__file__).stem}_{start_time}'
+
     # Define Global Env Parameters
     # Define properties object parameters
+    obs_props = ObservationProperties(render_agents=AgentRenderOptions.NOT,
+                                      omit_agent_self=True,
+                                      frames_to_stack=3,
+                                      pomdp_r=2
+                                      )
     move_props = MovementProperties(allow_diagonal_movement=True,
                                     allow_square_movement=True,
                                     allow_no_op=False)
@@ -108,33 +193,67 @@ if __name__ == '__main__':
     item_props = ItemProperties(n_items=10, agent_can_interact=True,
                                 spawn_frequency=30, n_drop_off_locations=2,
                                 max_agent_inventory_capacity=15)
-    factory_kwargs = dict(n_agents=1,
-                          pomdp_r=2, max_steps=400, parse_doors=True,
-                          level_name='rooms', frames_to_stack=3,
-                          omit_agent_in_obs=True, combin_agent_obs=True, record_episodes=False,
-                          cast_shadows=True, doors_have_area=False, verbose=False,
-                          movement_properties=move_props
+    factory_kwargs = dict(n_agents=1, max_steps=400, parse_doors=True,
+                          level_name='rooms', record_episodes=False, doors_have_area=False,
+                          verbose=False,
+                          mv_prop=move_props,
+                          obs_prop=obs_props
                           )
 
     # Bundle both environments with global kwargs and parameters
-    env_map = {'dirt': (DirtFactory, dict(dirt_properties=dirt_props, **factory_kwargs)),
-               'item': (ItemFactory, dict(item_properties=item_props, **factory_kwargs)),
-               'itemdirt': (DirtItemFactory, dict(dirt_properties=dirt_props, item_properties=item_props,
+    env_map = {'dirt': (DirtFactory, dict(dirt_prop=dirt_props,
+                                          **factory_kwargs)),
+               'item': (ItemFactory, dict(item_prop=item_props,
+                                          **factory_kwargs)),
+               'itemdirt': (DirtItemFactory, dict(dirt_prop=dirt_props,
+                                                  item_prop=item_props,
                                                   **factory_kwargs))}
     env_names = list(env_map.keys())
 
     # Define parameter versions according with #1,2[1,0,N],3
     observation_modes = {
         #  Fill-value = 0
-         # DEACTIVATED 'seperate_0': dict(additional_env_kwargs=dict(additional_agent_placeholder=0)),
+        # DEACTIVATED 'seperate_0': dict(additional_env_kwargs=dict(additional_agent_placeholder=0)),
         #  Fill-value = 1
         # DEACTIVATED 'seperate_1': dict(additional_env_kwargs=dict(additional_agent_placeholder=1)),
         #  Fill-value = N(0, 1)
-        'seperate_N': dict(additional_env_kwargs=dict(additional_agent_placeholder='N')),
-        #  Further Adjustments are done post-training
-        'in_lvl_obs': dict(post_training_kwargs=dict(other_agent_obs='in_lvl')),
+        'seperate_N': dict(
+            post_training_kwargs=
+            dict(obs_prop=ObservationProperties(
+                render_agents=AgentRenderOptions.COMBINED,
+                additional_agent_placeholder=None,
+                omit_agent_self=True,
+                frames_to_stack=3,
+                pomdp_r=2)
+            ),
+            additional_env_kwargs=
+            dict(obs_prop=ObservationProperties(
+                render_agents=AgentRenderOptions.NOT,
+                additional_agent_placeholder='N',
+                omit_agent_self=True,
+                frames_to_stack=3,
+                pomdp_r=2)
+            )
+        ),
+        'in_lvl_obs': dict(
+            post_training_kwargs=
+            dict(obs_prop=ObservationProperties(
+                render_agents=AgentRenderOptions.LEVEL,
+                omit_agent_self=True,
+                frames_to_stack=3,
+                pomdp_r=2)
+            )
+        ),
         #  No further adjustment needed
-        'no_obs': {}
+        'no_obs': dict(
+            post_training_kwargs=
+            dict(obs_prop=ObservationProperties(
+                render_agents=AgentRenderOptions.NOT,
+                omit_agent_self=True,
+                frames_to_stack=3,
+                pomdp_r=2)
+            )
+        )
     }
 
     # Train starts here ############################################################
@@ -223,52 +342,27 @@ if __name__ == '__main__':
 
     # Evaluation starts here #####################################################
     # First Iterate over every model and monitor "as trained"
-    baseline_monitor_file = 'e_1_baseline_monitor.pick'
     if True:
-        render = False
         for observation_mode in observation_modes:
             obs_mode_path = next(x for x in study_root_path.iterdir() if x.is_dir() and x.name == observation_mode)
             # For trained policy in study_root_path / identifier
             for env_path in [x for x in obs_mode_path.iterdir() if x.is_dir()]:
                 for policy_path in [x for x in env_path.iterdir() if x. is_dir()]:
                     # Iteration
-                    for seed_path in (y for y in policy_path.iterdir() if y.is_dir()):
-                        # retrieve model class
-                        for model_cls in (val for key, val in h.MODEL_MAP.items() if key in policy_path.name):
-                            # Load both agents
-                            model = model_cls.load(seed_path / 'model.zip')
-                            # Load old env kwargs
-                            with next(seed_path.glob('*.json')).open('r') as f:
-                                env_kwargs = simplejson.load(f)
-                            # Monitor Init
-                            with MonitorCallback(filepath=seed_path / baseline_monitor_file) as monitor:
-                                # Init Env
-                                with env_map[env_path.name][0](**env_kwargs) as env_factory:
-                                    # Evaluation Loop for i in range(n Episodes)
-                                    for episode in range(100):
-                                        env_state = env_factory.reset()
-                                        rew, done_bool = 0, False
-                                        while not done_bool:
-                                            action = model.predict(env_state, deterministic=True)[0]
-                                            env_state, step_r, done_bool, info_obj = env_factory.step(action)
-                                            monitor.read_info(0, info_obj)
-                                            rew += step_r
-                                            if render:
-                                                env_factory.render()
-                                            if done_bool:
-                                                monitor.read_done(0, done_bool)
-                                                break
-                                        print(f'Factory run {episode} done, reward is:\n    {rew}')
-                                # Eval monitor outputs are automatically stored by the monitor object
-                            del model, env_kwargs, env_factory
-                            import gc
+                    paths = list(y for y in policy_path.iterdir() if y.is_dir() \
+                                 and not (y / baseline_monitor_file).exists())
+                    import multiprocessing as mp
+                    import itertools as it
+                    pool = mp.Pool(mp.cpu_count())
+                    result = pool.starmap(load_model_run_baseline,
+                                          it.product(paths,
+                                                     (env_map[env_path.name][0],))
+                                          )
 
-                            gc.collect()
+                    # for seed_path in (y for y in policy_path.iterdir() if y.is_dir()):
+                    #    load_model_run_baseline(seed_path)
 
     # Then iterate over every model and monitor "ood behavior" - "is it ood?"
-    n_agents = 4
-    ood_monitor_file = f'e_1_monitor_{n_agents}_agents.pick'
-
     if True:
         for observation_mode in observation_modes:
             obs_mode_path = next(x for x in study_root_path.iterdir() if x.is_dir() and x.name == observation_mode)
@@ -279,44 +373,18 @@ if __name__ == '__main__':
                     # First seed path version
                     # seed_path = next((y for y in policy_path.iterdir() if y.is_dir()))
                     # Iteration
-                    for seed_path in (y for y in policy_path.iterdir() if y.is_dir()):
-                        if (seed_path / ood_monitor_file).exists():
-                            continue
-                        # retrieve model class
-                        for model_cls in (val for key, val in h.MODEL_MAP.items() if key in policy_path.name):
-                            # Load both agents
-                            models = [model_cls.load(seed_path / 'model.zip') for _ in range(n_agents)]
-                            # Load old env kwargs
-                            with next(seed_path.glob('*.json')).open('r') as f:
-                                env_kwargs = simplejson.load(f)
-                                env_kwargs.update(
-                                    n_agents=n_agents, additional_agent_placeholder=None,
-                                    **observation_modes[observation_mode].get('post_training_env_kwargs', {}))
-
-                            # Monitor Init
-                            with MonitorCallback(filepath=seed_path / ood_monitor_file) as monitor:
-                                # Init Env
-                                with env_map[env_path.name][0](**env_kwargs) as env_factory:
-                                    # Evaluation Loop for i in range(n Episodes)
-                                    for episode in range(50):
-                                        env_state = env_factory.reset()
-                                        rew, done_bool = 0, False
-                                        while not done_bool:
-                                            actions = [model.predict(
-                                                np.stack([env_state[i][j] for i in range(env_state.shape[0])]),
-                                                deterministic=False)[0] for j, model in enumerate(models)]
-                                            env_state, step_r, done_bool, info_obj = env_factory.step(actions)
-                                            monitor.read_info(0, info_obj)
-                                            rew += step_r
-                                            if done_bool:
-                                                monitor.read_done(0, done_bool)
-                                                break
-                                        print(f'Factory run {episode} done, reward is:\n    {rew}')
-                                    # Eval monitor outputs are automatically stored by the monitor object
-                            del models, env_kwargs, env_factory
-                            import gc
-
-                            gc.collect()
+                    import multiprocessing as mp
+                    import itertools as it
+                    pool = mp.Pool(mp.cpu_count())
+                    paths = list(y for y in policy_path.iterdir() if y.is_dir() \
+                                 and not (y / ood_monitor_file).exists())
+                    result = pool.starmap(load_model_run_study,
+                                          it.product(paths,
+                                                     (env_map[env_path.name][0],),
+                                                     (observation_modes[observation_mode],))
+                                          )
+                    # for seed_path in (y for y in policy_path.iterdir() if y.is_dir()):
+                    #     load_model_run_study(seed_path)
 
     # Plotting
     if True:

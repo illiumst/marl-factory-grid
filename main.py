@@ -56,7 +56,7 @@ if __name__ == '__main__':
     for modeL_type in [A2C, PPO, DQN]:  # ,RegDQN, QRDQN]:
         for seed in range(3):
             env_kwargs = dict(n_agents=1,
-                              # item_properties=item_props,
+                              # item_prop=item_props,
                               dirt_properties=dirt_props,
                               movement_properties=move_props,
                               pomdp_r=2, max_steps=1000, parse_doors=False,
