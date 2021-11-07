@@ -96,7 +96,7 @@ def load_model_run_baseline(seed_path, env_to_run):
     # retrieve model class
     model_cls = next(val for key, val in h.MODEL_MAP.items() if key in seed_path.parent.name)
     # Load both agents
-    model = model_cls.load(seed_path / 'model.zip')
+    model = model_cls.load(seed_path / 'model.zip', device='cpu')
     # Load old env kwargs
     with next(seed_path.glob('*.json')).open('r') as f:
         env_kwargs = simplejson.load(f)
@@ -128,7 +128,7 @@ def load_model_run_study(seed_path, env_to_run, additional_kwargs_dict):
     # retrieve model class
     model_cls = next(val for key, val in h.MODEL_MAP.items() if key in seed_path.parent.name)
     # Load both agents
-    models = [model_cls.load(seed_path / 'model.zip') for _ in range(n_agents)]
+    models = [model_cls.load(seed_path / 'model.zip', device='cpu') for _ in range(n_agents)]
     # Load old env kwargs
     with next(seed_path.glob('*.json')).open('r') as f:
         env_kwargs = simplejson.load(f)
@@ -179,6 +179,7 @@ if __name__ == '__main__':
     # Define properties object parameters
     obs_props = ObservationProperties(render_agents=AgentRenderOptions.NOT,
                                       omit_agent_self=True,
+                                      additional_agent_placeholder=None,
                                       frames_to_stack=3,
                                       pomdp_r=2
                                       )
@@ -202,12 +203,12 @@ if __name__ == '__main__':
 
     # Bundle both environments with global kwargs and parameters
     env_map = {'dirt': (DirtFactory, dict(dirt_prop=dirt_props,
-                                          **factory_kwargs)),
+                                          **factory_kwargs.copy())),
                'item': (ItemFactory, dict(item_prop=item_props,
-                                          **factory_kwargs)),
+                                          **factory_kwargs.copy())),
                'itemdirt': (DirtItemFactory, dict(dirt_prop=dirt_props,
                                                   item_prop=item_props,
-                                                  **factory_kwargs))}
+                                                  **factory_kwargs.copy()))}
     env_names = list(env_map.keys())
 
     # Define parameter versions according with #1,2[1,0,N],3
@@ -240,6 +241,7 @@ if __name__ == '__main__':
             dict(obs_prop=ObservationProperties(
                 render_agents=AgentRenderOptions.LEVEL,
                 omit_agent_self=True,
+                additional_agent_placeholder=None,
                 frames_to_stack=3,
                 pomdp_r=2)
             )
@@ -249,6 +251,7 @@ if __name__ == '__main__':
             post_training_kwargs=
             dict(obs_prop=ObservationProperties(
                 render_agents=AgentRenderOptions.NOT,
+                additional_agent_placeholder=None,
                 omit_agent_self=True,
                 frames_to_stack=3,
                 pomdp_r=2)
@@ -259,18 +262,18 @@ if __name__ == '__main__':
     # Train starts here ############################################################
     # Build Major Loop  parameters, parameter versions, Env Classes and models
     if True:
-        for observation_mode in observation_modes.keys():
+        for obs_mode in observation_modes.keys():
             for env_name in env_names:
                 for model_cls in [h.MODEL_MAP['A2C'], h.MODEL_MAP['DQN']]:
                     # Create an identifier, which is unique for every combination and easy to read in filesystem
                     identifier = f'{model_cls.__name__}_{start_time}'
                     # Train each combination per seed
-                    combination_path = study_root_path / observation_mode / env_name / identifier
+                    combination_path = study_root_path / obs_mode / env_name / identifier
                     env_class, env_kwargs = env_map[env_name]
+                    env_kwargs = env_kwargs.copy()
                     # Retrieve and set the observation mode specific env parameters
-                    if observation_mode_kwargs := observation_modes.get(observation_mode, None):
-                        if additional_env_kwargs := observation_mode_kwargs.get("additional_env_kwargs", None):
-                            env_kwargs.update(additional_env_kwargs)
+                    additional_kwargs = observation_modes.get(obs_mode, {}).get("additional_env_kwargs", {})
+                    env_kwargs.update(additional_kwargs)
                     for seed in range(5):
                         env_kwargs.update(env_seed=seed)
                         # Output folder
@@ -320,7 +323,10 @@ if __name__ == '__main__':
                         gc.collect()
 
                     # Compare performance runs, for each seed within a model
-                    compare_seed_runs(combination_path, use_tex=False)
+                    try:
+                        compare_seed_runs(combination_path, use_tex=False)
+                    except ValueError:
+                        pass
                     # Better be save then sorry: Clean up!
                     try:
                         del env_kwargs
@@ -332,8 +338,11 @@ if __name__ == '__main__':
 
                 # Compare performance runs, for each model
                 # FIXME: Check THIS!!!!
-                compare_model_runs(study_root_path / observation_mode / env_name, f'{start_time}', 'step_reward',
-                                   use_tex=False)
+                try:
+                    compare_model_runs(study_root_path / obs_mode / env_name, f'{start_time}', 'step_reward',
+                                       use_tex=False)
+                except ValueError:
+                    pass
                 pass
             pass
         pass
@@ -343,8 +352,8 @@ if __name__ == '__main__':
     # Evaluation starts here #####################################################
     # First Iterate over every model and monitor "as trained"
     if True:
-        for observation_mode in observation_modes:
-            obs_mode_path = next(x for x in study_root_path.iterdir() if x.is_dir() and x.name == observation_mode)
+        for obs_mode in observation_modes:
+            obs_mode_path = next(x for x in study_root_path.iterdir() if x.is_dir() and x.name == obs_mode)
             # For trained policy in study_root_path / identifier
             for env_path in [x for x in obs_mode_path.iterdir() if x.is_dir()]:
                 for policy_path in [x for x in env_path.iterdir() if x. is_dir()]:
@@ -364,8 +373,8 @@ if __name__ == '__main__':
 
     # Then iterate over every model and monitor "ood behavior" - "is it ood?"
     if True:
-        for observation_mode in observation_modes:
-            obs_mode_path = next(x for x in study_root_path.iterdir() if x.is_dir() and x.name == observation_mode)
+        for obs_mode in observation_modes:
+            obs_mode_path = next(x for x in study_root_path.iterdir() if x.is_dir() and x.name == obs_mode)
             # For trained policy in study_root_path / identifier
             for env_path in [x for x in obs_mode_path.iterdir() if x.is_dir()]:
                 for policy_path in [x for x in env_path.iterdir() if x. is_dir()]:
@@ -381,7 +390,7 @@ if __name__ == '__main__':
                     result = pool.starmap(load_model_run_study,
                                           it.product(paths,
                                                      (env_map[env_path.name][0],),
-                                                     (observation_modes[observation_mode],))
+                                                     (observation_modes[obs_mode],))
                                           )
                     # for seed_path in (y for y in policy_path.iterdir() if y.is_dir()):
                     #     load_model_run_study(seed_path)

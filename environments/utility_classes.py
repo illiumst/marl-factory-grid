@@ -3,7 +3,7 @@ from typing import NamedTuple, Union
 
 
 class AgentRenderOptions(object):
-    SEPERATE = 'each'
+    SEPERATE = 'seperate'
     COMBINED = 'combined'
     LEVEL = 'lvl'
     NOT = 'not'
