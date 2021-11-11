@@ -1,7 +1,7 @@
 def make(env_str, n_agents=1, pomdp_r=2, max_steps=400):
     import yaml
     from pathlib import Path
-    from environments.factory.factory_dirt_item import DirtItemFactory
+    from environments.factory.combined_factories import DirtItemFactory
     from environments.factory.factory_item import ItemFactory, ItemProperties
     from environments.factory.factory_dirt import DirtProperties, DirtFactory
     from environments.utility_classes import MovementProperties, ObservationProperties, AgentRenderOptions

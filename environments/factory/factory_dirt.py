@@ -261,13 +261,14 @@ if __name__ == '__main__':
 
     dirt_props = DirtProperties(1, 0.05, 0.1, 3, 1, 20, 0)
 
-    obs_props = ObservationProperties(render_agents=ARO.COMBINED, omit_agent_self=True, pomdp_r=2, additional_agent_placeholder=None)
+    obs_props = ObservationProperties(render_agents=ARO.COMBINED, omit_agent_self=True,
+                                      pomdp_r=15, additional_agent_placeholder=None)
 
     move_props = {'allow_square_movement': True,
                   'allow_diagonal_movement': False,
                   'allow_no_op': False}
 
-    factory = DirtFactory(n_agents=3, done_at_collision=False,
+    factory = DirtFactory(n_agents=5, done_at_collision=False,
                           level_name='rooms', max_steps=400,
                           obs_prop=obs_props, parse_doors=True,
                           record_episodes=True, verbose=True,

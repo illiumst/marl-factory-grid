@@ -49,6 +49,10 @@ class Constants(Enum):
     INVENTORY           = 'Inventory'
     DROP_OFF            = 'Drop_Off'
 
+    # Battery Env
+    CHARGE_POD          = 'Charge_Pod'
+    BATTERIES           = 'BATTERIES'
+
     def __bool__(self):
         if 'not_' in self.value:
             return False
@@ -84,6 +88,7 @@ class EnvActions(Enum):
     USE_DOOR    = 'use_door'
     CLEAN_UP    = 'clean_up'
     ITEM_ACTION = 'item_action'
+    CHARGE      = 'charge'
 
 
 m = MovingAction

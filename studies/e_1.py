@@ -23,7 +23,7 @@ from stable_baselines3.common.vec_env import SubprocVecEnv
 
 from environments import helpers as h
 from environments.factory.factory_dirt import DirtProperties, DirtFactory
-from environments.factory.factory_dirt_item import DirtItemFactory
+from environments.factory.combined_factories import DirtItemFactory
 from environments.factory.factory_item import ItemProperties, ItemFactory
 from environments.logging.monitor import MonitorCallback
 from environments.utility_classes import MovementProperties, ObservationProperties, AgentRenderOptions
@@ -300,7 +300,7 @@ if __name__ == '__main__':
 
     # Train starts here ############################################################
     # Build Major Loop  parameters, parameter versions, Env Classes and models
-    if True:
+    if False:
         for obs_mode in observation_modes.keys():
             for env_name in env_names:
                 for model_cls in [h.MODEL_MAP['A2C']]:

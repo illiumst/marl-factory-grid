@@ -117,7 +117,7 @@ class Inventories(ObjectRegister):
     can_be_shadowed = False
     hide_from_obs_builder = True
 
-    def __init__(self, *args, pomdp_r=0, **kwargs):
+    def __init__(self, *args, **kwargs):
         super(Inventories, self).__init__(*args, is_per_agent=True, individual_slices=True, **kwargs)
         self.is_observable = True
 

@@ -405,7 +405,7 @@ class BaseFactory(gym.Env):
         y0, y1 = max(0, agent.y - r), min(agent.y + r + 1, self._level_shape[1])
         # Other Agent Obs = oobs
         oobs = obs_to_be_padded[:, x0:x1, y0:y1]
-        if oobs.shape[0:] != (d,) * 2:
+        if oobs.shape[0:] != (d, d):
             if xd := oobs.shape[1] % d:
                 if agent.x > r:
                     x0_pad = 0

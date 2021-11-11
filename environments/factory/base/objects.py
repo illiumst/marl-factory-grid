@@ -32,7 +32,9 @@ class Object:
         else:
             return self._name
 
-    def __init__(self, str_ident: Union[str, None] = None, enum_ident: Union[Enum, None] = None, is_blocking_light=False, **kwargs):
+    def __init__(self, str_ident: Union[str, None] = None, enum_ident: Union[Enum, None] = None,
+                 is_blocking_light=False, **kwargs):
+
         self._str_ident = str_ident
         self._enum_ident = enum_ident
 

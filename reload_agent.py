@@ -7,7 +7,7 @@ import yaml
 from environments import helpers as h
 from environments.helpers import Constants as c
 from environments.factory.factory_dirt import DirtFactory
-from environments.factory.factory_dirt_item import DirtItemFactory
+from environments.factory.combined_factories import DirtItemFactory
 from environments.logging.recorder import RecorderCallback
 
 warnings.filterwarnings('ignore', category=FutureWarning)
