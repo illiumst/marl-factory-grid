@@ -136,7 +136,7 @@ def asset_str(agent):
     # if any([x is None for x in [self._slices[j] for j in agent.collisions]]):
     #     print('error')
     col_names = [x.name for x in agent.temp_collisions]
-    if c.AGENT.value in col_names:
+    if any(c.AGENT.value in name for name in col_names):
         return 'agent_collision', 'blank'
     elif not agent.temp_valid or c.LEVEL.name in col_names or c.AGENT.name in col_names:
         return c.AGENT.value, 'invalid'

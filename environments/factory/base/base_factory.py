@@ -494,10 +494,10 @@ class BaseFactory(gym.Env):
             if self._actions.is_moving_action(agent.temp_action):
                 if agent.temp_valid:
                     # info_dict.update(movement=1)
-                    reward -= 0.001
+                    reward -= 0.01
                     pass
                 else:
-                    reward -= 0.01
+                    reward -= 0.05
                     self.print(f'{agent.name} just hit the wall at {agent.pos}.')
                     per_agent_info_dict[agent.name].update({f'{agent.name}_vs_LEVEL': 1})
 

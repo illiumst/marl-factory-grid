@@ -65,7 +65,7 @@ class DirtRegister(MovingEntityObjectRegister):
     def as_array(self):
         if self._array is not None:
             self._array[:] = c.FREE_CELL.value
-            for dirt in self.values():
+            for dirt in list(self.values()):
                 if dirt.amount == 0:
                     self.delete_item(dirt)
                 self._array[0, dirt.x, dirt.y] = dirt.amount

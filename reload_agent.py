@@ -16,11 +16,11 @@ warnings.filterwarnings('ignore', category=UserWarning)
 
 if __name__ == '__main__':
 
-    model_name = 'DQN_163519000'
+    model_name = 'A2C_ItsDirt'
     run_id = 0
-    seed = 69
-    n_agents = 2
-    out_path = Path('debug_out/DQN_163519000/1_DQN_163519000')
+    seed = 67
+    n_agents = 1
+    out_path = Path('study_out/e_1_ItsDirt/no_obs/dirt/A2C_ItsDirt/0_A2C_ItsDirt')
     model_path = out_path
 
     with (out_path / f'env_params.json').open('r') as f:
@@ -46,10 +46,17 @@ if __name__ == '__main__':
                 env_state = env.reset()
                 rew, done_bool = 0, False
                 while not done_bool:
-                    actions = [model.predict(
-                        np.stack([env_state[i][j] for i in range(env_state.shape[0])]),
-                        deterministic=False)[0] for j, model in enumerate(models)]
+                    if n_agents > 1:
+                        actions = [model.predict(
+                            np.stack([env_state[i][j] for i in range(env_state.shape[0])]),
+                            deterministic=True)[0] for j, model in enumerate(models)]
+                    else:
+                        actions = models[0].predict(env_state, deterministic=True)[0]
+                    if any([agent.pos in [door.pos for door in env.unwrapped[c.DOORS]]
+                            for agent in env.unwrapped[c.AGENT]]):
+                        print('On Door')
                     env_state, step_r, done_bool, info_obj = env.step(actions)
+
                     recorder.read_info(0, info_obj)
                     rew += step_r
                     env.render()
