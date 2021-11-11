@@ -11,7 +11,6 @@ from gym import spaces
 from gym.wrappers import FrameStack
 
 from environments.factory.base.shadow_casting import Map
-from environments.factory.renderer import Renderer, RenderEntity
 from environments.helpers import Constants as c, Constants
 from environments import helpers as h
 from environments.factory.base.objects import Agent, Tile, Action
@@ -545,6 +544,8 @@ class BaseFactory(gym.Env):
 
     def render(self, mode='human'):
         if not self._renderer:  # lazy init
+            from environments.factory.renderer import Renderer, RenderEntity
+            global Renderer, RenderEntity
             height, width = self._obs_cube.shape[1:]
             self._renderer = Renderer(width, height, view_radius=self._pomdp_r, fps=5)
 
