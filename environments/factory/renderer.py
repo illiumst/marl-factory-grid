@@ -126,6 +126,6 @@ class Renderer:
 if __name__ == '__main__':
     renderer = Renderer(fps=2, cell_size=40)
     for i in range(15):
-        entity_1 = RenderEntity('agent', [5, i], 1, 'idle', 'idle')
+        entity_1 = RenderEntity('agent_collision', [5, i], 1, 'idle', 'idle')
         renderer.render([entity_1])
 

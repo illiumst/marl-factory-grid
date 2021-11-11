@@ -2,9 +2,12 @@ from typing import NamedTuple, Union
 from collections import deque, OrderedDict, defaultdict
 import numpy as np
 import random
+
+import pandas as pd
 import torch
 import torch.nn as nn
 
+from tqdm import trange
 
 class Experience(NamedTuple):
     # can be use for a single (s_t, a, r s_{t+1}) tuple
@@ -57,6 +60,9 @@ class BaseLearner:
     def train(self):
         pass
 
+    def reward(self, r):
+        return r
+
     def learn(self, n_steps):
         train_type, train_freq = self.train_every
         while self.step < n_steps:
@@ -70,7 +76,7 @@ class BaseLearner:
                 next_obs, reward, done, info = self.env.step(action if not len(action) == 1 else action[0])
 
                 experience = Experience(observation=obs, next_observation=next_obs,
-                                        action=action, reward=reward,
+                                        action=action, reward=self.reward(reward),
                                         done=done, episode=self.episode)  # do we really need to copy?
                 self.on_new_experience(experience)
                 # end of step routine
@@ -90,13 +96,28 @@ class BaseLearner:
             self.running_reward.append(total_reward)
             self.episode += 1
             try:
-                if self.step % 10 == 0:
+                if self.step % 100 == 0:
                     print(
                         f'Step: {self.step} ({(self.step / n_steps) * 100:.2f}%)\tRunning reward: {sum(list(self.running_reward)) / len(self.running_reward):.2f}\t'
                         f' eps: {self.eps:.4f}\tRunning loss: {sum(list(self.running_loss)) / len(self.running_loss):.4f}\tUpdates:{self.n_updates}')
             except Exception as e:
                 pass
         self.on_all_done()
+
+    def evaluate(self, n_episodes=100, render=False):
+        with torch.no_grad():
+            data = []
+            for eval_i in trange(n_episodes):
+                obs, done = self.env.reset(), False
+                while not done:
+                    action = self.get_action(obs)
+                    next_obs, reward, done, info = self.env.step(action if not len(action) == 1 else action[0])
+                    if render: self.env.render()
+                    obs = next_obs  # srsly i'm so stupid
+                    info.update({'reward': reward, 'eval_episode': eval_i})
+                    data.append(info)
+        return pd.DataFrame(data).fillna(0)
+
 
 
 class BaseBuffer:
@@ -187,7 +208,7 @@ class BaseDDQN(BaseDQN):
 class BaseICM(nn.Module):
     def __init__(self, backbone_dims=[2*3*5*5, 64, 64], head_dims=[2*64, 64, 9]):
         super(BaseICM, self).__init__()
-        self.backbone = mlp_maker(backbone_dims, flatten=True)
+        self.backbone = mlp_maker(backbone_dims, flatten=True, activation_last='relu', activation='relu')
         self.icm = mlp_maker(head_dims)
         self.ce = nn.CrossEntropyLoss()
 
