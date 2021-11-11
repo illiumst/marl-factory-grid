@@ -1,5 +1,5 @@
 from environments.factory import make
-import random
+import salina
 from gym.wrappers import FrameStack
 
 n_agents = 4
