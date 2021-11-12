@@ -1,6 +1,5 @@
 import time
 from enum import Enum
-from pathlib import Path
 from typing import List, Union, NamedTuple, Dict
 import random
 
@@ -12,8 +11,7 @@ from environments.factory.base.base_factory import BaseFactory
 from environments.factory.base.objects import Agent, Action, Entity, Tile
 from environments.factory.base.registers import Entities, MovingEntityObjectRegister
 
-from environments.factory.renderer import RenderEntity
-from environments.logging.recorder import RecorderCallback
+from environments.factory.base.renderer import RenderEntity
 from environments.utility_classes import ObservationProperties
 
 CLEAN_UP_ACTION = h.EnvActions.CLEAN_UP

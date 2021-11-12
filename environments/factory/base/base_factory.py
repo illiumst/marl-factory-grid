@@ -544,7 +544,7 @@ class BaseFactory(gym.Env):
 
     def render(self, mode='human'):
         if not self._renderer:  # lazy init
-            from environments.factory.renderer import Renderer, RenderEntity
+            from environments.factory.base.renderer import Renderer, RenderEntity
             global Renderer, RenderEntity
             height, width = self._obs_cube.shape[1:]
             self._renderer = Renderer(width, height, view_radius=self._pomdp_r, fps=5)
@@ -562,7 +562,7 @@ class BaseFactory(gym.Env):
                 doors.append(RenderEntity(name, door.pos, 1, 'none', state, i + 1))
         additional_assets = self.render_additional_assets()
 
-        self._renderer.render(walls + doors + additional_assets + agents)
+        return self._renderer.render(walls + doors + additional_assets + agents)
 
     def save_params(self, filepath: Path):
         # noinspection PyProtectedMember

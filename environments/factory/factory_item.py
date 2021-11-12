@@ -10,9 +10,9 @@ from environments.helpers import Constants as c
 from environments import helpers as h
 from environments.factory.base.objects import Agent, Entity, Action, Tile, MoveableEntity
 from environments.factory.base.registers import Entities, EntityObjectRegister, ObjectRegister, \
-    MovingEntityObjectRegister, Register
+    MovingEntityObjectRegister
 
-from environments.factory.renderer import RenderEntity
+from environments.factory.base.renderer import RenderEntity
 
 
 NO_ITEM = 0

@@ -1,11 +1,11 @@
-from typing import Union, NamedTuple, Dict
+from typing import Union, NamedTuple
 
 import numpy as np
 
 from environments.factory.base.base_factory import BaseFactory
 from environments.factory.base.objects import Agent, Action, Entity
 from environments.factory.base.registers import EntityObjectRegister, ObjectRegister
-from environments.factory.renderer import RenderEntity
+from environments.factory.base.renderer import RenderEntity
 from environments.helpers import Constants as c
 
 from environments import helpers as h

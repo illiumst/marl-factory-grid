@@ -7,6 +7,8 @@ import pygame
 from typing import NamedTuple, Any
 import time
 
+import torch
+
 
 class RenderEntity(NamedTuple):
     name: str
@@ -22,7 +24,7 @@ class Renderer:
     BG_COLOR = (178, 190, 195)         # (99, 110, 114)
     WHITE = (223, 230, 233)            # (200, 200, 200)
     AGENT_VIEW_COLOR = (9, 132, 227)
-    ASSETS = Path(__file__).parent / 'assets'
+    ASSETS = Path(__file__).parent.parent / 'assets'
 
     def __init__(self, grid_w=16, grid_h=16, cell_size=40, fps=7,  grid_lines=True, view_radius=2):
         self.grid_h = grid_h
@@ -121,6 +123,8 @@ class Renderer:
 
         pygame.display.flip()
         self.clock.tick(self.fps)
+        rgb_obs = pygame.surfarray.array3d(self.screen)
+        return torch.from_numpy(rgb_obs).permute(2, 0, 1)
 
 
 if __name__ == '__main__':
