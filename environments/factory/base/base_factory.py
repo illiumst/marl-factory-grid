@@ -61,7 +61,8 @@ class BaseFactory(gym.Env):
                  mv_prop: MovementProperties = MovementProperties(),
                  obs_prop: ObservationProperties = ObservationProperties(),
                  parse_doors=False, record_episodes=False, done_at_collision=False,
-                 verbose=False, doors_have_area=True, env_seed=time.time_ns(), **kwargs):
+                 verbose=False, doors_have_area=True, env_seed=time.time_ns(), individual_rewards=False,
+                 **kwargs):
 
         if isinstance(mv_prop, dict):
             mv_prop = MovementProperties(**mv_prop)
@@ -94,6 +95,7 @@ class BaseFactory(gym.Env):
         self.record_episodes = record_episodes
         self.parse_doors = parse_doors
         self.doors_have_area = doors_have_area
+        self.individual_rewards = individual_rewards
 
         # Reset
         self.reset()
@@ -487,31 +489,32 @@ class BaseFactory(gym.Env):
     def calculate_reward(self) -> (int, dict):
         # Returns: Reward, Info
         per_agent_info_dict = defaultdict(dict)
-        reward = 0
+        reward = {}
 
         for agent in self[c.AGENT]:
+            per_agent_reward = 0
             if self._actions.is_moving_action(agent.temp_action):
                 if agent.temp_valid:
                     # info_dict.update(movement=1)
-                    reward -= 0.01
+                    per_agent_reward -= 0.01
                     pass
                 else:
-                    reward -= 0.05
+                    per_agent_reward -= 0.05
                     self.print(f'{agent.name} just hit the wall at {agent.pos}.')
                     per_agent_info_dict[agent.name].update({f'{agent.name}_vs_LEVEL': 1})
 
             elif h.EnvActions.USE_DOOR == agent.temp_action:
                 if agent.temp_valid:
-                    # reward += 0.00
+                    # per_agent_reward += 0.00
                     self.print(f'{agent.name} did just use the door at {agent.pos}.')
                     per_agent_info_dict[agent.name].update(door_used=1)
                 else:
-                    # reward -= 0.00
+                    # per_agent_reward -= 0.00
                     self.print(f'{agent.name} just tried to use a door at {agent.pos}, but failed.')
                     per_agent_info_dict[agent.name].update({f'{agent.name}_failed_door_open': 1})
             elif h.EnvActions.NOOP == agent.temp_action:
                 per_agent_info_dict[agent.name].update(no_op=1)
-                # reward -= 0.00
+                # per_agent_reward -= 0.00
 
             # Monitor Notes
             if agent.temp_valid:
@@ -522,7 +525,7 @@ class BaseFactory(gym.Env):
                 per_agent_info_dict[agent.name].update({f'{agent.name}_failed_action': 1})
 
             additional_reward, additional_info_dict = self.calculate_additional_reward(agent)
-            reward += additional_reward
+            per_agent_reward += additional_reward
             per_agent_info_dict[agent.name].update(additional_info_dict)
 
             if agent.temp_collisions:
@@ -531,6 +534,7 @@ class BaseFactory(gym.Env):
 
                 for other_agent in agent.temp_collisions:
                     per_agent_info_dict[agent.name].update({f'{agent.name}_vs_{other_agent.name}': 1})
+            reward[agent.name] = per_agent_reward
 
         # Combine the per_agent_info_dict:
         combined_info_dict = defaultdict(lambda: 0)
@@ -539,7 +543,13 @@ class BaseFactory(gym.Env):
                 combined_info_dict[key] += value
         combined_info_dict = dict(combined_info_dict)
 
-        self.print(f"reward is {reward}")
+        if self.individual_rewards:
+            self.print(f"rewards are {reward}")
+            reward = list(reward.values())
+            return reward, combined_info_dict
+        else:
+            reward = sum(reward.values())
+            self.print(f"reward is {reward}")
         return reward, combined_info_dict
 
     def render(self, mode='human'):
