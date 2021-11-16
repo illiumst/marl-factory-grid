@@ -1,4 +1,4 @@
-def make(env_str, n_agents=1, pomdp_r=2, max_steps=400, stack_n_frames=3):
+def make(env_name, n_agents=1, pomdp_r=2, max_steps=400, stack_n_frames=3):
     import yaml
     from pathlib import Path
     from environments.factory.combined_factories import DirtItemFactory
@@ -6,7 +6,7 @@ def make(env_str, n_agents=1, pomdp_r=2, max_steps=400, stack_n_frames=3):
     from environments.factory.factory_dirt import DirtProperties, DirtFactory
     from environments.utility_classes import MovementProperties, ObservationProperties, AgentRenderOptions
 
-    with (Path(__file__).parent / 'levels' / 'parameters' / f'{env_str}.yaml').open('r') as stream:
+    with (Path(__file__).parent / 'levels' / 'parameters' / f'{env_name}.yaml').open('r') as stream:
         dictionary = yaml.load(stream, Loader=yaml.FullLoader)
 
     obs_props = ObservationProperties(render_agents=AgentRenderOptions.COMBINED,

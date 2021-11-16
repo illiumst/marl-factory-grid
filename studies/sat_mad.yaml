@@ -1,0 +1,26 @@
+agent:
+  classname:        studies.sat_mad.A2CAgent
+  observation_size: 4*5*5
+  hidden_size:      128
+  n_actions:        10
+
+env:
+  classname:      environments.factory.make
+  env_name:       "DirtyFactory-v0"
+  n_agents:       1
+  pomdp_r:        2
+  max_steps:      400
+  stack_n_frames: 3
+
+algorithm:
+  max_epochs:             1000000
+  n_envs:                 1
+  n_timesteps:            16
+  discount_factor:        0.99
+  entropy_coef:           0.01
+  critic_coef:            1.0
+  gae:                    0.3
+  optimizer:
+    classname:            torch.optim.Adam
+    lr:                   0.0003
+    weight_decay:         0.0
