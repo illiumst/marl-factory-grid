@@ -66,8 +66,8 @@ There are further distinctions to be made:
 """
 
 n_agents = 4
-ood_monitor_file = f'e_1_monitor_{n_agents}_agents.pick'
-baseline_monitor_file = 'e_1_baseline_monitor.pick'
+ood_monitor_file = f'e_1_{n_agents}_agents'
+baseline_monitor_file = 'e_1_baseline'
 
 
 def policy_model_kwargs():
@@ -103,7 +103,7 @@ def load_model_run_baseline(seed_path, env_to_run):
         env_kwargs = simplejson.load(f)
         env_kwargs.update(done_at_collision=True)
     # Monitor Init
-    with MonitorCallback(filepath=seed_path / baseline_monitor_file) as monitor:
+    with MonitorCallback(filepath=seed_path / f'{baseline_monitor_file}.pick') as monitor:
         # Init Env
         with env_to_run(**env_kwargs) as env_factory:
             # Evaluation Loop for i in range(n Episodes)
@@ -139,7 +139,7 @@ def load_model_run_study(seed_path, env_to_run, additional_kwargs_dict):
             done_at_collision=True,
             **additional_kwargs_dict.get('post_training_kwargs', {}))
     # Monitor Init
-    with MonitorCallback(filepath=seed_path / ood_monitor_file) as monitor:
+    with MonitorCallback(filepath=seed_path / f'{ood_monitor_file}.pick') as monitor:
         # Init Env
         with env_to_run(**env_kwargs) as env_factory:
             # Evaluation Loop for i in range(n Episodes)
@@ -172,7 +172,7 @@ def load_model_run_study(seed_path, env_to_run, additional_kwargs_dict):
 
 
 def start_mp_study_run(envs_map, policies_path):
-    paths = list(y for y in policies_path.iterdir() if y.is_dir() and not (y / ood_monitor_file).exists())
+    paths = list(y for y in policies_path.iterdir() if y.is_dir() and not (y / f'{ood_monitor_file}.pick').exists())
     if paths:
         import multiprocessing as mp
         pool = mp.Pool(mp.cpu_count())
@@ -185,7 +185,8 @@ def start_mp_study_run(envs_map, policies_path):
 
 
 def start_mp_baseline_run(envs_map, policies_path):
-    paths = list(y for y in policies_path.iterdir() if y.is_dir() and not (y / baseline_monitor_file).exists())
+    paths = list(y for y in policies_path.iterdir() if y.is_dir() and
+                 not (y / f'{baseline_monitor_file}.pick').exists())
     if paths:
         import multiprocessing as mp
         pool = mp.Pool(mp.cpu_count())
@@ -197,11 +198,17 @@ def start_mp_baseline_run(envs_map, policies_path):
 
 
 if __name__ == '__main__':
+    # What to do:
+    train = True
+    baseline_run = True
+    ood_run = True
+    plotting = True
+
     train_steps = 5e6
     n_seeds = 3
 
     # Define a global studi save path
-    start_time = 'Now_with_doors'  # int(time.time())
+    start_time = 'exploring_obs_stack'  # int(time.time())
     study_root_path = Path(__file__).parent.parent / 'study_out' / f'{Path(__file__).stem}_{start_time}'
 
     # Define Global Env Parameters
@@ -209,7 +216,7 @@ if __name__ == '__main__':
     obs_props = ObservationProperties(render_agents=AgentRenderOptions.NOT,
                                       omit_agent_self=True,
                                       additional_agent_placeholder=None,
-                                      frames_to_stack=3,
+                                      frames_to_stack=6,
                                       pomdp_r=2
                                       )
     move_props = MovementProperties(allow_diagonal_movement=True,
@@ -327,7 +334,7 @@ if __name__ == '__main__':
 
     # Train starts here ############################################################
     # Build Major Loop  parameters, parameter versions, Env Classes and models
-    if False:
+    if train:
         for obs_mode in observation_modes.keys():
             for env_name in env_names:
                 for model_cls in [h.MODEL_MAP['A2C']]:
@@ -417,7 +424,7 @@ if __name__ == '__main__':
 
     # Evaluation starts here #####################################################
     # First Iterate over every model and monitor "as trained"
-    if True:
+    if baseline_run:
         print('Start Baseline Tracking')
         for obs_mode in observation_modes:
             obs_mode_path = next(x for x in study_root_path.iterdir() if x.is_dir() and x.name == obs_mode)
@@ -432,7 +439,7 @@ if __name__ == '__main__':
         print('Baseline Tracking done')
 
     # Then iterate over every model and monitor "ood behavior" - "is it ood?"
-    if True:
+    if ood_run:
         print('Start OOD Tracking')
         for obs_mode in observation_modes:
             obs_mode_path = next(x for x in study_root_path.iterdir() if x.is_dir() and x.name == obs_mode)
@@ -449,17 +456,18 @@ if __name__ == '__main__':
         print('OOD Tracking Done')
 
     # Plotting
-    if True:
+    if plotting:
         # TODO: Plotting
         print('Start Plotting')
+        df_list = list()
         for observation_folder in (x for x in study_root_path.iterdir() if x.is_dir()):
-            df_list = list()
+
             for env_folder in (x for x in observation_folder.iterdir() if x.is_dir()):
                 for model_folder in (x for x in env_folder.iterdir() if x.is_dir()):
                     # Gather per seed results in this list
 
                     for seed_folder in (x for x in model_folder.iterdir() if x.is_dir()):
-                        for monitor_file in [baseline_monitor_file, ood_monitor_file]:
+                        for monitor_file in [f'{baseline_monitor_file}.pick', f'{ood_monitor_file}.pick']:
 
                             with (seed_folder / monitor_file).open('rb') as f:
                                 monitor_df = pickle.load(f)
@@ -476,47 +484,47 @@ if __name__ == '__main__':
 
                             df_list.append(monitor_df)
 
-            id_cols = ['monitor', 'env', 'obs_mode', 'model']
+        id_cols = ['monitor', 'env', 'obs_mode', 'model']
 
-            df = pd.concat(df_list, ignore_index=True)
-            df = df.fillna(0)
-
+        df = pd.concat(df_list, ignore_index=True)
+        df = df.fillna(0)
+        for env_name in env_names:
             for id_col in id_cols:
                 df[id_col] = df[id_col].astype(str)
 
-            if True:
-                # df['fail_sum'] = df.loc[:, df.columns.str.contains("failed")].sum(1)
-                df['pick_up'] = df.loc[:, df.columns.str.contains("]_item_pickup")].sum(1)
-                df['drop_off'] = df.loc[:, df.columns.str.contains("]_item_dropoff")].sum(1)
-                df['failed_item_action'] = df.loc[:, df.columns.str.contains("]_failed_item_action")].sum(1)
-                df['failed_cleanup'] = df.loc[:, df.columns.str.contains("]_failed_dirt_cleanup")].sum(1)
-                df['coll_lvl'] = df.loc[:, df.columns.str.contains("]_vs_LEVEL")].sum(1)
-                df['coll_agent'] = df.loc[:, df.columns.str.contains("]_vs_Agent")].sum(1) / 2
-                # df['collisions'] = df['coll_lvl'] + df['coll_agent']
+                if True:
+                    # df['fail_sum'] = df.loc[:, df.columns.str.contains("failed")].sum(1)
+                    df['pick_up'] = df.loc[:, df.columns.str.contains("]_item_pickup")].sum(1)
+                    df['drop_off'] = df.loc[:, df.columns.str.contains("]_item_dropoff")].sum(1)
+                    df['failed_item_action'] = df.loc[:, df.columns.str.contains("]_failed_item_action")].sum(1)
+                    df['failed_cleanup'] = df.loc[:, df.columns.str.contains("]_failed_dirt_cleanup")].sum(1)
+                    df['coll_lvl'] = df.loc[:, df.columns.str.contains("]_vs_LEVEL")].sum(1)
+                    df['coll_agent'] = df.loc[:, df.columns.str.contains("]_vs_Agent")].sum(1) / 2
+                    # df['collisions'] = df['coll_lvl'] + df['coll_agent']
 
-            value_vars = ['pick_up', 'drop_off', 'failed_item_action', 'failed_cleanup',
-                          'coll_lvl', 'coll_agent', 'dirt_cleaned']
+                    value_vars = ['pick_up', 'drop_off', 'failed_item_action', 'failed_cleanup',
+                                  'coll_lvl', 'coll_agent', 'dirt_cleaned']
 
-            df_grouped = df.groupby(id_cols + ['seed']
-                                    ).agg({key: 'sum' if "Agent" in key else 'mean' for key in df.columns
-                                           if key not in (id_cols + ['seed'])})
-            df_melted = df_grouped.reset_index().melt(id_vars=id_cols,
-                                                      value_vars=value_vars,  # 'step_reward',
-                                                      var_name="Measurement",
-                                                      value_name="Score")
-            # df_melted["Measurements"] = df_melted["Measurement"] + " " + df_melted["monitor"]
+                df_grouped = df.groupby(id_cols + ['seed']
+                                        ).agg({key: 'sum' if "Agent" in key else 'mean' for key in df.columns
+                                               if key not in (id_cols + ['seed'])})
+                df_melted = df_grouped.reset_index().melt(id_vars=id_cols,
+                                                          value_vars=value_vars,  # 'step_reward',
+                                                          var_name="Measurement",
+                                                          value_name="Score")
+                # df_melted["Measurements"] = df_melted["Measurement"] + " " + df_melted["monitor"]
 
-            # Plotting
-            # fig, ax = plt.subplots(figsize=(11.7, 8.27))
+                # Plotting
+                # fig, ax = plt.subplots(figsize=(11.7, 8.27))
 
-            c = sns.catplot(data=df_melted[df_melted['obs_mode'] == observation_folder.name],
-                            x='Measurement', hue='monitor', row='model', col='env', y='Score',
-                            sharey=False, kind="box", height=4, aspect=.7, legend_out=False, legend=False,
-                            showfliers=False)
-            c.set_xticklabels(rotation=65, horizontalalignment='right')
-            # c.fig.subplots_adjust(top=0.9)  # adjust the Figure in rp
-            c.fig.suptitle(f"Cat plot for {observation_folder.name}")
-            # plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-            plt.tight_layout()
-            plt.savefig(study_root_path / f'results_{n_agents}_agents_{observation_folder.name}.png')
+                c = sns.catplot(data=df_melted[df_melted['env'] == env_name],
+                                x='Measurement', hue='monitor', row='model', col='obs_mode', y='Score',
+                                sharey=True, kind="box", height=4, aspect=.7, legend_out=False, legend=False,
+                                showfliers=False)
+                c.set_xticklabels(rotation=65, horizontalalignment='right')
+                # c.fig.subplots_adjust(top=0.9)  # adjust the Figure in rp
+                c.fig.suptitle(f"Cat plot for {env_name}")
+                # plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+                plt.tight_layout()
+                plt.savefig(study_root_path / f'results_{n_agents}_agents_{env_name}.png')
         pass

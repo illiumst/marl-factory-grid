@@ -50,6 +50,11 @@ class BaseFactory(gym.Env):
     def movement_actions(self):
         return self._actions.movement_actions
 
+    @property
+    def params(self) -> dict:
+        d = {key: val for key, val in self.__dict__.items() if not key.startswith('_') and not key.startswith('__')}
+        return d
+
     def __enter__(self):
         return self if self.obs_prop.frames_to_stack == 0 else \
             FrameStack(self, self.obs_prop.frames_to_stack)
@@ -576,8 +581,7 @@ class BaseFactory(gym.Env):
 
     def save_params(self, filepath: Path):
         # noinspection PyProtectedMember
-        # d = {key: val._asdict() if hasattr(val, '_asdict') else val for key, val in self.__dict__.items()
-        d = {key: val for key, val in self.__dict__.items() if not key.startswith('_') and not key.startswith('__')}
+        d = self.params
         filepath.parent.mkdir(parents=True, exist_ok=True)
         with filepath.open('w') as f:
             simplejson.dump(d, f, indent=4, namedtuple_as_object=True)
@@ -587,6 +591,7 @@ class BaseFactory(gym.Env):
 
         for entity_group in self._entities:
             summary.update({f'{REC_TAC}{entity_group.name}': entity_group.summarize_states(n_steps=self._steps)})
+
         return summary
 
     def print(self, string):

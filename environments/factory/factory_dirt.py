@@ -239,7 +239,12 @@ class DirtFactory(BaseFactory):
 
         if agent.temp_action == CLEAN_UP_ACTION:
             if agent.temp_valid:
+                # Reward if pickup succeds,
+                #  0.5 on every pickup
                 reward += 0.5
+                if self.dirt_prop.done_when_clean and (len(self[c.DIRT]) == 0):
+                    #  0.5 additional reward for the very last pickup
+                    reward += 0.5
                 self.print(f'{agent.name} did just clean up some dirt at {agent.pos}.')
                 info_dict.update(dirt_cleaned=1)
             else:
