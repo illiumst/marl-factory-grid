@@ -9,7 +9,12 @@ from pathlib import Path
 import numpy as np
 from tqdm import tqdm
 import time
-from algorithms.utils import add_env_props, load_yaml_file, CombineActionsAgent
+from algorithms.utils import (
+    add_env_props,
+    load_yaml_file,
+    CombineActionsAgent,
+    AutoResetGymMultiAgent
+)
 
 
 class A2CAgent(TAgent):
@@ -32,8 +37,8 @@ class A2CAgent(TAgent):
 
     def get_obs(self, t):
         observation = self.get(("env/env_obs", t))
+        print(observation.shape)
         if self.marl:
-            observation = observation.permute(2, 0, 1, 3, 4, 5)
             observation = observation[self.agent_id]
         return observation
 
@@ -57,7 +62,7 @@ if __name__ == '__main__':
     # Setup workspace
     uid = time.time()
     workspace = Workspace()
-    n_agents = 1
+    n_agents = 2
 
     # load config
     cfg = load_yaml_file(Path(__file__).parent / 'sat_mad.yaml')
@@ -65,10 +70,11 @@ if __name__ == '__main__':
     cfg['env'].update({'n_agents': n_agents})
 
     # instantiate agent and env
-    env_agent = AutoResetGymAgent(
+    env_agent = AutoResetGymMultiAgent(
         get_class(cfg['env']),
         get_arguments(cfg['env']),
-        n_envs=1
+        n_envs=1,
+        n_agents=n_agents
     )
 
     a2c_agents = [instantiate_class({**cfg['agent'],
@@ -103,7 +109,8 @@ if __name__ == '__main__':
                     f'agent{agent_id}_action_probs', "env/reward",
                     f"agent{agent_id}_action"
                 ]
-                td = gae(critic, reward, done, 0.99, 0.3)
+                reward = reward[agent_id]
+                td = gae(critic, reward, done, 0.98, 0.25)
                 td_error = td ** 2
                 critic_loss = td_error.mean()
                 entropy_loss = Categorical(action_probs).entropy().mean()
@@ -118,11 +125,12 @@ if __name__ == '__main__':
                 optimizer = optimizers[agent_id]
                 optimizer.zero_grad()
                 loss.backward()
-                #torch.nn.utils.clip_grad_norm_(a2c_agents[agent_id].parameters(), 2)
+                #torch.nn.utils.clip_grad_norm_(a2c_agents[agent_id].parameters(), .5)
                 optimizer.step()
 
                 # Compute the cumulated reward on final_state
-                creward = workspace["env/cumulated_reward"]
+                creward = workspace["env/cumulated_reward"]#[agent_id].unsqueeze(-1)
+                print(creward.shape, done.shape)
                 creward = creward[done]
                 if creward.size()[0] > 0:
                     cum_r = creward.mean().item()
