@@ -121,8 +121,7 @@ def load_model_run_baseline(seed_path, env_to_run):
                 if done_bool:
                     break
             print(f'Factory run {episode} done, reward is:\n    {rew}')
-        monitored_env_factory.save_run(filepath=seed_path / f'{ood_monitor_file}.pick')
-
+        monitored_env_factory.save_run(filepath=seed_path / f'{baseline_monitor_file}.pick')
 
 
 def load_model_run_study(seed_path, env_to_run, additional_kwargs_dict):
@@ -147,9 +146,8 @@ def load_model_run_study(seed_path, env_to_run, additional_kwargs_dict):
             rew, done_bool = 0, False
             while not done_bool:
                 try:
-                    actions = [model.predict(
-                        np.stack([env_state[i][j] for i in range(env_state.shape[0])]),
-                        deterministic=True)[0] for j, model in enumerate(models)]
+                    actions = [model.predict(env_state[model_idx], deterministic=True)[0]
+                               for model_idx, model in enumerate(models)]
                 except ValueError as e:
                     print(e)
                     print('Env_Kwargs are:\n')
@@ -205,7 +203,7 @@ if __name__ == '__main__':
     frames_to_stack = 3
 
     # Define a global studi save path
-    start_time = 'obs_stack_3_gae_0.25_n_steps_16'  # int(time.time())
+    start_time = 'adam_no_weight_decay'  # int(time.time())
     study_root_path = Path(__file__).parent.parent / 'study_out' / f'{Path(__file__).stem}_{start_time}'
 
     # Define Global Env Parameters
@@ -228,7 +226,7 @@ if __name__ == '__main__':
                                 spawn_frequency=30, n_drop_off_locations=2,
                                 max_agent_inventory_capacity=15)
     factory_kwargs = dict(n_agents=1, max_steps=400, parse_doors=True,
-                          level_name='rooms', record_episodes=False, doors_have_area=True,
+                          level_name='rooms', doors_have_area=True,
                           verbose=False,
                           mv_prop=move_props,
                           obs_prop=obs_props,

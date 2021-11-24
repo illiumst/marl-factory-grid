@@ -50,9 +50,8 @@ if __name__ == '__main__':
             rew, done_bool = 0, False
             while not done_bool:
                 if n_agents > 1:
-                    actions = [model.predict(
-                        np.stack([env_state[i][j] for i in range(env_state.shape[0])]),
-                        deterministic=determin)[0] for j, model in enumerate(models)]
+                    actions = [model.predict(env_state[model_idx], deterministic=True)[0]
+                               for model_idx, model in enumerate(models)]
                 else:
                     actions = models[0].predict(env_state, deterministic=determin)[0]
                 env_state, step_r, done_bool, info_obj = env.step(actions)
