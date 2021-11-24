@@ -15,11 +15,10 @@ from environments.helpers import Constants as c, Constants
 from environments import helpers as h
 from environments.factory.base.objects import Agent, Tile, Action
 from environments.factory.base.registers import Actions, Entities, Agents, Doors, FloorTiles, WallTiles, PlaceHolders
-from environments.utility_classes import MovementProperties, ObservationProperties
+from environments.utility_classes import MovementProperties, ObservationProperties, MarlFrameStack
 from environments.utility_classes import AgentRenderOptions as a_obs
 
 import simplejson
-
 
 REC_TAC = 'rec_'
 
@@ -57,7 +56,7 @@ class BaseFactory(gym.Env):
 
     def __enter__(self):
         return self if self.obs_prop.frames_to_stack == 0 else \
-            FrameStack(self, self.obs_prop.frames_to_stack)
+            MarlFrameStack(FrameStack(self, self.obs_prop.frames_to_stack))
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()

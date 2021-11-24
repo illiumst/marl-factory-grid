@@ -5,21 +5,22 @@ agent:
   n_actions:        10
 
 env:
-  classname:      environments.factory.make
-  env_name:       "DirtyFactory-v0"
-  n_agents:       1
-  pomdp_r:        2
-  max_steps:      400
-  stack_n_frames: 3
+  classname:          environments.factory.make
+  env_name:           "DirtyFactory-v0"
+  n_agents:           1
+  pomdp_r:            2
+  max_steps:          400
+  stack_n_frames:     3
+  individual_rewards: True
 
 algorithm:
   max_epochs:             1000000
   n_envs:                 1
-  n_timesteps:            16
+  n_timesteps:            10
   discount_factor:        0.99
   entropy_coef:           0.01
   critic_coef:            1.0
-  gae:                    0.3
+  gae:                    0.25
   optimizer:
     classname:            torch.optim.Adam
     lr:                   0.0003

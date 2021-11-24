@@ -9,15 +9,22 @@ from pathlib import Path
 import numpy as np
 from tqdm import tqdm
 import time
-from algorithms.utils import add_env_props, load_yaml_file, CombineActionsAgent
+from algorithms.utils import (
+    add_env_props,
+    load_yaml_file,
+    CombineActionsAgent,
+    AutoResetGymMultiAgent,
+    access_str,
+    AGENT_PREFIX, REWARD, CUMU_REWARD, OBS, SEP
+)
 
 
 class A2CAgent(TAgent):
-    def __init__(self, observation_size, hidden_size, n_actions, agent_id=-1, marl=False):
+    def __init__(self, observation_size, hidden_size, n_actions, agent_id):
         super().__init__()
         observation_size = np.prod(observation_size)
+        print(observation_size)
         self.agent_id = agent_id
-        self.marl = marl
         self.model = nn.Sequential(
             nn.Flatten(),
             nn.Linear(observation_size, hidden_size),
@@ -31,10 +38,7 @@ class A2CAgent(TAgent):
         self.critic_head = nn.Linear(hidden_size, 1)
 
     def get_obs(self, t):
-        observation = self.get(("env/env_obs", t))
-        if self.marl:
-            observation = observation.permute(2, 0, 1, 3, 4, 5)
-            observation = observation[self.agent_id]
+        observation = self.get((f'env/{access_str(self.agent_id, OBS)}', t))
         return observation
 
     def forward(self, t, stochastic, **kwargs):
@@ -47,17 +51,16 @@ class A2CAgent(TAgent):
             action = torch.distributions.Categorical(probs).sample()
         else:
             action = probs.argmax(1)
-        agent_str = f'agent{self.agent_id}_'
-        self.set((f'{agent_str}action', t), action)
-        self.set((f'{agent_str}action_probs', t), probs)
-        self.set((f'{agent_str}critic', t), critic)
+        self.set((f'{access_str(self.agent_id, "action")}', t), action)
+        self.set((f'{access_str(self.agent_id, "action_probs")}', t), probs)
+        self.set((f'{access_str(self.agent_id, "critic")}', t), critic)
 
 
 if __name__ == '__main__':
     # Setup workspace
     uid = time.time()
     workspace = Workspace()
-    n_agents = 1
+    n_agents = 2
 
     # load config
     cfg = load_yaml_file(Path(__file__).parent / 'sat_mad.yaml')
@@ -65,15 +68,14 @@ if __name__ == '__main__':
     cfg['env'].update({'n_agents': n_agents})
 
     # instantiate agent and env
-    env_agent = AutoResetGymAgent(
+    env_agent = AutoResetGymMultiAgent(
         get_class(cfg['env']),
         get_arguments(cfg['env']),
         n_envs=1
     )
 
     a2c_agents = [instantiate_class({**cfg['agent'],
-                                     'agent_id': agent_id,
-                                     'marl':     n_agents > 1})
+                                     'agent_id': agent_id})
                   for agent_id in range(n_agents)]
 
     # combine agents
@@ -99,11 +101,13 @@ if __name__ == '__main__':
 
             for agent_id in range(n_agents):
                 critic, done, action_probs, reward, action = workspace[
-                    f"agent{agent_id}_critic", "env/done",
-                    f'agent{agent_id}_action_probs', "env/reward",
-                    f"agent{agent_id}_action"
+                    access_str(agent_id, 'critic'),
+                    "env/done",
+                    access_str(agent_id, 'action_probs'),
+                    access_str(agent_id, 'reward', 'env/'),
+                    access_str(agent_id, 'action')
                 ]
-                td = gae(critic, reward, done, 0.99, 0.3)
+                td = gae(critic, reward, done, 0.98, 0.25)
                 td_error = td ** 2
                 critic_loss = td_error.mean()
                 entropy_loss = Categorical(action_probs).entropy().mean()
@@ -118,16 +122,18 @@ if __name__ == '__main__':
                 optimizer = optimizers[agent_id]
                 optimizer.zero_grad()
                 loss.backward()
-                #torch.nn.utils.clip_grad_norm_(a2c_agents[agent_id].parameters(), 2)
+                #torch.nn.utils.clip_grad_norm_(a2c_agents[agent_id].parameters(), .5)
                 optimizer.step()
 
                 # Compute the cumulated reward on final_state
-                creward = workspace["env/cumulated_reward"]
-                creward = creward[done]
-                if creward.size()[0] > 0:
-                    cum_r = creward.mean().item()
-                    if cum_r > best:
-                    #    torch.save(a2c_agent.state_dict(), Path(__file__).parent / f'agent_{uid}.pt')
-                        best = cum_r
-                    pbar.set_description(f"Cum. r: {cum_r:.2f}, Best r. so far: {best:.2f}", refresh=True)
+                rews = ''
+                for agent_i in range(n_agents):
+                    creward = workspace['env/'+access_str(agent_i, CUMU_REWARD)]
+                    creward = creward[done]
+                    if creward.size()[0] > 0:
+                        rews += f'{AGENT_PREFIX}{agent_i}: {creward.mean().item():.2f}  |  '
+                        """if cum_r > best:
+                            torch.save(a2c_agent.state_dict(), Path(__file__).parent / f'agent_{uid}.pt')
+                            best = cum_r"""
+                        pbar.set_description(rews, refresh=True)
 

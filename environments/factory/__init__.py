@@ -1,4 +1,4 @@
-def make(env_name, n_agents=1, pomdp_r=2, max_steps=400, stack_n_frames=3):
+def make(env_name, pomdp_r=2, max_steps=400, stack_n_frames=3, n_agents=1,  individual_rewards=False):
     import yaml
     from pathlib import Path
     from environments.factory.combined_factories import DirtItemFactory
@@ -12,7 +12,8 @@ def make(env_name, n_agents=1, pomdp_r=2, max_steps=400, stack_n_frames=3):
     obs_props = ObservationProperties(render_agents=AgentRenderOptions.COMBINED,
                                       frames_to_stack=stack_n_frames, pomdp_r=pomdp_r)
 
-    factory_kwargs = dict(n_agents=n_agents, max_steps=max_steps, obs_prop=obs_props,
+    factory_kwargs = dict(n_agents=n_agents, individual_rewards=individual_rewards,
+                          max_steps=max_steps, obs_prop=obs_props,
                           mv_prop=MovementProperties(**dictionary['movement_props']),
                           dirt_prop=DirtProperties(**dictionary['dirt_props']),
                           record_episodes=False, verbose=False, **dictionary['factory_props']
