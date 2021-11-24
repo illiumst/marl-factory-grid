@@ -28,7 +28,7 @@ class DirtProperties(NamedTuple):
     max_global_amount: int = 20             # Max dirt amount in the whole environment.
     dirt_smear_amount: float = 0.2          # Agents smear dirt, when not cleaning up in place.
     agent_can_interact: bool = True         # Whether the agents can interact with the dirt in this environment.
-    done_when_clean = True
+    done_when_clean: bool = True
 
 
 class Dirt(Entity):
@@ -228,14 +228,14 @@ class DirtFactory(BaseFactory):
         dirt = [dirt.amount for dirt in self[c.DIRT]]
         current_dirt_amount = sum(dirt)
         dirty_tile_count = len(dirt)
-        if dirty_tile_count:
-            dirt_distribution_score = entropy(softmax(np.asarray(dirt)) / dirty_tile_count)
-        else:
-            dirt_distribution_score = 0
+        # if dirty_tile_count:
+        #    dirt_distribution_score = entropy(softmax(np.asarray(dirt)) / dirty_tile_count)
+        #else:
+        #    dirt_distribution_score = 0
 
         info_dict.update(dirt_amount=current_dirt_amount)
         info_dict.update(dirty_tile_count=dirty_tile_count)
-        info_dict.update(dirt_distribution_score=dirt_distribution_score)
+        # info_dict.update(dirt_distribution_score=dirt_distribution_score)
 
         if agent.temp_action == CLEAN_UP_ACTION:
             if agent.temp_valid:

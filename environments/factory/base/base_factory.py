@@ -65,7 +65,7 @@ class BaseFactory(gym.Env):
     def __init__(self, level_name='simple', n_agents=1, max_steps=int(5e2),
                  mv_prop: MovementProperties = MovementProperties(),
                  obs_prop: ObservationProperties = ObservationProperties(),
-                 parse_doors=False, record_episodes=False, done_at_collision=False,
+                 parse_doors=False, done_at_collision=False,
                  verbose=False, doors_have_area=True, env_seed=time.time_ns(), individual_rewards=False,
                  **kwargs):
 
@@ -97,7 +97,7 @@ class BaseFactory(gym.Env):
         self._pomdp_r = self.obs_prop.pomdp_r
 
         self.done_at_collision = done_at_collision
-        self.record_episodes = record_episodes
+        self._record_episodes = False
         self.parse_doors = parse_doors
         self.doors_have_area = doors_have_area
         self.individual_rewards = individual_rewards
@@ -249,7 +249,7 @@ class BaseFactory(gym.Env):
         if self._steps >= self.max_steps:
             done = True
         info.update(step_reward=reward, step=self._steps)
-        if self.record_episodes:
+        if self._record_episodes:
             info.update(self._summarize_state())
 
         # Post step Hook for later use
@@ -280,7 +280,7 @@ class BaseFactory(gym.Env):
         if self.n_agents == 1:
             obs = self._build_per_agent_obs(self[c.AGENT][0], state_array_dict)
         elif self.n_agents >= 2:
-            obs = np.stack([self._build_per_agent_obs(agent, state_array_dict) for agent in self[c.AGENT]])
+            obs = np.stack(self._build_per_agent_obs(agent, state_array_dict) for agent in self[c.AGENT])
         else:
             raise ValueError('n_agents cannot be smaller than 1!!')
         return obs
@@ -290,9 +290,6 @@ class BaseFactory(gym.Env):
         agent_omit_idx = None
 
         if self.obs_prop.omit_agent_self and self.n_agents == 1:
-            # There is only a single agent and we want to omit the agent obs, so just remove the array.
-            # del state_array_dict[c.AGENT]
-            # Not Needed any more,
             pass
         elif self.obs_prop.omit_agent_self and self.obs_prop.render_agents in [a_obs.COMBINED, ] and self.n_agents > 1:
             state_array_dict[c.AGENT][0, agent.x, agent.y] -= agent.encoding
@@ -439,7 +436,7 @@ class BaseFactory(gym.Env):
         tiles_with_collisions = list()
         for tile in self[c.FLOOR]:
             if tile.is_occupied():
-                guests = [guest for guest in tile.guests if guest.can_collide]
+                guests = tile.guests_that_can_collide
                 if len(guests) >= 2:
                     tiles_with_collisions.append(tile)
         return tiles_with_collisions
@@ -521,7 +518,7 @@ class BaseFactory(gym.Env):
                 per_agent_info_dict[agent.name].update(no_op=1)
                 # per_agent_reward -= 0.00
 
-            # Monitor Notes
+            # EnvMonitor Notes
             if agent.temp_valid:
                 per_agent_info_dict[agent.name].update(valid_action=1)
                 per_agent_info_dict[agent.name].update({f'{agent.name}_valid_action': 1})

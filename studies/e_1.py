@@ -18,7 +18,6 @@ except NameError:
 
 import time
 
-
 import simplejson
 from stable_baselines3.common.vec_env import SubprocVecEnv
 
@@ -26,12 +25,16 @@ from environments import helpers as h
 from environments.factory.factory_dirt import DirtProperties, DirtFactory
 from environments.factory.combined_factories import DirtItemFactory
 from environments.factory.factory_item import ItemProperties, ItemFactory
-from environments.logging.monitor import MonitorCallback
+from environments.logging.envmonitor import EnvMonitor
 from environments.utility_classes import MovementProperties, ObservationProperties, AgentRenderOptions
 import pickle
 from plotting.compare_runs import compare_seed_runs, compare_model_runs, compare_all_parameter_runs
 import pandas as pd
 import seaborn as sns
+
+import multiprocessing as mp
+
+# mp.set_start_method("spawn")
 
 """
 In this studie, we want to explore the macro behaviour of multi agents which are trained on the same task, 
@@ -69,9 +72,10 @@ n_agents = 4
 ood_monitor_file = f'e_1_{n_agents}_agents'
 baseline_monitor_file = 'e_1_baseline'
 
+from stable_baselines3 import A2C
 
 def policy_model_kwargs():
-    return dict()
+    return dict(gae_lambda=0.25, n_steps=16, max_grad_norm=0, use_rms_prop=False)
 
 
 def dqn_model_kwargs():
@@ -102,27 +106,23 @@ def load_model_run_baseline(seed_path, env_to_run):
     with next(seed_path.glob('*.json')).open('r') as f:
         env_kwargs = simplejson.load(f)
         env_kwargs.update(done_at_collision=True)
-    # Monitor Init
-    with MonitorCallback(filepath=seed_path / f'{baseline_monitor_file}.pick') as monitor:
-        # Init Env
-        with env_to_run(**env_kwargs) as env_factory:
-            # Evaluation Loop for i in range(n Episodes)
-            for episode in range(100):
-                env_state = env_factory.reset()
-                rew, done_bool = 0, False
-                while not done_bool:
-                    action = model.predict(env_state, deterministic=True)[0]
-                    env_state, step_r, done_bool, info_obj = env_factory.step(action)
-                    monitor.read_info(0, info_obj)
-                    rew += step_r
-                    if done_bool:
-                        monitor.read_done(0, done_bool)
-                        break
-                print(f'Factory run {episode} done, reward is:\n    {rew}')
-        # Eval monitor outputs are automatically stored by the monitor object
-        # del model, env_kwargs, env_factory
-        # import gc
-        # gc.collect()
+    # Init Env
+    with env_to_run(**env_kwargs) as env_factory:
+        monitored_env_factory = EnvMonitor(env_factory)
+
+        # Evaluation Loop for i in range(n Episodes)
+        for episode in range(100):
+            env_state = monitored_env_factory.reset()
+            rew, done_bool = 0, False
+            while not done_bool:
+                action = model.predict(env_state, deterministic=True)[0]
+                env_state, step_r, done_bool, info_obj = monitored_env_factory.step(action)
+                rew += step_r
+                if done_bool:
+                    break
+            print(f'Factory run {episode} done, reward is:\n    {rew}')
+        monitored_env_factory.save_run(filepath=seed_path / f'{ood_monitor_file}.pick')
+
 
 
 def load_model_run_study(seed_path, env_to_run, additional_kwargs_dict):
@@ -138,33 +138,31 @@ def load_model_run_study(seed_path, env_to_run, additional_kwargs_dict):
             n_agents=n_agents,
             done_at_collision=True,
             **additional_kwargs_dict.get('post_training_kwargs', {}))
-    # Monitor Init
-    with MonitorCallback(filepath=seed_path / f'{ood_monitor_file}.pick') as monitor:
-        # Init Env
-        with env_to_run(**env_kwargs) as env_factory:
-            # Evaluation Loop for i in range(n Episodes)
-            for episode in range(50):
-                env_state = env_factory.reset()
-                rew, done_bool = 0, False
-                while not done_bool:
-                    try:
-                        actions = [model.predict(
-                            np.stack([env_state[i][j] for i in range(env_state.shape[0])]),
-                            deterministic=True)[0] for j, model in enumerate(models)]
-                    except ValueError as e:
-                        print(e)
-                        print('Env_Kwargs are:\n')
-                        print(env_kwargs)
-                        print('Path is:\n')
-                        print(seed_path)
-                        exit()
-                    env_state, step_r, done_bool, info_obj = env_factory.step(actions)
-                    monitor.read_info(0, info_obj)
-                    rew += step_r
-                    if done_bool:
-                        monitor.read_done(0, done_bool)
-                        break
-                print(f'Factory run {episode} done, reward is:\n    {rew}')
+    # Init Env
+    with env_to_run(**env_kwargs) as env_factory:
+        monitored_factory_env = EnvMonitor(env_factory)
+        # Evaluation Loop for i in range(n Episodes)
+        for episode in range(50):
+            env_state = monitored_factory_env.reset()
+            rew, done_bool = 0, False
+            while not done_bool:
+                try:
+                    actions = [model.predict(
+                        np.stack([env_state[i][j] for i in range(env_state.shape[0])]),
+                        deterministic=True)[0] for j, model in enumerate(models)]
+                except ValueError as e:
+                    print(e)
+                    print('Env_Kwargs are:\n')
+                    print(env_kwargs)
+                    print('Path is:\n')
+                    print(seed_path)
+                    exit()
+                env_state, step_r, done_bool, info_obj = monitored_factory_env.step(actions)
+                rew += step_r
+                if done_bool:
+                    break
+            print(f'Factory run {episode} done, reward is:\n    {rew}')
+        monitored_factory_env.save_run(filepath=seed_path / f'{ood_monitor_file}.pick')
     # Eval monitor outputs are automatically stored by the monitor object
     del models, env_kwargs, env_factory
     import gc
@@ -174,27 +172,25 @@ def load_model_run_study(seed_path, env_to_run, additional_kwargs_dict):
 def start_mp_study_run(envs_map, policies_path):
     paths = list(y for y in policies_path.iterdir() if y.is_dir() and not (y / f'{ood_monitor_file}.pick').exists())
     if paths:
-        import multiprocessing as mp
-        pool = mp.Pool(mp.cpu_count())
-        print("Starting MP with: ", pool._processes, " Processes")
-        _ = pool.starmap(load_model_run_study,
-                         it.product(paths,
-                                    (envs_map[policies_path.parent.name][0],),
-                                    (observation_modes[policies_path.parent.parent.name],))
-                         )
+        with mp.get_context("spawn").Pool(mp.cpu_count()) as pool:
+            print("Starting MP with: ", pool._processes, " Processes")
+            _ = pool.starmap(load_model_run_study,
+                             it.product(paths,
+                                        (envs_map[policies_path.parent.name][0],),
+                                        (observation_modes[policies_path.parent.parent.name],))
+                             )
 
 
 def start_mp_baseline_run(envs_map, policies_path):
     paths = list(y for y in policies_path.iterdir() if y.is_dir() and
                  not (y / f'{baseline_monitor_file}.pick').exists())
     if paths:
-        import multiprocessing as mp
-        pool = mp.Pool(mp.cpu_count())
-        print("Starting MP with: ", pool._processes, " Processes")
-        _ = pool.starmap(load_model_run_baseline,
-                         it.product(paths,
-                                    (envs_map[policies_path.parent.name][0],))
-                         )
+        with mp.get_context("spawn").Pool(mp.cpu_count()) as pool:
+            print("Starting MP with: ", pool._processes, " Processes")
+            _ = pool.starmap(load_model_run_baseline,
+                             it.product(paths,
+                                        (envs_map[policies_path.parent.name][0],))
+                             )
 
 
 if __name__ == '__main__':
@@ -206,9 +202,10 @@ if __name__ == '__main__':
 
     train_steps = 5e6
     n_seeds = 3
+    frames_to_stack = 3
 
     # Define a global studi save path
-    start_time = 'exploring_obs_stack'  # int(time.time())
+    start_time = 'obs_stack_3_gae_0.25_n_steps_16'  # int(time.time())
     study_root_path = Path(__file__).parent.parent / 'study_out' / f'{Path(__file__).stem}_{start_time}'
 
     # Define Global Env Parameters
@@ -216,7 +213,7 @@ if __name__ == '__main__':
     obs_props = ObservationProperties(render_agents=AgentRenderOptions.NOT,
                                       omit_agent_self=True,
                                       additional_agent_placeholder=None,
-                                      frames_to_stack=6,
+                                      frames_to_stack=frames_to_stack,
                                       pomdp_r=2
                                       )
     move_props = MovementProperties(allow_diagonal_movement=True,
@@ -234,7 +231,8 @@ if __name__ == '__main__':
                           level_name='rooms', record_episodes=False, doors_have_area=True,
                           verbose=False,
                           mv_prop=move_props,
-                          obs_prop=obs_props
+                          obs_prop=obs_props,
+                          done_at_collision=True
                           )
 
     # Bundle both environments with global kwargs and parameters
@@ -250,44 +248,45 @@ if __name__ == '__main__':
 
     # Define parameter versions according with #1,2[1,0,N],3
     observation_modes = {}
-    observation_modes.update({
-        'seperate_1': dict(
-            post_training_kwargs=
-            dict(obs_prop=ObservationProperties(
-                render_agents=AgentRenderOptions.COMBINED,
-                additional_agent_placeholder=None,
-                omit_agent_self=True,
-                frames_to_stack=3,
-                pomdp_r=2)
-            ),
-            additional_env_kwargs=
-            dict(obs_prop=ObservationProperties(
-                render_agents=AgentRenderOptions.NOT,
-                additional_agent_placeholder=1,
-                omit_agent_self=True,
-                frames_to_stack=3,
-                pomdp_r=2)
-            )
-        )})
-    observation_modes.update({
-        'seperate_0': dict(
-            post_training_kwargs=
-            dict(obs_prop=ObservationProperties(
-                render_agents=AgentRenderOptions.COMBINED,
-                additional_agent_placeholder=None,
-                omit_agent_self=True,
-                frames_to_stack=3,
-                pomdp_r=2)
-            ),
-            additional_env_kwargs=
-            dict(obs_prop=ObservationProperties(
-                render_agents=AgentRenderOptions.NOT,
-                additional_agent_placeholder=0,
-                omit_agent_self=True,
-                frames_to_stack=3,
-                pomdp_r=2)
-            )
-        )})
+    if False:
+        observation_modes.update({
+            'seperate_1': dict(
+                post_training_kwargs=
+                dict(obs_prop=ObservationProperties(
+                    render_agents=AgentRenderOptions.COMBINED,
+                    additional_agent_placeholder=None,
+                    omit_agent_self=True,
+                    frames_to_stack=frames_to_stack,
+                    pomdp_r=2)
+                ),
+                additional_env_kwargs=
+                dict(obs_prop=ObservationProperties(
+                    render_agents=AgentRenderOptions.NOT,
+                    additional_agent_placeholder=1,
+                    omit_agent_self=True,
+                    frames_to_stack=frames_to_stack,
+                    pomdp_r=2)
+                )
+            )})
+        observation_modes.update({
+            'seperate_0': dict(
+                post_training_kwargs=
+                dict(obs_prop=ObservationProperties(
+                    render_agents=AgentRenderOptions.COMBINED,
+                    additional_agent_placeholder=None,
+                    omit_agent_self=True,
+                    frames_to_stack=frames_to_stack,
+                    pomdp_r=2)
+                ),
+                additional_env_kwargs=
+                dict(obs_prop=ObservationProperties(
+                    render_agents=AgentRenderOptions.NOT,
+                    additional_agent_placeholder=0,
+                    omit_agent_self=True,
+                    frames_to_stack=frames_to_stack,
+                    pomdp_r=2)
+                )
+            )})
     observation_modes.update({
         'seperate_N': dict(
             post_training_kwargs=
@@ -295,7 +294,7 @@ if __name__ == '__main__':
                 render_agents=AgentRenderOptions.COMBINED,
                 additional_agent_placeholder=None,
                 omit_agent_self=True,
-                frames_to_stack=3,
+                frames_to_stack=frames_to_stack,
                 pomdp_r=2)
             ),
             additional_env_kwargs=
@@ -303,7 +302,7 @@ if __name__ == '__main__':
                 render_agents=AgentRenderOptions.NOT,
                 additional_agent_placeholder='N',
                 omit_agent_self=True,
-                frames_to_stack=3,
+                frames_to_stack=frames_to_stack,
                 pomdp_r=2)
             )
         )})
@@ -314,7 +313,7 @@ if __name__ == '__main__':
                 render_agents=AgentRenderOptions.LEVEL,
                 omit_agent_self=True,
                 additional_agent_placeholder=None,
-                frames_to_stack=3,
+                frames_to_stack=frames_to_stack,
                 pomdp_r=2)
             )
         )})
@@ -326,7 +325,7 @@ if __name__ == '__main__':
                 render_agents=AgentRenderOptions.NOT,
                 additional_agent_placeholder=None,
                 omit_agent_self=True,
-                frames_to_stack=3,
+                frames_to_stack=frames_to_stack,
                 pomdp_r=2)
             )
         )
@@ -355,9 +354,6 @@ if __name__ == '__main__':
                             continue
                         seed_path.mkdir(parents=True, exist_ok=True)
 
-                        # Monitor Init
-                        callbacks = [MonitorCallback(seed_path / 'monitor.pick')]
-
                         # Env Init & Model kwargs definition
                         if model_cls.__name__ in ["PPO", "A2C"]:
                             # env_factory = env_class(**env_kwargs)
@@ -378,6 +374,9 @@ if __name__ == '__main__':
                         except AttributeError:
                             env_factory.save_params(param_path)
 
+                        # EnvMonitor Init
+                        callbacks = [EnvMonitor(env_factory)]
+
                         # Model Init
                         model = model_cls("MlpPolicy", env_factory,
                                           verbose=1, seed=seed, device='cpu',
@@ -389,6 +388,9 @@ if __name__ == '__main__':
                         # Model save
                         save_path = seed_path / f'model.zip'
                         model.save(save_path)
+
+                        # Monitor Save
+                        callbacks[0].save_run(seed_path / 'monitor.pick')
 
                         # Better be save then sorry: Clean up!
                         del env_factory, model
@@ -500,13 +502,14 @@ if __name__ == '__main__':
                     df['failed_cleanup'] = df.loc[:, df.columns.str.contains("]_failed_dirt_cleanup")].sum(1)
                     df['coll_lvl'] = df.loc[:, df.columns.str.contains("]_vs_LEVEL")].sum(1)
                     df['coll_agent'] = df.loc[:, df.columns.str.contains("]_vs_Agent")].sum(1) / 2
-                    # df['collisions'] = df['coll_lvl'] + df['coll_agent']
+                    # df['`collis`ions'] = df['coll_lvl'] + df['coll_agent']
 
                     value_vars = ['pick_up', 'drop_off', 'failed_item_action', 'failed_cleanup',
                                   'coll_lvl', 'coll_agent', 'dirt_cleaned']
 
                 df_grouped = df.groupby(id_cols + ['seed']
-                                        ).agg({key: 'sum' if "Agent" in key else 'mean' for key in df.columns
+                                        # 'sum' if "agent" in key else 'mean'
+                                        ).agg({key: 'sum' for key in df.columns
                                                if key not in (id_cols + ['seed'])})
                 df_melted = df_grouped.reset_index().melt(id_vars=id_cols,
                                                           value_vars=value_vars,  # 'step_reward',

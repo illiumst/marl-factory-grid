@@ -209,7 +209,7 @@ class Tile(Object):
         return not len(self._guests)
 
     def is_occupied(self):
-        return len(self._guests)
+        return bool(len(self._guests))
 
     def enter(self, guest):
         if guest.name not in self._guests:

@@ -1,7 +1,7 @@
 import pickle
 from collections import defaultdict
 from pathlib import Path
-from typing import List, Dict
+from typing import List, Dict, Union
 
 from stable_baselines3.common.callbacks import BaseCallback
 
@@ -10,57 +10,50 @@ from environments.helpers import IGNORED_DF_COLUMNS
 import pandas as pd
 
 
-class MonitorCallback(BaseCallback):
+class EnvMonitor(BaseCallback):
 
     ext = 'png'
 
-    def __init__(self, filepath=Path('debug_out/monitor.pick')):
-        super(MonitorCallback, self).__init__()
-        self.filepath = Path(filepath)
+    def __init__(self, env):
+        super(EnvMonitor, self).__init__()
+        self.unwrapped = env
         self._monitor_df = pd.DataFrame()
         self._monitor_dicts = defaultdict(dict)
-        self.started = False
-        self.closed = False
 
-    def __enter__(self):
-        self.start()
-        return self
+    def __getattr__(self, item):
+        return getattr(self.unwrapped, item)
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.stop()
+    def step(self, action):
+        obs, reward, done, info = self.unwrapped.step(action)
+        self._read_info(0, info)
+        self._read_done(0, done)
+        return obs, reward, done, info
+
+    def reset(self):
+        return self.unwrapped.reset()
 
     def _on_training_start(self) -> None:
-        if self.started:
-            pass
-        else:
-            self.start()
         pass
 
     def _on_training_end(self) -> None:
-        if self.closed:
-            pass
-        else:
-            self.stop()
+        pass
 
     def _on_step(self, alt_infos: List[Dict] = None, alt_dones: List[bool] = None) -> bool:
-        if self.started:
-            for env_idx, info in enumerate(self.locals.get('infos', [])):
-                self.read_info(env_idx, info)
+        for env_idx, info in enumerate(self.locals.get('infos', [])):
+            self._read_info(env_idx, info)
 
-            for env_idx, done in list(
-                    enumerate(self.locals.get('dones', []))) + list(enumerate(self.locals.get('done', []))):
-                self.read_done(env_idx, done)
-        else:
-            pass
+        for env_idx, done in list(
+                enumerate(self.locals.get('dones', []))) + list(enumerate(self.locals.get('done', []))):
+            self._read_done(env_idx, done)
         return True
 
-    def read_info(self, env_idx, info: dict):
+    def _read_info(self, env_idx, info: dict):
         self._monitor_dicts[env_idx][len(self._monitor_dicts[env_idx])] = {
             key: val for key, val in info.items() if
             key not in ['terminal_observation', 'episode'] and not key.startswith('rec_')}
         return
 
-    def read_done(self, env_idx, done):
+    def _read_done(self, env_idx, done):
         if done:
             env_monitor_df = pd.DataFrame.from_dict(self._monitor_dicts[env_idx], orient='index')
             self._monitor_dicts[env_idx] = dict()
@@ -74,16 +67,8 @@ class MonitorCallback(BaseCallback):
             pass
         return
 
-    def stop(self):
-        # self.out_file.unlink(missing_ok=True)
-        with self.filepath.open('wb') as f:
+    def save_run(self, filepath: Union[Path, str]):
+        filepath = Path(filepath)
+        filepath.parent.mkdir(exist_ok=True, parents=True)
+        with filepath.open('wb') as f:
             pickle.dump(self._monitor_df.reset_index(), f, protocol=pickle.HIGHEST_PROTOCOL)
-        self.closed = True
-
-    def start(self):
-        if self.started:
-            pass
-        else:
-            self.filepath.parent.mkdir(exist_ok=True, parents=True)
-            self.started = True
-        pass
