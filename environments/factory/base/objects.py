@@ -3,7 +3,7 @@ from enum import Enum
 from typing import Union
 
 import networkx as nx
-import numpy as np
+from environments import helpers as h
 from environments.helpers import Constants as c
 import itertools
 
@@ -267,11 +267,7 @@ class Door(Entity):
         neighbor_pos = list(itertools.product([-1, 1, 0], repeat=2))[:-1]
         neighbor_tiles = [context.by_pos(tuple([sum(x) for x in zip(self.pos, diff)])) for diff in neighbor_pos]
         neighbor_pos = [x.pos for x in neighbor_tiles if x]
-        possible_connections = itertools.combinations(neighbor_pos, 2)
-        self.connectivity = nx.Graph()
-        for a, b in possible_connections:
-            if not max(abs(np.subtract(a, b))) > 1:
-                self.connectivity.add_edge(a, b)
+        self.connectivity = h.points_to_graph(neighbor_pos)
         self.connectivity_subgroups = list(nx.algorithms.components.connected_components(self.connectivity))
         for idx, group in enumerate(self.connectivity_subgroups):
             for tile_pos in group:

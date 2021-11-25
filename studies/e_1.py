@@ -75,7 +75,7 @@ baseline_monitor_file = 'e_1_baseline'
 from stable_baselines3 import A2C
 
 def policy_model_kwargs():
-    return dict(gae_lambda=0.25, n_steps=16, max_grad_norm=0, use_rms_prop=False)
+    return dict(gae_lambda=0.25, n_steps=16, max_grad_norm=0, use_rms_prop=True)
 
 
 def dqn_model_kwargs():
@@ -203,7 +203,7 @@ if __name__ == '__main__':
     frames_to_stack = 3
 
     # Define a global studi save path
-    start_time = 'adam_no_weight_decay'  # int(time.time())
+    start_time = 'rms_weight_decay_0'  # int(time.time())
     study_root_path = Path(__file__).parent.parent / 'study_out' / f'{Path(__file__).stem}_{start_time}'
 
     # Define Global Env Parameters
@@ -285,36 +285,36 @@ if __name__ == '__main__':
                     pomdp_r=2)
                 )
             )})
-    observation_modes.update({
-        'seperate_N': dict(
-            post_training_kwargs=
-            dict(obs_prop=ObservationProperties(
-                render_agents=AgentRenderOptions.COMBINED,
-                additional_agent_placeholder=None,
-                omit_agent_self=True,
-                frames_to_stack=frames_to_stack,
-                pomdp_r=2)
-            ),
-            additional_env_kwargs=
-            dict(obs_prop=ObservationProperties(
-                render_agents=AgentRenderOptions.NOT,
-                additional_agent_placeholder='N',
-                omit_agent_self=True,
-                frames_to_stack=frames_to_stack,
-                pomdp_r=2)
-            )
-        )})
-    observation_modes.update({
-        'in_lvl_obs': dict(
-            post_training_kwargs=
-            dict(obs_prop=ObservationProperties(
-                render_agents=AgentRenderOptions.LEVEL,
-                omit_agent_self=True,
-                additional_agent_placeholder=None,
-                frames_to_stack=frames_to_stack,
-                pomdp_r=2)
-            )
-        )})
+        observation_modes.update({
+            'seperate_N': dict(
+                post_training_kwargs=
+                dict(obs_prop=ObservationProperties(
+                    render_agents=AgentRenderOptions.COMBINED,
+                    additional_agent_placeholder=None,
+                    omit_agent_self=True,
+                    frames_to_stack=frames_to_stack,
+                    pomdp_r=2)
+                ),
+                additional_env_kwargs=
+                dict(obs_prop=ObservationProperties(
+                    render_agents=AgentRenderOptions.NOT,
+                    additional_agent_placeholder='N',
+                    omit_agent_self=True,
+                    frames_to_stack=frames_to_stack,
+                    pomdp_r=2)
+                )
+            )})
+        observation_modes.update({
+            'in_lvl_obs': dict(
+                post_training_kwargs=
+                dict(obs_prop=ObservationProperties(
+                    render_agents=AgentRenderOptions.LEVEL,
+                    omit_agent_self=True,
+                    additional_agent_placeholder=None,
+                    frames_to_stack=frames_to_stack,
+                    pomdp_r=2)
+                )
+            )})
     observation_modes.update({
         #  No further adjustment needed
         'no_obs': dict(

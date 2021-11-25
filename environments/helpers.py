@@ -1,7 +1,9 @@
+import itertools
 from collections import defaultdict
 from enum import Enum, auto
 from typing import Tuple, Union
 
+import networkx as nx
 import numpy as np
 from pathlib import Path
 
@@ -152,6 +154,23 @@ def asset_str(agent):
     else:
         return c.AGENT.value, 'idle'
 
+
+def points_to_graph(coordiniates_or_tiles, allow_euclidean_connections=True, allow_manhattan_connections=True):
+    assert allow_euclidean_connections or allow_manhattan_connections
+    if hasattr(coordiniates_or_tiles, 'positions'):
+        coordiniates_or_tiles = coordiniates_or_tiles.positions
+    possible_connections = itertools.combinations(coordiniates_or_tiles, 2)
+    graph = nx.Graph()
+    for a, b in possible_connections:
+        diff = abs(np.subtract(a, b))
+        if not max(diff) > 1:
+            if allow_manhattan_connections and allow_euclidean_connections:
+                graph.add_edge(a, b)
+            elif not allow_manhattan_connections and allow_euclidean_connections and all(diff):
+                graph.add_edge(a, b)
+            elif allow_manhattan_connections and not allow_euclidean_connections and not all(diff) and any(diff):
+                graph.add_edge(a, b)
+    return graph
 
 if __name__ == '__main__':
     parsed_level = parse_level(Path(__file__).parent / 'factory' / 'levels' / 'simple.txt')

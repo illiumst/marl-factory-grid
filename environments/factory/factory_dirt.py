@@ -5,6 +5,7 @@ import random
 
 import numpy as np
 
+from algorithms.TSP_dirt_agent import TSPDirtAgent
 from environments.helpers import Constants as c
 from environments import helpers as h
 from environments.factory.base.base_factory import BaseFactory
@@ -262,17 +263,29 @@ if __name__ == '__main__':
     from environments.utility_classes import AgentRenderOptions as ARO
     render = True
 
-    dirt_props = DirtProperties(1, 0.05, 0.1, 3, 1, 20, 0)
+    dirt_props = DirtProperties(
+        initial_dirt_ratio=0.35,
+        initial_dirt_spawn_r_var=0.1,
+        clean_amount=0.34,
+        max_spawn_amount=0.1,
+        max_global_amount=20,
+        max_local_amount=1,
+        spawn_frequency=0,
+        max_spawn_ratio=0.05,
+        dirt_smear_amount=0.0,
+        agent_can_interact=True
+    )
 
     obs_props = ObservationProperties(render_agents=ARO.COMBINED, omit_agent_self=True,
-                                      pomdp_r=15, additional_agent_placeholder=None)
+                                      pomdp_r=2, additional_agent_placeholder=None)
 
     move_props = {'allow_square_movement': True,
                   'allow_diagonal_movement': False,
                   'allow_no_op': False}
 
-    factory = DirtFactory(n_agents=5, done_at_collision=False,
+    factory = DirtFactory(n_agents=1, done_at_collision=False,
                           level_name='rooms', max_steps=400,
+                          doors_have_area=False,
                           obs_prop=obs_props, parse_doors=True,
                           record_episodes=True, verbose=True,
                           mv_prop=move_props, dirt_prop=dirt_props
@@ -287,9 +300,15 @@ if __name__ == '__main__':
                            in range(factory.n_agents)] for _
                           in range(factory.max_steps+1)]
         env_state = factory.reset()
+        if render:
+            factory.render()
+        random_start_position = factory[c.AGENT][0].tile
+        factory[c.AGENT][0] = tsp_agent = TSPDirtAgent(factory[c.FLOOR], factory[c.DIRT],
+                                                       factory._actions, random_start_position)
+
         r = 0
         for agent_i_action in random_actions:
-            env_state, step_r, done_bool, info_obj = factory.step(agent_i_action)
+            env_state, step_r, done_bool, info_obj = factory.step(tsp_agent.predict())
             r += step_r
             if render:
                 factory.render()

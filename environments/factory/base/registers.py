@@ -320,6 +320,9 @@ class Agents(MovingEntityObjectRegister):
     def positions(self):
         return [agent.pos for agent in self]
 
+    def __setitem__(self, key, value):
+        self._register[self[key].name] = value
+
 
 class Doors(EntityObjectRegister):
 
