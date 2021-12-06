@@ -308,7 +308,7 @@ class ItemFactory(BaseFactory):
             if item.auto_despawn >= 1:
                 item.set_auto_despawn(item.auto_despawn-1)
             elif not item.auto_despawn:
-                self[c.ITEM].delete_item(item)
+                self[c.ITEM].delete_entity(item)
             else:
                 pass
 

@@ -20,8 +20,8 @@ if __name__ == '__main__':
     render = True
     record = True
     seed = 67
-    n_agents = 2
-    out_path = Path('study_out/e_1_obs_stack_3_gae_0.25_n_steps_16/seperate_N/dirt/A2C_obs_stack_3_gae_0.25_n_steps_16/0_A2C_obs_stack_3_gae_0.25_n_steps_16')
+    n_agents = 1
+    out_path = Path('study_out/e_1_new_reward/no_obs/dirt/A2C_new_reward/0_A2C_new_reward')
     out_path_2 = Path('study_out/e_1_obs_stack_3_gae_0.25_n_steps_16/seperate_N/dirt/A2C_obs_stack_3_gae_0.25_n_steps_16/1_A2C_obs_stack_3_gae_0.25_n_steps_16')
     model_path = out_path
 
@@ -38,7 +38,7 @@ if __name__ == '__main__':
     other_model = out_path / 'model.zip'
 
     model_cls = next(val for key, val in h.MODEL_MAP.items() if key in out_path.parent.name)
-    models = [model_cls.load(this_model), model_cls.load(other_model)]
+    models = [model_cls.load(this_model)]  # , model_cls.load(other_model)]
 
     # Init Env
     with DirtFactory(**env_kwargs) as env:
@@ -61,5 +61,5 @@ if __name__ == '__main__':
                     env.render()
                 if done_bool:
                     break
-                print(f'Factory run {episode} done, reward is:\n    {rew}')
+            print(f'Factory run {episode} done, reward is:\n    {rew}')
     print('all done')

@@ -23,6 +23,7 @@ class ObservationProperties(NamedTuple):
     cast_shadows = True
     frames_to_stack: int = 0
     pomdp_r: int = 0
+    show_global_position_info: bool = True
 
 
 class MarlFrameStack(gym.ObservationWrapper):

@@ -55,6 +55,10 @@ class Constants(Enum):
     CHARGE_POD          = 'Charge_Pod'
     BATTERIES           = 'BATTERIES'
 
+    # Destination Env
+    DESTINATION         = 'Destination'
+    REACHEDDESTINATION  = 'ReachedDestination'
+
     def __bool__(self):
         if 'not_' in self.value:
             return False
@@ -86,11 +90,12 @@ class MovingAction(Enum):
 
 
 class EnvActions(Enum):
-    NOOP        = 'no_op'
-    USE_DOOR    = 'use_door'
-    CLEAN_UP    = 'clean_up'
-    ITEM_ACTION = 'item_action'
-    CHARGE      = 'charge'
+    NOOP            = 'no_op'
+    USE_DOOR        = 'use_door'
+    CLEAN_UP        = 'clean_up'
+    ITEM_ACTION     = 'item_action'
+    CHARGE          = 'charge'
+    WAIT_ON_DEST    = 'wait'
 
 
 m = MovingAction

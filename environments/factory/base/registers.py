@@ -50,6 +50,8 @@ class Register:
 
     def __getitem__(self, item):
         if isinstance(item, (int, np.int64, np.int32)):
+            if item < 0:
+                item = len(self._register) - abs(item)
             try:
                 return next(v for i, v in enumerate(self._register.values()) if i == item)
             except StopIteration:
@@ -147,10 +149,10 @@ class MovingEntityObjectRegister(EntityObjectRegister, ABC):
         if self.individual_slices:
             self._array = np.delete(self._array, idx, axis=0)
 
-    def delete_item(self, item):
-        self.delete_item_by_name(item.name)
+    def delete_entity(self, item):
+        self.delete_entity_by_name(item.name)
 
-    def delete_item_by_name(self, name):
+    def delete_entity_by_name(self, name):
         del self[name]
 
 
@@ -320,8 +322,11 @@ class Agents(MovingEntityObjectRegister):
     def positions(self):
         return [agent.pos for agent in self]
 
-    def __setitem__(self, key, value):
-        self._register[self[key].name] = value
+    def replace_agent(self, key, agent):
+        old_agent = self[key]
+        self[key].tile.leave(self[key])
+        agent._name = old_agent.name
+        self._register[agent.name] = agent
 
 
 class Doors(EntityObjectRegister):

@@ -31,6 +31,8 @@ def prepare_tex(df, hue, style, hue_order):
     lineplot = sns.lineplot(data=df, x='Episode', y='Score', ci=95, palette=PALETTE,
                             hue_order=hue_order, hue=hue, style=style)
     # lineplot.set_title(f'{sorted(list(df["Measurement"].unique()))}')
+    plt.legend(bbox_to_anchor=(1.02, 1), loc='upper left', borderaxespad=0)
+    plt.tight_layout()
     return lineplot
 
 

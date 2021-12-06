@@ -66,7 +66,7 @@ class DirtRegister(MovingEntityObjectRegister):
             self._array[:] = c.FREE_CELL.value
             for dirt in list(self.values()):
                 if dirt.amount == 0:
-                    self.delete_item(dirt)
+                    self.delete_entity(dirt)
                 self._array[0, dirt.x, dirt.y] = dirt.amount
         else:
             self._array = np.zeros((1, *self._level_shape))
@@ -155,7 +155,7 @@ class DirtFactory(BaseFactory):
             new_dirt_amount = dirt.amount - self.dirt_prop.clean_amount
 
             if new_dirt_amount <= 0:
-                self[c.DIRT].delete_item(dirt)
+                self[c.DIRT].delete_entity(dirt)
             else:
                 dirt.set_new_amount(max(new_dirt_amount, c.FREE_CELL.value))
             return c.VALID
@@ -243,11 +243,12 @@ class DirtFactory(BaseFactory):
                 # Reward if pickup succeds,
                 #  0.5 on every pickup
                 reward += 0.5
+                info_dict.update(dirt_cleaned=1)
                 if self.dirt_prop.done_when_clean and (len(self[c.DIRT]) == 0):
                     #  0.5 additional reward for the very last pickup
-                    reward += 0.5
+                    reward += 4.5
+                    info_dict.update(done_clean=1)
                 self.print(f'{agent.name} did just clean up some dirt at {agent.pos}.')
-                info_dict.update(dirt_cleaned=1)
             else:
                 reward -= 0.01
                 self.print(f'{agent.name} just tried to clean up some dirt at {agent.pos}, but failed.')
@@ -288,23 +289,22 @@ if __name__ == '__main__':
                           doors_have_area=False,
                           obs_prop=obs_props, parse_doors=True,
                           record_episodes=True, verbose=True,
-                          mv_prop=move_props, dirt_prop=dirt_props
+                          mv_prop=move_props, dirt_prop=dirt_props,
+                          inject_agents=[TSPDirtAgent]
                           )
 
     # noinspection DuplicatedCode
     n_actions = factory.action_space.n - 1
     _ = factory.observation_space
 
-    for epoch in range(4):
+    for epoch in range(10):
         random_actions = [[random.randint(0, n_actions) for _
                            in range(factory.n_agents)] for _
                           in range(factory.max_steps+1)]
         env_state = factory.reset()
         if render:
             factory.render()
-        random_start_position = factory[c.AGENT][0].tile
-        factory[c.AGENT][0] = tsp_agent = TSPDirtAgent(factory[c.FLOOR], factory[c.DIRT],
-                                                       factory._actions, random_start_position)
+        tsp_agent = factory.get_injected_agents()[0]
 
         r = 0
         for agent_i_action in random_actions:
