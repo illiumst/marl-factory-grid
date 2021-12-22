@@ -434,8 +434,8 @@ if __name__ == '__main__':
                     # Iteration
                     start_mp_baseline_run(env_map, policy_path)
 
-                    # for seed_path in (y for y in policy_path.iterdir() if y.is_dir()):
-                    #    load_model_run_baseline(seed_path)
+                    # for policy_path in (y for y in policy_path.iterdir() if y.is_dir()):
+                    #    load_model_run_baseline(policy_path)
         print('Baseline Tracking done')
 
     # Then iterate over every model and monitor "ood behavior" - "is it ood?"
@@ -448,11 +448,11 @@ if __name__ == '__main__':
                 for policy_path in [x for x in env_path.iterdir() if x. is_dir()]:
                     # FIXME: Pick random seed or iterate over available seeds
                     # First seed path version
-                    # seed_path = next((y for y in policy_path.iterdir() if y.is_dir()))
+                    # policy_path = next((y for y in policy_path.iterdir() if y.is_dir()))
                     # Iteration
                     start_mp_study_run(env_map, policy_path)
-                    #for seed_path in (y for y in policy_path.iterdir() if y.is_dir()):
-                    #    load_model_run_study(seed_path, env_map[env_path.name][0], observation_modes[obs_mode])
+                    #for policy_path in (y for y in policy_path.iterdir() if y.is_dir()):
+                    #    load_model_run_study(policy_path, env_map[env_path.name][0], observation_modes[obs_mode])
         print('OOD Tracking Done')
 
     # Plotting

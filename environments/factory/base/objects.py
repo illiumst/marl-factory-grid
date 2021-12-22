@@ -3,21 +3,25 @@ from enum import Enum
 from typing import Union
 
 import networkx as nx
+import numpy as np
+
 from environments import helpers as h
 from environments.helpers import Constants as c
 import itertools
 
+##########################################################################
+# ##################### Base Object Definition ######################### #
+##########################################################################
+
 
 class Object:
+
+    """Generell Objects for Organisation and Maintanance such as Actions etc..."""
 
     _u_idx = defaultdict(lambda: 0)
 
     def __bool__(self):
         return True
-
-    @property
-    def is_blocking_light(self):
-        return self._is_blocking_light
 
     @property
     def name(self):
@@ -43,7 +47,7 @@ class Object:
         elif self._str_ident is not None and self._enum_ident is None:
             self._name = f'{self.__class__.__name__}[{self._str_ident}]'
         elif self._str_ident is None and self._enum_ident is None:
-            self._name = f'{self.__class__.__name__}#{self._u_idx[self.__class__.__name__]}'
+            self._name = f'{self.__class__.__name__}#{Object._u_idx[self.__class__.__name__]}'
             Object._u_idx[self.__class__.__name__] += 1
         else:
             raise ValueError('Please use either of the idents.')
@@ -68,15 +72,55 @@ class Object:
             return other.name == self.name
 
 
-class Entity(Object):
+class EnvObject(Object):
 
-    @property
-    def can_collide(self):
-        return True
+    """Objects that hold Information that are observable, but have no position on the env grid. Inventories etc..."""
+
+    _u_idx = defaultdict(lambda: 0)
 
     @property
     def encoding(self):
         return c.OCCUPIED_CELL.value
+
+    def __init__(self, register, **kwargs):
+        super(EnvObject, self).__init__(**kwargs)
+        self._register = register
+
+
+class BoundingMixin:
+
+    @property
+    def bound_entity(self):
+        return self._bound_entity
+
+    def __init__(self, entity_to_be_bound, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        assert entity_to_be_bound is not None
+        self._bound_entity = entity_to_be_bound
+
+    def __repr__(self):
+        s = super(BoundingMixin, self).__repr__()
+        i = s[:s.find('(')]
+        return f'{s[:i]}[{self.bound_entity.name}]{s[i:]}'
+
+    @property
+    def name(self):
+        return f'{super(BoundingMixin, self).name}({self._bound_entity.name})'
+
+    def belongs_to_entity(self, entity):
+        return entity == self.bound_entity
+
+
+class Entity(EnvObject):
+    """Full Env Entity that lives on the env Grid. Doors, Items, Dirt etc..."""
+
+    @property
+    def is_blocking_light(self):
+        return self._is_blocking_light
+
+    @property
+    def can_collide(self):
+        return True
 
     @property
     def x(self):
@@ -94,9 +138,10 @@ class Entity(Object):
     def tile(self):
         return self._tile
 
-    def __init__(self, tile, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, tile, *args, is_blocking_light=True,  **kwargs):
+        super().__init__(*args, **kwargs)
         self._tile = tile
+        self._is_blocking_light = is_blocking_light
         tile.enter(self)
 
     def summarize_state(self, **_) -> dict:
@@ -104,7 +149,7 @@ class Entity(Object):
                     tile=str(self.tile.name), can_collide=bool(self.can_collide))
 
     def __repr__(self):
-        return f'{self.name}(@{self.pos})'
+        return super(Entity, self).__repr__() + f'(@{self.pos})'
 
 
 class MoveableEntity(Entity):
@@ -118,7 +163,7 @@ class MoveableEntity(Entity):
         if self._last_tile:
             return self._last_tile.pos
         else:
-            return c.NO_POS
+            return c.NO_POS.value
 
     @property
     def direction_of_view(self):
@@ -137,9 +182,15 @@ class MoveableEntity(Entity):
             curr_tile.leave(self)
             self._tile = next_tile
             self._last_tile = curr_tile
+            self._register.notify_change_to_value(self)
             return True
         else:
             return False
+
+
+##########################################################################
+# ####################### Objects and Entitys ########################## #
+##########################################################################
 
 
 class Action(Object):
@@ -148,19 +199,11 @@ class Action(Object):
         super().__init__(*args, **kwargs)
 
 
-class PlaceHolder(MoveableEntity):
+class PlaceHolder(Object):
 
     def __init__(self, *args, fill_value=0, **kwargs):
         super().__init__(*args, **kwargs)
         self._fill_value = fill_value
-
-    @property
-    def last_tile(self):
-        return self.tile
-
-    @property
-    def direction_of_view(self):
-        return self.pos
 
     @property
     def can_collide(self):
@@ -168,14 +211,37 @@ class PlaceHolder(MoveableEntity):
 
     @property
     def encoding(self):
-        return c.NO_POS.value[0]
+        return self._fill_value
 
     @property
     def name(self):
         return "PlaceHolder"
 
 
-class Tile(Object):
+class GlobalPosition(EnvObject):
+
+    def belongs_to_entity(self, entity):
+        return self._agent == entity
+
+    def __init__(self, level_shape, obs_shape, agent, normalized: bool = True):
+        super(GlobalPosition, self).__init__(self)
+        self._obs_shape = (1, *obs_shape) if len(obs_shape) == 2 else obs_shape
+        self._agent = agent
+        self._level_shape = level_shape
+        self._normalized = normalized
+
+    def as_array(self):
+        pos_array = np.zeros(self._obs_shape)
+        for xy in range(1):
+            pos_array[0, 0, xy] = self._agent.pos[xy] / self._level_shape[xy]
+        return pos_array
+
+
+class Tile(EnvObject):
+
+    @property
+    def encoding(self):
+        return c.FREE_CELL.value
 
     @property
     def guests_that_can_collide(self):
@@ -197,8 +263,8 @@ class Tile(Object):
     def pos(self):
         return self._pos
 
-    def __init__(self, pos, **kwargs):
-        super(Tile, self).__init__(**kwargs)
+    def __init__(self, pos, *args, **kwargs):
+        super(Tile, self).__init__(*args, **kwargs)
         self._guests = dict()
         self._pos = tuple(pos)
 
@@ -233,6 +299,11 @@ class Tile(Object):
 
 
 class Wall(Tile):
+
+    @property
+    def encoding(self):
+        return c.OCCUPIED_CELL.value
+
     pass
 
 
@@ -247,7 +318,8 @@ class Door(Entity):
 
     @property
     def encoding(self):
-        return 1 if self.is_closed else 2
+        # This is important as it shadow is checked by occupation value
+        return c.OCCUPIED_CELL.value if self.is_closed else 2
 
     @property
     def str_state(self):
@@ -307,11 +379,13 @@ class Door(Entity):
     def _open(self):
         self.connectivity.add_edges_from([(self.pos, x) for x in range(len(self.connectivity_subgroups))])
         self._state = c.OPEN_DOOR
+        self._register.notify_change_to_value(self)
         self.time_to_close = self.auto_close_interval
 
     def _close(self):
         self.connectivity.remove_node(self.pos)
         self._state = c.CLOSED_DOOR
+        self._register.notify_change_to_value(self)
 
     def is_linked(self, old_pos, new_pos):
         try:

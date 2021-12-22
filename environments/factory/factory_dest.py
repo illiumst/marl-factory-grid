@@ -6,10 +6,10 @@ import numpy as np
 import random
 
 from environments.factory.base.base_factory import BaseFactory
-from environments.helpers import Constants as c
+from environments.helpers import Constants as c, Constants
 from environments import helpers as h
-from environments.factory.base.objects import Agent, Entity, Action, Tile
-from environments.factory.base.registers import Entities, MovingEntityObjectRegister
+from environments.factory.base.objects import Agent, Entity, Action
+from environments.factory.base.registers import Entities, EntityRegister
 
 from environments.factory.base.renderer import RenderEntity
 
@@ -62,13 +62,16 @@ class Destination(Entity):
         return state_summary
 
 
-class Destinations(MovingEntityObjectRegister):
+class Destinations(EntityRegister):
 
     _accepted_objects = Destination
     _light_blocking = False
 
     def as_array(self):
         self._array[:] = c.FREE_CELL.value
+        # ToDo: Switch to new Style Array Put
+        # indices = list(zip(range(len(self)), *zip(*[x.pos for x in self])))
+        # np.put(self._array, [np.ravel_multi_index(x, self._array.shape) for x in indices], self.encodings)
         for item in self:
             if item.pos != c.NO_POS.value:
                 self._array[0, item.x, item.y] = item.encoding
@@ -83,39 +86,39 @@ class ReachedDestinations(Destinations):
     _light_blocking = False
 
     def __init__(self, *args, **kwargs):
-        super(ReachedDestinations, self).__init__(*args, is_observable=False, **kwargs)
+        super(ReachedDestinations, self).__init__(*args, **kwargs)
 
     def summarize_states(self, n_steps=None):
         return {}
 
 
-class DestSpawnMode(object):
+class DestModeOptions(object):
     DONE        = 'DONE'
     GROUPED     = 'GROUPED'
     PER_DEST    = 'PER_DEST'
 
 
-class DestinationProperties(NamedTuple):
+class DestProperties(NamedTuple):
     n_dests:                                     int = 1     # How many destinations are there
     dwell_time:                                  int = 0     # How long does the agent need to "wait" on a destination
     spawn_frequency:                             int = 0
     spawn_in_other_zone:                        bool = True  #
-    spawn_mode:                                  str = DestSpawnMode.DONE
+    spawn_mode:                                  str = DestModeOptions.DONE
 
     assert dwell_time >= 0, 'dwell_time cannot be < 0!'
     assert spawn_frequency >= 0, 'spawn_frequency cannot be < 0!'
     assert n_dests >= 0, 'n_destinations cannot be < 0!'
-    assert (spawn_mode == DestSpawnMode.DONE) != bool(spawn_frequency)
+    assert (spawn_mode == DestModeOptions.DONE) != bool(spawn_frequency)
 
 
 # noinspection PyAttributeOutsideInit, PyAbstractClass
-class DestinationFactory(BaseFactory):
+class DestFactory(BaseFactory):
     # noinspection PyMissingConstructor
 
-    def __init__(self, *args, dest_prop: DestinationProperties  = DestinationProperties(),
+    def __init__(self, *args, dest_prop: DestProperties  = DestProperties(),
                  env_seed=time.time_ns(), **kwargs):
         if isinstance(dest_prop, dict):
-            dest_prop = DestinationProperties(**dest_prop)
+            dest_prop = DestProperties(**dest_prop)
         self.dest_prop = dest_prop
         kwargs.update(env_seed=env_seed)
         self._dest_rng = np.random.default_rng(env_seed)
@@ -144,10 +147,6 @@ class DestinationFactory(BaseFactory):
 
         super_entities.update({c.DESTINATION: destinations, c.REACHEDDESTINATION: reached_destinations})
         return super_entities
-
-    def additional_per_agent_obs_build(self, agent) -> List[np.ndarray]:
-        additional_per_agent_obs_build = super().additional_per_agent_obs_build(agent)
-        return additional_per_agent_obs_build
 
     def wait(self, agent: Agent):
         if destiantion := self[c.DESTINATION].by_pos(agent.pos):
@@ -178,13 +177,13 @@ class DestinationFactory(BaseFactory):
                                  if val == self.dest_prop.spawn_frequency]
         if destinations_to_spawn:
             n_dest_to_spawn = len(destinations_to_spawn)
-            if self.dest_prop.spawn_mode != DestSpawnMode.GROUPED:
+            if self.dest_prop.spawn_mode != DestModeOptions.GROUPED:
                 destinations = [Destination(tile) for tile in self[c.FLOOR].empty_tiles[:n_dest_to_spawn]]
                 self[c.DESTINATION].register_additional_items(destinations)
                 for dest in destinations_to_spawn:
                     del self._dest_spawn_timer[dest]
                 self.print(f'{n_dest_to_spawn} new destinations have been spawned')
-            elif self.dest_prop.spawn_mode == DestSpawnMode.GROUPED and n_dest_to_spawn == self.dest_prop.n_dests:
+            elif self.dest_prop.spawn_mode == DestModeOptions.GROUPED and n_dest_to_spawn == self.dest_prop.n_dests:
                 destinations = [Destination(tile) for tile in self[c.FLOOR].empty_tiles[:n_dest_to_spawn]]
                 self[c.DESTINATION].register_additional_items(destinations)
                 for dest in destinations_to_spawn:
@@ -204,7 +203,7 @@ class DestinationFactory(BaseFactory):
         for dest in list(self[c.DESTINATION].values()):
             if dest.is_considered_reached:
                 self[c.REACHEDDESTINATION].register_item(dest)
-                self[c.DESTINATION].delete_entity(dest)
+                self[c.DESTINATION].delete_env_object(dest)
                 self._dest_spawn_timer[dest.name] = 0
                 self.print(f'{dest.name} is reached now, removing...')
             else:
@@ -218,6 +217,11 @@ class DestinationFactory(BaseFactory):
                         self.print(f'{agent.name} left the destination early.')
         self.trigger_destination_spawn()
         return info_dict
+
+    def _additional_observations(self) -> Dict[Constants, np.typing.ArrayLike]:
+        additional_observations = super()._additional_observations()
+        additional_observations.update({c.DESTINATION: self[c.DESTINATION].as_array()})
+        return additional_observations
 
     def calculate_additional_reward(self, agent: Agent) -> (int, dict):
         # noinspection PyUnresolvedReferences
@@ -240,7 +244,7 @@ class DestinationFactory(BaseFactory):
                     info_dict.update(agent_reached_destination=1)
                     self.print(f'{agent.name} just reached destination at {agent.pos}')
                     reward += 0.5
-                    self[c.REACHEDDESTINATION].delete_entity(reached_dest)
+                    self[c.REACHEDDESTINATION].delete_env_object(reached_dest)
         return reward, info_dict
 
     def render_additional_assets(self, mode='human'):
@@ -256,7 +260,7 @@ if __name__ == '__main__':
 
     render = True
 
-    dest_probs = DestinationProperties(n_dests=2, spawn_frequency=5, spawn_mode=DestSpawnMode.GROUPED)
+    dest_probs = DestProperties(n_dests=2, spawn_frequency=5, spawn_mode=DestModeOptions.GROUPED)
 
     obs_props = ObservationProperties(render_agents=ARO.LEVEL, omit_agent_self=True, pomdp_r=2)
 
@@ -264,12 +268,12 @@ if __name__ == '__main__':
                   'allow_diagonal_movement': False,
                   'allow_no_op': False}
 
-    factory = DestinationFactory(n_agents=10, done_at_collision=False,
-                                 level_name='rooms', max_steps=400,
-                                 obs_prop=obs_props, parse_doors=True,
-                                 verbose=True,
-                                 mv_prop=move_props, dest_prop=dest_probs
-                                 )
+    factory = DestFactory(n_agents=10, done_at_collision=False,
+                          level_name='rooms', max_steps=400,
+                          obs_prop=obs_props, parse_doors=True,
+                          verbose=True,
+                          mv_prop=move_props, dest_prop=dest_probs
+                          )
 
     # noinspection DuplicatedCode
     n_actions = factory.action_space.n - 1

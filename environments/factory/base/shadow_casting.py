@@ -13,7 +13,7 @@ mult_array = np.asarray([
 class Map(object):
     # Multipliers for transforming coordinates to other octants:
 
-    def __init__(self, map_array: np.ndarray, diamond_slope: float = 0.9):
+    def __init__(self, map_array: np.typing.ArrayLike, diamond_slope: float = 0.9):
         self.data = map_array
         self.width, self.height = map_array.shape
         self.light = np.full_like(self.data, c.FREE_CELL.value)

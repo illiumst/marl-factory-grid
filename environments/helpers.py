@@ -1,12 +1,12 @@
 import itertools
 from collections import defaultdict
-from enum import Enum, auto
-from typing import Tuple, Union
+from enum import Enum
+from pathlib import Path
+from typing import Tuple, Union, Dict, List
 
 import networkx as nx
 import numpy as np
-from pathlib import Path
-
+from numpy.typing import ArrayLike
 from stable_baselines3 import PPO, DQN, A2C
 
 MODEL_MAP = dict(PPO=PPO, DQN=DQN, A2C=A2C)
@@ -29,6 +29,7 @@ class Constants(Enum):
     LEVEL               = 'Level'
     AGENT               = 'Agent'
     AGENT_PLACEHOLDER   = 'AGENT_PLACEHOLDER'
+    GLOBAL_POSITION     = 'GLOBAL_POSITION'
     FREE_CELL           = 0
     OCCUPIED_CELL       = 1
     SHADOWED_CELL       = -1
@@ -109,6 +110,58 @@ ACTIONMAP = defaultdict(lambda: (0, 0), {m.NORTH: (-1, 0), m.NORTHEAST: (-1, +1)
                         )
 
 
+class ObservationTranslator:
+
+    def __init__(self, obs_shape_2d: (int, int), this_named_observation_space: Dict[str, dict],
+                 *per_agent_named_obs_space: Dict[str, dict],
+                 placeholder_fill_value: Union[int, str] = 'N'):
+        assert len(obs_shape_2d) == 2
+        self.obs_shape = obs_shape_2d
+        if isinstance(placeholder_fill_value, str):
+            if placeholder_fill_value.lower() in ['normal', 'n']:
+                self.random_fill = lambda: np.random.normal(size=self.obs_shape)
+            elif placeholder_fill_value.lower() in ['uniform', 'u']:
+                self.random_fill = lambda: np.random.uniform(size=self.obs_shape)
+            else:
+                raise ValueError('Please chooe between "uniform" or "normal"')
+        else:
+            self.random_fill = None
+
+        self._this_named_obs_space = this_named_observation_space
+        self._per_agent_named_obs_space = list(per_agent_named_obs_space)
+
+    def translate_observation(self, agent_idx: int, obs: np.ndarray):
+        target_obs_space = self._per_agent_named_obs_space[agent_idx]
+        translation = [idx_space_dict['explained_idxs'] for name, idx_space_dict in target_obs_space.items()]
+        flat_translation = [x for y in translation for x in y]
+        return np.take(obs, flat_translation, axis=1 if obs.ndim == 4 else 0)
+
+    def translate_observations(self, observations: List[ArrayLike]):
+        return [self.translate_observation(idx, observation) for idx, observation in enumerate(observations)]
+
+    def __call__(self, observations):
+        return self.translate_observations(observations)
+
+
+class ActionTranslator:
+
+    def __init__(self, target_named_action_space: Dict[str, int], *per_agent_named_action_space: Dict[str, int]):
+        self._target_named_action_space = target_named_action_space
+        self._per_agent_named_action_space = list(per_agent_named_action_space)
+        self._per_agent_idx_actions = [{idx: a for a, idx in x.items()} for x in self._per_agent_named_action_space]
+
+    def translate_action(self, agent_idx: int, action: int):
+        named_action = self._per_agent_idx_actions[agent_idx][action]
+        translated_action = self._target_named_action_space[named_action]
+        return translated_action
+
+    def translate_actions(self, actions: List[int]):
+        return [self.translate_action(idx, action) for idx, action in enumerate(actions)]
+
+    def __call__(self, actions):
+        return self.translate_actions(actions)
+
+
 # Utility functions
 def parse_level(path):
     with path.open('r') as lvl:
@@ -128,7 +181,7 @@ def one_hot_level(level, wall_char: Union[c, str] = c.WALL):
     return binary_grid
 
 
-def check_position(slice_to_check_against: np.ndarray, position_to_check: Tuple[int, int]):
+def check_position(slice_to_check_against: ArrayLike, position_to_check: Tuple[int, int]):
     x_pos, y_pos = position_to_check
 
     # Check if agent colides with grid boundrys
@@ -176,6 +229,7 @@ def points_to_graph(coordiniates_or_tiles, allow_euclidean_connections=True, all
             elif allow_manhattan_connections and not allow_euclidean_connections and not all(diff) and any(diff):
                 graph.add_edge(a, b)
     return graph
+
 
 if __name__ == '__main__':
     parsed_level = parse_level(Path(__file__).parent / 'factory' / 'levels' / 'simple.txt')
