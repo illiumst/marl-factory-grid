@@ -17,7 +17,7 @@ class QLearner(BaseLearner):
         self.q_net = q_net
         self.target_q_net = target_q_net
         self.target_q_net.eval()
-        #soft_update(self.q_net, self.target_q_net, tau=1.0)
+        #soft_update(cls.q_net, cls.target_q_net, tau=1.0)
         self.buffer = BaseBuffer(buffer_size)
         self.target_update = target_update
         self.eps = eps_start

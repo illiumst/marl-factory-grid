@@ -5,24 +5,31 @@ import random
 
 import numpy as np
 
-from algorithms.TSP_dirt_agent import TSPDirtAgent
-from environments.helpers import Constants as c, Constants
-from environments import helpers as h
+# from algorithms.TSP_dirt_agent import TSPDirtAgent
+from environments.helpers import Constants as BaseConstants
+from environments.helpers import EnvActions as BaseActions
+
 from environments.factory.base.base_factory import BaseFactory
 from environments.factory.base.objects import Agent, Action, Entity, Tile
-from environments.factory.base.registers import Entities, MovingEntityObjectRegister, EntityRegister
+from environments.factory.base.registers import Entities, EntityRegister
 
 from environments.factory.base.renderer import RenderEntity
 from environments.utility_classes import ObservationProperties
 
-CLEAN_UP_ACTION = h.EnvActions.CLEAN_UP
+
+class Constants(BaseConstants):
+    DIRT = 'Dirt'
+
+
+class EnvActions(BaseActions):
+    CLEAN_UP = 'clean_up'
 
 
 class DirtProperties(NamedTuple):
-    initial_dirt_ratio: float = 0.3         # On INIT, on max how much tiles does the dirt spawn in percent.
+    initial_dirt_ratio: float = 0.3         # On INIT, on max how many tiles does the dirt spawn in percent.
     initial_dirt_spawn_r_var: float = 0.05   # How much does the dirt spawn amount vary?
     clean_amount: float = 1                 # How much does the robot clean with one actions.
-    max_spawn_ratio: float = 0.20           # On max how much tiles does the dirt spawn in percent.
+    max_spawn_ratio: float = 0.20           # On max how many tiles does the dirt spawn in percent.
     max_spawn_amount: float = 0.3           # How much dirt does spawn per tile at max.
     spawn_frequency: int = 0                # Spawn Frequency in Steps.
     max_local_amount: int = 2               # Max dirt amount per tile.
@@ -77,7 +84,7 @@ class DirtRegister(EntityRegister):
         super(DirtRegister, self).__init__(*args)
         self._dirt_properties: DirtProperties = dirt_properties
 
-    def spawn_dirt(self, then_dirty_tiles) -> c:
+    def spawn_dirt(self, then_dirty_tiles) -> bool:
         if isinstance(then_dirty_tiles, Tile):
             then_dirty_tiles = [then_dirty_tiles]
         for tile in then_dirty_tiles:
@@ -108,6 +115,9 @@ def entropy(x):
     return -(x * np.log(x + 1e-8)).sum()
 
 
+c = Constants
+
+
 # noinspection PyAttributeOutsideInit, PyAbstractClass
 class DirtFactory(BaseFactory):
 
@@ -115,7 +125,7 @@ class DirtFactory(BaseFactory):
     def additional_actions(self) -> Union[Action, List[Action]]:
         super_actions = super().additional_actions
         if self.dirt_prop.agent_can_interact:
-            super_actions.append(Action(enum_ident=CLEAN_UP_ACTION))
+            super_actions.append(Action(str_ident=EnvActions.CLEAN_UP))
         return super_actions
 
     @property
@@ -194,7 +204,7 @@ class DirtFactory(BaseFactory):
     def do_additional_actions(self, agent: Agent, action: Action) -> Union[None, c]:
         valid = super().do_additional_actions(agent, action)
         if valid is None:
-            if action == CLEAN_UP_ACTION:
+            if action == EnvActions.CLEAN_UP:
                 if self.dirt_prop.agent_can_interact:
                     valid = self.clean_up(agent)
                     return valid
@@ -215,7 +225,7 @@ class DirtFactory(BaseFactory):
         done = self.dirt_prop.done_when_clean and (len(self[c.DIRT]) == 0)
         return super_done or done
 
-    def _additional_observations(self) -> Dict[Constants, np.typing.ArrayLike]:
+    def _additional_observations(self) -> Dict[str, np.typing.ArrayLike]:
         additional_observations = super()._additional_observations()
         additional_observations.update({c.DIRT: self[c.DIRT].as_array()})
         return additional_observations
@@ -227,14 +237,14 @@ class DirtFactory(BaseFactory):
         dirty_tile_count = len(dirt)
         # if dirty_tile_count:
         #    dirt_distribution_score = entropy(softmax(np.asarray(dirt)) / dirty_tile_count)
-        #else:
+        # else:
         #    dirt_distribution_score = 0
 
         info_dict.update(dirt_amount=current_dirt_amount)
         info_dict.update(dirty_tile_count=dirty_tile_count)
         # info_dict.update(dirt_distribution_score=dirt_distribution_score)
 
-        if agent.temp_action == CLEAN_UP_ACTION:
+        if agent.temp_action == EnvActions.CLEAN_UP:
             if agent.temp_valid:
                 # Reward if pickup succeds,
                 #  0.5 on every pickup
@@ -257,7 +267,7 @@ class DirtFactory(BaseFactory):
 
 
 if __name__ == '__main__':
-    from environments.utility_classes import AgentRenderOptions as ARO
+    from environments.utility_classes import AgentRenderOptions as aro
     render = True
 
     dirt_props = DirtProperties(
@@ -273,7 +283,7 @@ if __name__ == '__main__':
         agent_can_interact=True
     )
 
-    obs_props = ObservationProperties(render_agents=ARO.COMBINED, omit_agent_self=True,
+    obs_props = ObservationProperties(render_agents=aro.COMBINED, omit_agent_self=True,
                                       pomdp_r=2, additional_agent_placeholder=None, cast_shadows=True)
 
     move_props = {'allow_square_movement': True,

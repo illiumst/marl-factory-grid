@@ -16,14 +16,14 @@ class Map(object):
     def __init__(self, map_array: np.typing.ArrayLike, diamond_slope: float = 0.9):
         self.data = map_array
         self.width, self.height = map_array.shape
-        self.light = np.full_like(self.data, c.FREE_CELL.value)
-        self.flag = c.FREE_CELL.value
+        self.light = np.full_like(self.data, c.FREE_CELL)
+        self.flag = c.FREE_CELL
         self.d_slope = diamond_slope
 
     def blocked(self, x, y):
         return (x < 0 or y < 0
                 or x >= self.width or y >= self.height
-                or self.data[x, y] == c.OCCUPIED_CELL.value)
+                or self.data[x, y] == c.OCCUPIED_CELL)
 
     def lit(self, x, y):
         return self.light[x, y] == self.flag
@@ -46,14 +46,14 @@ class Map(object):
                 # Translate the dx, dy coordinates into map coordinates:
                 X, Y = cx + dx * xx + dy * xy, cy + dx * yx + dy * yy
                 # l_slope and r_slope store the slopes of the left and right
-                # extremities of the square we're considering:
+                # extremities of the square_move we're considering:
                 l_slope, r_slope = (dx-self.d_slope)/(dy+self.d_slope), (dx+self.d_slope)/(dy-self.d_slope)
                 if start < r_slope:
                     continue
                 elif end > l_slope:
                     break
                 else:
-                    # Our light beam is touching this square; light it:
+                    # Our light beam is touching this square_move; light it:
                     if dx*dx + dy*dy < radius_squared:
                         self.set_lit(X, Y)
                     if blocked:
@@ -66,12 +66,12 @@ class Map(object):
                             start = new_start
                     else:
                         if self.blocked(X, Y) and j < radius:
-                            # This is a blocking square, start a child scan:
+                            # This is a blocking square_move, start a child scan:
                             blocked = True
                             self._cast_light(cx, cy, j+1, start, l_slope,
                                              radius, xx, xy, yx, yy, id+1)
                             new_start = r_slope
-            # Row is scanned; do next row unless last square was blocked:
+            # Row is scanned; do next row unless last square_move was blocked:
             if blocked:
                 break
 

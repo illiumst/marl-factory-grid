@@ -65,7 +65,6 @@ class BatteriesRegister(EnvObjectRegister):
     _accepted_objects = Battery
     is_blocking_light = False
     can_be_shadowed = False
-    hide_from_obs_builder = True
 
     def __init__(self, *args, **kwargs):
         super(BatteriesRegister, self).__init__(*args, is_per_agent=True, individual_slices=True, **kwargs)
@@ -98,7 +97,7 @@ class BatteriesRegister(EnvObjectRegister):
 
     def summarize_states(self, n_steps=None):
         # as dict with additional nesting
-        # return dict(items=super(Inventories, self).summarize_states())
+        # return dict(items=super(Inventories, cls).summarize_states())
         return super(BatteriesRegister, self).summarize_states(n_steps=n_steps)
 
 
@@ -156,8 +155,8 @@ class BatteryFactory(BaseFactory):
         self.btry_prop = btry_prop
         super().__init__(*args, **kwargs)
 
-    def _additional_raw_observations(self, agent) -> Dict[Constants, np.typing.ArrayLike]:
-        additional_raw_observations = super()._additional_raw_observations(agent)
+    def _additional_per_agent_raw_observations(self, agent) -> Dict[Constants, np.typing.ArrayLike]:
+        additional_raw_observations = super()._additional_per_agent_raw_observations(agent)
         additional_raw_observations.update({c.BATTERIES: self[c.BATTERIES].by_entity(agent).as_array()})
         return additional_raw_observations
 

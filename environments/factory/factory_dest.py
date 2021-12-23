@@ -14,6 +14,8 @@ from environments.factory.base.registers import Entities, EntityRegister
 from environments.factory.base.renderer import RenderEntity
 
 
+
+
 DESTINATION = 1
 DESTINATION_DONE = 0.5
 
@@ -70,8 +72,8 @@ class Destinations(EntityRegister):
     def as_array(self):
         self._array[:] = c.FREE_CELL.value
         # ToDo: Switch to new Style Array Put
-        # indices = list(zip(range(len(self)), *zip(*[x.pos for x in self])))
-        # np.put(self._array, [np.ravel_multi_index(x, self._array.shape) for x in indices], self.encodings)
+        # indices = list(zip(range(len(cls)), *zip(*[x.pos for x in cls])))
+        # np.put(cls._array, [np.ravel_multi_index(x, cls._array.shape) for x in indices], cls.encodings)
         for item in self:
             if item.pos != c.NO_POS.value:
                 self._array[0, item.x, item.y] = item.encoding

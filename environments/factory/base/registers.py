@@ -4,6 +4,7 @@ from abc import ABC
 from typing import List, Union, Dict, Tuple
 
 import numpy as np
+import six
 
 from environments.factory.base.objects import Entity, Tile, Agent, Door, Action, Wall, PlaceHolder, GlobalPosition, \
     Object, EnvObject
@@ -56,7 +57,7 @@ class ObjectRegister:
     def _get_index(self, item):
         try:
             return next(i for i, v in enumerate(self._register.values()) if v == item)
-        except (StopIteration, AssertionError):
+        except StopIteration:
             return None
 
     def __getitem__(self, item):
@@ -73,24 +74,30 @@ class ObjectRegister:
             return None
 
     def __repr__(self):
-        return f'{self.__class__.__name__}({self._register})'
+        return f'{self.__class__.__name__}[{self._register}]'
 
 
 class EnvObjectRegister(ObjectRegister):
 
     _accepted_objects = EnvObject
 
-    def __init__(self, obs_shape: (int, int), *args, **kwargs):
+    @property
+    def encodings(self):
+        return [x.encoding for x in self]
+
+    def __init__(self, obs_shape: (int, int), *args, individual_slices: bool = False, **kwargs):
         super(EnvObjectRegister, self).__init__(*args, **kwargs)
         self._shape = obs_shape
         self._array = None
-        self.hide_from_obs_builder = False
+        self._individual_slices = individual_slices
         self._lazy_eval_transforms = []
 
     def register_item(self, other: EnvObject):
         super(EnvObjectRegister, self).register_item(other)
         if self._array is None:
             self._array = np.zeros((1, *self._shape))
+        if self._individual_slices:
+            self._array = np.vstack((self._array, np.zeros((1, *self._shape))))
         self.notify_change_to_value(other)
 
     def as_array(self):
@@ -105,7 +112,7 @@ class EnvObjectRegister(ObjectRegister):
         return [val.summarize_state(n_steps=n_steps) for val in self.values()]
 
     def notify_change_to_free(self, env_object: EnvObject):
-        self._array_change_notifyer(env_object, value=c.FREE_CELL.value)
+        self._array_change_notifyer(env_object, value=c.FREE_CELL)
 
     def notify_change_to_value(self, env_object: EnvObject):
         self._array_change_notifyer(env_object)
@@ -114,9 +121,28 @@ class EnvObjectRegister(ObjectRegister):
         pos = self._get_index(env_object)
         value = value if value is not None else env_object.encoding
         self._lazy_eval_transforms.append((pos, value))
+        if self._individual_slices:
+            idx = (self._get_index(env_object) * np.prod(self._shape[1:]), value)
+            self._lazy_eval_transforms.append((idx, value))
+        else:
+            self._lazy_eval_transforms.append((pos, value))
+
+    def _refresh_arrays(self):
+        poss, values = zip(*[(idx, x.encoding) for idx,x in enumerate(self.values())])
+        for pos, value in zip(poss, values):
+            self._lazy_eval_transforms.append((pos, value))
 
     def __delitem__(self, name):
-        self.notify_change_to_free(self._register[name])
+        idx, obj = next((i, obj) for i, obj in enumerate(self) if obj.name == name)
+        if self._individual_slices:
+            self._array = np.delete(self._array, idx, axis=0)
+        else:
+            self.notify_change_to_free(self._register[name])
+            # Dirty Hack to check if not beeing subclassed. In that case we need to refresh the array since positions
+            # in the observation array are result of enumeration. They can overide each other.
+            # Todo: Find a better solution
+            if not issubclass(self.__class__, EntityRegister) and issubclass(self.__class__, EnvObjectRegister):
+                self._refresh_arrays()
         del self._register[name]
 
     def delete_env_object(self, env_object: EnvObject):
@@ -153,26 +179,19 @@ class EntityRegister(EnvObjectRegister, ABC):
     def tiles(self):
         return [entity.tile for entity in self]
 
-    @property
-    def encodings(self):
-        return [x.encoding for x in self]
-
     def __init__(self, level_shape, *args,
                  is_blocking_light: bool = False,
                  can_be_shadowed: bool = True,
-                 individual_slices: bool = False, **kwargs):
+                 **kwargs):
         super(EntityRegister, self).__init__(level_shape, *args, **kwargs)
         self._lazy_eval_transforms = []
         self.can_be_shadowed = can_be_shadowed
-        self.individual_slices = individual_slices
         self.is_blocking_light = is_blocking_light
 
     def __delitem__(self, name):
         idx, obj = next((i, obj) for i, obj in enumerate(self) if obj.name == name)
         obj.tile.leave(obj)
         super(EntityRegister, self).__delitem__(name)
-        if self.individual_slices:
-            self._array = np.delete(self._array, idx, axis=0)
 
     def as_array(self):
         if self._lazy_eval_transforms:
@@ -188,7 +207,7 @@ class EntityRegister(EnvObjectRegister, ABC):
         pos = pos if pos is not None else entity.pos
         value = value if value is not None else entity.encoding
         x, y = pos
-        if self.individual_slices:
+        if self._individual_slices:
             idx = (self._get_index(entity), x, y)
         else:
             idx = (0, x, y)
@@ -203,19 +222,12 @@ class EntityRegister(EnvObjectRegister, ABC):
 
 class BoundRegisterMixin(EnvObjectRegister, ABC):
 
-    @classmethod
-    def from_entities_to_bind(self, entitites):
-        def from_values(cls, values: Union[str, numbers.Number, List[Union[str, numbers.Number]]],
-                        *args, object_kwargs=None, **kwargs):
-            # objects_name = cls._accepted_objects.__name__
-            if isinstance(values, (str, numbers.Number)):
-                values = [values]
-            register_obj = cls(*args, **kwargs)
-            objects = [cls._accepted_objects(register_obj, str_ident=i, fill_value=value,
-                                             **object_kwargs if object_kwargs is not None else {})
-                       for i, value in enumerate(values)]
-            register_obj.register_additional_items(objects)
-            return register_obj
+    def __init__(self, entity_to_be_bound, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._bound_entity = entity_to_be_bound
+
+    def belongs_to_entity(self, entity):
+        return self._bound_entity == entity
 
 
 class MovingEntityObjectRegister(EntityRegister, ABC):
@@ -225,9 +237,9 @@ class MovingEntityObjectRegister(EntityRegister, ABC):
 
     def notify_change_to_value(self, entity):
         super(MovingEntityObjectRegister, self).notify_change_to_value(entity)
-        if entity.last_pos != c.NO_POS.value:
+        if entity.last_pos != c.NO_POS:
             try:
-                self._array_change_notifyer(entity, entity.last_pos, value=c.FREE_CELL.value)
+                self._array_change_notifyer(entity, entity.last_pos, value=c.FREE_CELL)
             except AttributeError:
                 pass
 
@@ -238,20 +250,26 @@ class MovingEntityObjectRegister(EntityRegister, ABC):
 
 
 class GlobalPositions(EnvObjectRegister):
+
     _accepted_objects = GlobalPosition
+
     is_blocking_light = False
     can_be_shadowed = False
-    hide_from_obs_builder = True
 
     def __init__(self, *args, **kwargs):
         super(GlobalPositions, self).__init__(*args, is_per_agent=True, individual_slices=True, **kwargs)
 
     def as_array(self):
-        # Todo make this lazy?
+        # FIXME DEBUG!!! make this lazy?
         return np.stack([gp.as_array() for inv_idx, gp in enumerate(self)])
 
-    def spawn_GlobalPositionObjects(self, obs_shape, agents):
-        global_positions = [self._accepted_objects(self._shape, obs_shape, agent)
+    def as_array_by_entity(self, entity):
+        # FIXME DEBUG!!! make this lazy?
+        return np.stack([gp.as_array() for inv_idx, gp in enumerate(self)])
+
+    def spawn_global_position_objects(self, agents):
+        # Todo, change to 'from xy'-form
+        global_positions = [self._accepted_objects(self._shape, agent)
                             for _, agent in enumerate(agents)]
         # noinspection PyTypeChecker
         self.register_additional_items(global_positions)
@@ -276,7 +294,7 @@ class PlaceHolders(EnvObjectRegister):
     _accepted_objects = PlaceHolder
 
     def __init__(self, *args, **kwargs):
-        assert not 'individual_slices' in kwargs, 'Keyword - "individual_slices": "True" and must not be altered'
+        assert 'individual_slices' not in kwargs, 'Keyword - "individual_slices": "True" and must not be altered'
         kwargs.update(individual_slices=False)
         super().__init__(*args, **kwargs)
 
@@ -317,10 +335,6 @@ class Entities(ObjectRegister):
         return {key: val.as_array() for key, val in self.items()}
 
     @property
-    def obs_arrays(self):
-        return {key: val.as_array() for key, val in self.items() if not val.hide_from_obs_builder}
-
-    @property
     def names(self):
         return list(self._register.keys())
 
@@ -347,24 +361,20 @@ class Entities(ObjectRegister):
 class WallTiles(EntityRegister):
     _accepted_objects = Wall
     _light_blocking = True
-    hide_from_obs_builder = True
 
     def as_array(self):
         if not np.any(self._array):
             # Which is Faster?
-            # indices = [x.pos for x in self]
-            # np.put(self._array, [np.ravel_multi_index((0, *x), self._array.shape) for x in indices], self.encodings)
+            # indices = [x.pos for x in cls]
+            # np.put(cls._array, [np.ravel_multi_index((0, *x), cls._array.shape) for x in indices], cls.encodings)
             x, y = zip(*[x.pos for x in self])
-            self._array[0, x, y] = self.encoding
+            self._array[0, x, y] = self._value
         return self._array
 
     def __init__(self, *args, **kwargs):
         super(WallTiles, self).__init__(*args, is_blocking_light=self._light_blocking, individual_slices=False,
                                         **kwargs)
-
-    @property
-    def encoding(self):
-        return c.OCCUPIED_CELL.value
+        self._value = c.OCCUPIED_CELL
 
     @classmethod
     def from_argwhere_coordinates(cls, argwhere_coordinates, *args, **kwargs):
@@ -393,10 +403,7 @@ class FloorTiles(WallTiles):
 
     def __init__(self, *args, **kwargs):
         super(FloorTiles, self).__init__(*args, **kwargs)
-
-    @property
-    def encoding(self):
-        return c.FREE_CELL.value
+        self._value = c.FREE_CELL
 
     @property
     def occupied_tiles(self):
@@ -422,23 +429,8 @@ class FloorTiles(WallTiles):
 class Agents(MovingEntityObjectRegister):
     _accepted_objects = Agent
 
-    def __init__(self, *args, hide_from_obs_builder=False, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.hide_from_obs_builder = hide_from_obs_builder
-
-    @DeprecationWarning
-    def Xas_array(self):
-        # Super Safe Version
-        # self._array[:] = c.FREE_CELL.value
-        indices = list(zip(range(len(self)), *zip(*[x.last_pos for x in self])))
-        np.put(self._array, [np.ravel_multi_index(x, self._array.shape) for x in indices], c.FREE_CELL.value)
-        indices = list(zip(range(len(self)), *zip(*[x.pos for x in self])))
-        np.put(self._array, [np.ravel_multi_index(x, self._array.shape) for x in indices], self.encodings)
-
-        if self.individual_slices:
-            return self._array
-        else:
-            return self._array.sum(axis=0, keepdims=True)
 
     @property
     def positions(self):
@@ -484,17 +476,18 @@ class Actions(ObjectRegister):
         self.can_use_doors = can_use_doors
         super(Actions, self).__init__()
 
+        # Move this to Baseclass, Env init?
         if self.allow_square_movement:
-            self.register_additional_items([self._accepted_objects(enum_ident=direction)
-                                            for direction in h.MovingAction.square()])
+            self.register_additional_items([self._accepted_objects(str_ident=direction)
+                                            for direction in h.EnvActions.square_move()])
         if self.allow_diagonal_movement:
-            self.register_additional_items([self._accepted_objects(enum_ident=direction)
-                                            for direction in h.MovingAction.diagonal()])
+            self.register_additional_items([self._accepted_objects(str_ident=direction)
+                                            for direction in h.EnvActions.diagonal_move()])
         self._movement_actions = self._register.copy()
         if self.can_use_doors:
-            self.register_additional_items([self._accepted_objects(enum_ident=h.EnvActions.USE_DOOR)])
+            self.register_additional_items([self._accepted_objects(str_ident=h.EnvActions.USE_DOOR)])
         if self.allow_no_op:
-            self.register_additional_items([self._accepted_objects(enum_ident=h.EnvActions.NOOP)])
+            self.register_additional_items([self._accepted_objects(str_ident=h.EnvActions.NOOP)])
 
     def is_moving_action(self, action: Union[int]):
         return action in self.movement_actions.values()
@@ -504,7 +497,7 @@ class Zones(ObjectRegister):
 
     @property
     def accounting_zones(self):
-        return [self[idx] for idx, name in self.items() if name != c.DANGER_ZONE.value]
+        return [self[idx] for idx, name in self.items() if name != c.DANGER_ZONE]
 
     def __init__(self, parsed_level):
         raise NotImplementedError('This needs a Rework')
@@ -513,9 +506,9 @@ class Zones(ObjectRegister):
         self._accounting_zones = list()
         self._danger_zones = list()
         for symbol in np.unique(parsed_level):
-            if symbol == c.WALL.value:
+            if symbol == c.WALL:
                 continue
-            elif symbol == c.DANGER_ZONE.value:
+            elif symbol == c.DANGER_ZONE:
                 self + symbol
                 slices.append(h.one_hot_level(parsed_level, symbol))
                 self._danger_zones.append(symbol)

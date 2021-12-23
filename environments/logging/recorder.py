@@ -60,7 +60,7 @@ class EnvRecorder(BaseCallback):
     def save_records(self, filepath: Union[Path, str], save_occupation_map=False, save_trajectory_map=False):
         filepath = Path(filepath)
         filepath.parent.mkdir(exist_ok=True, parents=True)
-        # self.out_file.unlink(missing_ok=True)
+        # cls.out_file.unlink(missing_ok=True)
         with filepath.open('w') as f:
             out_dict = {'episodes': self._recorder_out_list, 'header': self.unwrapped.params}
             try:
