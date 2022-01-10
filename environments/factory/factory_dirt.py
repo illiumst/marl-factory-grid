@@ -8,6 +8,7 @@ import numpy as np
 # from algorithms.TSP_dirt_agent import TSPDirtAgent
 from environments.helpers import Constants as BaseConstants
 from environments.helpers import EnvActions as BaseActions
+from environments.helpers import Rewards as BaseRewards
 
 from environments.factory.base.base_factory import BaseFactory
 from environments.factory.base.objects import Agent, Action, Entity, Tile
@@ -21,8 +22,14 @@ class Constants(BaseConstants):
     DIRT = 'Dirt'
 
 
-class EnvActions(BaseActions):
-    CLEAN_UP = 'clean_up'
+class Actions(BaseActions):
+    CLEAN_UP = 'do_cleanup_action'
+
+
+class Rewards(BaseRewards):
+    CLEAN_UP_VALID          = 0.5
+    CLEAN_UP_FAIL          = -0.1
+    CLEAN_UP_LAST_PIECE     = 4.5
 
 
 class DirtProperties(NamedTuple):
@@ -40,10 +47,6 @@ class DirtProperties(NamedTuple):
 
 
 class Dirt(Entity):
-
-    @property
-    def can_collide(self):
-        return False
 
     @property
     def amount(self):
@@ -116,6 +119,8 @@ def entropy(x):
 
 
 c = Constants
+a = Actions
+r = Rewards
 
 
 # noinspection PyAttributeOutsideInit, PyAbstractClass
@@ -125,7 +130,7 @@ class DirtFactory(BaseFactory):
     def additional_actions(self) -> Union[Action, List[Action]]:
         super_actions = super().additional_actions
         if self.dirt_prop.agent_can_interact:
-            super_actions.append(Action(str_ident=EnvActions.CLEAN_UP))
+            super_actions.append(Action(str_ident=a.CLEAN_UP))
         return super_actions
 
     @property
@@ -151,7 +156,7 @@ class DirtFactory(BaseFactory):
         additional_assets.extend(dirt)
         return additional_assets
 
-    def clean_up(self, agent: Agent) -> c:
+    def do_cleanup_action(self, agent: Agent) -> (dict, dict):
         if dirt := self[c.DIRT].by_pos(agent.pos):
             new_dirt_amount = dirt.amount - self.dirt_prop.clean_amount
 
@@ -159,9 +164,21 @@ class DirtFactory(BaseFactory):
                 self[c.DIRT].delete_env_object(dirt)
             else:
                 dirt.set_new_amount(max(new_dirt_amount, c.FREE_CELL.value))
-            return c.VALID
+            valid = c.VALID
+            self.print(f'{agent.name} did just clean up some dirt at {agent.pos}.')
+            info_dict = {f'{agent.name}_{a.CLEAN_UP}_VALID': 1}
+            reward = r.CLEAN_UP_VALID
         else:
-            return c.NOT_VALID
+            valid = c.NOT_VALID
+            self.print(f'{agent.name} just tried to clean up some dirt at {agent.pos}, but failed.')
+            info_dict = {f'{agent.name}_{a.CLEAN_UP}_FAIL': 1}
+            reward = r.CLEAN_UP_FAIL
+
+        if valid and self.dirt_prop.done_when_clean and (len(self[c.DIRT]) == 0):
+            reward += r.CLEAN_UP_LAST_PIECE
+            self.print(f'{agent.name} picked up the last piece of dirt!')
+            info_dict = {f'{agent.name}_{a.CLEAN_UP}_LAST_PIECE': 1}
+        return valid, dict(value=reward, reason=a.CLEAN_UP, info=info_dict)
 
     def trigger_dirt_spawn(self, initial_spawn=False):
         dirt_rng = self._dirt_rng
@@ -177,8 +194,8 @@ class DirtFactory(BaseFactory):
         n_dirt_tiles = max(0, int(new_spawn * len(free_for_dirt)))
         self[c.DIRT].spawn_dirt(free_for_dirt[:n_dirt_tiles])
 
-    def do_additional_step(self) -> dict:
-        info_dict = super().do_additional_step()
+    def do_additional_step(self) -> (List[dict], dict):
+        super_reward_info = super().do_additional_step()
         if smear_amount := self.dirt_prop.dirt_smear_amount:
             for agent in self[c.AGENT]:
                 if agent.temp_valid and agent.last_pos != c.NO_POS:
@@ -199,42 +216,44 @@ class DirtFactory(BaseFactory):
             self._next_dirt_spawn = self.dirt_prop.spawn_frequency
         else:
             self._next_dirt_spawn -= 1
-        return info_dict
+        return super_reward_info
 
-    def do_additional_actions(self, agent: Agent, action: Action) -> Union[None, c]:
-        valid = super().do_additional_actions(agent, action)
-        if valid is None:
-            if action == EnvActions.CLEAN_UP:
-                if self.dirt_prop.agent_can_interact:
-                    valid = self.clean_up(agent)
-                    return valid
-                else:
-                    return c.NOT_VALID
+    def do_additional_actions(self, agent: Agent, action: Action) -> (dict, dict):
+        action_result = super().do_additional_actions(agent, action)
+        if action_result is None:
+            if action == a.CLEAN_UP:
+                return self.do_cleanup_action(agent)
             else:
                 return None
         else:
-            return valid
+            return action_result
 
     def do_additional_reset(self) -> None:
         super().do_additional_reset()
         self.trigger_dirt_spawn(initial_spawn=True)
         self._next_dirt_spawn = self.dirt_prop.spawn_frequency if self.dirt_prop.spawn_frequency else -1
 
-    def check_additional_done(self):
-        super_done = super().check_additional_done()
-        done = self.dirt_prop.done_when_clean and (len(self[c.DIRT]) == 0)
-        return super_done or done
+    def check_additional_done(self) -> (bool, dict):
+        super_done, super_dict = super().check_additional_done()
+        if self.dirt_prop.done_when_clean:
+            if all_cleaned := len(self[c.DIRT]) == 0:
+                super_dict.update(ALL_CLEAN_DONE=all_cleaned)
+                return all_cleaned, super_dict
+        return super_done, super_dict
 
     def _additional_observations(self) -> Dict[str, np.typing.ArrayLike]:
         additional_observations = super()._additional_observations()
         additional_observations.update({c.DIRT: self[c.DIRT].as_array()})
         return additional_observations
 
-    def calculate_additional_reward(self, agent: Agent) -> (int, dict):
-        reward, info_dict = super().calculate_additional_reward(agent)
+    def gather_additional_info(self, agent: Agent) -> dict:
+        event_reward_dict = super().additional_per_agent_reward(agent)
+        info_dict = dict()
+
         dirt = [dirt.amount for dirt in self[c.DIRT]]
         current_dirt_amount = sum(dirt)
         dirty_tile_count = len(dirt)
+
         # if dirty_tile_count:
         #    dirt_distribution_score = entropy(softmax(np.asarray(dirt)) / dirty_tile_count)
         # else:
@@ -242,33 +261,14 @@ class DirtFactory(BaseFactory):
 
         info_dict.update(dirt_amount=current_dirt_amount)
         info_dict.update(dirty_tile_count=dirty_tile_count)
-        # info_dict.update(dirt_distribution_score=dirt_distribution_score)
 
-        if agent.temp_action == EnvActions.CLEAN_UP:
-            if agent.temp_valid:
-                # Reward if pickup succeds,
-                #  0.5 on every pickup
-                reward += 0.5
-                info_dict.update(dirt_cleaned=1)
-                if self.dirt_prop.done_when_clean and (len(self[c.DIRT]) == 0):
-                    #  0.5 additional reward for the very last pickup
-                    reward += 4.5
-                    info_dict.update(done_clean=1)
-                self.print(f'{agent.name} did just clean up some dirt at {agent.pos}.')
-            else:
-                reward -= 0.01
-                self.print(f'{agent.name} just tried to clean up some dirt at {agent.pos}, but failed.')
-                info_dict.update({f'{agent.name}_failed_dirt_cleanup': 1})
-                info_dict.update(failed_dirt_clean=1)
-
-        # Potential based rewards ->
-        #  track the last reward , minus the current reward = potential
-        return reward, info_dict
+        event_reward_dict.update({'info': info_dict})
+        return event_reward_dict
 
 
 if __name__ == '__main__':
     from environments.utility_classes import AgentRenderOptions as aro
-    render = True
+    render = False
 
     dirt_props = DirtProperties(
         initial_dirt_ratio=0.35,
@@ -289,14 +289,15 @@ if __name__ == '__main__':
     move_props = {'allow_square_movement': True,
                   'allow_diagonal_movement': False,
                   'allow_no_op': False}
+    import time
     global_timings = []
-    for i in range(20):
+    for i in range(10):
 
         factory = DirtFactory(n_agents=2, done_at_collision=False,
                               level_name='rooms', max_steps=1000,
                               doors_have_area=False,
                               obs_prop=obs_props, parse_doors=True,
-                              record_episodes=True, verbose=True,
+                              verbose=False,
                               mv_prop=move_props, dirt_prop=dirt_props,
                               # inject_agents=[TSPDirtAgent],
                               )
@@ -307,7 +308,6 @@ if __name__ == '__main__':
         obs_space = factory.observation_space
         obs_space_named = factory.named_observation_space
         times = []
-        import time
         for epoch in range(10):
             start_time = time.time()
             random_actions = [[random.randint(0, n_actions) for _
@@ -318,18 +318,19 @@ if __name__ == '__main__':
                 factory.render()
             # tsp_agent = factory.get_injected_agents()[0]
 
-            r = 0
+            rwrd = 0
             for agent_i_action in random_actions:
-                env_state, step_r, done_bool, info_obj = factory.step(agent_i_action)
-                r += step_r
+                env_state, step_rwrd, done_bool, info_obj = factory.step(agent_i_action)
+                rwrd += step_rwrd
                 if render:
                     factory.render()
                 if done_bool:
                     break
             times.append(time.time() - start_time)
             # print(f'Factory run {epoch} done, reward is:\n    {r}')
-        print('Time Taken: ', sum(times) / 10)
-        global_timings.append(sum(times) / 10)
-    print('Time Taken: ', sum(global_timings[10:]) / 10)
+        print('Mean Time Taken: ', sum(times) / 10)
+        global_timings.extend(times)
+    print('Mean Time Taken: ', sum(global_timings) / len(global_timings))
+    print('Median Time Taken: ', global_timings[len(global_timings)//2])
 
 pass

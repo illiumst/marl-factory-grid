@@ -33,7 +33,7 @@ class Object:
         else:
             return self._name
 
-    def __init__(self, str_ident: Union[str, None] = None, is_blocking_light=False, **kwargs):
+    def __init__(self, str_ident: Union[str, None] = None, **kwargs):
 
         self._str_ident = str_ident
 
@@ -45,7 +45,6 @@ class Object:
         else:
             raise ValueError('Please use either of the idents.')
 
-        self._is_blocking_light = is_blocking_light
         if kwargs:
             print(f'Following kwargs were passed, but ignored: {kwargs}')
 
@@ -63,6 +62,10 @@ class EnvObject(Object):
     _u_idx = defaultdict(lambda: 0)
 
     @property
+    def can_collide(self):
+        return False
+
+    @property
     def encoding(self):
         return c.OCCUPIED_CELL
 
@@ -71,7 +74,10 @@ class EnvObject(Object):
         self._register = register
 
     def change_register(self, register):
+        register.register_item(self)
+        self._register.delete_env_object(self)
         self._register = register
+        return self._register == register
 
 
 class BoundingMixin(Object):
@@ -85,11 +91,6 @@ class BoundingMixin(Object):
         assert entity_to_be_bound is not None
         self._bound_entity = entity_to_be_bound
 
-    def __repr__(self):
-        s = super(BoundingMixin, self).__repr__()
-        i = s[:s.find('(')]
-        return f'{s[:i]}[{self.bound_entity.name}]{s[i:]}'
-
     @property
     def name(self):
         return f'{super(BoundingMixin, self).name}({self._bound_entity.name})'
@@ -102,12 +103,8 @@ class Entity(EnvObject):
     """Full Env Entity that lives on the env Grid. Doors, Items, Dirt etc..."""
 
     @property
-    def is_blocking_light(self):
-        return self._is_blocking_light
-
-    @property
     def can_collide(self):
-        return True
+        return False
 
     @property
     def x(self):
@@ -125,10 +122,9 @@ class Entity(EnvObject):
     def tile(self):
         return self._tile
 
-    def __init__(self, tile, *args, is_blocking_light=True,  **kwargs):
+    def __init__(self, tile, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._tile = tile
-        self._is_blocking_light = is_blocking_light
         tile.enter(self)
 
     def summarize_state(self, **_) -> dict:
@@ -170,9 +166,9 @@ class MoveableEntity(Entity):
             self._tile = next_tile
             self._last_tile = curr_tile
             self._register.notify_change_to_value(self)
-            return True
+            return c.VALID
         else:
-            return False
+            return c.NOT_VALID
 
 
 ##########################################################################
@@ -285,6 +281,10 @@ class Tile(EnvObject):
 class Wall(Tile):
 
     @property
+    def can_collide(self):
+        return True
+
+    @property
     def encoding(self):
         return c.OCCUPIED_CELL
 
@@ -381,6 +381,10 @@ class Door(Entity):
 
 class Agent(MoveableEntity):
 
+    @property
+    def can_collide(self):
+        return True
+
     def __init__(self, *args, **kwargs):
         super(Agent, self).__init__(*args, **kwargs)
         self.clear_temp_state()
@@ -389,12 +393,9 @@ class Agent(MoveableEntity):
     def clear_temp_state(self):
         # for attr in cls.__dict__:
         #   if attr.startswith('temp'):
-        self.temp_collisions = []
-        self.temp_valid = None
-        self.temp_action = None
-        self.temp_light_map = None
+        self.step_result = None
 
     def summarize_state(self, **kwargs):
         state_dict = super().summarize_state(**kwargs)
-        state_dict.update(valid=bool(self.temp_valid), action=str(self.temp_action))
+        state_dict.update(valid=bool(self.temp_action_result['valid']), action=str(self.temp_action_result['action']))
         return state_dict

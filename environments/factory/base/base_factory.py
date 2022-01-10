@@ -13,6 +13,8 @@ from gym.wrappers import FrameStack
 from environments.factory.base.shadow_casting import Map
 from environments import helpers as h
 from environments.helpers import Constants as c
+from environments.helpers import EnvActions as a
+from environments.helpers import Rewards as r
 from environments.factory.base.objects import Agent, Tile, Action
 from environments.factory.base.registers import Actions, Entities, Agents, Doors, FloorTiles, WallTiles, PlaceHolders, \
     GlobalPositions
@@ -205,8 +207,9 @@ class BaseFactory(gym.Env):
 
         if self.obs_prop.show_global_position_info:
             global_positions = GlobalPositions(self._level_shape)
-            obs_shape_2d = self._level_shape if not self._pomdp_r else ((self.pomdp_diameter,) * 2)
-            global_positions.spawn_global_position_objects(obs_shape_2d, self[c.AGENT])
+            # This moved into the GlobalPosition object
+            # obs_shape_2d = self._level_shape if not self._pomdp_r else ((self.pomdp_diameter,) * 2)
+            global_positions.spawn_global_position_objects(self[c.AGENT])
             self._entities.register_additional_items({c.GLOBAL_POSITION: global_positions})
 
         # Return
@@ -232,37 +235,51 @@ class BaseFactory(gym.Env):
         # Pre step Hook for later use
         self.hook_pre_step()
 
-        # Move this in a seperate function?
         for action, agent in zip(actions, self[c.AGENT]):
             agent.clear_temp_state()
             action_obj = self._actions[int(action)]
+            step_result = dict(collisions=[], rewards=[], info={}, action_name='', action_valid=False)
             # cls.print(f'Action #{action} has been resolved to: {action_obj}')
-            if h.EnvActions.is_move(action_obj):
-                valid = self._move_or_colide(agent, action_obj)
-            elif h.EnvActions.NOOP == agent.temp_action:
-                valid = c.VALID
-            elif h.EnvActions.USE_DOOR == action_obj:
-                valid = self._handle_door_interaction(agent)
+            if a.is_move(action_obj):
+                action_valid, reward = self._do_move_action(agent, action_obj)
+            elif a.NOOP == action_obj:
+                action_valid = c.VALID
+                reward = dict(value=r.NOOP, reason=a.NOOP, info={f'{agent.pos}_NOOP': 1})
+            elif a.USE_DOOR == action_obj:
+                action_valid, reward = self._handle_door_interaction(agent)
             else:
-                valid = self.do_additional_actions(agent, action_obj)
-            assert valid is not None, 'This should not happen, every Action musst be detected correctly!'
-            agent.temp_action = action_obj
-            agent.temp_valid = valid
+                # noinspection PyTupleAssignmentBalance
+                action_valid, reward = self.do_additional_actions(agent, action_obj)
+                # Not needed any more sice the tuple assignment above will fail in case of a failing action resolvement.
+                # assert step_result is not None, 'This should not happen, every Action musst be detected correctly!'
+            step_result['action_name'] = action_obj.identifier
+            step_result['action_valid'] = action_valid
+            step_result['rewards'].append(reward)
+            agent.step_result = step_result
 
-        # In-between step Hook for later use
-        info = self.do_additional_step()
-
+        # Additional step and Reward, Info Init
+        rewards, info = self.do_additional_step()
+        # Todo: Make this faster, so that only tiles of entities that can collide are searched.
         tiles_with_collisions = self.get_all_tiles_with_collisions()
         for tile in tiles_with_collisions:
             guests = tile.guests_that_can_collide
             for i, guest in enumerate(guests):
+                # This does make a copy, but is faster than.copy()
                 this_collisions = guests[:]
                 del this_collisions[i]
-                guest.temp_collisions = this_collisions
+                assert hasattr(guest, 'step_result')
+                for collision in this_collisions:
+                    guest.step_result['collisions'].append(collision)
 
-        done = self.done_at_collision and tiles_with_collisions
+        done = False
+        if self.done_at_collision:
+            if done_at_col := bool(tiles_with_collisions):
+                done = done_at_col
+                info.update(COLLISION_DONE=done_at_col)
 
-        done = done or self.check_additional_done()
+        additional_done, additional_done_info = self.check_additional_done()
+        done = done or additional_done
+        info.update(additional_done_info)
 
         # Step the door close intervall
         if self.parse_doors:
@@ -270,7 +287,8 @@ class BaseFactory(gym.Env):
                 doors.tick_doors()
 
         # Finalize
-        reward, reward_info = self.calculate_reward()
+        reward, reward_info = self.build_reward_result()
+
         info.update(reward_info)
         if self._steps >= self.max_steps:
             done = True
@@ -285,7 +303,7 @@ class BaseFactory(gym.Env):
 
         return obs, reward, done, info
 
-    def _handle_door_interaction(self, agent) -> c:
+    def _handle_door_interaction(self, agent) -> (bool, dict):
         if doors := self[c.DOORS]:
             # Check if agent really is standing on a door:
             if self.doors_have_area:
@@ -294,12 +312,21 @@ class BaseFactory(gym.Env):
                 door = doors.by_pos(agent.pos)
             if door is not None:
                 door.use()
-                return c.VALID
+                valid = c.VALID
+                self.print(f'{agent.name} just used a door {door.name}')
+                info_dict = {f'{agent.name}_door_use_{door.name}': 1}
             # When he doesn't...
             else:
-                return c.NOT_VALID
+                valid = c.NOT_VALID
+                info_dict = {f'{agent.name}_failed_door_use': 1}
+                self.print(f'{agent.name} just tried to use a door at {agent.pos}, but there is none.')
+
         else:
-            return c.NOT_VALID
+            raise RuntimeError('This should not happen, since the door action should not be available.')
+        reward = dict(value=r.USE_DOOR_VALID if valid else r.USE_DOOR_FAIL,
+                      reason=a.USE_DOOR, info=info_dict)
+
+        return valid, reward
 
     def _build_observations(self) -> np.typing.ArrayLike:
         # Observation dict:
@@ -308,7 +335,7 @@ class BaseFactory(gym.Env):
         # Generel Observations
         lvl_obs = self[c.WALLS].as_array()
         door_obs = self[c.DOORS].as_array()
-        agent_obs = self[c.AGENT].as_array() if self.obs_prop.render_agents != a_obs.NOT else None
+        global_agent_obs = self[c.AGENT].as_array() if self.obs_prop.render_agents != a_obs.NOT else None
         placeholder_obs = self[c.AGENT_PLACEHOLDER].as_array() if self[c.AGENT_PLACEHOLDER] else None
         add_obs_dict = self._additional_observations()
 
@@ -318,15 +345,20 @@ class BaseFactory(gym.Env):
             if self.obs_prop.render_agents != a_obs.NOT:
                 if self.obs_prop.omit_agent_self:
                     if self.obs_prop.render_agents == a_obs.SEPERATE:
-                        agent_obs = np.take(agent_obs, [x for x in range(self.n_agents) if x != agent_idx], axis=0)
+                        other_agent_obs_idx = [x for x in range(self.n_agents) if x != agent_idx]
+                        agent_obs = np.take(global_agent_obs, other_agent_obs_idx, axis=0)
                     else:
-                        agent_obs = agent_obs.copy()
+                        agent_obs = global_agent_obs.copy()
                         agent_obs[(0, *agent.pos)] -= agent.encoding
+                else:
+                    agent_obs = global_agent_obs
+            else:
+                agent_obs = global_agent_obs
 
             # Build Level Observations
             if self.obs_prop.render_agents == a_obs.LEVEL:
                 lvl_obs = lvl_obs.copy()
-                lvl_obs += agent_obs
+                lvl_obs += global_agent_obs
 
             obs_dict[c.WALLS] = lvl_obs
             if self.obs_prop.render_agents in [a_obs.SEPERATE, a_obs.COMBINED]:
@@ -340,11 +372,12 @@ class BaseFactory(gym.Env):
                 obsn = self._do_pomdp_cutout(agent, obsn)
 
             raw_obs = self._additional_per_agent_raw_observations(agent)
-            obsn = np.vstack((obsn, *list(raw_obs.values())))
+            raw_obs = {key: np.expand_dims(val, 0) if val.ndim != 3 else val for key, val in raw_obs.items()}
+            obsn = np.vstack((obsn, *raw_obs.values()))
 
             keys = list(chain(obs_dict.keys(), raw_obs.keys()))
             idxs = np.cumsum([x.shape[0] for x in chain(obs_dict.values(), raw_obs.values())]) - 1
-            per_agent_expl_idx[agent.name] = {key: list(range(a, b)) for key, a, b in
+            per_agent_expl_idx[agent.name] = {key: list(range(d, b)) for key, d, b in
                                               zip(keys, idxs, list(idxs[1:]) + [idxs[-1]+1, ])}
 
             # Shadow Casting
@@ -390,7 +423,13 @@ class BaseFactory(gym.Env):
                 if door_shadowing:
                     # noinspection PyUnboundLocalVariable
                     light_block_map[xs, ys] = 0
-                agent.temp_light_map = light_block_map.copy()
+                if agent.step_result:
+                    agent.step_result['lightmap'] = light_block_map
+                    pass
+                else:
+                    assert self._steps == 0
+                    agent.step_result = {'action_name': a.NOOP, 'action_valid': True,
+                                         'collisions': [], 'lightmap': light_block_map}
 
                 obsn[shadowed_obs] = ((obsn[shadowed_obs] * light_block_map) + 0.) - (1 - light_block_map)
             else:
@@ -410,27 +449,27 @@ class BaseFactory(gym.Env):
 
     def _do_pomdp_cutout(self, agent, obs_to_be_padded):
         assert obs_to_be_padded.ndim == 3
-        r, d = self._pomdp_r, self.pomdp_diameter
-        x0, x1 = max(0, agent.x - r), min(agent.x + r + 1, self._level_shape[0])
-        y0, y1 = max(0, agent.y - r), min(agent.y + r + 1, self._level_shape[1])
+        ra, d = self._pomdp_r, self.pomdp_diameter
+        x0, x1 = max(0, agent.x - ra), min(agent.x + ra + 1, self._level_shape[0])
+        y0, y1 = max(0, agent.y - ra), min(agent.y + ra + 1, self._level_shape[1])
         oobs = obs_to_be_padded[:, x0:x1, y0:y1]
         if oobs.shape[1:] != (d, d):
             if xd := oobs.shape[1] % d:
-                if agent.x > r:
+                if agent.x > ra:
                     x0_pad = 0
                     x1_pad = (d - xd)
                 else:
-                    x0_pad = r - agent.x
+                    x0_pad = ra - agent.x
                     x1_pad = 0
             else:
                 x0_pad, x1_pad = 0, 0
 
             if yd := oobs.shape[2] % d:
-                if agent.y > r:
+                if agent.y > ra:
                     y0_pad = 0
                     y1_pad = (d - yd)
                 else:
-                    y0_pad = r - agent.y
+                    y0_pad = ra - agent.y
                     y1_pad = 0
             else:
                 y0_pad, y1_pad = 0, 0
@@ -439,22 +478,39 @@ class BaseFactory(gym.Env):
         return oobs
 
     def get_all_tiles_with_collisions(self) -> List[Tile]:
-        tiles_with_collisions = list()
-        for tile in self[c.FLOOR]:
-            if tile.is_occupied():
-                guests = tile.guests_that_can_collide
-                if len(guests) >= 2:
-                    tiles_with_collisions.append(tile)
-        return tiles_with_collisions
+        tiles = [x.tile for y in self._entities for x in y if
+                 y.can_collide and not isinstance(y, WallTiles) and x.can_collide and len(x.tile.guests) > 1]
+        if False:
+            tiles_with_collisions = list()
+            for tile in self[c.FLOOR]:
+                if tile.is_occupied():
+                    guests = tile.guests_that_can_collide
+                    if len(guests) >= 2:
+                        tiles_with_collisions.append(tile)
+        return tiles
 
-    def _move_or_colide(self, agent: Agent, action: Action) -> bool:
+    def _do_move_action(self, agent: Agent, action: Action) -> (dict, dict):
+        info_dict = dict()
         new_tile, valid = self._check_agent_move(agent, action)
         if valid:
             # Does not collide width level boundaries
-            return agent.move(new_tile)
+            valid = agent.move(new_tile)
+            if valid:
+                # This will spam your logs, beware!
+                # self.print(f'{agent.name} just moved from {agent.last_pos} to {agent.pos}.')
+                # info_dict.update({f'{agent.pos}_move': 1})
+                pass
+            else:
+                valid = c.NOT_VALID
+                self.print(f'{agent.name} just hit the wall at {agent.pos}.')
+                info_dict.update({f'{agent.pos}_wall_collide': 1})
         else:
-            # Agent seems to be trying to collide in this step
-            return c.NOT_VALID
+            # Agent seems to be trying to Leave the level
+            self.print(f'{agent.name} tried to leave the level {agent.pos}.')
+            info_dict.update({f'{agent.pos}_wall_collide': 1})
+        reward_value = r.MOVEMENTS_VALID if valid else r.MOVEMENTS_FAIL
+        reward = {'value': reward_value, 'reason': action.identifier, 'info': info_dict}
+        return valid, reward
 
     def _check_agent_move(self, agent, action: Action) -> (Tile, bool):
         # Actions
@@ -474,7 +530,7 @@ class BaseFactory(gym.Env):
             if doors := self[c.DOORS]:
                 if self.doors_have_area:
                     if door := doors.by_pos(new_tile.pos):
-                        if door.is_open:
+                        if door.is_closed:
                             return agent.tile, c.NOT_VALID
                         else:  # door.is_closed:
                             pass
@@ -494,69 +550,46 @@ class BaseFactory(gym.Env):
 
         return new_tile, valid
 
-    def calculate_reward(self) -> (int, dict):
+    @abc.abstractmethod
+    def additional_per_agent_rewards(self, agent) -> List[dict]:
+        return []
+
+    def build_reward_result(self) -> (int, dict):
         # Returns: Reward, Info
-        per_agent_info_dict = defaultdict(dict)
-        reward = {}
+        info = defaultdict(lambda: 0.0)
 
+        # Gather additional sub-env rewards and calculate collisions
         for agent in self[c.AGENT]:
-            per_agent_reward = 0
-            if self._actions.is_moving_action(agent.temp_action):
-                if agent.temp_valid:
-                    # info_dict.update(movement=1)
-                    per_agent_reward -= 0.001
-                    pass
-                else:
-                    per_agent_reward -= 0.05
-                    self.print(f'{agent.name} just hit the wall at {agent.pos}.')
-                    per_agent_info_dict[agent.name].update({f'{agent.name}_vs_LEVEL': 1})
 
-            elif h.EnvActions.USE_DOOR == agent.temp_action:
-                if agent.temp_valid:
-                    # per_agent_reward += 0.00
-                    self.print(f'{agent.name} did just use the door at {agent.pos}.')
-                    per_agent_info_dict[agent.name].update(door_used=1)
-                else:
-                    # per_agent_reward -= 0.00
-                    self.print(f'{agent.name} just tried to use a door at {agent.pos}, but failed.')
-                    per_agent_info_dict[agent.name].update({f'{agent.name}_failed_door_open': 1})
-            elif h.EnvActions.NOOP == agent.temp_action:
-                per_agent_info_dict[agent.name].update(no_op=1)
-                # per_agent_reward -= 0.00
-
-            # EnvMonitor Notes
-            if agent.temp_valid:
-                per_agent_info_dict[agent.name].update(valid_action=1)
-                per_agent_info_dict[agent.name].update({f'{agent.name}_valid_action': 1})
+            rewards = self.additional_per_agent_rewards(agent)
+            for reward in rewards:
+                agent.step_result['rewards'].append(reward)
+            if collisions := agent.step_result['collisions']:
+                self.print(f't = {self._steps}\t{agent.name} has collisions with {collisions}')
+                info[c.COLLISION] += 1
+                reward = {'value': r.COLLISION, 'reason': c.COLLISION, 'info': {f'{agent.name}_{c.COLLISION}': 1}}
+                agent.step_result['rewards'].append(reward)
             else:
-                per_agent_info_dict[agent.name].update(failed_action=1)
-                per_agent_info_dict[agent.name].update({f'{agent.name}_failed_action': 1})
+                # No Collisions, nothing to do
+                pass
 
-            additional_reward, additional_info_dict = self.calculate_additional_reward(agent)
-            per_agent_reward += additional_reward
-            per_agent_info_dict[agent.name].update(additional_info_dict)
-
-            if agent.temp_collisions:
-                self.print(f't = {self._steps}\t{agent.name} has collisions with {agent.temp_collisions}')
-                per_agent_info_dict[agent.name].update(collisions=1)
-
-                for other_agent in agent.temp_collisions:
-                    per_agent_info_dict[agent.name].update({f'{agent.name}_vs_{other_agent.name}': 1})
-            reward[agent.name] = per_agent_reward
+        comb_rewards = {agent.name: sum(x['value'] for x in agent.step_result['rewards']) for agent in self[c.AGENT]}
 
         # Combine the per_agent_info_dict:
         combined_info_dict = defaultdict(lambda: 0)
-        for info_dict in per_agent_info_dict.values():
-            for key, value in info_dict.items():
-                combined_info_dict[key] += value
+        for agent in self[c.AGENT]:
+            for reward in agent.step_result['rewards']:
+                combined_info_dict.update(reward['info'])
+
         combined_info_dict = dict(combined_info_dict)
+        combined_info_dict.update(info)
 
         if self.individual_rewards:
-            self.print(f"rewards are {reward}")
-            reward = list(reward.values())
+            self.print(f"rewards are {comb_rewards}")
+            reward = list(comb_rewards.values())
             return reward, combined_info_dict
         else:
-            reward = sum(reward.values())
+            reward = sum(comb_rewards.values())
             self.print(f"reward is {reward}")
         return reward, combined_info_dict
 
@@ -574,7 +607,7 @@ class BaseFactory(gym.Env):
         agents = []
         for i, agent in enumerate(self[c.AGENT]):
             name, state = h.asset_str(agent)
-            agents.append(RenderEntity(name, agent.pos, 1, 'none', state, i + 1, agent.temp_light_map))
+            agents.append(RenderEntity(name, agent.pos, 1, 'none', state, i + 1, agent.step_result['lightmap']))
         doors = []
         if self.parse_doors:
             for i, door in enumerate(self[c.DOORS]):
@@ -637,16 +670,16 @@ class BaseFactory(gym.Env):
         pass
 
     @abc.abstractmethod
-    def do_additional_step(self) -> dict:
-        return {}
+    def do_additional_step(self) -> (List[dict], dict):
+        return [], {}
 
     @abc.abstractmethod
-    def do_additional_actions(self, agent: Agent, action: Action) -> Union[None, c]:
+    def do_additional_actions(self, agent: Agent, action: Action) -> (bool, dict):
         return None
 
     @abc.abstractmethod
-    def check_additional_done(self) -> bool:
-        return False
+    def check_additional_done(self) -> (bool, dict):
+        return False, {}
 
     @abc.abstractmethod
     def _additional_observations(self) -> Dict[str, np.typing.ArrayLike]:
@@ -660,8 +693,8 @@ class BaseFactory(gym.Env):
         return additional_raw_observations
 
     @abc.abstractmethod
-    def calculate_additional_reward(self, agent: Agent) -> (int, dict):
-        return 0, {}
+    def additional_per_agent_reward(self, agent: Agent) -> Dict[str, dict]:
+        return {}
 
     @abc.abstractmethod
     def render_additional_assets(self):

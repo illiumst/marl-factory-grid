@@ -134,8 +134,7 @@ if __name__ == '__main__':
                                 max_spawn_amount=0.1, max_global_amount=20,
                                 max_local_amount=1, spawn_frequency=0, max_spawn_ratio=0.05,
                                 dirt_smear_amount=0.0, agent_can_interact=True)
-    item_props = ItemProperties(n_items=10, agent_can_interact=True,
-                                spawn_frequency=30, n_drop_off_locations=2,
+    item_props = ItemProperties(n_items=10, spawn_frequency=30, n_drop_off_locations=2,
                                 max_agent_inventory_capacity=15)
     dest_props = DestProperties(n_dests=4, spawn_mode=DestModeOptions.GROUPED, spawn_frequency=1)
     factory_kwargs = dict(n_agents=1, max_steps=400, parse_doors=True,

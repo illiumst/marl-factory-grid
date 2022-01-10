@@ -2,6 +2,7 @@ import numpy as np
 
 from environments.helpers import Constants as c
 
+# Multipliers for transforming coordinates to other octants:
 mult_array = np.asarray([
     [1,  0,  0, -1, -1,  0,  0,  1],
     [0,  1, -1,  0,  0, -1,  1,  0],
@@ -11,8 +12,6 @@ mult_array = np.asarray([
 
 
 class Map(object):
-    # Multipliers for transforming coordinates to other octants:
-
     def __init__(self, map_array: np.typing.ArrayLike, diamond_slope: float = 0.9):
         self.data = map_array
         self.width, self.height = map_array.shape
@@ -33,7 +32,7 @@ class Map(object):
             self.light[x, y] = self.flag
 
     def _cast_light(self, cx, cy, row, start, end, radius, xx, xy, yx, yy, id):
-        "Recursive lightcasting function"
+        """Recursive lightcasting function"""
         if start < end:
             return
         radius_squared = radius*radius
