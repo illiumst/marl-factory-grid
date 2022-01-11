@@ -78,7 +78,7 @@ class EnvActions:
 
 class Rewards:
 
-    MOVEMENTS_VALID = -0.01
+    MOVEMENTS_VALID = -0.00
     MOVEMENTS_FAIL  = -0.10
     NOOP            = -0.01
     USE_DOOR_VALID  = -0.00
@@ -90,11 +90,12 @@ m = EnvActions
 c = Constants
 r = Rewards
 
-ACTIONMAP = defaultdict(lambda: (0, 0), {m.NORTH: (-1, 0), m.NORTHEAST: (-1, +1),
-                                         m.EAST: (0, 1),   m.SOUTHEAST: (1, 1),
-                                         m.SOUTH: (1, 0),  m.SOUTHWEST: (+1, -1),
-                                         m.WEST: (0, -1),  m.NORTHWEST: (-1, -1)
-                                         }
+ACTIONMAP = defaultdict(lambda: (0, 0),
+                        {m.NORTH: (-1, 0), m.NORTHEAST: (-1, 1),
+                         m.EAST: (0, 1),   m.SOUTHEAST: (1, 1),
+                         m.SOUTH: (1, 0),  m.SOUTHWEST: (1, -1),
+                         m.WEST: (0, -1),  m.NORTHWEST: (-1, -1)
+                         }
                         )
 
 
