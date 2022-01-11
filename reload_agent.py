@@ -21,9 +21,7 @@ if __name__ == '__main__':
     record = True
     seed = 67
     n_agents = 1
-    out_path = Path('study_out/e_1_new_reward/no_obs/dirt/A2C_new_reward/0_A2C_new_reward')
-    out_path_2 = Path('study_out/e_1_obs_stack_3_gae_0.25_n_steps_16/seperate_N/dirt/A2C_obs_stack_3_gae_0.25_n_steps_16/1_A2C_obs_stack_3_gae_0.25_n_steps_16')
-    model_path = out_path
+    out_path = Path('study_out/test/dirt')
 
     with (out_path / f'env_params.json').open('r') as f:
         env_kwargs = yaml.load(f, Loader=yaml.FullLoader)
@@ -35,10 +33,9 @@ if __name__ == '__main__':
         env_kwargs.update(record_episodes=record, done_at_collision=True)
 
     this_model = out_path / 'model.zip'
-    other_model = out_path / 'model.zip'
 
-    model_cls = next(val for key, val in h.MODEL_MAP.items() if key in out_path.parent.name)
-    models = [model_cls.load(this_model)]  # , model_cls.load(other_model)]
+    model_cls =h.MODEL_MAP['A2C']
+    models = [model_cls.load(this_model)]
 
     # Init Env
     with DirtFactory(**env_kwargs) as env:

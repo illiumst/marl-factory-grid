@@ -20,7 +20,7 @@ class ObservationProperties(NamedTuple):
     render_agents: AgentRenderOptions = AgentRenderOptions.SEPERATE
     omit_agent_self: bool = True
     additional_agent_placeholder: Union[None, str, int] = None
-    cast_shadows = True
+    cast_shadows: bool = True
     frames_to_stack: int = 0
     pomdp_r: int = 0
     show_global_position_info: bool = True
