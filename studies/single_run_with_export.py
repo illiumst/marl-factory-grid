@@ -1,6 +1,8 @@
 import sys
 from pathlib import Path
 
+from stable_baselines3.common.vec_env import SubprocVecEnv
+
 try:
     # noinspection PyUnboundLocalVariable
     if __package__ is None:
@@ -44,7 +46,7 @@ def load_model_run_baseline(policy_path, env_to_run):
     # Load both agents
     model = model_cls.load(policy_path / 'model.zip', device='cpu')
     # Load old env kwargs
-    with next(policy_path.glob('*.json')).open('r') as f:
+    with next(policy_path.glob('*params.json')).open('r') as f:
         env_kwargs = simplejson.load(f)
         env_kwargs.update(done_at_collision=True)
     # Init Env
@@ -103,8 +105,8 @@ def load_model_run_combined(root_path, env_to_run, env_kwargs):
                 if done_bool:
                     break
             print(f'Factory run {episode} done, reward is:\n    {rew}')
-        recorded_env_factory.save_run(filepath=policy_path / f'monitor.pick')
-        recorded_env_factory.save_records(filepath=policy_path / f'recorder.json')
+        recorded_env_factory.save_run(filepath=root_path / f'monitor.pick')
+        recorded_env_factory.save_records(filepath=root_path / f'recorder.json')
 
 
 if __name__ == '__main__':
@@ -113,11 +115,14 @@ if __name__ == '__main__':
     individual_run = True
     combined_run = True
 
-    train_steps = 2e6
+    train_steps = 2e5
     frames_to_stack = 3
 
     # Define a global studi save path
     study_root_path = Path(__file__).parent.parent / 'study_out' / f'{Path(__file__).stem}'
+
+    def policy_model_kwargs():
+        return dict(learning_rate=0.0003, n_steps=10, gamma=0.95, gae_lambda=0.0, ent_coef=0.01, vf_coef=0.5)
 
     # Define Global Env Parameters
     # Define properties object parameters
@@ -138,11 +143,11 @@ if __name__ == '__main__':
                                 max_agent_inventory_capacity=15)
     dest_props = DestProperties(n_dests=4, spawn_mode=DestModeOptions.GROUPED, spawn_frequency=1)
     factory_kwargs = dict(n_agents=1, max_steps=400, parse_doors=True,
-                          level_name='rooms', doors_have_area=True,
+                          level_name='rooms', doors_have_area=False,
                           verbose=False,
                           mv_prop=move_props,
                           obs_prop=obs_props,
-                          done_at_collision=False
+                          done_at_collision=True
                           )
 
     # Bundle both environments with global kwargs and parameters
@@ -172,33 +177,42 @@ if __name__ == '__main__':
                 continue
             combination_path.mkdir(parents=True, exist_ok=True)
 
-            with env_class(**env_kwargs) as env_factory:
-                param_path = combination_path / f'env_params.json'
+            env_factory = SubprocVecEnv([encapsule_env_factory(env_class, env_kwargs)
+                                         for _ in range(6)], start_method="spawn")
+
+            param_path = combination_path / f'env_params.json'
+            try:
+                env_factory.env_method('save_params', param_path)
+            except AttributeError:
                 env_factory.save_params(param_path)
 
-                # EnvMonitor Init
-                callbacks = [EnvMonitor(env_factory)]
+            # EnvMonitor Init
+            callbacks = [EnvMonitor(env_factory)]
 
-                # Model Init
-                model = model_cls("MlpPolicy", env_factory,
-                                  verbose=1, seed=69, device='cpu')
+            # Model Init
+            model = model_cls("MlpPolicy", env_factory, **policy_model_kwargs(),
+                              verbose=1, seed=69, device='cpu')
 
-                # Model train
-                model.learn(total_timesteps=int(train_steps), callback=callbacks)
+            # Model train
+            model.learn(total_timesteps=int(train_steps), callback=callbacks)
 
-                # Model save
+            # Model save
+            try:
                 model.named_action_space = env_factory.unwrapped.named_action_space
                 model.named_observation_space = env_factory.unwrapped.named_observation_space
-                save_path = combination_path / f'model.zip'
-                model.save(save_path)
+            except AttributeError:
+                model.named_action_space = env_factory.get_attr("named_action_space")[0]
+                model.named_observation_space = env_factory.get_attr("named_observation_space")[0]
+            save_path = combination_path / f'model.zip'
+            model.save(save_path)
 
-                # Monitor Save
-                callbacks[0].save_run(combination_path / 'monitor.pick')
+            # Monitor Save
+            callbacks[0].save_run(combination_path / 'monitor.pick')
 
-                # Better be save then sorry: Clean up!
-                del env_factory, model
-                import gc
-                gc.collect()
+            # Better be save then sorry: Clean up!
+            del env_factory, model
+            import gc
+            gc.collect()
 
     # Train ends here ############################################################
 
@@ -213,7 +227,7 @@ if __name__ == '__main__':
 
             # for policy_path in (y for y in policy_path.iterdir() if y.is_dir()):
             #    load_model_run_baseline(policy_path)
-        print('Start Individual Training')
+        print('Done Individual Recording')
 
     # Then iterate over every model and monitor "ood behavior" - "is it ood?"
     if combined_run:

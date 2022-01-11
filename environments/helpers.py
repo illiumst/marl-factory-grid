@@ -78,12 +78,12 @@ class EnvActions:
 
 class Rewards:
 
-    MOVEMENTS_VALID = -0.001
-    MOVEMENTS_FAIL  = -0.001
-    NOOP = -0.1
-    USE_DOOR_VALID = -0.001
-    USE_DOOR_FAIL  = -0.001
-    COLLISION      = -1
+    MOVEMENTS_VALID = -0.01
+    MOVEMENTS_FAIL  = -0.1
+    NOOP = -0.01
+    USE_DOOR_VALID = -0.01
+    USE_DOOR_FAIL  = -0.1
+    COLLISION      = -0.5
 
 
 m = EnvActions
@@ -120,7 +120,7 @@ class ObservationTranslator:
 
     def translate_observation(self, agent_idx: int, obs: np.ndarray):
         target_obs_space = self._per_agent_named_obs_space[agent_idx]
-        translation = [idx_space_dict['explained_idxs'] for name, idx_space_dict in target_obs_space.items()]
+        translation = [idx_space_dict for name, idx_space_dict in target_obs_space.items()]
         flat_translation = [x for y in translation for x in y]
         return np.take(obs, flat_translation, axis=1 if obs.ndim == 4 else 0)
 

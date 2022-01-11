@@ -1,7 +1,6 @@
 import sys
 from pathlib import Path
 from matplotlib import pyplot as plt
-import numpy as np
 import itertools as it
 
 try:
@@ -16,8 +15,6 @@ except NameError:
     DIR = None
     pass
 
-import time
-
 import simplejson
 from stable_baselines3.common.vec_env import SubprocVecEnv
 
@@ -28,13 +25,11 @@ from environments.factory.factory_item import ItemProperties, ItemFactory
 from environments.logging.envmonitor import EnvMonitor
 from environments.utility_classes import MovementProperties, ObservationProperties, AgentRenderOptions
 import pickle
-from plotting.compare_runs import compare_seed_runs, compare_model_runs, compare_all_parameter_runs
+from plotting.compare_runs import compare_seed_runs, compare_model_runs
 import pandas as pd
 import seaborn as sns
 
 import multiprocessing as mp
-
-# mp.set_start_method("spawn")
 
 """
 In this studie, we want to explore the macro behaviour of multi agents which are trained on the same task, 
@@ -72,10 +67,9 @@ n_agents = 4
 ood_monitor_file = f'e_1_{n_agents}_agents'
 baseline_monitor_file = 'e_1_baseline'
 
-from stable_baselines3 import A2C
 
 def policy_model_kwargs():
-    return dict() # gae_lambda=0.25, n_steps=16, max_grad_norm=0.25, use_rms_prop=True)
+    return dict()  # gae_lambda=0.25, n_steps=16, max_grad_norm=0.25, use_rms_prop=True)
 
 
 def dqn_model_kwargs():
@@ -198,7 +192,7 @@ if __name__ == '__main__':
     ood_run = True
     plotting = True
 
-    train_steps = 1e7
+    train_steps = 1e6
     n_seeds = 3
     frames_to_stack = 3
 
@@ -222,7 +216,7 @@ if __name__ == '__main__':
                                 max_spawn_amount=0.1, max_global_amount=20,
                                 max_local_amount=1, spawn_frequency=0, max_spawn_ratio=0.05,
                                 dirt_smear_amount=0.0, agent_can_interact=True)
-    item_props = ItemProperties(n_items=10, agent_can_interact=True,
+    item_props = ItemProperties(n_items=10,
                                 spawn_frequency=30, n_drop_off_locations=2,
                                 max_agent_inventory_capacity=15)
     factory_kwargs = dict(n_agents=1, max_steps=400, parse_doors=True,

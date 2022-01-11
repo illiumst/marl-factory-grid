@@ -268,7 +268,7 @@ class DirtFactory(BaseFactory):
 
 if __name__ == '__main__':
     from environments.utility_classes import AgentRenderOptions as aro
-    render = False
+    render = True
 
     dirt_props = DirtProperties(
         initial_dirt_ratio=0.35,
@@ -293,11 +293,11 @@ if __name__ == '__main__':
     global_timings = []
     for i in range(10):
 
-        factory = DirtFactory(n_agents=2, done_at_collision=False,
+        factory = DirtFactory(n_agents=4, done_at_collision=False,
                               level_name='rooms', max_steps=1000,
                               doors_have_area=False,
                               obs_prop=obs_props, parse_doors=True,
-                              verbose=False,
+                              verbose=True,
                               mv_prop=move_props, dirt_prop=dirt_props,
                               # inject_agents=[TSPDirtAgent],
                               )
@@ -307,6 +307,7 @@ if __name__ == '__main__':
         _ = factory.observation_space
         obs_space = factory.observation_space
         obs_space_named = factory.named_observation_space
+        action_space_named = factory.named_action_space
         times = []
         for epoch in range(10):
             start_time = time.time()

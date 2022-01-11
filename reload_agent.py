@@ -22,6 +22,7 @@ if __name__ == '__main__':
     record = False
     seed = 67
     n_agents = 1
+    # out_path = Path('study_out/e_1_new_reward/no_obs/dirt/A2C_new_reward/0_A2C_new_reward')
     out_path = Path('study_out/single_run_with_export/dirt')
     model_path = out_path
 
@@ -49,7 +50,7 @@ if __name__ == '__main__':
             rew, done_bool = 0, False
             while not done_bool:
                 if n_agents > 1:
-                    actions = [model.predict(env_state[model_idx], deterministic=True)[0]
+                    actions = [model.predict(env_state[model_idx], deterministic=determin)[0]
                                for model_idx, model in enumerate(models)]
                 else:
                     actions = models[0].predict(env_state, deterministic=determin)[0]
@@ -58,8 +59,6 @@ if __name__ == '__main__':
                 rew += step_r
                 if render:
                     env.render()
-                if not env.unwrapped.unwrapped[c.AGENT][0].temp_valid:
-                    print('Invalid ACtions')
                 if done_bool:
                     break
             print(f'Factory run {episode} done, reward is:\n    {rew}')
