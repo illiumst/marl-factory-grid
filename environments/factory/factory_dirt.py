@@ -28,9 +28,9 @@ class Actions(BaseActions):
 
 
 class Rewards(BaseRewards):
-    CLEAN_UP_VALID          = 1
+    CLEAN_UP_VALID          = 0.5
     CLEAN_UP_FAIL           = -0.1
-    CLEAN_UP_LAST_PIECE     = 4
+    CLEAN_UP_LAST_PIECE     = 4.5
 
 
 class DirtProperties(NamedTuple):

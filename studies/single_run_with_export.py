@@ -113,10 +113,10 @@ if __name__ == '__main__':
     # What to do:
     train = True
     individual_run = True
-    combined_run = True
+    combined_run = False
     multi_env = False
 
-    train_steps = 2e5
+    train_steps = 2e6
     frames_to_stack = 3
 
     # Define a global studi save path
@@ -155,8 +155,8 @@ if __name__ == '__main__':
     env_map = {}
     env_map.update({'dirt': (DirtFactory, dict(dirt_prop=dirt_props,
                                                **factory_kwargs.copy()))})
-    # env_map.update({'item': (ItemFactory, dict(item_prop=item_props,
-    #                                            **factory_kwargs.copy()))})
+    env_map.update({'item': (ItemFactory, dict(item_prop=item_props,
+                                               **factory_kwargs.copy()))})
     # env_map.update({'dest': (DestFactory, dict(dest_prop=dest_props,
     #                                           **factory_kwargs.copy()))})
     env_map.update({'combined': (DirtDestItemFactory, dict(dest_prop=dest_props,

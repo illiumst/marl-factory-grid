@@ -79,11 +79,11 @@ class EnvActions:
 class Rewards:
 
     MOVEMENTS_VALID = -0.01
-    MOVEMENTS_FAIL  = -0.1
-    NOOP = -0.01
-    USE_DOOR_VALID = -0.01
-    USE_DOOR_FAIL  = -0.1
-    COLLISION      = -0.5
+    MOVEMENTS_FAIL  = -0.10
+    NOOP            = -0.01
+    USE_DOOR_VALID  = -0.00
+    USE_DOOR_FAIL   = -0.10
+    COLLISION       = -0.5
 
 
 m = EnvActions
