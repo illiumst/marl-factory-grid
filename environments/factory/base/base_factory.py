@@ -697,7 +697,9 @@ class BaseFactory(gym.Env):
     def _additional_per_agent_raw_observations(self, agent) -> Dict[str, np.typing.ArrayLike]:
         additional_raw_observations = {}
         if self.obs_prop.show_global_position_info:
-            additional_raw_observations.update({c.GLOBAL_POSITION: self[c.GLOBAL_POSITION].by_entity(agent).as_array()})
+            global_pos_obs = np.zeros(self._obs_shape)
+            global_pos_obs[:2, 0] = self[c.GLOBAL_POSITION].by_entity(agent).encoding
+            additional_raw_observations.update({c.GLOBAL_POSITION: global_pos_obs})
         return additional_raw_observations
 
     @abc.abstractmethod

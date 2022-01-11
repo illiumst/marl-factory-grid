@@ -19,7 +19,7 @@ if __name__ == '__main__':
     seed = 67
     n_agents = 1
     # out_path = Path('study_out/e_1_new_reward/no_obs/dirt/A2C_new_reward/0_A2C_new_reward')
-    out_path = Path('study_out/single_run_with_export/dirt')
+    out_path = Path('study_out/test/dirt')
     model_path = out_path
 
     with (out_path / f'env_params.json').open('r') as f:

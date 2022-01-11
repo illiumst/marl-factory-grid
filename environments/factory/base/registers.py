@@ -288,7 +288,7 @@ class GlobalPositions(EnvObjectRegister):
 
     def spawn_global_position_objects(self, agents):
         # Todo, change to 'from xy'-form
-        global_positions = [self._accepted_objects(self._shape, agent)
+        global_positions = [self._accepted_objects(self._shape, agent, self)
                             for _, agent in enumerate(agents)]
         # noinspection PyTypeChecker
         self.register_additional_items(global_positions)

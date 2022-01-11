@@ -86,8 +86,8 @@ class BoundingMixin(Object):
     def bound_entity(self):
         return self._bound_entity
 
-    def __init__(self, entity_to_be_bound, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self,entity_to_be_bound, *args, **kwargs):
+        super(BoundingMixin, self).__init__(*args, **kwargs)
         assert entity_to_be_bound is not None
         self._bound_entity = entity_to_be_bound
 
@@ -201,18 +201,17 @@ class PlaceHolder(Object):
         return "PlaceHolder"
 
 
-class GlobalPosition(EnvObject, BoundingMixin):
+class GlobalPosition(BoundingMixin, EnvObject):
 
     @property
     def encoding(self):
         if self._normalized:
-            return tuple(np.diff(self._bound_entity.pos, self._level_shape))
+            return tuple(np.divide(self._bound_entity.pos, self._level_shape))
         else:
             return self.bound_entity.pos
 
-    def __init__(self, level_shape, *args, normalized: bool = True, **kwargs):
-        super(GlobalPosition, self).__init__(self, *args, **kwargs)
-
+    def __init__(self, level_shape: (int, int), *args, normalized: bool = True, **kwargs):
+        super(GlobalPosition, self).__init__(*args, **kwargs)
         self._level_shape = level_shape
         self._normalized = normalized
 
