@@ -181,11 +181,11 @@ class BaseFactory(gym.Env):
         if agents_to_spawn:
             agents = Agents.from_tiles(floor.empty_tiles[:agents_to_spawn], self._level_shape, **agents_kwargs)
         else:
-            agents = Agents(**agents_kwargs)
+            agents = Agents(self._level_shape, **agents_kwargs)
         if self._injected_agents:
             initialized_injections = list()
             for i, injection in enumerate(self._injected_agents):
-                agents.register_item(injection(self, floor.empty_tiles[agents_to_spawn+i+1], static_problem=False))
+                agents.register_item(injection(self, floor.empty_tiles[0], agents, static_problem=False))
                 initialized_injections.append(agents[-1])
             self._initialized_injections = initialized_injections
         self._entities.register_additional_items({c.AGENT: agents})
@@ -335,7 +335,12 @@ class BaseFactory(gym.Env):
         # Generel Observations
         lvl_obs = self[c.WALLS].as_array()
         door_obs = self[c.DOORS].as_array()
-        global_agent_obs = self[c.AGENT].as_array() if self.obs_prop.render_agents != a_obs.NOT else None
+        if self.obs_prop.render_agents == a_obs.NOT:
+            global_agent_obs = None
+        elif self.obs_prop.omit_agent_self and self.n_agents == 1:
+            global_agent_obs = None
+        else:
+            global_agent_obs = self[c.AGENT].as_array().copy()
         placeholder_obs = self[c.AGENT_PLACEHOLDER].as_array() if self[c.AGENT_PLACEHOLDER] else None
         add_obs_dict = self._additional_observations()
 
@@ -343,7 +348,7 @@ class BaseFactory(gym.Env):
             obs_dict = dict()
             # Build Agent Observations
             if self.obs_prop.render_agents != a_obs.NOT:
-                if self.obs_prop.omit_agent_self:
+                if self.obs_prop.omit_agent_self and self.n_agents >= 2:
                     if self.obs_prop.render_agents == a_obs.SEPERATE:
                         other_agent_obs_idx = [x for x in range(self.n_agents) if x != agent_idx]
                         agent_obs = np.take(global_agent_obs, other_agent_obs_idx, axis=0)
@@ -361,11 +366,12 @@ class BaseFactory(gym.Env):
                 lvl_obs += global_agent_obs
 
             obs_dict[c.WALLS] = lvl_obs
-            if self.obs_prop.render_agents in [a_obs.SEPERATE, a_obs.COMBINED]:
+            if self.obs_prop.render_agents in [a_obs.SEPERATE, a_obs.COMBINED] and agent_obs is not None:
                 obs_dict[c.AGENT] = agent_obs
-            if self[c.AGENT_PLACEHOLDER]:
+            if self[c.AGENT_PLACEHOLDER] and placeholder_obs is not None:
                 obs_dict[c.AGENT_PLACEHOLDER] = placeholder_obs
-            obs_dict[c.DOORS] = door_obs
+            if self.parse_doors and door_obs is not None:
+                obs_dict[c.DOORS] = door_obs
             obs_dict.update(add_obs_dict)
             obsn = np.vstack(list(obs_dict.values()))
             if self.obs_prop.pomdp_r:
@@ -381,20 +387,21 @@ class BaseFactory(gym.Env):
                                               zip(keys, idxs, list(idxs[1:]) + [idxs[-1]+1, ])}
 
             # Shadow Casting
-            try:
-                light_block_obs = [obs_idx for key, obs_idx in per_agent_expl_idx[agent.name].items()
-                                   if self[key].is_blocking_light]
-                # Flatten
-                light_block_obs = [x for y in light_block_obs for x in y]
-                shadowed_obs = [obs_idx for key, obs_idx in per_agent_expl_idx[agent.name].items()
-                                if self[key].can_be_shadowed]
-                # Flatten
-                shadowed_obs = [x for y in shadowed_obs for x in y]
-            except AttributeError as e:
-                print('Check your Keys! Only use Constants as Keys!')
-                print(e)
-                raise e
             if self.obs_prop.cast_shadows:
+                try:
+                    light_block_obs = [obs_idx for key, obs_idx in per_agent_expl_idx[agent.name].items()
+                                       if self[key].is_blocking_light]
+                    # Flatten
+                    light_block_obs = [x for y in light_block_obs for x in y]
+                    shadowed_obs = [obs_idx for key, obs_idx in per_agent_expl_idx[agent.name].items()
+                                    if self[key].can_be_shadowed]
+                    # Flatten
+                    shadowed_obs = [x for y in shadowed_obs for x in y]
+                except AttributeError as e:
+                    print('Check your Keys! Only use Constants as Keys!')
+                    print(e)
+                    raise e
+
                 obs_block_light = obsn[light_block_obs] != c.OCCUPIED_CELL
                 door_shadowing = False
                 if self.parse_doors:

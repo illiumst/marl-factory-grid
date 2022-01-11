@@ -6,6 +6,7 @@ import random
 import numpy as np
 
 # from algorithms.TSP_dirt_agent import TSPDirtAgent
+from algorithms.TSP_dirt_agent import TSPDirtAgent
 from environments.helpers import Constants as BaseConstants
 from environments.helpers import EnvActions as BaseActions
 from environments.helpers import Rewards as BaseRewards
@@ -27,9 +28,9 @@ class Actions(BaseActions):
 
 
 class Rewards(BaseRewards):
-    CLEAN_UP_VALID          = 0.5
-    CLEAN_UP_FAIL          = -0.1
-    CLEAN_UP_LAST_PIECE     = 4.5
+    CLEAN_UP_VALID          = 1
+    CLEAN_UP_FAIL           = -0.1
+    CLEAN_UP_LAST_PIECE     = 4
 
 
 class DirtProperties(NamedTuple):
@@ -293,13 +294,13 @@ if __name__ == '__main__':
     global_timings = []
     for i in range(10):
 
-        factory = DirtFactory(n_agents=4, done_at_collision=False,
+        factory = DirtFactory(n_agents=1, done_at_collision=False,
                               level_name='rooms', max_steps=1000,
                               doors_have_area=False,
                               obs_prop=obs_props, parse_doors=True,
                               verbose=True,
                               mv_prop=move_props, dirt_prop=dirt_props,
-                              # inject_agents=[TSPDirtAgent],
+                              inject_agents=[TSPDirtAgent],
                               )
 
         # noinspection DuplicatedCode
@@ -317,10 +318,11 @@ if __name__ == '__main__':
             env_state = factory.reset()
             if render:
                 factory.render()
-            # tsp_agent = factory.get_injected_agents()[0]
+            tsp_agent = factory.get_injected_agents()[0]
 
             rwrd = 0
             for agent_i_action in random_actions:
+                agent_i_action = tsp_agent.predict()
                 env_state, step_rwrd, done_bool, info_obj = factory.step(agent_i_action)
                 rwrd += step_rwrd
                 if render:

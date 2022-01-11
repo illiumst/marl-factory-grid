@@ -5,10 +5,24 @@ from networkx.algorithms.approximation import traveling_salesman as tsp
 from environments.factory.base.objects import Agent
 from environments.helpers import points_to_graph
 from environments import helpers as h
-from environments.helpers import Constants as c
 
+from environments.helpers import Constants as BaseConstants
+from environments.helpers import EnvActions as BaseActions
+
+
+class Constants(BaseConstants):
+    DIRT = 'Dirt'
+
+
+class Actions(BaseActions):
+    CLEAN_UP = 'do_cleanup_action'
+
+
+a = Actions
+c = Constants
 
 future_planning = 7
+
 
 class TSPDirtAgent(Agent):
 
@@ -26,7 +40,7 @@ class TSPDirtAgent(Agent):
     def predict(self, *_, **__):
         if self._env[c.DIRT].by_pos(self.pos) is not None:
             # Translate the action_object to an integer to have the same output as any other model
-            action = h.EnvActions.CLEAN_UP
+            action = a.CLEAN_UP
         elif any('door' in x.name.lower() for x in self.tile.guests):
             door = next(x for x in self.tile.guests if 'door' in x.name.lower())
             if door.is_closed:
@@ -37,7 +51,7 @@ class TSPDirtAgent(Agent):
         else:
             action = self._predict_move()
         # Translate the action_object to an integer to have the same output as any other model
-        action_obj = next(action_i for action_i, action_obj in enumerate(self._env._actions) if action_obj == action)
+        action_obj = next(action_i for action_name, action_i in self._env.named_action_space.items() if action_name == action)
         return action_obj
 
     def _predict_move(self):
