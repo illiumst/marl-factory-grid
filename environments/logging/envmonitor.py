@@ -1,5 +1,6 @@
 import pickle
 from collections import defaultdict
+from os import PathLike
 from pathlib import Path
 from typing import List, Dict, Union
 
@@ -9,14 +10,17 @@ from environments.helpers import IGNORED_DF_COLUMNS
 
 import pandas as pd
 
+from plotting.compare_runs import plot_single_run
+
 
 class EnvMonitor(BaseCallback):
 
     ext = 'png'
 
-    def __init__(self, env):
+    def __init__(self, env, filepath: Union[str, PathLike] = None):
         super(EnvMonitor, self).__init__()
         self.unwrapped = env
+        self._filepath = filepath
         self._monitor_df = pd.DataFrame()
         self._monitor_dicts = defaultdict(dict)
 
@@ -67,8 +71,10 @@ class EnvMonitor(BaseCallback):
             pass
         return
 
-    def save_run(self, filepath: Union[Path, str]):
+    def save_run(self, filepath: Union[Path, str], auto_plotting_keys=None):
         filepath = Path(filepath)
         filepath.parent.mkdir(exist_ok=True, parents=True)
         with filepath.open('wb') as f:
             pickle.dump(self._monitor_df.reset_index(), f, protocol=pickle.HIGHEST_PROTOCOL)
+        if auto_plotting_keys:
+            plot_single_run(filepath, column_keys=auto_plotting_keys)

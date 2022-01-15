@@ -9,10 +9,11 @@ from environments.helpers import Constants as c
 import itertools
 
 ##########################################################################
-# ##################### Base Object Definition ######################### #
+# ##################### Base Object Building Blocks ######################### #
 ##########################################################################
 
 
+# TODO: Missing Documentation
 class Object:
 
     """Generell Objects for Organisation and Maintanance such as Actions etc..."""
@@ -53,8 +54,10 @@ class Object:
 
     def __eq__(self, other) -> bool:
         return other == self.identifier
+# Base
 
 
+# TODO: Missing Documentation
 class EnvObject(Object):
 
     """Objects that hold Information that are observable, but have no position on the env grid. Inventories etc..."""
@@ -78,27 +81,10 @@ class EnvObject(Object):
         self._register.delete_env_object(self)
         self._register = register
         return self._register == register
+# With Rendering
 
 
-class BoundingMixin(Object):
-
-    @property
-    def bound_entity(self):
-        return self._bound_entity
-
-    def __init__(self,entity_to_be_bound, *args, **kwargs):
-        super(BoundingMixin, self).__init__(*args, **kwargs)
-        assert entity_to_be_bound is not None
-        self._bound_entity = entity_to_be_bound
-
-    @property
-    def name(self):
-        return f'{super(BoundingMixin, self).name}({self._bound_entity.name})'
-
-    def belongs_to_entity(self, entity):
-        return entity == self.bound_entity
-
-
+# TODO: Missing Documentation
 class Entity(EnvObject):
     """Full Env Entity that lives on the env Grid. Doors, Items, Dirt etc..."""
 
@@ -133,8 +119,10 @@ class Entity(EnvObject):
 
     def __repr__(self):
         return super(Entity, self).__repr__() + f'(@{self.pos})'
+# With Position in Env
 
 
+# TODO: Missing Documentation
 class MoveableEntity(Entity):
 
     @property
@@ -169,6 +157,27 @@ class MoveableEntity(Entity):
             return c.VALID
         else:
             return c.NOT_VALID
+# Can Move
+
+
+# TODO: Missing Documentation
+class BoundingMixin(Object):
+
+    @property
+    def bound_entity(self):
+        return self._bound_entity
+
+    def __init__(self,entity_to_be_bound, *args, **kwargs):
+        super(BoundingMixin, self).__init__(*args, **kwargs)
+        assert entity_to_be_bound is not None
+        self._bound_entity = entity_to_be_bound
+
+    @property
+    def name(self):
+        return f'{super(BoundingMixin, self).name}({self._bound_entity.name})'
+
+    def belongs_to_entity(self, entity):
+        return entity == self.bound_entity
 
 
 ##########################################################################
@@ -216,7 +225,7 @@ class GlobalPosition(BoundingMixin, EnvObject):
         self._normalized = normalized
 
 
-class Tile(EnvObject):
+class Floor(EnvObject):
 
     @property
     def encoding(self):
@@ -243,7 +252,7 @@ class Tile(EnvObject):
         return self._pos
 
     def __init__(self, pos, *args, **kwargs):
-        super(Tile, self).__init__(*args, **kwargs)
+        super(Floor, self).__init__(*args, **kwargs)
         self._guests = dict()
         self._pos = tuple(pos)
 
@@ -277,7 +286,7 @@ class Tile(EnvObject):
         return dict(name=self.name, x=int(self.x), y=int(self.y))
 
 
-class Wall(Tile):
+class Wall(Floor):
 
     @property
     def can_collide(self):
@@ -302,7 +311,7 @@ class Door(Entity):
     @property
     def encoding(self):
         # This is important as it shadow is checked by occupation value
-        return c.OCCUPIED_CELL if self.is_closed else 2
+        return c.OCCUPIED_CELL if self.is_closed else 0.5
 
     @property
     def str_state(self):
@@ -396,5 +405,5 @@ class Agent(MoveableEntity):
 
     def summarize_state(self, **kwargs):
         state_dict = super().summarize_state(**kwargs)
-        state_dict.update(valid=bool(self.temp_action_result['valid']), action=str(self.temp_action_result['action']))
+        state_dict.update(valid=bool(self.step_result['action_valid']), action=str(self.step_result['action_name']))
         return state_dict

@@ -15,8 +15,8 @@ from environments import helpers as h
 from environments.helpers import Constants as c
 from environments.helpers import EnvActions as a
 from environments.helpers import Rewards as r
-from environments.factory.base.objects import Agent, Tile, Action
-from environments.factory.base.registers import Actions, Entities, Agents, Doors, FloorTiles, WallTiles, PlaceHolders, \
+from environments.factory.base.objects import Agent, Floor, Action
+from environments.factory.base.registers import Actions, Entities, Agents, Doors, Floors, Walls, PlaceHolders, \
     GlobalPositions
 from environments.utility_classes import MovementProperties, ObservationProperties, MarlFrameStack
 from environments.utility_classes import AgentRenderOptions as a_obs
@@ -121,7 +121,7 @@ class BaseFactory(gym.Env):
         self.doors_have_area = doors_have_area
         self.individual_rewards = individual_rewards
 
-        # Reset
+        # TODO: Reset ---> document this
         self.reset()
 
     def __getitem__(self, item):
@@ -141,21 +141,21 @@ class BaseFactory(gym.Env):
         self._obs_shape = self._level_shape if not self.obs_prop.pomdp_r else (self.pomdp_diameter, ) * 2
 
         # Walls
-        walls = WallTiles.from_argwhere_coordinates(
+        walls = Walls.from_argwhere_coordinates(
             np.argwhere(level_array == c.OCCUPIED_CELL),
             self._level_shape
         )
         self._entities.register_additional_items({c.WALLS: walls})
 
         # Floor
-        floor = FloorTiles.from_argwhere_coordinates(
+        floor = Floors.from_argwhere_coordinates(
             np.argwhere(level_array == c.FREE_CELL),
             self._level_shape
         )
         self._entities.register_additional_items({c.FLOOR: floor})
 
         # NOPOS
-        self._NO_POS_TILE = Tile(c.NO_POS, None)
+        self._NO_POS_TILE = Floor(c.NO_POS, None)
 
         # Doors
         if self.parse_doors:
@@ -170,7 +170,7 @@ class BaseFactory(gym.Env):
 
         # Actions
         self._actions = Actions(self.mv_prop, can_use_doors=self.parse_doors)
-        if additional_actions := self.additional_actions:
+        if additional_actions := self.actions_hook:
             self._actions.register_additional_items(additional_actions)
 
         # Agents
@@ -202,7 +202,7 @@ class BaseFactory(gym.Env):
             self._entities.register_additional_items({c.AGENT_PLACEHOLDER: placeholder})
 
         # Additional Entitites from SubEnvs
-        if additional_entities := self.additional_entities:
+        if additional_entities := self.entities_hook:
             self._entities.register_additional_items(additional_entities)
 
         if self.obs_prop.show_global_position_info:
@@ -217,7 +217,7 @@ class BaseFactory(gym.Env):
 
     def reset(self) -> (np.typing.ArrayLike, int, bool, dict):
         _ = self._base_init_env()
-        self.do_additional_reset()
+        self.reset_hook()
 
         self._steps = 0
 
@@ -233,7 +233,7 @@ class BaseFactory(gym.Env):
         self._steps += 1
 
         # Pre step Hook for later use
-        self.hook_pre_step()
+        self.pre_step_hook()
 
         for action, agent in zip(actions, self[c.AGENT]):
             agent.clear_temp_state()
@@ -244,7 +244,7 @@ class BaseFactory(gym.Env):
                 action_valid, reward = self._do_move_action(agent, action_obj)
             elif a.NOOP == action_obj:
                 action_valid = c.VALID
-                reward = dict(value=r.NOOP, reason=a.NOOP, info={f'{agent.pos}_NOOP': 1})
+                reward = dict(value=r.NOOP, reason=a.NOOP, info={f'{agent.name}_NOOP': 1, 'NOOP': 1})
             elif a.USE_DOOR == action_obj:
                 action_valid, reward = self._handle_door_interaction(agent)
             else:
@@ -258,7 +258,7 @@ class BaseFactory(gym.Env):
             agent.step_result = step_result
 
         # Additional step and Reward, Info Init
-        rewards, info = self.do_additional_step()
+        rewards, info = self.step_hook()
         # Todo: Make this faster, so that only tiles of entities that can collide are searched.
         tiles_with_collisions = self.get_all_tiles_with_collisions()
         for tile in tiles_with_collisions:
@@ -297,7 +297,7 @@ class BaseFactory(gym.Env):
             info.update(self._summarize_state())
 
         # Post step Hook for later use
-        info.update(self.hook_post_step())
+        info.update(self.post_step_hook())
 
         obs, _ = self._build_observations()
 
@@ -314,11 +314,11 @@ class BaseFactory(gym.Env):
                 door.use()
                 valid = c.VALID
                 self.print(f'{agent.name} just used a {door.name} at {door.pos}')
-                info_dict = {f'{agent.name}_door_use': 1}
+                info_dict = {f'{agent.name}_door_use': 1, f'door_use': 1}
             # When he doesn't...
             else:
                 valid = c.NOT_VALID
-                info_dict = {f'{agent.name}_failed_door_use': 1}
+                info_dict = {f'{agent.name}_failed_door_use': 1, 'failed_door_use': 1}
                 self.print(f'{agent.name} just tried to use a door at {agent.pos}, but there is none.')
 
         else:
@@ -334,7 +334,7 @@ class BaseFactory(gym.Env):
         per_agent_obsn = dict()
         # Generel Observations
         lvl_obs = self[c.WALLS].as_array()
-        door_obs = self[c.DOORS].as_array()
+        door_obs = self[c.DOORS].as_array() if self.parse_doors else None
         if self.obs_prop.render_agents == a_obs.NOT:
             global_agent_obs = None
         elif self.obs_prop.omit_agent_self and self.n_agents == 1:
@@ -342,7 +342,7 @@ class BaseFactory(gym.Env):
         else:
             global_agent_obs = self[c.AGENT].as_array().copy()
         placeholder_obs = self[c.AGENT_PLACEHOLDER].as_array() if self[c.AGENT_PLACEHOLDER] else None
-        add_obs_dict = self._additional_observations()
+        add_obs_dict = self.observations_hook()
 
         for agent_idx, agent in enumerate(self[c.AGENT]):
             obs_dict = dict()
@@ -367,17 +367,17 @@ class BaseFactory(gym.Env):
 
             obs_dict[c.WALLS] = lvl_obs
             if self.obs_prop.render_agents in [a_obs.SEPERATE, a_obs.COMBINED] and agent_obs is not None:
-                obs_dict[c.AGENT] = agent_obs
+                obs_dict[c.AGENT] = agent_obs[:]
             if self[c.AGENT_PLACEHOLDER] and placeholder_obs is not None:
                 obs_dict[c.AGENT_PLACEHOLDER] = placeholder_obs
             if self.parse_doors and door_obs is not None:
-                obs_dict[c.DOORS] = door_obs
+                obs_dict[c.DOORS] = door_obs[:]
             obs_dict.update(add_obs_dict)
             obsn = np.vstack(list(obs_dict.values()))
             if self.obs_prop.pomdp_r:
                 obsn = self._do_pomdp_cutout(agent, obsn)
 
-            raw_obs = self._additional_per_agent_raw_observations(agent)
+            raw_obs = self.per_agent_raw_observations_hook(agent)
             raw_obs = {key: np.expand_dims(val, 0) if val.ndim != 3 else val for key, val in raw_obs.items()}
             obsn = np.vstack((obsn, *raw_obs.values()))
 
@@ -387,6 +387,12 @@ class BaseFactory(gym.Env):
                                               zip(keys, idxs, list(idxs[1:]) + [idxs[-1]+1, ])}
 
             # Shadow Casting
+            if agent.step_result is not None:
+                pass
+            else:
+                assert self._steps == 0
+                agent.step_result = {'action_name': a.NOOP, 'action_valid': True,
+                                     'collisions': [], 'lightmap': None}
             if self.obs_prop.cast_shadows:
                 try:
                     light_block_obs = [obs_idx for key, obs_idx in per_agent_expl_idx[agent.name].items()
@@ -430,17 +436,15 @@ class BaseFactory(gym.Env):
                 if door_shadowing:
                     # noinspection PyUnboundLocalVariable
                     light_block_map[xs, ys] = 0
-                if agent.step_result:
-                    agent.step_result['lightmap'] = light_block_map
-                    pass
-                else:
-                    assert self._steps == 0
-                    agent.step_result = {'action_name': a.NOOP, 'action_valid': True,
-                                         'collisions': [], 'lightmap': light_block_map}
+
+                agent.step_result['lightmap'] = light_block_map
 
                 obsn[shadowed_obs] = ((obsn[shadowed_obs] * light_block_map) + 0.) - (1 - light_block_map)
             else:
-                pass
+                if self._pomdp_r:
+                    agent.step_result['lightmap'] = np.ones(self._obs_shape)
+                else:
+                    agent.step_result['lightmap'] = None
 
             per_agent_obsn[agent.name] = obsn
 
@@ -484,7 +488,7 @@ class BaseFactory(gym.Env):
             oobs = np.pad(oobs, ((0, 0), (x0_pad, x1_pad), (y0_pad, y1_pad)), 'constant')
         return oobs
 
-    def get_all_tiles_with_collisions(self) -> List[Tile]:
+    def get_all_tiles_with_collisions(self) -> List[Floor]:
         tiles = [x for x in self[c.FLOOR] if len(x.guests_that_can_collide) > 1]
         if False:
             tiles_with_collisions = list()
@@ -503,22 +507,22 @@ class BaseFactory(gym.Env):
             valid = agent.move(new_tile)
             if valid:
                 # This will spam your logs, beware!
-                # self.print(f'{agent.name} just moved from {agent.last_pos} to {agent.pos}.')
-                # info_dict.update({f'{agent.pos}_move': 1})
+                self.print(f'{agent.name} just moved {action.identifier} from {agent.last_pos} to {agent.pos}.')
+                info_dict.update({f'{agent.name}_move': 1, 'move': 1})
                 pass
             else:
                 valid = c.NOT_VALID
-                self.print(f'{agent.name} just hit the wall at {agent.pos}.')
-                info_dict.update({f'{agent.name}_wall_collide': 1})
+                self.print(f'{agent.name} just hit the wall at {agent.pos}. ({action.identifier})')
+                info_dict.update({f'{agent.name}_wall_collide': 1, 'wall_collide': 1})
         else:
             # Agent seems to be trying to Leave the level
-            self.print(f'{agent.name} tried to leave the level {agent.pos}.')
-            info_dict.update({f'{agent.name}_wall_collide': 1})
+            self.print(f'{agent.name} tried to leave the level {agent.pos}. ({action.identifier})')
+            info_dict.update({f'{agent.name}_wall_collide': 1, 'wall_collide': 1})
         reward_value = r.MOVEMENTS_VALID if valid else r.MOVEMENTS_FAIL
         reward = {'value': reward_value, 'reason': action.identifier, 'info': info_dict}
         return valid, reward
 
-    def _check_agent_move(self, agent, action: Action) -> (Tile, bool):
+    def _check_agent_move(self, agent, action: Action) -> (Floor, bool):
         # Actions
         x_diff, y_diff = h.ACTIONMAP[action.identifier]
         x_new = agent.x + x_diff
@@ -556,10 +560,6 @@ class BaseFactory(gym.Env):
 
         return new_tile, valid
 
-    @abc.abstractmethod
-    def additional_per_agent_rewards(self, agent) -> List[dict]:
-        return []
-
     def build_reward_result(self, global_env_rewards: list) -> (int, dict):
         # Returns: Reward, Info
         info = defaultdict(lambda: 0.0)
@@ -567,7 +567,7 @@ class BaseFactory(gym.Env):
         # Gather additional sub-env rewards and calculate collisions
         for agent in self[c.AGENT]:
 
-            rewards = self.additional_per_agent_rewards(agent)
+            rewards = self.per_agent_reward_hook(agent)
             for reward in rewards:
                 agent.step_result['rewards'].append(reward)
             if collisions := agent.step_result['collisions']:
@@ -601,6 +601,12 @@ class BaseFactory(gym.Env):
             self.print(f"reward is {reward}")
         return reward, combined_info_dict
 
+    def start_recording(self):
+        self._record_episodes = True
+
+    def stop_recording(self):
+        self._record_episodes = False
+
     # noinspection PyGlobalUndefined
     def render(self, mode='human'):
         if not self._renderer:  # lazy init
@@ -621,7 +627,7 @@ class BaseFactory(gym.Env):
             for i, door in enumerate(self[c.DOORS]):
                 name, state = 'door_open' if door.is_open else 'door_closed', 'blank'
                 doors.append(RenderEntity(name, door.pos, 1, 'none', state, i + 1))
-        additional_assets = self.render_additional_assets()
+        additional_assets = self.render_assets_hook()
 
         return self._renderer.render(walls + doors + additional_assets + agents)
 
@@ -652,7 +658,8 @@ class BaseFactory(gym.Env):
 
     # Properties which are called by the base class to extend beyond attributes of the base class
     @property
-    def additional_actions(self) -> Union[Action, List[Action]]:
+    @abc.abstractmethod
+    def actions_hook(self) -> Union[Action, List[Action]]:
         """
         When heriting from this Base Class, you musst implement this methode!!!
 
@@ -662,7 +669,8 @@ class BaseFactory(gym.Env):
         return []
 
     @property
-    def additional_entities(self) -> Dict[(str, Entities)]:
+    @abc.abstractmethod
+    def entities_hook(self) -> Dict[(str, Entities)]:
         """
         When heriting from this Base Class, you musst implement this methode!!!
 
@@ -674,27 +682,39 @@ class BaseFactory(gym.Env):
     # Functions which provide additions to functions of the base class
     #  Always call super!!!!!!
     @abc.abstractmethod
-    def do_additional_reset(self) -> None:
+    def reset_hook(self) -> None:
         pass
 
     @abc.abstractmethod
-    def do_additional_step(self) -> (List[dict], dict):
-        return [], {}
+    def pre_step_hook(self) -> None:
+        pass
 
     @abc.abstractmethod
     def do_additional_actions(self, agent: Agent, action: Action) -> (bool, dict):
         return None
 
     @abc.abstractmethod
+    def step_hook(self) -> (List[dict], dict):
+        return [], {}
+
+    @abc.abstractmethod
     def check_additional_done(self) -> (bool, dict):
         return False, {}
 
     @abc.abstractmethod
-    def _additional_observations(self) -> Dict[str, np.typing.ArrayLike]:
+    def observations_hook(self) -> Dict[str, np.typing.ArrayLike]:
         return {}
 
     @abc.abstractmethod
-    def _additional_per_agent_raw_observations(self, agent) -> Dict[str, np.typing.ArrayLike]:
+    def per_agent_reward_hook(self, agent: Agent) -> Dict[str, dict]:
+        return {}
+
+    @abc.abstractmethod
+    def post_step_hook(self) -> dict:
+        return {}
+
+    @abc.abstractmethod
+    def per_agent_raw_observations_hook(self, agent) -> Dict[str, np.typing.ArrayLike]:
         additional_raw_observations = {}
         if self.obs_prop.show_global_position_info:
             global_pos_obs = np.zeros(self._obs_shape)
@@ -703,19 +723,5 @@ class BaseFactory(gym.Env):
         return additional_raw_observations
 
     @abc.abstractmethod
-    def additional_per_agent_reward(self, agent: Agent) -> Dict[str, dict]:
-        return {}
-
-    @abc.abstractmethod
-    def render_additional_assets(self):
+    def render_assets_hook(self):
         return []
-
-    # Hooks for in between operations.
-    #  Always call super!!!!!!
-    @abc.abstractmethod
-    def hook_pre_step(self) -> None:
-        pass
-
-    @abc.abstractmethod
-    def hook_post_step(self) -> dict:
-        return {}

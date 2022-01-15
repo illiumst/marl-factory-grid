@@ -158,19 +158,19 @@ class BatteryFactory(BaseFactory):
         self.btry_prop = btry_prop
         super().__init__(*args, **kwargs)
 
-    def _additional_per_agent_raw_observations(self, agent) -> Dict[str, np.typing.ArrayLike]:
-        additional_raw_observations = super()._additional_per_agent_raw_observations(agent)
+    def per_agent_raw_observations_hook(self, agent) -> Dict[str, np.typing.ArrayLike]:
+        additional_raw_observations = super().per_agent_raw_observations_hook(agent)
         additional_raw_observations.update({c.BATTERIES: self[c.BATTERIES].as_array_by_entity(agent)})
         return additional_raw_observations
 
-    def _additional_observations(self) -> Dict[str, np.typing.ArrayLike]:
-        additional_observations = super()._additional_observations()
+    def observations_hook(self) -> Dict[str, np.typing.ArrayLike]:
+        additional_observations = super().observations_hook()
         additional_observations.update({c.CHARGE_PODS: self[c.CHARGE_PODS].as_array()})
         return additional_observations
 
     @property
-    def additional_entities(self):
-        super_entities = super().additional_entities
+    def entities_hook(self):
+        super_entities = super().entities_hook
 
         empty_tiles = self[c.FLOOR].empty_tiles[:self.btry_prop.charge_locations]
         charge_pods = ChargePods.from_tiles(
@@ -185,8 +185,8 @@ class BatteryFactory(BaseFactory):
         super_entities.update({c.BATTERIES: batteries, c.CHARGE_PODS: charge_pods})
         return super_entities
 
-    def do_additional_step(self) -> (List[dict], dict):
-        super_reward_info = super(BatteryFactory, self).do_additional_step()
+    def step_hook(self) -> (List[dict], dict):
+        super_reward_info = super(BatteryFactory, self).step_hook()
 
         # Decharge
         batteries = self[c.BATTERIES]
@@ -230,7 +230,7 @@ class BatteryFactory(BaseFactory):
             return action_result
         pass
 
-    def do_additional_reset(self) -> None:
+    def reset_hook(self) -> None:
         # There is Nothing to reset.
         pass
 
@@ -249,8 +249,8 @@ class BatteryFactory(BaseFactory):
                 pass
         pass
 
-    def additional_per_agent_reward(self, agent: Agent) -> Dict[str, dict]:
-        reward_event_dict = super(BatteryFactory, self).additional_per_agent_reward(agent)
+    def per_agent_reward_hook(self, agent: Agent) -> Dict[str, dict]:
+        reward_event_dict = super(BatteryFactory, self).per_agent_reward_hook(agent)
         if self[c.BATTERIES].by_entity(agent).is_discharged:
             self.print(f'{agent.name} Battery is discharged!')
             info_dict = {f'{agent.name}_{c.BATTERY_DISCHARGED}': 1}
@@ -260,9 +260,9 @@ class BatteryFactory(BaseFactory):
             pass
         return reward_event_dict
 
-    def render_additional_assets(self):
+    def render_assets_hook(self):
         # noinspection PyUnresolvedReferences
-        additional_assets = super().render_additional_assets()
+        additional_assets = super().render_assets_hook()
         charge_pods = [RenderEntity(c.CHARGE_PODS, charge_pod.tile.pos) for charge_pod in self[c.CHARGE_PODS]]
         additional_assets.extend(charge_pods)
         return additional_assets

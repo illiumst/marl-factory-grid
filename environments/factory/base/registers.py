@@ -6,7 +6,7 @@ from typing import List, Union, Dict, Tuple
 import numpy as np
 import six
 
-from environments.factory.base.objects import Entity, Tile, Agent, Door, Action, Wall, PlaceHolder, GlobalPosition, \
+from environments.factory.base.objects import Entity, Floor, Agent, Door, Action, Wall, PlaceHolder, GlobalPosition, \
     Object, EnvObject
 from environments.utility_classes import MovementProperties
 from environments import helpers as h
@@ -271,12 +271,9 @@ class GlobalPositions(EnvObjectRegister):
 
     _accepted_objects = GlobalPosition
 
-    is_blocking_light = False
-    can_be_shadowed = False
-    can_collide = False
-
     def __init__(self, *args, **kwargs):
-        super(GlobalPositions, self).__init__(*args, is_per_agent=True, individual_slices=True, **kwargs)
+        super(GlobalPositions, self).__init__(*args, is_per_agent=True, individual_slices=True, is_blocking_light = False,
+                                              can_be_shadowed = False, can_collide = False, **kwargs)
 
     def as_array(self):
         # FIXME DEBUG!!! make this lazy?
@@ -377,7 +374,7 @@ class Entities(ObjectRegister):
         return found_entities
 
 
-class WallTiles(EntityRegister):
+class Walls(EntityRegister):
     _accepted_objects = Wall
 
     def as_array(self):
@@ -390,9 +387,9 @@ class WallTiles(EntityRegister):
         return self._array
 
     def __init__(self, *args, is_blocking_light=True, **kwargs):
-        super(WallTiles, self).__init__(*args, individual_slices=False,
-                                        can_collide=True,
-                                        is_blocking_light=is_blocking_light, **kwargs)
+        super(Walls, self).__init__(*args, individual_slices=False,
+                                    can_collide=True,
+                                    is_blocking_light=is_blocking_light, **kwargs)
         self._value = c.OCCUPIED_CELL
 
     @classmethod
@@ -411,16 +408,16 @@ class WallTiles(EntityRegister):
 
     def summarize_states(self, n_steps=None):
         if n_steps == h.STEPS_START:
-            return super(WallTiles, self).summarize_states(n_steps=n_steps)
+            return super(Walls, self).summarize_states(n_steps=n_steps)
         else:
             return {}
 
 
-class FloorTiles(WallTiles):
-    _accepted_objects = Tile
+class Floors(Walls):
+    _accepted_objects = Floor
 
     def __init__(self, *args, is_blocking_light=False, **kwargs):
-        super(FloorTiles, self).__init__(*args, is_blocking_light=is_blocking_light, **kwargs)
+        super(Floors, self).__init__(*args, is_blocking_light=is_blocking_light, **kwargs)
         self._value = c.FREE_CELL
 
     @property
@@ -430,7 +427,7 @@ class FloorTiles(WallTiles):
         return tiles
 
     @property
-    def empty_tiles(self) -> List[Tile]:
+    def empty_tiles(self) -> List[Floor]:
         tiles = [tile for tile in self if tile.is_empty()]
         random.shuffle(tiles)
         return tiles
