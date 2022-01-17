@@ -76,19 +76,18 @@ class EnvActions:
         return list(itertools.chain(cls.square_move(), cls.diagonal_move()))
 
 
-class Rewards:
-
-    MOVEMENTS_VALID = -0.00
-    MOVEMENTS_FAIL  = -0.10
-    NOOP            = -0.01
-    USE_DOOR_VALID  = -0.00
-    USE_DOOR_FAIL   = -0.10
-    COLLISION       = -0.5
+class RewardsBase(NamedTuple):
+    MOVEMENTS_VALID: float = -0.001
+    MOVEMENTS_FAIL: float  = -0.05
+    NOOP: float            = -0.01
+    USE_DOOR_VALID: float  = -0.00
+    USE_DOOR_FAIL: float   = -0.01
+    COLLISION: float       = -0.5
 
 
 m = EnvActions
 c = Constants
-r = Rewards
+r = RewardsBase
 
 ACTIONMAP = defaultdict(lambda: (0, 0),
                         {m.NORTH: (-1, 0), m.NORTHEAST: (-1, 1),

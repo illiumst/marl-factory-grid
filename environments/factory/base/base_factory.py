@@ -14,7 +14,7 @@ from environments.factory.base.shadow_casting import Map
 from environments import helpers as h
 from environments.helpers import Constants as c
 from environments.helpers import EnvActions as a
-from environments.helpers import Rewards as r
+from environments.helpers import RewardsBase
 from environments.factory.base.objects import Agent, Floor, Action
 from environments.factory.base.registers import Actions, Entities, Agents, Doors, Floors, Walls, PlaceHolders, \
     GlobalPositions
@@ -80,6 +80,7 @@ class BaseFactory(gym.Env):
     def __init__(self, level_name='simple', n_agents=1, max_steps=int(5e2),
                  mv_prop: MovementProperties = MovementProperties(),
                  obs_prop: ObservationProperties = ObservationProperties(),
+                 rewards_base: RewardsBase = RewardsBase(),
                  parse_doors=False, done_at_collision=False, inject_agents: Union[None, List] = None,
                  verbose=False, doors_have_area=True, env_seed=time.time_ns(), individual_rewards=False,
                  **kwargs):
@@ -88,6 +89,8 @@ class BaseFactory(gym.Env):
             mv_prop = MovementProperties(**mv_prop)
         if isinstance(obs_prop, dict):
             obs_prop = ObservationProperties(**obs_prop)
+        if isinstance(rewards_base, dict):
+            rewards_base = RewardsBase(**rewards_base)
 
         assert obs_prop.frames_to_stack != 1 and \
                obs_prop.frames_to_stack >= 0, "'frames_to_stack' cannot be negative or 1."
@@ -100,6 +103,7 @@ class BaseFactory(gym.Env):
         self._base_rng = np.random.default_rng(self.env_seed)
         self.mv_prop = mv_prop
         self.obs_prop = obs_prop
+        self.rewards_base = rewards_base
         self.level_name = level_name
         self._level_shape = None
         self._obs_shape = None
@@ -244,7 +248,7 @@ class BaseFactory(gym.Env):
                 action_valid, reward = self._do_move_action(agent, action_obj)
             elif a.NOOP == action_obj:
                 action_valid = c.VALID
-                reward = dict(value=r.NOOP, reason=a.NOOP, info={f'{agent.name}_NOOP': 1, 'NOOP': 1})
+                reward = dict(value=self.rewards_base.NOOP, reason=a.NOOP, info={f'{agent.name}_NOOP': 1, 'NOOP': 1})
             elif a.USE_DOOR == action_obj:
                 action_valid, reward = self._handle_door_interaction(agent)
             else:
@@ -323,7 +327,7 @@ class BaseFactory(gym.Env):
 
         else:
             raise RuntimeError('This should not happen, since the door action should not be available.')
-        reward = dict(value=r.USE_DOOR_VALID if valid else r.USE_DOOR_FAIL,
+        reward = dict(value=self.rewards_base.USE_DOOR_VALID if valid else self.rewards_base.USE_DOOR_FAIL,
                       reason=a.USE_DOOR, info=info_dict)
 
         return valid, reward
@@ -518,7 +522,7 @@ class BaseFactory(gym.Env):
             # Agent seems to be trying to Leave the level
             self.print(f'{agent.name} tried to leave the level {agent.pos}. ({action.identifier})')
             info_dict.update({f'{agent.name}_wall_collide': 1, 'wall_collide': 1})
-        reward_value = r.MOVEMENTS_VALID if valid else r.MOVEMENTS_FAIL
+        reward_value = self.rewards_base.MOVEMENTS_VALID if valid else self.rewards_base.MOVEMENTS_FAIL
         reward = {'value': reward_value, 'reason': action.identifier, 'info': info_dict}
         return valid, reward
 
@@ -573,7 +577,9 @@ class BaseFactory(gym.Env):
             if collisions := agent.step_result['collisions']:
                 self.print(f't = {self._steps}\t{agent.name} has collisions with {collisions}')
                 info[c.COLLISION] += 1
-                reward = {'value': r.COLLISION, 'reason': c.COLLISION, 'info': {f'{agent.name}_{c.COLLISION}': 1}}
+                reward = {'value': self.rewards_base.COLLISION,
+                          'reason': c.COLLISION,
+                          'info': {f'{agent.name}_{c.COLLISION}': 1}}
                 agent.step_result['rewards'].append(reward)
             else:
                 # No Collisions, nothing to do
