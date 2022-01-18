@@ -97,7 +97,10 @@ class BaseFactory(gym.Env):
             rewards_base = RewardsBase(**rewards_base)
 
         assert obs_prop.frames_to_stack != 1 and \
-               obs_prop.frames_to_stack >= 0, "'frames_to_stack' cannot be negative or 1."
+               obs_prop.frames_to_stack >= 0, \
+               "'frames_to_stack' cannot be negative or 1."
+        assert doors_have_area or not obs_prop.indicate_door_area, \
+            '"indicate_door_area" can only active, when "doors_have_area"'
         if kwargs:
             print(f'Following kwargs were passed, but ignored: {kwargs}')
 
