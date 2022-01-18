@@ -171,7 +171,7 @@ class BaseFactory(gym.Env):
             parsed_doors = np.pad(parsed_doors, self.obs_prop.pomdp_r, 'constant', constant_values=0)
             if np.any(parsed_doors):
                 door_tiles = [floor.by_pos(tuple(pos)) for pos in np.argwhere(parsed_doors == c.OCCUPIED_CELL)]
-                doors = Doors.from_tiles(door_tiles, self._level_shape, have_area=self.doors_have_area,
+                doors = Doors.from_tiles(door_tiles, self._level_shape, have_area=self.obs_prop.indicate_door_area,
                                          entity_kwargs=dict(context=floor)
                                          )
                 self._entities.register_additional_items({c.DOORS: doors})

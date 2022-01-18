@@ -17,13 +17,14 @@ class MovementProperties(NamedTuple):
 
 
 class ObservationProperties(NamedTuple):
+    # Todo: Add Description
     render_agents: AgentRenderOptions = AgentRenderOptions.SEPERATE
     omit_agent_self: bool = True
     additional_agent_placeholder: Union[None, str, int] = None
     cast_shadows: bool = True
     frames_to_stack: int = 0
     pomdp_r: int = 0
-    indicate_door_area: bool = True
+    indicate_door_area: bool = False
     show_global_position_info: bool = False
 
 
