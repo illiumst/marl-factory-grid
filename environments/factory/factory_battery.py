@@ -155,7 +155,7 @@ class BatteryFactory(BaseFactory):
         if isinstance(btry_prop, dict):
             btry_prop = BatteryProperties(**btry_prop)
         if isinstance(rewards_dest, dict):
-            rewards_dest = RewardsBtry(**rewards_dest)
+            rewards_dest = BatteryProperties(**rewards_dest)
         self.btry_prop = btry_prop
         self.rewards_dest = rewards_dest
         super().__init__(*args, **kwargs)

@@ -23,6 +23,7 @@ class ObservationProperties(NamedTuple):
     cast_shadows: bool = True
     frames_to_stack: int = 0
     pomdp_r: int = 0
+    indicate_door_area: bool = True
     show_global_position_info: bool = False
 
 
@@ -34,4 +35,3 @@ class MarlFrameStack(gym.ObservationWrapper):
         if isinstance(self.env, FrameStack) and self.env.unwrapped.n_agents > 1:
             return observation[0:].swapaxes(0, 1)
         return observation
-

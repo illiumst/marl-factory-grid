@@ -460,7 +460,9 @@ class Agents(MovingEntityObjectRegister):
 
 class Doors(EntityRegister):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, have_area: bool = False, **kwargs):
+        self.have_area = have_area
+        self._area_marked = False
         super(Doors, self).__init__(*args, is_blocking_light=True, can_collide=True, **kwargs)
 
     _accepted_objects = Door
@@ -474,6 +476,18 @@ class Doors(EntityRegister):
     def tick_doors(self):
         for door in self:
             door.tick()
+
+    def as_array(self):
+        if self.have_area and not self._area_marked:
+            for door in self:
+                for pos in door.access_area:
+                    if self._individual_slices:
+                        pass
+                    else:
+                        pos = (0, *pos)
+                    self._lazy_eval_transforms.append((pos, c.ACCESS_DOOR_CELL))
+            self._area_marked = True
+        return super(Doors, self).as_array()
 
 
 class Actions(ObjectRegister):

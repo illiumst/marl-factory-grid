@@ -68,6 +68,7 @@ class BaseFactory(gym.Env):
     @property
     def params(self) -> dict:
         d = {key: val for key, val in self.__dict__.items() if not key.startswith('_') and not key.startswith('__')}
+        d['class_name'] = self.__class__.__name__
         return d
 
     def __enter__(self):
@@ -83,7 +84,10 @@ class BaseFactory(gym.Env):
                  rewards_base: RewardsBase = RewardsBase(),
                  parse_doors=False, done_at_collision=False, inject_agents: Union[None, List] = None,
                  verbose=False, doors_have_area=True, env_seed=time.time_ns(), individual_rewards=False,
-                 **kwargs):
+                 class_name='', **kwargs):
+
+        if class_name:
+            print(f'You loaded parameters for {class_name}', f'this is: {self.__class__.__name__}')
 
         if isinstance(mv_prop, dict):
             mv_prop = MovementProperties(**mv_prop)
@@ -167,7 +171,7 @@ class BaseFactory(gym.Env):
             parsed_doors = np.pad(parsed_doors, self.obs_prop.pomdp_r, 'constant', constant_values=0)
             if np.any(parsed_doors):
                 door_tiles = [floor.by_pos(tuple(pos)) for pos in np.argwhere(parsed_doors == c.OCCUPIED_CELL)]
-                doors = Doors.from_tiles(door_tiles, self._level_shape,
+                doors = Doors.from_tiles(door_tiles, self._level_shape, have_area=self.doors_have_area,
                                          entity_kwargs=dict(context=floor)
                                          )
                 self._entities.register_additional_items({c.DOORS: doors})

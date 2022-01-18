@@ -311,7 +311,7 @@ class Door(Entity):
     @property
     def encoding(self):
         # This is important as it shadow is checked by occupation value
-        return c.OCCUPIED_CELL if self.is_closed else 0.5
+        return c.CLOSED_DOOR_CELL if self.is_closed else c.OPEN_DOOR_CELL
 
     @property
     def str_state(self):

@@ -31,11 +31,15 @@ class Constants:
     FREE_CELL           = 0
     OCCUPIED_CELL       = 1
     SHADOWED_CELL       = -1
+    ACCESS_DOOR_CELL    = 1/3
+    OPEN_DOOR_CELL      = 2/3
+    CLOSED_DOOR_CELL    = 3/3
     NO_POS              = (-9999, -9999)
 
     DOORS               = 'Doors'
     CLOSED_DOOR         = 'closed'
     OPEN_DOOR           = 'open'
+    ACCESS_DOOR         = 'access'
 
     ACTION              = 'action'
     COLLISION          = 'collision'
@@ -87,7 +91,6 @@ class RewardsBase(NamedTuple):
 
 m = EnvActions
 c = Constants
-r = RewardsBase
 
 ACTIONMAP = defaultdict(lambda: (0, 0),
                         {m.NORTH: (-1, 0), m.NORTHEAST: (-1, 1),

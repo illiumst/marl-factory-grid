@@ -1,4 +1,5 @@
 import time
+from pathlib import Path
 from typing import List, Union, NamedTuple, Dict
 import random
 
@@ -284,7 +285,8 @@ if __name__ == '__main__':
     )
 
     obs_props = ObservationProperties(render_agents=aro.COMBINED, omit_agent_self=True,
-                                      pomdp_r=2, additional_agent_placeholder=None, cast_shadows=True)
+                                      pomdp_r=2, additional_agent_placeholder=None, cast_shadows=True,
+                                      indicate_door_area=True)
 
     move_props = {'allow_square_movement': True,
                   'allow_diagonal_movement': False,
@@ -295,12 +297,14 @@ if __name__ == '__main__':
 
         factory = DirtFactory(n_agents=10, done_at_collision=False,
                               level_name='rooms', max_steps=1000,
-                              doors_have_area=False,
+                              doors_have_area=True,
                               obs_prop=obs_props, parse_doors=True,
                               verbose=True,
                               mv_prop=move_props, dirt_prop=dirt_props,
                               # inject_agents=[TSPDirtAgent],
                               )
+
+        factory.save_params(Path('rewards_param'))
 
         # noinspection DuplicatedCode
         n_actions = factory.action_space.n - 1
