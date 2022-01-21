@@ -1,8 +1,12 @@
-movement_props:
+parse_doors:                True
+doors_have_area:            True
+done_at_collision:          False
+level_name:                 "rooms"
+mv_prop:
     allow_diagonal_movement:    True
     allow_square_movement:      True
     allow_no_op:                False
-dirt_props:
+dirt_prop:
     initial_dirt_ratio:         0.35
     initial_dirt_spawn_r_var :  0.1
     clean_amount:               0.34
@@ -12,8 +16,15 @@ dirt_props:
     spawn_frequency:            0
     max_spawn_ratio:            0.05
     dirt_smear_amount:          0.0
-    agent_can_interact:         True
-factory_props:
-    parse_doors:                True
-    level_name:                 "rooms"
-    doors_have_area:            False
+    done_when_clean:            True
+rewards_base:
+    MOVEMENTS_VALID:    0
+    MOVEMENTS_FAIL:     0
+    NOOP:               0
+    USE_DOOR_VALID:     0
+    USE_DOOR_FAIL:      0
+    COLLISION:          0
+rewards_dirt:
+    CLEAN_UP_VALID:       1
+    CLEAN_UP_FAIL:        0
+    CLEAN_UP_LAST_PIECE:  5
