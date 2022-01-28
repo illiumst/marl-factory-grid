@@ -21,7 +21,6 @@ class LoopIAC(BaseActorCritic):
 
     def load_state_dict(self, path: Path):
         paths = natsorted(list(path.glob('*.pt')))
-        print(list(paths))
         for path, net in zip(paths, self.net):
             net.load_state_dict(torch.load(path))
 

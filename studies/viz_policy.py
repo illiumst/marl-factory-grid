@@ -3,19 +3,21 @@ from algorithms.marl import LoopSNAC, LoopIAC, LoopSEAC
 from pathlib import Path
 from algorithms.utils import load_yaml_file
 from tqdm import trange
-study = 'curious_study'
-study_root = Path(__file__).parent / study
+study = 'example_config#0'
+#study_root = Path(__file__).parent / study
+study_root = Path('/Users/romue/PycharmProjects/EDYS/algorithms/marl/')
 
 #['L2NoAh_gru', 'L2NoCh_gru', 'nomix_gru']:
 render = True
 eval_eps = 3
 for run in range(0, 5):
-    for name in ['basic_gru']:#['L2OnlyAh_gru', 'L2OnlyChAh_gru', 'L2OnlyMix_gru']: #['layernorm_gru', 'basic_gru', 'nonorm_gru', 'spectralnorm_gru']:
-        cfg = load_yaml_file(Path(__file__).parent / study / f'{name}.yaml')
-        p_root = Path(study_root / f'{name}#{run}')
+    for name in ['example_config']:#['L2OnlyAh_gru', 'L2OnlyChAh_gru', 'L2OnlyMix_gru']: #['layernorm_gru', 'basic_gru', 'nonorm_gru', 'spectralnorm_gru']:
+        cfg = load_yaml_file(study_root / study / 'config.yaml')
+        #p_root = Path(study_root / study / f'{name}#{run}')
         dfs = []
         for i in trange(500):
-            path = p_root / f'checkpoint_{i}'
+            path = study_root / study / f'checkpoint_{161}'
+            print(path)
 
             snac = LoopSEAC(cfg)
             snac.load_state_dict(path)

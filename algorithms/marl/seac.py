@@ -8,7 +8,7 @@ class LoopSEAC(LoopIAC):
     def __init__(self, cfg):
         super(LoopSEAC, self).__init__(cfg)
 
-    def actor_critic(self, tm, networks, gamma, entropy_coef, vf_coef, **kwargs):
+    def actor_critic(self, tm, networks, gamma, entropy_coef, vf_coef, gae_coef=0.0, **kwargs):
         obs, actions, done, reward = tm.observation, tm.action, tm.done, tm.reward
         outputs = [net(obs, actions, tm.hidden_actor, tm.hidden_critic) for net in networks]
 
@@ -26,7 +26,7 @@ class LoopSEAC(LoopIAC):
             critic = out['critic']
 
             entropy_loss = Categorical(logits=logits[ag_i]).entropy().mean()
-            advantages = self.compute_advantages(critic, reward, done, gamma)
+            advantages = self.compute_advantages(critic, reward, done, gamma, gae_coef)
 
             # policy loss
             log_ap = torch.log_softmax(logits, -1)
