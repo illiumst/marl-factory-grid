@@ -1,4 +1,5 @@
 from algorithms.marl.base_ac import BaseActorCritic
+from algorithms.marl.base_ac import nms
 import torch
 from torch.distributions import Categorical
 from pathlib import Path
@@ -21,7 +22,7 @@ class LoopSNAC(BaseActorCritic):
                     )
 
     def get_actions(self, out):
-        actions = Categorical(logits=out['logits']).sample().squeeze()
+        actions = Categorical(logits=out[nms.LOGITS]).sample().squeeze()
         return actions
 
     def forward(self, observations, actions, hidden_actor, hidden_critic):

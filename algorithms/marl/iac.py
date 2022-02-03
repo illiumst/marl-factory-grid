@@ -1,5 +1,5 @@
 import torch
-from algorithms.marl.base_ac import BaseActorCritic
+from algorithms.marl.base_ac import BaseActorCritic, nms
 from algorithms.utils import instantiate_class
 from pathlib import Path
 from natsort import natsorted
@@ -13,7 +13,7 @@ class LoopIAC(BaseActorCritic):
 
     def setup(self):
         self.net = [
-            instantiate_class(self.cfg['agent']) for _ in range(self.n_agents)
+            instantiate_class(self.cfg[nms.AGENT]) for _ in range(self.n_agents)
         ]
         self.optimizer = [
             torch.optim.RMSprop(self.net[ag_i].parameters(), lr=3e-4, eps=1e-5) for ag_i in range(self.n_agents)
@@ -50,7 +50,7 @@ class LoopIAC(BaseActorCritic):
     def learn(self, tms: MARLActorCriticMemory, **kwargs):
         for ag_i in range(self.n_agents):
             tm, net = tms(ag_i), self.net[ag_i]
-            loss = self.actor_critic(tm, net, **self.cfg['algorithm'], **kwargs)
+            loss = self.actor_critic(tm, net, **self.cfg[nms.ALGORITHM], **kwargs)
             self.optimizer[ag_i].zero_grad()
             loss.backward()
             torch.nn.utils.clip_grad_norm_(net.parameters(), 0.5)

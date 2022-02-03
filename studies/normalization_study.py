@@ -6,7 +6,7 @@ from algorithms.utils import load_yaml_file, add_env_props, instantiate_class, l
 
 
 for i in range(0, 5):
-    for name in ['mappo']:#['seac', 'iac', 'snac']:
+    for name in ['snac', 'mappo', 'iac', 'seac']:
         study_root = Path(__file__).parent / name
         cfg = load_yaml_file(study_root / f'{name}.yaml')
         add_env_props(cfg)
