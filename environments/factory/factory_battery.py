@@ -4,7 +4,7 @@ import numpy as np
 
 from environments.factory.base.base_factory import BaseFactory
 from environments.factory.base.objects import Agent, Action, Entity, EnvObject, BoundingMixin
-from environments.factory.base.registers import EntityRegister, EnvObjectRegister
+from environments.factory.base.registers import EntityCollection, EnvObjectCollection
 from environments.factory.base.renderer import RenderEntity
 from environments.helpers import Constants as BaseConstants
 from environments.helpers import EnvActions as BaseActions
@@ -68,7 +68,7 @@ class Battery(BoundingMixin, EnvObject):
         if self.charge_level != 0:
             # noinspection PyTypeChecker
             self.charge_level = max(0, amount + self.charge_level)
-            self._register.notify_change_to_value(self)
+            self._collection.notify_change_to_value(self)
             return c.VALID
         else:
             return c.NOT_VALID
@@ -79,7 +79,7 @@ class Battery(BoundingMixin, EnvObject):
         return attr_dict
 
 
-class BatteriesRegister(EnvObjectRegister):
+class BatteriesRegister(EnvObjectCollection):
 
     _accepted_objects = Battery
 
@@ -90,7 +90,7 @@ class BatteriesRegister(EnvObjectRegister):
 
     def spawn_batteries(self, agents, initial_charge_level):
         batteries = [self._accepted_objects(initial_charge_level, agent, self) for _, agent in enumerate(agents)]
-        self.register_additional_items(batteries)
+        self.add_additional_items(batteries)
 
     def summarize_states(self, n_steps=None):
         # as dict with additional nesting
@@ -140,7 +140,7 @@ class ChargePod(Entity):
             return summary
 
 
-class ChargePods(EntityRegister):
+class ChargePods(EntityCollection):
 
     _accepted_objects = ChargePod
 

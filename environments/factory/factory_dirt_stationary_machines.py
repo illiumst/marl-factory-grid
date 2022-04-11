@@ -5,10 +5,10 @@ import numpy as np
 from environments.factory.base.objects import Agent, Entity, Action
 from environments.factory.factory_dirt import Dirt, DirtRegister, DirtFactory
 from environments.factory.base.objects import Floor
-from environments.factory.base.registers import Floors, Entities, EntityRegister
+from environments.factory.base.registers import Floors, Entities, EntityCollection
 
 
-class Machines(EntityRegister):
+class Machines(EntityCollection):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

@@ -11,7 +11,7 @@ from environments.helpers import EnvActions as BaseActions
 
 from environments.factory.base.base_factory import BaseFactory
 from environments.factory.base.objects import Agent, Action, Entity, Floor
-from environments.factory.base.registers import Entities, EntityRegister
+from environments.factory.base.registers import Entities, EntityCollection
 
 from environments.factory.base.renderer import RenderEntity
 from environments.utility_classes import ObservationProperties
@@ -61,7 +61,7 @@ class Dirt(Entity):
 
     def set_new_amount(self, amount):
         self._amount = amount
-        self._register.notify_change_to_value(self)
+        self._collection.notify_change_to_value(self)
 
     def summarize_state(self, **kwargs):
         state_dict = super().summarize_state(**kwargs)
@@ -69,7 +69,7 @@ class Dirt(Entity):
         return state_dict
 
 
-class DirtRegister(EntityRegister):
+class DirtRegister(EntityCollection):
 
     _accepted_objects = Dirt
 
@@ -93,7 +93,7 @@ class DirtRegister(EntityRegister):
                 dirt = self.by_pos(tile.pos)
                 if dirt is None:
                     dirt = Dirt(tile, self, amount=self.dirt_properties.max_spawn_amount)
-                    self.register_item(dirt)
+                    self.add_item(dirt)
                 else:
                     new_value = dirt.amount + self.dirt_properties.max_spawn_amount
                     dirt.set_new_amount(min(new_value, self.dirt_properties.max_local_amount))

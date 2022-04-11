@@ -213,7 +213,8 @@ if __name__ == '__main__':
                     env_factory.save_params(param_path)
 
                 # EnvMonitor Init
-                callbacks = [EnvMonitor(env_factory)]
+                env_monitor = EnvMonitor(env_factory)
+                callbacks = [env_monitor]
 
                 # Model Init
                 model = model_cls("MlpPolicy", env_factory, **policy_model_kwargs,
@@ -233,7 +234,7 @@ if __name__ == '__main__':
                 model.save(save_path)
 
                 # Monitor Save
-                callbacks[0].save_run(combination_path / 'monitor.pick',
+                env_monitor.save_run(combination_path / 'monitor.pick',
                                       auto_plotting_keys=['step_reward', 'collision'] + env_plot_keys)
 
                 # Better be save then sorry: Clean up!

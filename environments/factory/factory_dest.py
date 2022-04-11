@@ -9,7 +9,7 @@ from environments.factory.base.base_factory import BaseFactory
 from environments.helpers import Constants as BaseConstants
 from environments.helpers import EnvActions as BaseActions
 from environments.factory.base.objects import Agent, Entity, Action
-from environments.factory.base.registers import Entities, EntityRegister
+from environments.factory.base.registers import Entities, EntityCollection
 
 from environments.factory.base.renderer import RenderEntity
 
@@ -73,7 +73,7 @@ class Destination(Entity):
         return state_summary
 
 
-class Destinations(EntityRegister):
+class Destinations(EntityCollection):
 
     _accepted_objects = Destination
 
@@ -208,13 +208,13 @@ class DestFactory(BaseFactory):
             n_dest_to_spawn = len(destinations_to_spawn)
             if self.dest_prop.spawn_mode != DestModeOptions.GROUPED:
                 destinations = [Destination(tile, c.DEST) for tile in self[c.FLOOR].empty_tiles[:n_dest_to_spawn]]
-                self[c.DEST].register_additional_items(destinations)
+                self[c.DEST].add_additional_items(destinations)
                 for dest in destinations_to_spawn:
                     del self._dest_spawn_timer[dest]
                 self.print(f'{n_dest_to_spawn} new destinations have been spawned')
             elif self.dest_prop.spawn_mode == DestModeOptions.GROUPED and n_dest_to_spawn == self.dest_prop.n_dests:
                 destinations = [Destination(tile, self[c.DEST]) for tile in self[c.FLOOR].empty_tiles[:n_dest_to_spawn]]
-                self[c.DEST].register_additional_items(destinations)
+                self[c.DEST].add_additional_items(destinations)
                 for dest in destinations_to_spawn:
                     del self._dest_spawn_timer[dest]
                 self.print(f'{n_dest_to_spawn} new destinations have been spawned')
@@ -231,7 +231,7 @@ class DestFactory(BaseFactory):
             self._dest_spawn_timer[key] = min(self.dest_prop.spawn_frequency, self._dest_spawn_timer[key] + 1)
         for dest in list(self[c.DEST].values()):
             if dest.is_considered_reached:
-                dest.change_register(self[c.DEST])
+                dest.change_parent_collection(self[c.DEST])
                 self._dest_spawn_timer[dest.name] = 0
                 self.print(f'{dest.name} is reached now, removing...')
             else:

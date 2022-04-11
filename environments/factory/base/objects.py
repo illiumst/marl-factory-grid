@@ -72,15 +72,15 @@ class EnvObject(Object):
     def encoding(self):
         return c.OCCUPIED_CELL
 
-    def __init__(self, register, **kwargs):
+    def __init__(self, collection, **kwargs):
         super(EnvObject, self).__init__(**kwargs)
-        self._register = register
+        self._collection = collection
 
-    def change_register(self, register):
-        register.register_item(self)
-        self._register.delete_env_object(self)
-        self._register = register
-        return self._register == register
+    def change_parent_collection(self, other_collection):
+        other_collection.add_item(self)
+        self._collection.delete_env_object(self)
+        self._collection = other_collection
+        return self._collection == other_collection
 # With Rendering
 
 
@@ -153,7 +153,7 @@ class MoveableEntity(Entity):
             curr_tile.leave(self)
             self._tile = next_tile
             self._last_tile = curr_tile
-            self._register.notify_change_to_value(self)
+            self._collection.notify_change_to_value(self)
             return c.VALID
         else:
             return c.NOT_VALID
@@ -371,13 +371,13 @@ class Door(Entity):
     def _open(self):
         self.connectivity.add_edges_from([(self.pos, x) for x in range(len(self.connectivity_subgroups))])
         self._state = c.OPEN_DOOR
-        self._register.notify_change_to_value(self)
+        self._collection.notify_change_to_value(self)
         self.time_to_close = self.auto_close_interval
 
     def _close(self):
         self.connectivity.remove_node(self.pos)
         self._state = c.CLOSED_DOOR
-        self._register.notify_change_to_value(self)
+        self._collection.notify_change_to_value(self)
 
     def is_linked(self, old_pos, new_pos):
         try:

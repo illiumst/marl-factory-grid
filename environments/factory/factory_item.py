@@ -9,7 +9,7 @@ from environments.helpers import Constants as BaseConstants
 from environments.helpers import EnvActions as BaseActions
 from environments import helpers as h
 from environments.factory.base.objects import Agent, Entity, Action, Floor
-from environments.factory.base.registers import Entities, EntityRegister, BoundEnvObjRegister, ObjectRegister
+from environments.factory.base.registers import Entities, EntityCollection, BoundEnvObjCollection, ObjectCollection
 
 from environments.factory.base.renderer import RenderEntity
 
@@ -53,17 +53,17 @@ class Item(Entity):
         self._auto_despawn = auto_despawn
 
     def set_tile_to(self, no_pos_tile):
-        assert self._register.__class__.__name__ != ItemRegister.__class__
+        assert self._collection.__class__.__name__ != ItemRegister.__class__
         self._tile = no_pos_tile
 
 
-class ItemRegister(EntityRegister):
+class ItemRegister(EntityCollection):
 
     _accepted_objects = Item
 
     def spawn_items(self, tiles: List[Floor]):
         items = [Item(tile, self) for tile in tiles]
-        self.register_additional_items(items)
+        self.add_additional_items(items)
 
     def despawn_items(self, items: List[Item]):
         items = [items] if isinstance(items, Item) else items
@@ -71,7 +71,7 @@ class ItemRegister(EntityRegister):
             del self[item]
 
 
-class Inventory(BoundEnvObjRegister):
+class Inventory(BoundEnvObjCollection):
 
     @property
     def name(self):
@@ -98,7 +98,7 @@ class Inventory(BoundEnvObjRegister):
         return item_to_pop
 
 
-class Inventories(ObjectRegister):
+class Inventories(ObjectCollection):
 
     _accepted_objects = Inventory
     is_blocking_light = False
@@ -114,7 +114,7 @@ class Inventories(ObjectRegister):
     def spawn_inventories(self, agents, capacity):
         inventories = [self._accepted_objects(agent, capacity, self._obs_shape)
                        for _, agent in enumerate(agents)]
-        self.register_additional_items(inventories)
+        self.add_additional_items(inventories)
 
     def idx_by_entity(self, entity):
         try:
@@ -161,7 +161,7 @@ class DropOffLocation(Entity):
             return super().summarize_state(n_steps=n_steps)
 
 
-class DropOffLocations(EntityRegister):
+class DropOffLocations(EntityCollection):
 
     _accepted_objects = DropOffLocation
 
@@ -250,7 +250,7 @@ class ItemFactory(BaseFactory):
                           reason=a.ITEM_ACTION, info=info_dict)
             return valid, reward
         elif item := self[c.ITEM].by_pos(agent.pos):
-            item.change_register(inventory)
+            item.change_parent_collection(inventory)
             item.set_tile_to(self._NO_POS_TILE)
             self.print(f'{agent.name} just picked up an item at {agent.pos}')
             info_dict = {f'{agent.name}_{a.ITEM_ACTION}_VALID': 1, f'{a.ITEM_ACTION}_VALID': 1}

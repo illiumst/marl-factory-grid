@@ -156,14 +156,14 @@ class BaseFactory(gym.Env):
             np.argwhere(level_array == c.OCCUPIED_CELL),
             self._level_shape
         )
-        self._entities.register_additional_items({c.WALLS: walls})
+        self._entities.add_additional_items({c.WALLS: walls})
 
         # Floor
         floor = Floors.from_argwhere_coordinates(
             np.argwhere(level_array == c.FREE_CELL),
             self._level_shape
         )
-        self._entities.register_additional_items({c.FLOOR: floor})
+        self._entities.add_additional_items({c.FLOOR: floor})
 
         # NOPOS
         self._NO_POS_TILE = Floor(c.NO_POS, None)
@@ -177,12 +177,12 @@ class BaseFactory(gym.Env):
                 doors = Doors.from_tiles(door_tiles, self._level_shape, have_area=self.obs_prop.indicate_door_area,
                                          entity_kwargs=dict(context=floor)
                                          )
-                self._entities.register_additional_items({c.DOORS: doors})
+                self._entities.add_additional_items({c.DOORS: doors})
 
         # Actions
         self._actions = Actions(self.mv_prop, can_use_doors=self.parse_doors)
         if additional_actions := self.actions_hook:
-            self._actions.register_additional_items(additional_actions)
+            self._actions.add_additional_items(additional_actions)
 
         # Agents
         agents_to_spawn = self.n_agents-len(self._injected_agents)
@@ -196,10 +196,10 @@ class BaseFactory(gym.Env):
         if self._injected_agents:
             initialized_injections = list()
             for i, injection in enumerate(self._injected_agents):
-                agents.register_item(injection(self, floor.empty_tiles[0], agents, static_problem=False))
+                agents.add_item(injection(self, floor.empty_tiles[0], agents, static_problem=False))
                 initialized_injections.append(agents[-1])
             self._initialized_injections = initialized_injections
-        self._entities.register_additional_items({c.AGENT: agents})
+        self._entities.add_additional_items({c.AGENT: agents})
 
         if self.obs_prop.additional_agent_placeholder is not None:
             # TODO: Make this accept Lists for multiple placeholders
@@ -210,18 +210,18 @@ class BaseFactory(gym.Env):
                                                        fill_value=self.obs_prop.additional_agent_placeholder)
                                                    )
 
-            self._entities.register_additional_items({c.AGENT_PLACEHOLDER: placeholder})
+            self._entities.add_additional_items({c.AGENT_PLACEHOLDER: placeholder})
 
         # Additional Entitites from SubEnvs
         if additional_entities := self.entities_hook:
-            self._entities.register_additional_items(additional_entities)
+            self._entities.add_additional_items(additional_entities)
 
         if self.obs_prop.show_global_position_info:
             global_positions = GlobalPositions(self._level_shape)
             # This moved into the GlobalPosition object
             # obs_shape_2d = self._level_shape if not self._pomdp_r else ((self.pomdp_diameter,) * 2)
             global_positions.spawn_global_position_objects(self[c.AGENT])
-            self._entities.register_additional_items({c.GLOBAL_POSITION: global_positions})
+            self._entities.add_additional_items({c.GLOBAL_POSITION: global_positions})
 
         # Return
         return self._entities
@@ -535,7 +535,7 @@ class BaseFactory(gym.Env):
 
     def _check_agent_move(self, agent, action: Action) -> (Floor, bool):
         # Actions
-        x_diff, y_diff = h.ACTIONMAP[action.identifier]
+        x_diff, y_diff = a.resolve_movement_action_to_coords(action.identifier)
         x_new = agent.x + x_diff
         y_new = agent.y + y_diff
 

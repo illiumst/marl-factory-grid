@@ -215,7 +215,7 @@ if __name__ == '__main__':
                                 clean_amount=0.34,
                                 max_spawn_amount=0.1, max_global_amount=20,
                                 max_local_amount=1, spawn_frequency=0, max_spawn_ratio=0.05,
-                                dirt_smear_amount=0.0, agent_can_interact=True)
+                                dirt_smear_amount=0.0)
     item_props = ItemProperties(n_items=10,
                                 spawn_frequency=30, n_drop_off_locations=2,
                                 max_agent_inventory_capacity=15)
@@ -349,6 +349,7 @@ if __name__ == '__main__':
                         # Env Init & Model kwargs definition
                         if model_cls.__name__ in ["PPO", "A2C"]:
                             # env_factory = env_class(**env_kwargs)
+
                             env_factory = SubprocVecEnv([encapsule_env_factory(env_class, env_kwargs)
                                                          for _ in range(6)], start_method="spawn")
                             model_kwargs = policy_model_kwargs()
