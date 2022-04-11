@@ -1,12 +1,14 @@
 numpy
 scipy
 tqdm
+pandas
 seaborn>=0.11.1
-matplotlib>=3.4.1
+matplotlib>=3.3.4
 stable-baselines3>=1.0
 pygame>=2.1.0
 gym>=0.18.0
-networkx>=2.6.1
+networkx>=2.6.3
 simplejson>=3.17.5
 PyYAML>=6.0
-git+https://github.com/facebookresearch/salina.git@main#egg=salina
+einops
+natsort
