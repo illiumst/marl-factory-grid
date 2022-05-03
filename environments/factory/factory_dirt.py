@@ -33,7 +33,7 @@ class RewardsDirt(NamedTuple):
 
 class DirtProperties(NamedTuple):
     initial_dirt_ratio: float = 0.3         # On INIT, on max how many tiles does the dirt spawn in percent.
-    initial_dirt_spawn_r_var: float = 0.05   # How much does the dirt spawn amount vary?
+    initial_dirt_spawn_r_var: float = 0.05  # How much does the dirt spawn amount vary?
     clean_amount: float = 1                 # How much does the robot clean with one actions.
     max_spawn_ratio: float = 0.20           # On max how many tiles does the dirt spawn in percent.
     max_spawn_amount: float = 0.3           # How much dirt does spawn per tile at max.
