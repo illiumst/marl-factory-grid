@@ -20,10 +20,10 @@ except NameError:
     pass
 
 from environments import helpers as h
+from environments.factory.additional.item.factory_item import ItemFactory
+from environments.factory.additional.item.item_util import ItemProperties
 from environments.logging.envmonitor import EnvMonitor
 from environments.logging.recorder import EnvRecorder
-from environments.factory.additional.dirt.dirt_util import DirtProperties
-from environments.factory.additional.dirt.factory_dirt import DirtFactory
 from environments.utility_classes import MovementProperties, ObservationProperties, AgentRenderOptions
 
 from plotting.compare_runs import compare_seed_runs
@@ -31,7 +31,7 @@ from plotting.compare_runs import compare_seed_runs
 """
 Welcome to this quick start file. Here we will see how to:
     0. Setup I/O Paths
-    1. Setup parameters for the environments (dirt-factory).
+    1. Setup parameters for the environments (item-factory).
     2. Setup parameters for the agent training (SB3: PPO) and save metrics.
         Run the training.
     3. Save env and agent for later analysis.
@@ -47,7 +47,7 @@ if __name__ == '__main__':
     train_steps = 1e6
     n_seeds = 3
     model_class = sb3.PPO
-    env_class = DirtFactory
+    env_class = ItemFactory
 
     env_params_json = 'env_params.json'
 
@@ -59,9 +59,8 @@ if __name__ == '__main__':
     exp_path = study_root_path / identifier
 
     #########################################################
-    # 1. Setup parameters for the environments (dirt-factory).
-
-
+    # 1. Setup parameters for the environments (item-factory).
+    #
     # Define property object parameters.
     #  'ObservationProperties' are for specifying how the agent sees the env.
     obs_props = ObservationProperties(render_agents=AgentRenderOptions.NOT,  # Agents won`t be shown in the obs at all
@@ -75,17 +74,15 @@ if __name__ == '__main__':
                                     allow_square_movement=True,     # Manhattan (edges)
                                     allow_no_op=False)              # Pause movement (do nothing)
 
-    #  'DirtProperties' control if and how dirt is spawned
+    # 'ItemProperties' control if and how item is spawned
     # TODO: Comments
-    dirt_props = DirtProperties(initial_dirt_ratio=0.35,
-                                initial_dirt_spawn_r_var=0.1,
-                                clean_amount=0.34,
-                                max_spawn_amount=0.1,
-                                max_global_amount=20,
-                                max_local_amount=1,
-                                spawn_frequency=0,
-                                max_spawn_ratio=0.05,
-                                dirt_smear_amount=0.0)
+    item_props = ItemProperties(
+        n_items                      = 7,     # How many items are there at the same time
+        spawn_frequency              = 50,     # Spawn Frequency in Steps
+        n_drop_off_locations         = 10,     # How many DropOff locations are there at the same time
+        max_dropoff_storage_size     = 0,     # How many items are needed until the dropoff is full
+        max_agent_inventory_capacity = 5,     # How many items are needed until the agent inventory is full)
+        )
 
     #  These are the EnvKwargs for initializing the env class, holding all former parameter-classes
     # TODO: Comments
@@ -98,13 +95,12 @@ if __name__ == '__main__':
                           mv_prop=move_props,    # See Above
                           obs_prop=obs_props,    # See Above
                           done_at_collision=True,
-                          dirt_prop=dirt_props
+                          item_prop=item_props
                           )
 
     #########################################################
     # 2. Setup parameters for the agent training (SB3: PPO) and save metrics.
     agent_kwargs = dict()
-
 
     #########################################################
     # Run the Training
@@ -126,7 +122,7 @@ if __name__ == '__main__':
         model_save_path = seed_path / f'model.zip'
 
         # Env Init & Model kwargs definition
-        with env_class(**env_kwargs) as env_factory:
+        with ItemFactory(**env_kwargs) as env_factory:
 
             # EnvMonitor Init
             env_monitor_callback = EnvMonitor(env_factory)
@@ -176,7 +172,7 @@ if __name__ == '__main__':
             env_kwargs.update(done_at_collision=True)
 
         # Init Env
-        with env_class(**env_kwargs) as env_factory:
+        with ItemFactory(**env_kwargs) as env_factory:
             monitored_env_factory = EnvMonitor(env_factory)
 
             # Evaluation Loop for i in range(n Episodes)

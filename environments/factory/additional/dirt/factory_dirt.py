@@ -1,109 +1,20 @@
 import time
 from pathlib import Path
-from typing import List, Union, NamedTuple, Dict
+from typing import List, Union, Dict
 import random
 
 import numpy as np
 
-from algorithms.TSP_dirt_agent import TSPDirtAgent
-from environments.helpers import Constants as BaseConstants
-from environments.helpers import EnvActions as BaseActions
+from environments.factory.additional.dirt.dirt_collections import DirtRegister
+from environments.factory.additional.dirt.dirt_entity import Dirt
+from environments.factory.additional.dirt.dirt_util import Constants, Actions, RewardsDirt, DirtProperties
 
 from environments.factory.base.base_factory import BaseFactory
-from environments.factory.base.objects import Agent, Action, Entity, Floor
-from environments.factory.base.registers import Entities, EntityCollection
+from environments.factory.base.objects import Agent, Action
+from environments.factory.base.registers import Entities
 
 from environments.factory.base.renderer import RenderEntity
 from environments.utility_classes import ObservationProperties
-
-
-class Constants(BaseConstants):
-    DIRT = 'Dirt'
-
-
-class Actions(BaseActions):
-    CLEAN_UP = 'do_cleanup_action'
-
-
-class RewardsDirt(NamedTuple):
-    CLEAN_UP_VALID: float          = 0.5
-    CLEAN_UP_FAIL: float           = -0.1
-    CLEAN_UP_LAST_PIECE: float     = 4.5
-
-
-class DirtProperties(NamedTuple):
-    initial_dirt_ratio: float = 0.3         # On INIT, on max how many tiles does the dirt spawn in percent.
-    initial_dirt_spawn_r_var: float = 0.05  # How much does the dirt spawn amount vary?
-    clean_amount: float = 1                 # How much does the robot clean with one actions.
-    max_spawn_ratio: float = 0.20           # On max how many tiles does the dirt spawn in percent.
-    max_spawn_amount: float = 0.3           # How much dirt does spawn per tile at max.
-    spawn_frequency: int = 0                # Spawn Frequency in Steps.
-    max_local_amount: int = 2               # Max dirt amount per tile.
-    max_global_amount: int = 20             # Max dirt amount in the whole environment.
-    dirt_smear_amount: float = 0.2          # Agents smear dirt, when not cleaning up in place.
-    done_when_clean: bool = True
-
-
-class Dirt(Entity):
-
-    @property
-    def amount(self):
-        return self._amount
-
-    @property
-    def encoding(self):
-        # Edit this if you want items to be drawn in the ops differntly
-        return self._amount
-
-    def __init__(self, *args, amount=None, **kwargs):
-        super(Dirt, self).__init__(*args, **kwargs)
-        self._amount = amount
-
-    def set_new_amount(self, amount):
-        self._amount = amount
-        self._collection.notify_change_to_value(self)
-
-    def summarize_state(self, **kwargs):
-        state_dict = super().summarize_state(**kwargs)
-        state_dict.update(amount=float(self.amount))
-        return state_dict
-
-
-class DirtRegister(EntityCollection):
-
-    _accepted_objects = Dirt
-
-    @property
-    def amount(self):
-        return sum([dirt.amount for dirt in self])
-
-    @property
-    def dirt_properties(self):
-        return self._dirt_properties
-
-    def __init__(self, dirt_properties, *args):
-        super(DirtRegister, self).__init__(*args)
-        self._dirt_properties: DirtProperties = dirt_properties
-
-    def spawn_dirt(self, then_dirty_tiles) -> bool:
-        if isinstance(then_dirty_tiles, Floor):
-            then_dirty_tiles = [then_dirty_tiles]
-        for tile in then_dirty_tiles:
-            if not self.amount > self.dirt_properties.max_global_amount:
-                dirt = self.by_pos(tile.pos)
-                if dirt is None:
-                    dirt = Dirt(tile, self, amount=self.dirt_properties.max_spawn_amount)
-                    self.add_item(dirt)
-                else:
-                    new_value = dirt.amount + self.dirt_properties.max_spawn_amount
-                    dirt.set_new_amount(min(new_value, self.dirt_properties.max_local_amount))
-            else:
-                return c.NOT_VALID
-        return c.VALID
-
-    def __repr__(self):
-        s = super(DirtRegister, self).__repr__()
-        return f'{s[:-1]}, {self.amount})'
 
 
 def softmax(x):
@@ -200,8 +111,8 @@ class DirtFactory(BaseFactory):
         super_reward_info = super().step_hook()
         if smear_amount := self.dirt_prop.dirt_smear_amount:
             for agent in self[c.AGENT]:
-                if agent.temp_valid and agent.last_pos != c.NO_POS:
-                    if self._actions.is_moving_action(agent.temp_action):
+                if agent.step_result['action_valid'] and agent.last_pos != c.NO_POS:
+                    if self._actions.is_moving_action(agent.step_result['action_name']):
                         if old_pos_dirt := self[c.DIRT].by_pos(agent.last_pos):
                             if smeared_dirt := round(old_pos_dirt.amount * smear_amount, 2):
                                 old_pos_dirt.set_new_amount(max(0, old_pos_dirt.amount-smeared_dirt))
@@ -248,8 +159,8 @@ class DirtFactory(BaseFactory):
         additional_observations.update({c.DIRT: self[c.DIRT].as_array()})
         return additional_observations
 
-    def gather_additional_info(self, agent: Agent) -> dict:
-        event_reward_dict = super().per_agent_reward_hook(agent)
+    def post_step_hook(self) -> List[Dict[str, int]]:
+        super_post_step = super(DirtFactory, self).post_step_hook()
         info_dict = dict()
 
         dirt = [dirt.amount for dirt in self[c.DIRT]]
@@ -264,8 +175,8 @@ class DirtFactory(BaseFactory):
         info_dict.update(dirt_amount=current_dirt_amount)
         info_dict.update(dirty_tile_count=dirty_tile_count)
 
-        event_reward_dict.update({'info': info_dict})
-        return event_reward_dict
+        super_post_step.append(info_dict)
+        return super_post_step
 
 
 if __name__ == '__main__':
@@ -304,7 +215,6 @@ if __name__ == '__main__':
                               # inject_agents=[TSPDirtAgent],
                               )
 
-        factory.save_params(Path('rewards_param'))
 
         # noinspection DuplicatedCode
         n_actions = factory.action_space.n - 1

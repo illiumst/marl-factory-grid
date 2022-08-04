@@ -1,131 +1,18 @@
 import time
-from collections import defaultdict
 from enum import Enum
-from typing import List, Union, NamedTuple, Dict
+from typing import List, Union, Dict
 import numpy as np
 import random
 
+from environments.factory.additional.dest.dest_collections import Destinations, ReachedDestinations
+from environments.factory.additional.dest.dest_enitites import Destination
+from environments.factory.additional.dest.dest_util import Constants, Actions, RewardsDest, DestModeOptions, \
+    DestProperties
 from environments.factory.base.base_factory import BaseFactory
-from environments.helpers import Constants as BaseConstants
-from environments.helpers import EnvActions as BaseActions
-from environments.factory.base.objects import Agent, Entity, Action
-from environments.factory.base.registers import Entities, EntityCollection
+from environments.factory.base.objects import Agent, Action
+from environments.factory.base.registers import Entities
 
 from environments.factory.base.renderer import RenderEntity
-
-
-class Constants(BaseConstants):
-    # Destination Env
-    DEST                    = 'Destination'
-    DESTINATION             = 1
-    DESTINATION_DONE        = 0.5
-    DEST_REACHED            = 'ReachedDestination'
-
-
-class Actions(BaseActions):
-    WAIT_ON_DEST    = 'WAIT'
-
-
-class RewardsDest(NamedTuple):
-
-    WAIT_VALID: float      = 0.1
-    WAIT_FAIL: float       = -0.1
-    DEST_REACHED: float    = 5.0
-
-
-class Destination(Entity):
-
-    @property
-    def any_agent_has_dwelled(self):
-        return bool(len(self._per_agent_times))
-
-    @property
-    def currently_dwelling_names(self):
-        return self._per_agent_times.keys()
-
-    @property
-    def encoding(self):
-        return c.DESTINATION
-
-    def __init__(self, *args, dwell_time: int = 0, **kwargs):
-        super(Destination, self).__init__(*args, **kwargs)
-        self.dwell_time = dwell_time
-        self._per_agent_times = defaultdict(lambda: dwell_time)
-
-    def do_wait_action(self, agent: Agent):
-        self._per_agent_times[agent.name] -= 1
-        return c.VALID
-
-    def leave(self, agent: Agent):
-        del self._per_agent_times[agent.name]
-
-    @property
-    def is_considered_reached(self):
-        agent_at_position = any(c.AGENT.lower() in x.name.lower() for x in self.tile.guests_that_can_collide)
-        return (agent_at_position and not self.dwell_time) or any(x == 0 for x in self._per_agent_times.values())
-
-    def agent_is_dwelling(self, agent: Agent):
-        return self._per_agent_times[agent.name] < self.dwell_time
-
-    def summarize_state(self, n_steps=None) -> dict:
-        state_summary = super().summarize_state(n_steps=n_steps)
-        state_summary.update(per_agent_times=self._per_agent_times)
-        return state_summary
-
-
-class Destinations(EntityCollection):
-
-    _accepted_objects = Destination
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.is_blocking_light = False
-        self.can_be_shadowed = False
-
-    def as_array(self):
-        self._array[:] = c.FREE_CELL
-        # ToDo: Switch to new Style Array Put
-        # indices = list(zip(range(len(cls)), *zip(*[x.pos for x in cls])))
-        # np.put(cls._array, [np.ravel_multi_index(x, cls._array.shape) for x in indices], cls.encodings)
-        for item in self:
-            if item.pos != c.NO_POS:
-                self._array[0, item.x, item.y] = item.encoding
-        return self._array
-
-    def __repr__(self):
-        super(Destinations, self).__repr__()
-
-
-class ReachedDestinations(Destinations):
-    _accepted_objects = Destination
-
-    def __init__(self, *args, **kwargs):
-        super(ReachedDestinations, self).__init__(*args, **kwargs)
-        self.can_be_shadowed = False
-        self.is_blocking_light = False
-
-    def summarize_states(self, n_steps=None):
-        return {}
-
-
-class DestModeOptions(object):
-    DONE        = 'DONE'
-    GROUPED     = 'GROUPED'
-    PER_DEST    = 'PER_DEST'
-
-
-class DestProperties(NamedTuple):
-    n_dests:                                     int = 1     # How many destinations are there
-    dwell_time:                                  int = 0     # How long does the agent need to "wait" on a destination
-    spawn_frequency:                             int = 0
-    spawn_in_other_zone:                        bool = True  #
-    spawn_mode:                                  str = DestModeOptions.DONE
-
-    assert dwell_time >= 0, 'dwell_time cannot be < 0!'
-    assert spawn_frequency >= 0, 'spawn_frequency cannot be < 0!'
-    assert n_dests >= 0, 'n_destinations cannot be < 0!'
-    assert (spawn_mode == DestModeOptions.DONE) != bool(spawn_frequency)
-
 
 c = Constants
 a = Actions
@@ -135,7 +22,7 @@ a = Actions
 class DestFactory(BaseFactory):
     # noinspection PyMissingConstructor
 
-    def __init__(self, *args, dest_prop: DestProperties  = DestProperties(), rewards_dest: RewardsDest = RewardsDest(),
+    def __init__(self, *args, dest_prop: DestProperties = DestProperties(), rewards_dest: RewardsDest = RewardsDest(),
                  env_seed=time.time_ns(), **kwargs):
         if isinstance(dest_prop, dict):
             dest_prop = DestProperties(**dest_prop)
@@ -151,6 +38,7 @@ class DestFactory(BaseFactory):
     def actions_hook(self) -> Union[Action, List[Action]]:
         # noinspection PyUnresolvedReferences
         super_actions = super().actions_hook
+        # If targets are considers reached after some time, agents need an action for that.
         if self.dest_prop.dwell_time:
             super_actions.append(Action(enum_ident=a.WAIT_ON_DEST))
         return super_actions
@@ -207,7 +95,7 @@ class DestFactory(BaseFactory):
         if destinations_to_spawn:
             n_dest_to_spawn = len(destinations_to_spawn)
             if self.dest_prop.spawn_mode != DestModeOptions.GROUPED:
-                destinations = [Destination(tile, c.DEST) for tile in self[c.FLOOR].empty_tiles[:n_dest_to_spawn]]
+                destinations = [Destination(tile, self[c.DEST]) for tile in self[c.FLOOR].empty_tiles[:n_dest_to_spawn]]
                 self[c.DEST].add_additional_items(destinations)
                 for dest in destinations_to_spawn:
                     del self._dest_spawn_timer[dest]
@@ -229,9 +117,10 @@ class DestFactory(BaseFactory):
         super_reward_info = super().step_hook()
         for key, val in self._dest_spawn_timer.items():
             self._dest_spawn_timer[key] = min(self.dest_prop.spawn_frequency, self._dest_spawn_timer[key] + 1)
+
         for dest in list(self[c.DEST].values()):
             if dest.is_considered_reached:
-                dest.change_parent_collection(self[c.DEST])
+                dest.change_parent_collection(self[c.DEST_REACHED])
                 self._dest_spawn_timer[dest.name] = 0
                 self.print(f'{dest.name} is reached now, removing...')
             else:
@@ -251,18 +140,19 @@ class DestFactory(BaseFactory):
         additional_observations.update({c.DEST: self[c.DEST].as_array()})
         return additional_observations
 
-    def per_agent_reward_hook(self, agent: Agent) -> Dict[str, dict]:
+    def per_agent_reward_hook(self, agent: Agent) -> List[dict]:
         # noinspection PyUnresolvedReferences
-        reward_event_dict = super().per_agent_reward_hook(agent)
+        reward_event_list = super().per_agent_reward_hook(agent)
         if len(self[c.DEST_REACHED]):
             for reached_dest in list(self[c.DEST_REACHED]):
                 if agent.pos == reached_dest.pos:
                     self.print(f'{agent.name} just reached destination at {agent.pos}')
                     self[c.DEST_REACHED].delete_env_object(reached_dest)
                     info_dict = {f'{agent.name}_{c.DEST_REACHED}': 1}
-                    reward_event_dict.update({c.DEST_REACHED: {'reward': self.rewards_dest.DEST_REACHED,
-                                                               'info': info_dict}})
-        return reward_event_dict
+                    reward_event_list.append({'value': self.rewards_dest.DEST_REACHED,
+                                              'reason': c.DEST_REACHED,
+                                              'info': info_dict})
+        return reward_event_list
 
     def render_assets_hook(self, mode='human'):
         # noinspection PyUnresolvedReferences

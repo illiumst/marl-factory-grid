@@ -3,6 +3,21 @@ import gym
 from gym.wrappers.frame_stack import FrameStack
 
 
+class EnvCombiner(object):
+
+    def __init__(self, *envs_cls):
+        self._env_dict = {env_cls.__name__: env_cls for env_cls in envs_cls}
+
+    @staticmethod
+    def combine_cls(name, *envs_cls):
+        return type(name,envs_cls,{})
+
+    def build(self):
+        name = f'{"".join([x.lower().replace("factory").capitalize() for x in self._env_dict.keys()])}Factory'
+
+        return self.combine_cls(name, tuple(self._env_dict.values()))
+
+
 class AgentRenderOptions(object):
     """
     Class that specifies the available options for the way agents are represented in the env observation.
@@ -46,7 +61,7 @@ class ObservationProperties(NamedTuple):
     Property holder; for setting multiple related parameters through a single parameter. Comes with default values.
     """
 
-    """How to represent agents in the observation space. This may also alters the obs-shape."""
+    """How to represent agents in the observation space. This may also alter the obs-shape."""
     render_agents: AgentRenderOptions = AgentRenderOptions.SEPERATE
 
     """Obserations are build per agent; whether the current agent should be represented in its own observation."""

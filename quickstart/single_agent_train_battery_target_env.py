@@ -20,10 +20,11 @@ except NameError:
     pass
 
 from environments import helpers as h
+from environments.factory.additional.dest.dest_util import DestModeOptions, DestProperties
+from environments.factory.additional.btry.btry_util import BatteryProperties
 from environments.logging.envmonitor import EnvMonitor
 from environments.logging.recorder import EnvRecorder
-from environments.factory.additional.dirt.dirt_util import DirtProperties
-from environments.factory.additional.dirt.factory_dirt import DirtFactory
+from environments.factory.additional.combined_factories import DestBatteryFactory
 from environments.utility_classes import MovementProperties, ObservationProperties, AgentRenderOptions
 
 from plotting.compare_runs import compare_seed_runs
@@ -47,7 +48,7 @@ if __name__ == '__main__':
     train_steps = 1e6
     n_seeds = 3
     model_class = sb3.PPO
-    env_class = DirtFactory
+    env_class = DestBatteryFactory
 
     env_params_json = 'env_params.json'
 
@@ -77,15 +78,21 @@ if __name__ == '__main__':
 
     #  'DirtProperties' control if and how dirt is spawned
     # TODO: Comments
-    dirt_props = DirtProperties(initial_dirt_ratio=0.35,
-                                initial_dirt_spawn_r_var=0.1,
-                                clean_amount=0.34,
-                                max_spawn_amount=0.1,
-                                max_global_amount=20,
-                                max_local_amount=1,
-                                spawn_frequency=0,
-                                max_spawn_ratio=0.05,
-                                dirt_smear_amount=0.0)
+    dest_props = DestProperties(
+        n_dests              = 2,  # How many destinations are there
+        dwell_time           = 0,  # How long does the agent need to "wait" on a destination
+        spawn_frequency      = 0,
+        spawn_in_other_zone  = True,  #
+        spawn_mode           = DestModeOptions.DONE,
+    )
+    btry_props = BatteryProperties(
+        initial_charge          = 0.9,  #
+        charge_rate             = 0.4,  #
+        charge_locations        = 3,  #
+        per_action_costs        = 0.01,
+        done_when_discharged    = True,
+        multi_charge            = False,
+    )
 
     #  These are the EnvKwargs for initializing the env class, holding all former parameter-classes
     # TODO: Comments
@@ -98,7 +105,8 @@ if __name__ == '__main__':
                           mv_prop=move_props,    # See Above
                           obs_prop=obs_props,    # See Above
                           done_at_collision=True,
-                          dirt_prop=dirt_props
+                          dest_prop=dest_props,
+                          btry_prop=btry_props
                           )
 
     #########################################################
@@ -135,7 +143,7 @@ if __name__ == '__main__':
             env_recorder_callback = EnvRecorder(env_factory, freq=int(train_steps / 400 / 10))
 
             # Model Init
-            model = model_class("MlpPolicy", env_factory,verbose=1, seed=seed, device='cpu')
+            model = model_class("MlpPolicy", env_factory, verbose=1, seed=seed, device='cpu')
 
             # Model train
             model.learn(total_timesteps=int(train_steps), callback=[env_monitor_callback, env_recorder_callback])

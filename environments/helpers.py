@@ -173,9 +173,9 @@ class RewardsBase(NamedTuple):
 
 class ObservationTranslator:
 
-    def __init__(self, obs_shape_2d: (int, int), this_named_observation_space: Dict[str, dict],
+    def __init__(self, this_named_observation_space: Dict[str, dict],
                  *per_agent_named_obs_spaces: Dict[str, dict],
-                 placeholder_fill_value: Union[int, str] = 'N'):
+                 placeholder_fill_value: Union[int, str, None] = None):
         """
         This is a helper class, which converts agents observations from joined environments.
         For example, agents trained in different environments may expect different observations.
@@ -183,8 +183,6 @@ class ObservationTranslator:
         A string identifier based approach is used.
         Currently, it is not possible to mix different obs shapes.
 
-        :param obs_shape_2d: The shape of the observation the agents expect.
-        :type  obs_shape_2d: tuple(int, int)
 
         :param this_named_observation_space: `Named observation space` of the joined environment.
         :type  this_named_observation_space: Dict[str, dict]
@@ -196,15 +194,15 @@ class ObservationTranslator:
         :type  placeholder_fill_value: Union[int, str] = 'N')
         """
 
-        assert len(obs_shape_2d) == 2
-        self.obs_shape = obs_shape_2d
         if isinstance(placeholder_fill_value, str):
             if placeholder_fill_value.lower() in ['normal', 'n']:
-                self.random_fill = lambda: np.random.normal(size=self.obs_shape)
+                self.random_fill = np.random.normal
             elif placeholder_fill_value.lower() in ['uniform', 'u']:
-                self.random_fill = lambda: np.random.uniform(size=self.obs_shape)
+                self.random_fill = np.random.uniform
             else:
-                raise ValueError('Please chooe between "uniform" or "normal"')
+                raise ValueError('Please chooe between "uniform" or "normal" ("u", "n").')
+        elif isinstance(placeholder_fill_value, int):
+            raise NotImplementedError('"Future Work."')
         else:
             self.random_fill = None
 
@@ -213,9 +211,21 @@ class ObservationTranslator:
 
     def translate_observation(self, agent_idx: int, obs: np.ndarray):
         target_obs_space = self._per_agent_named_obs_space[agent_idx]
-        translation = [idx_space_dict for name, idx_space_dict in target_obs_space.items()]
-        flat_translation = [x for y in translation for x in y]
-        return np.take(obs, flat_translation, axis=1 if obs.ndim == 4 else 0)
+        translation = dict()
+        for name, idxs in target_obs_space.items():
+            if name in self._this_named_obs_space:
+                for target_idx, this_idx in zip(idxs, self._this_named_obs_space[name]):
+                    taken_slice = np.take(obs, [this_idx], axis=1 if obs.ndim == 4 else 0)
+                    translation[target_idx] = taken_slice
+            elif random_fill := self.random_fill:
+                for target_idx in idxs:
+                    translation[target_idx] = random_fill(size=obs.shape[:-3] + (1,) + obs.shape[-2:])
+            else:
+                for target_idx in idxs:
+                    translation[target_idx] = np.zeros(shape=(obs.shape[:-3] + (1,) + obs.shape[-2:]))
+
+        translation = dict(sorted(translation.items()))
+        return np.concatenate(list(translation.values()), axis=-3)
 
     def translate_observations(self, observations: List[ArrayLike]):
         return [self.translate_observation(idx, observation) for idx, observation in enumerate(observations)]
@@ -241,7 +251,10 @@ class ActionTranslator:
         """
 
         self._target_named_action_space = target_named_action_space
-        self._per_agent_named_action_space = list(per_agent_named_action_space)
+        if isinstance(per_agent_named_action_space, (list, tuple)):
+            self._per_agent_named_action_space = per_agent_named_action_space
+        else:
+            self._per_agent_named_action_space = list(per_agent_named_action_space)
         self._per_agent_idx_actions = [{idx: a for a, idx in x.items()} for x in self._per_agent_named_action_space]
 
     def translate_action(self, agent_idx: int, action: int):

@@ -4,9 +4,9 @@ from pathlib import Path
 import yaml
 from stable_baselines3 import A2C, PPO, DQN
 
-from environments.factory.factory_dirt import Constants as c
+from environments.factory.additional.dirt.dirt_util import Constants
 
-from environments.factory.factory_dirt import DirtFactory
+from environments.factory.additional.dirt.factory_dirt import DirtFactory
 from environments.logging.envmonitor import EnvMonitor
 from environments.logging.recorder import EnvRecorder
 
@@ -23,7 +23,7 @@ if __name__ == '__main__':
     seed = 13
     n_agents = 1
     # out_path = Path('study_out/e_1_new_reward/no_obs/dirt/A2C_new_reward/0_A2C_new_reward')
-    out_path = Path('study_out/reload')
+    out_path = Path('quickstart/combinations/single_agent_train_dirt_env_1659374984/PPO_DirtFactory_1659374984/0_PPO_DirtFactory_1659374984/')
     model_path = out_path
 
     with (out_path / f'env_params.json').open('r') as f:
@@ -62,7 +62,7 @@ if __name__ == '__main__':
                 if render:
                     env.render()
                 try:
-                    door = next(x for x in env.unwrapped.unwrapped[c.DOORS] if x.is_open)
+                    door = next(x for x in env.unwrapped.unwrapped[Constants.DOORS] if x.is_open)
                     print('openDoor found')
                 except StopIteration:
                     pass

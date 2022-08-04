@@ -119,7 +119,6 @@ class Entity(EnvObject):
 
     def __repr__(self):
         return super(Entity, self).__repr__() + f'(@{self.pos})'
-# With Position in Env
 
 
 # TODO: Missing Documentation

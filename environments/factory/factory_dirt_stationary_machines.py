@@ -3,7 +3,9 @@ from typing import Dict, List, Union
 import numpy as np
 
 from environments.factory.base.objects import Agent, Entity, Action
-from environments.factory.factory_dirt import Dirt, DirtRegister, DirtFactory
+from environments.factory.factory_dirt import DirtFactory
+from environments.factory.additional.dirt.dirt_collections import DirtRegister
+from environments.factory.additional.dirt.dirt_entity import Dirt
 from environments.factory.base.objects import Floor
 from environments.factory.base.registers import Floors, Entities, EntityCollection
 
@@ -28,7 +30,6 @@ class StationaryMachinesDirtFactory(DirtFactory):
 
     def entities_hook(self) -> Dict[(str, Entities)]:
         super_entities = super().entities_hook()
-
         return super_entities
 
     def reset_hook(self) -> None:
@@ -48,8 +49,8 @@ class StationaryMachinesDirtFactory(DirtFactory):
         super_per_agent_raw_observations = super().per_agent_raw_observations_hook(agent)
         return super_per_agent_raw_observations
 
-    def per_agent_reward_hook(self, agent: Agent) -> Dict[str, dict]:
-        pass
+    def per_agent_reward_hook(self, agent: Agent) -> List[dict]:
+        return super(StationaryMachinesDirtFactory, self).per_agent_reward_hook(agent)
 
     def pre_step_hook(self) -> None:
         pass

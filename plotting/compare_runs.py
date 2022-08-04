@@ -76,10 +76,11 @@ def compare_seed_runs(run_path: Union[str, PathLike], use_tex: bool = False):
         skip_n = round(df_melted['Episode'].max() * 0.02)
         df_melted = df_melted[df_melted['Episode'] % skip_n == 0]
 
-    if run_path.is_dir():
-        prepare_plot(run_path / f'{run_path}_monitor_lineplot.png', df_melted, use_tex=use_tex)
-    elif run_path.exists() and run_path.is_file():
-        prepare_plot(run_path.parent / f'{run_path.parent}_monitor_lineplot.png', df_melted, use_tex=use_tex)
+    run_path.mkdir(parents=True, exist_ok=True)
+    if run_path.exists() and run_path.is_file():
+        prepare_plot(run_path.parent / f'{run_path.name}_monitor_lineplot.png', df_melted, use_tex=use_tex)
+    else:
+        prepare_plot(run_path / f'{run_path.name}_monitor_lineplot.png', df_melted, use_tex=use_tex)
     print('Plotting done.')
 
 

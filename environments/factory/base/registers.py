@@ -117,7 +117,7 @@ class EnvObjectCollection(ObjectCollection):
         return self._array
 
     def summarize_states(self, n_steps=None):
-        return [val.summarize_state(n_steps=n_steps) for val in self.values()]
+        return [entity.summarize_state(n_steps=n_steps) for entity in self.values()]
 
     def notify_change_to_free(self, env_object: EnvObject):
         self._array_change_notifyer(env_object, value=c.FREE_CELL)

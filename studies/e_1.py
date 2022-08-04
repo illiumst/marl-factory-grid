@@ -19,9 +19,11 @@ import simplejson
 from stable_baselines3.common.vec_env import SubprocVecEnv
 
 from environments import helpers as h
-from environments.factory.factory_dirt import DirtProperties, DirtFactory
+from environments.factory.factory_dirt import DirtFactory
+from environments.factory.dirt_util import DirtProperties
 from environments.factory.combined_factories import DirtItemFactory
-from environments.factory.factory_item import ItemProperties, ItemFactory
+from environments.factory.factory_item import ItemFactory
+from environments.factory.additional.item.item_util import ItemProperties
 from environments.logging.envmonitor import EnvMonitor
 from environments.utility_classes import MovementProperties, ObservationProperties, AgentRenderOptions
 import pickle

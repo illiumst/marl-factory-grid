@@ -1,12 +1,15 @@
 import random
 
-from environments.factory.factory_battery import BatteryFactory, BatteryProperties
-from environments.factory.factory_dest import DestFactory
-from environments.factory.factory_dirt import DirtFactory, DirtProperties
-from environments.factory.factory_item import ItemFactory
-
 
 # noinspection PyAbstractClass
+from environments.factory.additional.btry.btry_util import BatteryProperties
+from environments.factory.additional.btry.factory_battery import BatteryFactory
+from environments.factory.additional.dest.factory_dest import DestFactory
+from environments.factory.additional.dirt.dirt_util import DirtProperties
+from environments.factory.additional.dirt.factory_dirt import DirtFactory
+from environments.factory.additional.item.factory_item import ItemFactory
+
+
 class DirtItemFactory(ItemFactory, DirtFactory):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -20,6 +23,12 @@ class DirtBatteryFactory(DirtFactory, BatteryFactory):
 
 # noinspection PyAbstractClass
 class DirtDestItemFactory(ItemFactory, DirtFactory, DestFactory):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+
+# noinspection PyAbstractClass
+class DestBatteryFactory(BatteryFactory, DestFactory):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 

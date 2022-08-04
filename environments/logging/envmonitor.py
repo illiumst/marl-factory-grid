@@ -71,8 +71,8 @@ class EnvMonitor(BaseCallback):
             pass
         return
 
-    def save_run(self, filepath: Union[Path, str], auto_plotting_keys=None):
-        filepath = Path(filepath)
+    def save_run(self, filepath: Union[Path, str, None] = None, auto_plotting_keys=None):
+        filepath = Path(filepath or self._filepath)
         filepath.parent.mkdir(exist_ok=True, parents=True)
         with filepath.open('wb') as f:
             pickle.dump(self._monitor_df.reset_index(), f, protocol=pickle.HIGHEST_PROTOCOL)

@@ -20,9 +20,12 @@ import simplejson
 from environments.helpers import ActionTranslator, ObservationTranslator
 from environments.logging.recorder import EnvRecorder
 from environments import helpers as h
-from environments.factory.factory_dirt import DirtProperties, DirtFactory
-from environments.factory.factory_item import ItemProperties, ItemFactory
-from environments.factory.factory_dest import DestProperties, DestFactory, DestModeOptions
+from environments.factory.factory_dirt import DirtFactory
+from environments.factory.dirt_util import DirtProperties
+from environments.factory.factory_item import ItemFactory
+from environments.factory.additional.item.item_util import ItemProperties
+from environments.factory.factory_dest import DestFactory
+from environments.factory.additional.dest.dest_util import DestModeOptions, DestProperties
 from environments.factory.combined_factories import DirtDestItemFactory
 from environments.logging.envmonitor import EnvMonitor
 from environments.utility_classes import MovementProperties, ObservationProperties, AgentRenderOptions

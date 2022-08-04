@@ -2,8 +2,11 @@ def make(env_name, pomdp_r=2, max_steps=400, stack_n_frames=3, n_agents=1, indiv
     import yaml
     from pathlib import Path
     from environments.factory.combined_factories import DirtItemFactory
-    from environments.factory.factory_item import ItemFactory, ItemProperties
-    from environments.factory.factory_dirt import DirtProperties, DirtFactory, RewardsDirt
+    from environments.factory.factory_item import ItemFactory
+    from environments.factory.additional.item.item_util import ItemProperties
+    from environments.factory.factory_dirt import DirtFactory
+    from environments.factory.dirt_util import DirtProperties
+    from environments.factory.dirt_util import RewardsDirt
     from environments.utility_classes import AgentRenderOptions
 
     with (Path(__file__).parent / 'levels' / 'parameters' / f'{env_name}.yaml').open('r') as stream:
