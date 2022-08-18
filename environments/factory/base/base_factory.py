@@ -71,6 +71,12 @@ class BaseFactory(gym.Env):
         d['class_name'] = self.__class__.__name__
         return d
 
+    @property
+    def summarize_header(self):
+        summary_dict = self._summarize_state(stateless_entities=True)
+        summary_dict.update(actions=self._actions.summarize())
+        return summary_dict
+
     def __enter__(self):
         return self if self.obs_prop.frames_to_stack == 0 else \
             MarlFrameStack(FrameStack(self, self.obs_prop.frames_to_stack))
@@ -665,12 +671,12 @@ class BaseFactory(gym.Env):
         else:
             return []
 
-    def _summarize_state(self):
+    def _summarize_state(self, stateless_entities=False):
         summary = {f'{REC_TAC}step': self._steps}
 
         for entity_group in self._entities:
-            summary.update({f'{REC_TAC}{entity_group.name}': entity_group.summarize_states(n_steps=self._steps)})
-
+            if entity_group.is_stateless == stateless_entities:
+                summary.update({f'{REC_TAC}{entity_group.name}': entity_group.summarize_states()})
         return summary
 
     def print(self, string):

@@ -2,7 +2,7 @@ from typing import Dict, List
 
 import numpy as np
 
-from environments.factory.additional.btry.btry_collections import BatteriesRegister, ChargePods
+from environments.factory.additional.btry.btry_collections import Batteries, ChargePods
 from environments.factory.additional.btry.btry_util import Constants, Actions, RewardsBtry, BatteryProperties
 from environments.factory.base.base_factory import BaseFactory
 from environments.factory.base.objects import Agent, Action
@@ -45,8 +45,8 @@ class BatteryFactory(BaseFactory):
                                multi_charge=self.btry_prop.multi_charge)
         )
 
-        batteries = BatteriesRegister(self._level_shape if not self._pomdp_r else ((self.pomdp_diameter,) * 2),
-                                      )
+        batteries = Batteries(self._level_shape if not self._pomdp_r else ((self.pomdp_diameter,) * 2),
+                              )
         batteries.spawn_batteries(self[c.AGENT], self.btry_prop.initial_charge)
         super_entities.update({c.BATTERIES: batteries, c.CHARGE_PODS: charge_pods})
         return super_entities

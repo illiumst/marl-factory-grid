@@ -7,7 +7,7 @@ from environments.factory.base.registers import EntityCollection, BoundEnvObjCol
 from environments.factory.additional.item.item_entities import Item, DropOffLocation
 
 
-class ItemRegister(EntityCollection):
+class Items(EntityCollection):
 
     _accepted_objects = Item
 
@@ -37,9 +37,9 @@ class Inventory(BoundEnvObjCollection):
         return super(Inventory, self).as_array()
 
     def summarize_states(self, **kwargs):
-        attr_dict = {key: str(val) for key, val in self.__dict__.items() if not key.startswith('_') and key != 'data'}
-        attr_dict.update(dict(items={key: val.summarize_state(**kwargs) for key, val in self.items()}))
-        attr_dict.update(dict(name=self.name))
+        attr_dict = {key: val for key, val in self.__dict__.items() if not key.startswith('_') and key != 'data'}
+        attr_dict.update(dict(items=[val.summarize_state(**kwargs) for key, val in self.items()]))
+        attr_dict.update(dict(name=self.name, belongs_to=self._bound_entity.name))
         return attr_dict
 
     def pop(self):
@@ -79,9 +79,11 @@ class Inventories(ObjectCollection):
             return None
 
     def summarize_states(self, **kwargs):
-        return {key: val.summarize_states(**kwargs) for key, val in self.items()}
+        return [val.summarize_states(**kwargs) for key, val in self.items()]
 
 
 class DropOffLocations(EntityCollection):
 
     _accepted_objects = DropOffLocation
+    _stateless_entities = True
+

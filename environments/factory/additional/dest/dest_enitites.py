@@ -38,7 +38,8 @@ class Destination(Entity):
     def agent_is_dwelling(self, agent: Agent):
         return self._per_agent_times[agent.name] < self.dwell_time
 
-    def summarize_state(self, n_steps=None) -> dict:
-        state_summary = super().summarize_state(n_steps=n_steps)
-        state_summary.update(per_agent_times=self._per_agent_times)
+    def summarize_state(self) -> dict:
+        state_summary = super().summarize_state()
+        state_summary.update(per_agent_times=[
+            dict(belongs_to=key, time=val) for key, val in self._per_agent_times.keys()], dwell_time=self.dwell_time)
         return state_summary

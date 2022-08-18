@@ -3,7 +3,7 @@ from typing import List, Union, Dict
 import numpy as np
 import random
 
-from environments.factory.additional.item.item_collections import ItemRegister, Inventories, DropOffLocations
+from environments.factory.additional.item.item_collections import Items, Inventories, DropOffLocations
 from environments.factory.additional.item.item_util import Constants, Actions, RewardsItem, ItemProperties
 from environments.factory.base.base_factory import BaseFactory
 from environments.factory.base.objects import Agent, Action
@@ -49,7 +49,7 @@ class ItemFactory(BaseFactory):
             entity_kwargs=dict(
                 storage_size_until_full=self.item_prop.max_dropoff_storage_size)
         )
-        item_register = ItemRegister(self._level_shape)
+        item_register = Items(self._level_shape)
         empty_tiles = self[c.FLOOR].empty_tiles[:self.item_prop.n_items]
         item_register.spawn_items(empty_tiles)
 

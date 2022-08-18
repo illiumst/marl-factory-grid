@@ -1,7 +1,7 @@
 from environments.factory.base.objects import Entity
 
 
-class Dirt(Entity):
+class DirtPile(Entity):
 
     @property
     def amount(self):
@@ -13,14 +13,14 @@ class Dirt(Entity):
         return self._amount
 
     def __init__(self, *args, amount=None, **kwargs):
-        super(Dirt, self).__init__(*args, **kwargs)
+        super(DirtPile, self).__init__(*args, **kwargs)
         self._amount = amount
 
     def set_new_amount(self, amount):
         self._amount = amount
         self._collection.notify_change_to_value(self)
 
-    def summarize_state(self, **kwargs):
-        state_dict = super().summarize_state(**kwargs)
+    def summarize_state(self):
+        state_dict = super().summarize_state()
         state_dict.update(amount=float(self.amount))
         return state_dict

@@ -26,7 +26,7 @@ class Item(Entity):
     def set_tile_to(self, no_pos_tile):
         self._tile = no_pos_tile
 
-    def summarize_state(self, **_) -> dict:
+    def summarize_state(self) -> dict:
         super_summarization = super(Item, self).summarize_state()
         super_summarization.update(dict(auto_despawn=self.auto_despawn))
         return super_summarization
@@ -55,7 +55,3 @@ class DropOffLocation(Entity):
     @property
     def is_full(self):
         return False if not self.storage.maxlen else self.storage.maxlen == len(self.storage)
-
-    def summarize_state(self, n_steps=None) -> dict:
-        if n_steps == h.STEPS_START:
-            return super().summarize_state(n_steps=n_steps)

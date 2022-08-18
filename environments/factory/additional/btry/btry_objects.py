@@ -35,7 +35,7 @@ class Battery(BoundingMixin, EnvObject):
 
     def summarize_state(self, **_):
         attr_dict = {key: str(val) for key, val in self.__dict__.items() if not key.startswith('_') and key != 'data'}
-        attr_dict.update(dict(name=self.name))
+        attr_dict.update(dict(name=self.name, belongs_to=self._bound_entity.name))
         return attr_dict
 
 
@@ -58,10 +58,3 @@ class ChargePod(Entity):
             return c.NOT_VALID
         valid = battery.do_charge_action(self.charge_rate)
         return valid
-
-    def summarize_state(self, n_steps=None) -> dict:
-        if n_steps == h.STEPS_START:
-            summary = super().summarize_state(n_steps=n_steps)
-            return summary
-        else:
-            {}

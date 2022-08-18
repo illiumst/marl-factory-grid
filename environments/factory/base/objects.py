@@ -86,7 +86,7 @@ class EnvObject(Object):
 
 # TODO: Missing Documentation
 class Entity(EnvObject):
-    """Full Env Entity that lives on the env Grid. Doors, Items, Dirt etc..."""
+    """Full Env Entity that lives on the env Grid. Doors, Items, DirtPile etc..."""
 
     @property
     def can_collide(self):
@@ -113,7 +113,7 @@ class Entity(EnvObject):
         self._tile = tile
         tile.enter(self)
 
-    def summarize_state(self, **_) -> dict:
+    def summarize_state(self) -> dict:
         return dict(name=str(self.name), x=int(self.x), y=int(self.y),
                     tile=str(self.tile.name), can_collide=bool(self.can_collide))
 
@@ -338,8 +338,8 @@ class Door(Entity):
         if not closed_on_init:
             self._open()
 
-    def summarize_state(self, **kwargs):
-        state_dict = super().summarize_state(**kwargs)
+    def summarize_state(self):
+        state_dict = super().summarize_state()
         state_dict.update(state=str(self.str_state), time_to_close=int(self.time_to_close))
         return state_dict
 
@@ -402,7 +402,7 @@ class Agent(MoveableEntity):
         #   if attr.startswith('temp'):
         self.step_result = None
 
-    def summarize_state(self, **kwargs):
-        state_dict = super().summarize_state(**kwargs)
+    def summarize_state(self):
+        state_dict = super().summarize_state()
         state_dict.update(valid=bool(self.step_result['action_valid']), action=str(self.step_result['action_name']))
         return state_dict

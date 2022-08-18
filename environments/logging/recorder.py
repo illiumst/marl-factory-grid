@@ -1,3 +1,4 @@
+import warnings
 from collections import defaultdict
 from os import PathLike
 from pathlib import Path
@@ -21,6 +22,7 @@ class EnvRecorder(BaseCallback):
         self._recorder_dict = defaultdict(list)
         self._recorder_out_list = list()
         self._episode_counter = 1
+        self._do_record_dict = defaultdict(lambda: False)
         if isinstance(entities, str):
             if entities.lower() == 'all':
                 self._entities = None
@@ -58,7 +60,11 @@ class EnvRecorder(BaseCallback):
 
     def step(self, actions):
         step_result = self.unwrapped.step(actions)
-        self._on_step()
+        if self.do_record_episode(0):
+            info = step_result[-1]
+            self._read_info(0, info)
+        if self._do_record_dict[0]:
+            self._read_done(0, step_result[-2])
         return step_result
 
     def finalize(self):
@@ -71,7 +77,8 @@ class EnvRecorder(BaseCallback):
         # cls.out_file.unlink(missing_ok=True)
         with filepath.open('w') as f:
             out_dict = {'n_episodes': self._episode_counter,
-                        'header': self.unwrapped.params,
+                        'env_params': self.unwrapped.params,
+                        'header': self.unwrapped.summarize_header,
                         'episodes': self._recorder_out_list
                         }
             try:
@@ -99,18 +106,29 @@ class EnvRecorder(BaseCallback):
         if save_trajectory_map:
             raise NotImplementedError('This has not yet been implemented.')
 
+    def do_record_episode(self, env_idx):
+        if not self._recorder_dict[env_idx]:
+            if self.freq:
+                self._do_record_dict[env_idx] = (self.freq == -1) or (self._episode_counter % self.freq) == 0
+            else:
+                self._do_record_dict[env_idx] = False
+                warnings.warn('You did wrap your Environment with a recorder, but set the freq to zero\n'
+                              'Nothing will be recorded')
+            self._episode_counter += 1
+        else:
+            pass
+        return self._do_record_dict[env_idx]
+
     def _on_step(self) -> bool:
-        do_record = self.freq == -1 or self._episode_counter % self.freq == 0
         for env_idx, info in enumerate(self.locals.get('infos', [])):
-            if do_record:
+            if self._do_record_dict[env_idx]:
                 self._read_info(env_idx, info)
         dones = list(enumerate(self.locals.get('dones', [])))
         dones.extend(list(enumerate(self.locals.get('done', []))))
         for env_idx, done in dones:
-            if do_record:
+            if self._do_record_dict[env_idx]:
                 self._read_done(env_idx, done)
-            if done:
-                self._episode_counter += 1
+
         return True
 
     def _on_training_end(self) -> None:

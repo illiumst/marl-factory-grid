@@ -19,6 +19,11 @@ from environments.helpers import Constants as c
 
 class ObjectCollection:
     _accepted_objects = Object
+    _stateless_entities = False
+
+    @property
+    def is_stateless(self):
+        return self._stateless_entities
 
     @property
     def name(self):
@@ -116,8 +121,8 @@ class EnvObjectCollection(ObjectCollection):
             self._lazy_eval_transforms = []
         return self._array
 
-    def summarize_states(self, n_steps=None):
-        return [entity.summarize_state(n_steps=n_steps) for entity in self.values()]
+    def summarize_states(self):
+        return [entity.summarize_state() for entity in self.values()]
 
     def notify_change_to_free(self, env_object: EnvObject):
         self._array_change_notifyer(env_object, value=c.FREE_CELL)
@@ -290,9 +295,6 @@ class GlobalPositions(EnvObjectCollection):
         # noinspection PyTypeChecker
         self.add_additional_items(global_positions)
 
-    def summarize_states(self, n_steps=None):
-        return {}
-
     def idx_by_entity(self, entity):
         try:
             return next((idx for idx, inv in enumerate(self) if inv.belongs_to_entity(entity)))
@@ -376,6 +378,7 @@ class Entities(ObjectCollection):
 
 class Walls(EntityCollection):
     _accepted_objects = Wall
+    _stateless_entities = True
 
     def as_array(self):
         if not np.any(self._array):
@@ -406,15 +409,10 @@ class Walls(EntityCollection):
     def from_tiles(cls, tiles, *args, **kwargs):
         raise RuntimeError()
 
-    def summarize_states(self, n_steps=None):
-        if n_steps == h.STEPS_START:
-            return super(Walls, self).summarize_states(n_steps=n_steps)
-        else:
-            return {}
-
 
 class Floors(Walls):
     _accepted_objects = Floor
+    _stateless_entities = True
 
     def __init__(self, *args, is_blocking_light=False, **kwargs):
         super(Floors, self).__init__(*args, is_blocking_light=is_blocking_light, **kwargs)
@@ -435,10 +433,6 @@ class Floors(Walls):
     @classmethod
     def from_tiles(cls, tiles, *args, **kwargs):
         raise RuntimeError()
-
-    def summarize_states(self, n_steps=None):
-        # Do not summarize
-        return {}
 
 
 class Agents(MovingEntityObjectCollection):
@@ -520,6 +514,9 @@ class Actions(ObjectCollection):
 
     def is_moving_action(self, action: Union[int]):
         return action in self.movement_actions.values()
+
+    def summarize(self):
+        return [dict(name=action.identifier) for action in self]
 
 
 class Zones(ObjectCollection):

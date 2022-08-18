@@ -25,9 +25,6 @@ class Destinations(EntityCollection):
     def __repr__(self):
         return super(Destinations, self).__repr__()
 
-    def summarize_states(self, n_steps=None):
-        return {}
-
 
 class ReachedDestinations(Destinations):
     _accepted_objects = Destination
@@ -36,9 +33,6 @@ class ReachedDestinations(Destinations):
         super(ReachedDestinations, self).__init__(*args, **kwargs)
         self.can_be_shadowed = False
         self.is_blocking_light = False
-
-    def summarize_states(self, n_steps=None):
-        return {}
 
     def __repr__(self):
         return super(ReachedDestinations, self).__repr__()

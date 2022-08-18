@@ -5,8 +5,8 @@ import random
 
 import numpy as np
 
-from environments.factory.additional.dirt.dirt_collections import DirtRegister
-from environments.factory.additional.dirt.dirt_entity import Dirt
+from environments.factory.additional.dirt.dirt_collections import DirtPiles
+from environments.factory.additional.dirt.dirt_entity import DirtPile
 from environments.factory.additional.dirt.dirt_util import Constants, Actions, RewardsDirt, DirtProperties
 
 from environments.factory.base.base_factory import BaseFactory
@@ -43,7 +43,7 @@ class DirtFactory(BaseFactory):
     @property
     def entities_hook(self) -> Dict[(str, Entities)]:
         super_entities = super().entities_hook
-        dirt_register = DirtRegister(self.dirt_prop, self._level_shape)
+        dirt_register = DirtPiles(self.dirt_prop, self._level_shape)
         super_entities.update(({c.DIRT: dirt_register}))
         return super_entities
 
@@ -57,7 +57,7 @@ class DirtFactory(BaseFactory):
         self.dirt_prop = dirt_prop
         self.rewards_dirt = rewards_dirt
         self._dirt_rng = np.random.default_rng(env_seed)
-        self._dirt: DirtRegister
+        self._dirt: DirtPiles
         kwargs.update(env_seed=env_seed)
         # TODO: Reset ---> document this
         super().__init__(*args, **kwargs)
@@ -96,7 +96,7 @@ class DirtFactory(BaseFactory):
     def trigger_dirt_spawn(self, initial_spawn=False):
         dirt_rng = self._dirt_rng
         free_for_dirt = [x for x in self[c.FLOOR]
-                         if len(x.guests) == 0 or (len(x.guests) == 1 and isinstance(next(y for y in x.guests), Dirt))
+                         if len(x.guests) == 0 or (len(x.guests) == 1 and isinstance(next(y for y in x.guests), DirtPile))
                          ]
         self._dirt_rng.shuffle(free_for_dirt)
         if initial_spawn:
@@ -123,7 +123,7 @@ class DirtFactory(BaseFactory):
                                         new_pos_dirt = self[c.DIRT].by_pos(agent.pos)
                                         new_pos_dirt.set_new_amount(max(0, new_pos_dirt.amount + smeared_dirt))
         if self._next_dirt_spawn < 0:
-            pass  # No Dirt Spawn
+            pass  # No DirtPile Spawn
         elif not self._next_dirt_spawn:
             self.trigger_dirt_spawn()
             self._next_dirt_spawn = self.dirt_prop.spawn_frequency

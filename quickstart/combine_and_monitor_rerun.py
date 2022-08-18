@@ -60,6 +60,7 @@ def encapsule_env_factory(env_fctry, env_kwrgs):
 
 if __name__ == '__main__':
 
+    render = False
     # Define Global Env Parameters
     # Define properties object parameters
     factory_kwargs = dict(
@@ -140,17 +141,17 @@ if __name__ == '__main__':
                     combined_env_kwargs[key] = val
                 else:
                     assert combined_env_kwargs[key] == val
+            del combined_env_kwargs['key']
             combined_env_kwargs.update(n_agents=len(comparable_runs))
-
-            with(type("CombinedEnv", tuple(available_envs.values()), {})(**combined_env_kwargs)) as combEnv:
+            with type("CombinedEnv", tuple(available_envs.values()), {})(**combined_env_kwargs) as combEnv:
                 # EnvMonitor Init
                 comb = f'comb_{model_name}_{seed}'
                 comb_monitor_path = combinations_path / comb / f'{comb}_monitor.pick'
-                comb_recorder_path = combinations_path / comb / f'{comb}_recorder.pick'
+                comb_recorder_path = combinations_path / comb / f'{comb}_recorder.json'
                 comb_monitor_path.parent.mkdir(parents=True, exist_ok=True)
 
                 monitoredCombEnv = EnvMonitor(combEnv, filepath=comb_monitor_path)
-                # monitoredCombEnv = EnvRecorder(monitoredCombEnv, filepath=comb_monitor_path)
+                monitoredCombEnv = EnvRecorder(monitoredCombEnv, filepath=comb_recorder_path, freq=1)
 
                 # Evaluation starts here #####################################################
                 # Load all models
@@ -164,8 +165,9 @@ if __name__ == '__main__':
                     *(agent.named_action_space for agent in loaded_models)
                 )
 
-                for episode in range(50):
-                    obs, _ = monitoredCombEnv.reset(), monitoredCombEnv.render()
+                for episode in range(1):
+                    obs = monitoredCombEnv.reset()
+                    if render: monitoredCombEnv.render()
                     rew, done_bool = 0, False
                     while not done_bool:
                         actions = []
@@ -176,12 +178,12 @@ if __name__ == '__main__':
                         obs, step_r, done_bool, info_obj = monitoredCombEnv.step(actions)
 
                         rew += step_r
-                        monitoredCombEnv.render()
+                        if render: monitoredCombEnv.render()
                         if done_bool:
                             break
                     print(f'Factory run {episode} done, reward is:\n    {rew}')
                 # Eval monitor outputs are automatically stored by the monitor object
                 # TODO: Plotting
-                monitoredCombEnv.save_records(comb_monitor_path)
+                monitoredCombEnv.save_records()
                 monitoredCombEnv.save_run()
             pass

@@ -4,8 +4,8 @@ import numpy as np
 
 from environments.factory.base.objects import Agent, Entity, Action
 from environments.factory.factory_dirt import DirtFactory
-from environments.factory.additional.dirt.dirt_collections import DirtRegister
-from environments.factory.additional.dirt.dirt_entity import Dirt
+from environments.factory.additional.dirt.dirt_collections import DirtPiles
+from environments.factory.additional.dirt.dirt_entity import DirtPile
 from environments.factory.base.objects import Floor
 from environments.factory.base.registers import Floors, Entities, EntityCollection
 

@@ -1,13 +1,13 @@
-from environments.factory.additional.dirt.dirt_entity import Dirt
+from environments.factory.additional.dirt.dirt_entity import DirtPile
 from environments.factory.additional.dirt.dirt_util import DirtProperties
 from environments.factory.base.objects import Floor
 from environments.factory.base.registers import EntityCollection
 from environments.factory.additional.dirt.dirt_util import Constants as c
 
 
-class DirtRegister(EntityCollection):
+class DirtPiles(EntityCollection):
 
-    _accepted_objects = Dirt
+    _accepted_objects = DirtPile
 
     @property
     def amount(self):
@@ -18,7 +18,7 @@ class DirtRegister(EntityCollection):
         return self._dirt_properties
 
     def __init__(self, dirt_properties, *args):
-        super(DirtRegister, self).__init__(*args)
+        super(DirtPiles, self).__init__(*args)
         self._dirt_properties: DirtProperties = dirt_properties
 
     def spawn_dirt(self, then_dirty_tiles) -> bool:
@@ -28,7 +28,7 @@ class DirtRegister(EntityCollection):
             if not self.amount > self.dirt_properties.max_global_amount:
                 dirt = self.by_pos(tile.pos)
                 if dirt is None:
-                    dirt = Dirt(tile, self, amount=self.dirt_properties.max_spawn_amount)
+                    dirt = DirtPile(tile, self, amount=self.dirt_properties.max_spawn_amount)
                     self.add_item(dirt)
                 else:
                     new_value = dirt.amount + self.dirt_properties.max_spawn_amount
@@ -38,5 +38,5 @@ class DirtRegister(EntityCollection):
         return c.VALID
 
     def __repr__(self):
-        s = super(DirtRegister, self).__repr__()
+        s = super(DirtPiles, self).__repr__()
         return f'{s[:-1]}, {self.amount})'

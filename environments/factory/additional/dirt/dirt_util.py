@@ -4,7 +4,7 @@ from environments.helpers import Constants as BaseConstants, EnvActions as BaseA
 
 
 class Constants(BaseConstants):
-    DIRT = 'Dirt'
+    DIRT = 'DirtPile'
 
 
 class Actions(BaseActions):
