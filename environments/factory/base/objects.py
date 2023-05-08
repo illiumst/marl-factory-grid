@@ -1,12 +1,10 @@
 from collections import defaultdict
-from typing import Union
+from typing import Union, List
 
-import networkx as nx
 import numpy as np
 
 from environments import helpers as h
 from environments.helpers import Constants as c
-import itertools
 
 ##########################################################################
 # ##################### Base Object Building Blocks ######################### #
@@ -87,6 +85,10 @@ class EnvObject(Object):
 # TODO: Missing Documentation
 class Entity(EnvObject):
     """Full Env Entity that lives on the env Grid. Doors, Items, DirtPile etc..."""
+
+    @property
+    def is_blocking(self):
+        return False
 
     @property
     def can_collide(self):
@@ -227,6 +229,21 @@ class GlobalPosition(BoundingMixin, EnvObject):
 class Floor(EnvObject):
 
     @property
+    def neighboring_floor_pos(self):
+        return [x.pos for x in self.neighboring_floor]
+
+    @property
+    def neighboring_floor(self):
+        if self._neighboring_floor:
+            pass
+        else:
+            self._neighboring_floor = [x for x in [self._collection.by_pos(np.add(self.pos, pos))
+                                                   for pos in h.POS_MASK.reshape(-1, 2)
+                                                   if not np.all(pos == [0, 0])]
+                                       if x]
+        return self._neighboring_floor
+
+    @property
     def encoding(self):
         return c.FREE_CELL
 
@@ -254,6 +271,7 @@ class Floor(EnvObject):
         super(Floor, self).__init__(*args, **kwargs)
         self._guests = dict()
         self._pos = tuple(pos)
+        self._neighboring_floor: List[Floor] = list()
 
     def __len__(self):
         return len(self._guests)
@@ -296,94 +314,6 @@ class Wall(Floor):
         return c.OCCUPIED_CELL
 
     pass
-
-
-class Door(Entity):
-
-    @property
-    def can_collide(self):
-        if self.has_area:
-            return False if self.is_open else True
-        else:
-            return False
-
-    @property
-    def encoding(self):
-        # This is important as it shadow is checked by occupation value
-        return c.CLOSED_DOOR_CELL if self.is_closed else c.OPEN_DOOR_CELL
-
-    @property
-    def str_state(self):
-        return 'open' if self.is_open else 'closed'
-
-    @property
-    def access_area(self):
-        return [node for node in self.connectivity.nodes
-                if node not in range(len(self.connectivity_subgroups)) and node != self.pos]
-
-    def __init__(self, *args, context, closed_on_init=True, auto_close_interval=10, has_area=False, **kwargs):
-        super(Door, self).__init__(*args, **kwargs)
-        self._state = c.CLOSED_DOOR
-        self.has_area = has_area
-        self.auto_close_interval = auto_close_interval
-        self.time_to_close = -1
-        neighbor_pos = list(itertools.product([-1, 1, 0], repeat=2))[:-1]
-        neighbor_tiles = [context.by_pos(tuple([sum(x) for x in zip(self.pos, diff)])) for diff in neighbor_pos]
-        neighbor_pos = [x.pos for x in neighbor_tiles if x]
-        self.connectivity = h.points_to_graph(neighbor_pos)
-        self.connectivity_subgroups = list(nx.algorithms.components.connected_components(self.connectivity))
-        for idx, group in enumerate(self.connectivity_subgroups):
-            for tile_pos in group:
-                self.connectivity.add_edge(tile_pos, idx)
-        if not closed_on_init:
-            self._open()
-
-    def summarize_state(self):
-        state_dict = super().summarize_state()
-        state_dict.update(state=str(self.str_state), time_to_close=int(self.time_to_close))
-        return state_dict
-
-    @property
-    def is_closed(self):
-        return self._state == c.CLOSED_DOOR
-
-    @property
-    def is_open(self):
-        return self._state == c.OPEN_DOOR
-
-    @property
-    def status(self):
-        return self._state
-
-    def use(self):
-        if self._state == c.OPEN_DOOR:
-            self._close()
-        else:
-            self._open()
-
-    def tick(self):
-        if self.is_open and len(self.tile) == 1 and self.time_to_close:
-            self.time_to_close -= 1
-        elif self.is_open and not self.time_to_close and len(self.tile) == 1:
-            self.use()
-
-    def _open(self):
-        self.connectivity.add_edges_from([(self.pos, x) for x in range(len(self.connectivity_subgroups))])
-        self._state = c.OPEN_DOOR
-        self._collection.notify_change_to_value(self)
-        self.time_to_close = self.auto_close_interval
-
-    def _close(self):
-        self.connectivity.remove_node(self.pos)
-        self._state = c.CLOSED_DOOR
-        self._collection.notify_change_to_value(self)
-
-    def is_linked(self, old_pos, new_pos):
-        try:
-            _ = nx.shortest_path(self.connectivity, old_pos, new_pos)
-            return True
-        except nx.exception.NetworkXNoPath:
-            return False
 
 
 class Agent(MoveableEntity):

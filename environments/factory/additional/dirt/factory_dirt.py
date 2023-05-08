@@ -44,7 +44,7 @@ class DirtFactory(BaseFactory):
     def entities_hook(self) -> Dict[(str, Entities)]:
         super_entities = super().entities_hook
         dirt_register = DirtPiles(self.dirt_prop, self._level_shape)
-        super_entities.update(({c.DIRT: dirt_register}))
+        super_entities.update({c.DIRT: dirt_register})
         return super_entities
 
     def __init__(self, *args,

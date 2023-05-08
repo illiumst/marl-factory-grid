@@ -68,7 +68,7 @@ if __name__ == '__main__':
                                       omit_agent_self=True,                  # This is default
                                       additional_agent_placeholder=None,     # We will not take care of future agents
                                       frames_to_stack=3,                     # To give the agent a notion of time
-                                      pomdp_r=2                              # the agents view-radius
+                                      pomdp_r=2                              # the agents' view-radius
                                       )
     #  'MovementProperties' are for specifying how the agent is allowed to move in the env.
     move_props = MovementProperties(allow_diagonal_movement=True,   # Euclidean style (vertices)
@@ -135,7 +135,7 @@ if __name__ == '__main__':
             env_recorder_callback = EnvRecorder(env_factory, freq=int(train_steps / 400 / 10))
 
             # Model Init
-            model = model_class("MlpPolicy", env_factory,verbose=1, seed=seed, device='cpu')
+            model = model_class("MlpPolicy", env_factory, verbose=1, seed=seed, device='cpu')
 
             # Model train
             model.learn(total_timesteps=int(train_steps), callback=[env_monitor_callback, env_recorder_callback])
@@ -166,7 +166,7 @@ if __name__ == '__main__':
 
         # retrieve model class
         model_cls = next(val for key, val in h.MODEL_MAP.items() if key in policy_path.parent.name)
-        # Load the agent agent
+        # Load the agent
         model = model_cls.load(policy_path / 'model.zip', device='cpu')
         # Load old env kwargs
         with next(policy_path.glob(env_params_json)).open('r') as f:

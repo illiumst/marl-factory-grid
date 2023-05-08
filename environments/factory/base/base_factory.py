@@ -16,7 +16,7 @@ from environments.helpers import Constants as c
 from environments.helpers import EnvActions as a
 from environments.helpers import RewardsBase
 from environments.factory.base.objects import Agent, Floor, Action
-from environments.factory.base.registers import Actions, Entities, Agents, Doors, Floors, Walls, PlaceHolders, \
+from environments.factory.base.registers import Actions, Entities, Agents, Floors, Walls, PlaceHolders, \
     GlobalPositions
 from environments.utility_classes import MovementProperties, ObservationProperties, MarlFrameStack
 from environments.utility_classes import AgentRenderOptions as a_obs
@@ -88,8 +88,8 @@ class BaseFactory(gym.Env):
                  mv_prop: MovementProperties = MovementProperties(),
                  obs_prop: ObservationProperties = ObservationProperties(),
                  rewards_base: RewardsBase = RewardsBase(),
-                 parse_doors=False, done_at_collision=False, inject_agents: Union[None, List] = None,
-                 verbose=False, doors_have_area=True, env_seed=time.time_ns(), individual_rewards=False,
+                 done_at_collision=False, inject_agents: Union[None, List] = None,
+                 verbose=False, env_seed=time.time_ns(), individual_rewards=False,
                  class_name='', **kwargs):
 
         if class_name:
@@ -105,8 +105,6 @@ class BaseFactory(gym.Env):
         assert obs_prop.frames_to_stack != 1 and \
                obs_prop.frames_to_stack >= 0, \
                "'frames_to_stack' cannot be negative or 1."
-        assert doors_have_area or not obs_prop.indicate_door_area, \
-            '"indicate_door_area" can only active, when "doors_have_area"'
         if kwargs:
             print(f'Following kwargs were passed, but ignored: {kwargs}')
 
@@ -133,9 +131,7 @@ class BaseFactory(gym.Env):
 
         self.done_at_collision = done_at_collision
         self._record_episodes = False
-        self.parse_doors = parse_doors
         self._injected_agents = inject_agents or []
-        self.doors_have_area = doors_have_area
         self.individual_rewards = individual_rewards
 
         # TODO: Reset ---> document this
@@ -174,20 +170,9 @@ class BaseFactory(gym.Env):
         # NOPOS
         self._NO_POS_TILE = Floor(c.NO_POS, None)
 
-        # Doors
-        if self.parse_doors:
-            parsed_doors = h.one_hot_level(self._parsed_level, c.DOOR)
-            parsed_doors = np.pad(parsed_doors, self.obs_prop.pomdp_r, 'constant', constant_values=0)
-            if np.any(parsed_doors):
-                door_tiles = [floor.by_pos(tuple(pos)) for pos in np.argwhere(parsed_doors == c.OCCUPIED_CELL)]
-                doors = Doors.from_tiles(door_tiles, self._level_shape, have_area=self.obs_prop.indicate_door_area,
-                                         entity_kwargs=dict(context=floor)
-                                         )
-                self._entities.add_additional_items({c.DOORS: doors})
-
         # Actions
         # TODO: Move this to Agent init, so that agents can have individual action sets.
-        self._actions = Actions(self.mv_prop, can_use_doors=self.parse_doors)
+        self._actions = Actions(self.mv_prop)
         if additional_actions := self.actions_hook:
             self._actions.add_additional_items(additional_actions)
 
@@ -263,8 +248,6 @@ class BaseFactory(gym.Env):
             elif a.NOOP == action_obj:
                 action_valid = c.VALID
                 reward = dict(value=self.rewards_base.NOOP, reason=a.NOOP, info={f'{agent.name}_NOOP': 1, 'NOOP': 1})
-            elif a.USE_DOOR == action_obj:
-                action_valid, reward = self._handle_door_interaction(agent)
             else:
                 # noinspection PyTupleAssignmentBalance
                 action_valid, reward = self.do_additional_actions(agent, action_obj)
@@ -282,12 +265,9 @@ class BaseFactory(gym.Env):
         for tile in tiles_with_collisions:
             guests = tile.guests_that_can_collide
             for i, guest in enumerate(guests):
-                # This does make a copy, but is faster than.copy()
-                this_collisions = guests[:]
-                del this_collisions[i]
-                assert hasattr(guest, 'step_result')
-                for collision in this_collisions:
-                    guest.step_result['collisions'].append(collision)
+                for j, collision in enumerate(guests):
+                    if j != i and hasattr(guest, 'step_result'):
+                        guest.step_result['collisions'].append(collision)
 
         done = False
         if self.done_at_collision:
@@ -298,11 +278,6 @@ class BaseFactory(gym.Env):
         additional_done, additional_done_info = self.check_additional_done()
         done = done or additional_done
         info.update(additional_done_info)
-
-        # Step the door close intervall
-        if self.parse_doors:
-            if doors := self[c.DOORS]:
-                doors.tick_doors()
 
         # Finalize
         reward, reward_info = self.build_reward_result(rewards)
@@ -319,33 +294,7 @@ class BaseFactory(gym.Env):
             info.update(post_step_info)
 
         obs, _ = self._build_observations()
-
         return obs, reward, done, info
-
-    def _handle_door_interaction(self, agent) -> (bool, dict):
-        if doors := self[c.DOORS]:
-            # Check if agent really is standing on a door:
-            if self.doors_have_area:
-                door = doors.get_near_position(agent.pos)
-            else:
-                door = doors.by_pos(agent.pos)
-            if door is not None:
-                door.use()
-                valid = c.VALID
-                self.print(f'{agent.name} just used a {door.name} at {door.pos}')
-                info_dict = {f'{agent.name}_door_use': 1, f'door_use': 1}
-            # When he doesn't...
-            else:
-                valid = c.NOT_VALID
-                info_dict = {f'{agent.name}_failed_door_use': 1, 'failed_door_use': 1}
-                self.print(f'{agent.name} just tried to use a door at {agent.pos}, but there is none.')
-
-        else:
-            raise RuntimeError('This should not happen, since the door action should not be available.')
-        reward = dict(value=self.rewards_base.USE_DOOR_VALID if valid else self.rewards_base.USE_DOOR_FAIL,
-                      reason=a.USE_DOOR, info=info_dict)
-
-        return valid, reward
 
     def _build_observations(self) -> np.typing.ArrayLike:
         # Observation dict:
@@ -353,7 +302,6 @@ class BaseFactory(gym.Env):
         per_agent_obsn = dict()
         # Generel Observations
         lvl_obs = self[c.WALLS].as_array()
-        door_obs = self[c.DOORS].as_array() if self.parse_doors else None
         if self.obs_prop.render_agents == a_obs.NOT:
             global_agent_obs = None
         elif self.obs_prop.omit_agent_self and self.n_agents == 1:
@@ -391,8 +339,6 @@ class BaseFactory(gym.Env):
                 obs_dict[c.AGENT] = agent_obs[:]
             if self[c.AGENT_PLACEHOLDER] and placeholder_obs is not None:
                 obs_dict[c.AGENT_PLACEHOLDER] = placeholder_obs
-            if self.parse_doors and door_obs is not None:
-                obs_dict[c.DOORS] = door_obs[:]
             obs_dict.update(add_obs_dict)
             obsn = np.vstack(list(obs_dict.values()))
             if self.obs_prop.pomdp_r:
@@ -430,33 +376,11 @@ class BaseFactory(gym.Env):
                     raise e
 
                 obs_block_light = obsn[light_block_obs] != c.OCCUPIED_CELL
-                door_shadowing = False
-                if self.parse_doors:
-                    if doors := self[c.DOORS]:
-                        if door := doors.by_pos(agent.pos):
-                            if door.is_closed:
-                                for group in door.connectivity_subgroups:
-                                    if agent.last_pos not in group:
-                                        door_shadowing = True
-                                        if self._pomdp_r:
-                                            blocking = [
-                                                tuple(np.subtract(x, agent.pos) + (self._pomdp_r, self._pomdp_r))
-                                                for x in group]
-                                            xs, ys = zip(*blocking)
-                                        else:
-                                            xs, ys = zip(*group)
-
-                                        # noinspection PyUnresolvedReferences
-                                        obs_block_light[:, xs, ys] = False
-
                 light_block_map = Map((np.prod(obs_block_light, axis=0) != True).astype(int).squeeze())
                 if self._pomdp_r:
                     light_block_map = light_block_map.do_fov(self._pomdp_r, self._pomdp_r, max(self._level_shape))
                 else:
                     light_block_map = light_block_map.do_fov(*agent.pos, max(self._level_shape))
-                if door_shadowing:
-                    # noinspection PyUnboundLocalVariable
-                    light_block_map[xs, ys] = 0
 
                 agent.step_result['lightmap'] = light_block_map
 
@@ -550,34 +474,12 @@ class BaseFactory(gym.Env):
         y_new = agent.y + y_diff
 
         new_tile = self[c.FLOOR].by_pos((x_new, y_new))
-        if new_tile:
+        if new_tile and not np.any([x.is_blocking for x in new_tile.guests]):
             valid = c.VALID
         else:
             tile = agent.tile
             valid = c.VALID
             return tile, valid
-
-        if self.parse_doors and agent.last_pos != c.NO_POS:
-            if doors := self[c.DOORS]:
-                if self.doors_have_area:
-                    if door := doors.by_pos(new_tile.pos):
-                        if door.is_closed:
-                            return agent.tile, c.NOT_VALID
-                        else:  # door.is_closed:
-                            pass
-
-                if door := doors.by_pos(agent.pos):
-                    if door.is_open:
-                        pass
-                    else:  # door.is_closed:
-                        if door.is_linked(agent.last_pos, new_tile.pos):
-                            pass
-                        else:
-                            return agent.tile, c.NOT_VALID
-                else:
-                    pass
-        else:
-            pass
 
         return new_tile, valid
 
@@ -649,14 +551,10 @@ class BaseFactory(gym.Env):
         for i, agent in enumerate(self[c.AGENT]):
             name, state = h.asset_str(agent)
             agents.append(RenderEntity(name, agent.pos, 1, 'none', state, i + 1, agent.step_result['lightmap']))
-        doors = []
-        if self.parse_doors:
-            for i, door in enumerate(self[c.DOORS]):
-                name, state = 'door_open' if door.is_open else 'door_closed', 'blank'
-                doors.append(RenderEntity(name, door.pos, 1, 'none', state, i + 1))
+
         additional_assets = self.render_assets_hook()
 
-        return self._renderer.render(walls + doors + additional_assets + agents)
+        return self._renderer.render(walls + additional_assets + agents)
 
     def save_params(self, filepath: Path):
         # noinspection PyProtectedMember

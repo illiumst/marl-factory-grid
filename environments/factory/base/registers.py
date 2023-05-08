@@ -6,7 +6,7 @@ from typing import List, Union, Dict, Tuple
 import numpy as np
 import six
 
-from environments.factory.base.objects import Entity, Floor, Agent, Door, Action, Wall, PlaceHolder, GlobalPosition, \
+from environments.factory.base.objects import Entity, Floor, Agent, Action, Wall, PlaceHolder, GlobalPosition, \
     Object, EnvObject
 from environments.utility_classes import MovementProperties
 from environments import helpers as h
@@ -452,38 +452,6 @@ class Agents(MovingEntityObjectCollection):
         self._collection[agent.name] = agent
 
 
-class Doors(EntityCollection):
-
-    def __init__(self, *args, have_area: bool = False, **kwargs):
-        self.have_area = have_area
-        self._area_marked = False
-        super(Doors, self).__init__(*args, is_blocking_light=True, can_collide=True, **kwargs)
-
-    _accepted_objects = Door
-
-    def get_near_position(self, position: (int, int)) -> Union[None, Door]:
-        try:
-            return next(door for door in self if position in door.access_area)
-        except StopIteration:
-            return None
-
-    def tick_doors(self):
-        for door in self:
-            door.tick()
-
-    def as_array(self):
-        if self.have_area and not self._area_marked:
-            for door in self:
-                for pos in door.access_area:
-                    if self._individual_slices:
-                        pass
-                    else:
-                        pos = (0, *pos)
-                    self._lazy_eval_transforms.append((pos, c.ACCESS_DOOR_CELL))
-            self._area_marked = True
-        return super(Doors, self).as_array()
-
-
 class Actions(ObjectCollection):
     _accepted_objects = Action
 
@@ -492,11 +460,10 @@ class Actions(ObjectCollection):
         return self._movement_actions
 
     # noinspection PyTypeChecker
-    def __init__(self, movement_properties: MovementProperties, can_use_doors=False):
+    def __init__(self, movement_properties: MovementProperties):
         self.allow_no_op = movement_properties.allow_no_op
         self.allow_diagonal_movement = movement_properties.allow_diagonal_movement
         self.allow_square_movement = movement_properties.allow_square_movement
-        self.can_use_doors = can_use_doors
         super(Actions, self).__init__()
 
         # Move this to Baseclass, Env init?
@@ -507,8 +474,6 @@ class Actions(ObjectCollection):
             self.add_additional_items([self._accepted_objects(str_ident=direction)
                                        for direction in h.EnvActions.diagonal_move()])
         self._movement_actions = self._collection.copy()
-        if self.can_use_doors:
-            self.add_additional_items([self._accepted_objects(str_ident=h.EnvActions.USE_DOOR)])
         if self.allow_no_op:
             self.add_additional_items([self._accepted_objects(str_ident=h.EnvActions.NOOP)])
 

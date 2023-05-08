@@ -33,6 +33,10 @@ IGNORED_DF_COLUMNS = ['Episode', 'Run',          # For plotting, which values ar
                       'train_step', 'step', 'index', 'dirt_amount', 'dirty_tile_count', 'terminal_observation',
                       'episode']
 
+POS_MASK = np.asarray([[[-1, -1], [0, -1], [1, -1]],
+                       [[-1,  0], [0,  0], [1,  0]],
+                       [[-1,  1], [0,  1], [1,  1]]])
+
 
 class Constants:
 
@@ -42,12 +46,10 @@ class Constants:
     """
 
     WALL                = '#'                   # Wall tile identifier for resolving the string based map files.
-    DOOR                = 'D'                   # Door identifier for resolving the string based map files.
     DANGER_ZONE         = 'x'                   # Dange Zone tile identifier for resolving the string based map files.
 
     WALLS               = 'Walls'               # Identifier of Wall-objects and sets (collections).
     FLOOR               = 'Floor'               # Identifier of Floor-objects and sets (collections).
-    DOORS               = 'Doors'               # Identifier of Door-objects and sets (collections).
     LEVEL               = 'Level'               # Identifier of Level-objects and sets (collections).
     AGENT               = 'Agent'               # Identifier of Agent-objects and sets (collections).
     AGENT_PLACEHOLDER   = 'AGENT_PLACEHOLDER'   # Identifier of Placeholder-objects and sets (collections).
@@ -56,15 +58,8 @@ class Constants:
     FREE_CELL           = 0                     # Free-Cell value used in observation
     OCCUPIED_CELL       = 1                     # Occupied-Cell value used in observation
     SHADOWED_CELL       = -1                    # Shadowed-Cell value used in observation
-    ACCESS_DOOR_CELL    = 1/3                   # Access-door-Cell value used in observation
-    OPEN_DOOR_CELL      = 2/3                   # Open-door-Cell value used in observation
-    CLOSED_DOOR_CELL    = 3/3                   # Closed-door-Cell value used in observation
 
     NO_POS              = (-9999, -9999)        # Invalid Position value used in the environment (something is off-grid)
-
-    CLOSED_DOOR         = 'closed'              # Identifier to compare door-is-closed state
-    OPEN_DOOR           = 'open'                # Identifier to compare door-is-open state
-    # ACCESS_DOOR         = 'access'            # Identifier to compare access positions
 
     ACTION              = 'action'              # Identifier of Action-objects and sets (collections).
     COLLISION           = 'collision'           # Identifier to use in the context of collitions.
@@ -90,7 +85,6 @@ class EnvActions:
     # Other
     # MOVE            = 'move'
     NOOP            = 'no_op'
-    USE_DOOR        = 'use_door'
 
     _ACTIONMAP = defaultdict(lambda: (0, 0),
                             {NORTH: (-1, 0),    NORTHEAST: (-1, 1),
@@ -99,6 +93,8 @@ class EnvActions:
                              WEST:  (0, -1),    NORTHWEST: (-1, -1)
                              }
                             )
+
+
 
     @classmethod
     def is_move(cls, action):
@@ -166,8 +162,6 @@ class RewardsBase(NamedTuple):
     MOVEMENTS_VALID: float = -0.001
     MOVEMENTS_FAIL: float  = -0.05
     NOOP: float            = -0.01
-    USE_DOOR_VALID: float  = -0.00
-    USE_DOOR_FAIL: float   = -0.01
     COLLISION: float       = -0.5
 
 
