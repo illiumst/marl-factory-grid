@@ -146,9 +146,9 @@ class BaseFactory(gym.Env):
         # Objects
         self._entities = Entities()
         # Level
-
         level_array = h.one_hot_level(self._parsed_level)
-        level_array = np.pad(level_array, self.obs_prop.pomdp_r, 'constant', constant_values=1)
+        self._level_init_shape = level_array.shape
+        level_array = np.pad(level_array, self.obs_prop.pomdp_r, 'constant', constant_values=c.OCCUPIED_CELL)
 
         self._level_shape = level_array.shape
         self._obs_shape = self._level_shape if not self.obs_prop.pomdp_r else (self.pomdp_diameter, ) * 2
