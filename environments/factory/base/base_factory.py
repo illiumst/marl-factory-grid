@@ -541,8 +541,7 @@ class BaseFactory(gym.Env):
         if not self._renderer:  # lazy init
             from environments.factory.base.renderer import Renderer, RenderEntity
             global Renderer, RenderEntity
-            height, width = self._level_shape
-            self._renderer = Renderer(width, height, view_radius=self._pomdp_r, fps=5)
+            self._renderer = Renderer(self._level_shape, view_radius=self._pomdp_r, fps=7)
 
         # noinspection PyUnboundLocalVariable
         walls = [RenderEntity('wall', wall.pos) for wall in self[c.WALLS]]

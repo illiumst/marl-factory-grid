@@ -28,6 +28,8 @@ class DirtPiles(EntityCollection):
             if not self.amount > self.dirt_properties.max_global_amount:
                 dirt = self.by_pos(tile.pos)
                 if dirt is None:
+                    if len(tile.guests) > 1:
+                        return c.NOT_VALID
                     dirt = DirtPile(tile, self, amount=self.dirt_properties.max_spawn_amount)
                     self.add_item(dirt)
                 else:
