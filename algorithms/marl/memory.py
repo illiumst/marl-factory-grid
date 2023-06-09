@@ -120,7 +120,7 @@ class MARLActorCriticMemory(object):
 
     def __getattr__(self, attr):
         all_attrs = [getattr(mem, attr) for mem in self.memories]
-        return torch.cat(all_attrs, 0)  # agents x time ...
+        return torch.cat(all_attrs, 0)  # agent x time ...
 
     def chunk_dataloader(self, chunk_len, k):
         datasets = [ExperienceChunks(mem, chunk_len, k) for mem in self.memories]

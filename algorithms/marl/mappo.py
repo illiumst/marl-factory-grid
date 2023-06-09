@@ -46,7 +46,7 @@ class LoopMAPPO(LoopSNAC):
 
         # monte carlo returns
         mc_returns = self.monte_carlo_returns(batch[nms.REWARD], batch[nms.DONE], gamma)
-        mc_returns = (mc_returns - mc_returns.mean()) / (mc_returns.std() + 1e-8) #todo: norm across agents ok?
+        mc_returns = (mc_returns - mc_returns.mean()) / (mc_returns.std() + 1e-8) #todo: norm across agent ok?
         advantages =  mc_returns - out[nms.CRITIC][:, :-1]
 
         # policy loss

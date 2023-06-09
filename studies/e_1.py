@@ -34,9 +34,9 @@ import seaborn as sns
 import multiprocessing as mp
 
 """
-In this studie, we want to explore the macro behaviour of multi agents which are trained on the same task, 
+In this studie, we want to explore the macro behaviour of multi agent which are trained on the same task, 
 but never saw each other in training.
-Those agents learned 
+Those agent learned 
 
 
 We start with training a single policy on a single task (dirt cleanup / item pickup).
@@ -51,16 +51,16 @@ There are further distinctions to be made:
 2. Observation in seperate slice - [['seperate_0'], ['seperate_1'], ['seperate_N']]:
 - Agents see other entitys on a seperate slice
 - This slice has been filled with $0 | 1 | \mathbb{N}(0, 1)$
--- Depending ob the fill value, agents will react diffently
+-- Depending ob the fill value, agent will react diffently
    -> TODO: Test this! 
 
 3. Observation in level slice - ['in_lvl_obs']:
-- This tells the agent to treat other agents as obstacle. 
+- This tells the agent to treat other agent as obstacle. 
 - However, the state space is altered since moving obstacles are not part the original agent observation. 
 - We are out of distribution.
 
 4. Obseration (similiar to camera read out) ['in_lvl_0.5', 'in_lvl_n']
-- This tells the agent to treat other agents as obstacle, but "sees" them encoded as a different value. 
+- This tells the agent to treat other agent as obstacle, but "sees" them encoded as a different value. 
 - However, the state space is altered since moving obstacles are not part the original agent observation. 
 - We are out of distribution.
 """
@@ -96,7 +96,7 @@ def encapsule_env_factory(env_fctry, env_kwrgs):
 def load_model_run_baseline(seed_path, env_to_run):
     # retrieve model class
     model_cls = next(val for key, val in h.MODEL_MAP.items() if key in seed_path.parent.name)
-    # Load both agents
+    # Load both agent
     model = model_cls.load(seed_path / 'model.zip', device='cpu')
     # Load old env kwargs
     with next(seed_path.glob('*.json')).open('r') as f:
@@ -124,7 +124,7 @@ def load_model_run_study(seed_path, env_to_run, additional_kwargs_dict):
     global model_cls
     # retrieve model class
     model_cls = next(val for key, val in h.MODEL_MAP.items() if key in seed_path.parent.name)
-    # Load both agents
+    # Load both agent
     models = [model_cls.load(seed_path / 'model.zip', device='cpu') for _ in range(n_agents)]
     # Load old env kwargs
     with next(seed_path.glob('*.json')).open('r') as f:
@@ -331,7 +331,7 @@ if __name__ == '__main__':
         for obs_mode in observation_modes.keys():
             for env_name in env_names:
                 for model_cls in [h.MODEL_MAP['A2C']]:
-                    # Create an identifier, which is unique for every combination and easy to read in filesystem
+                    # Create an _identifier, which is unique for every combination and easy to read in filesystem
                     identifier = f'{model_cls.__name__}_{start_time}'
                     # Train each combination per seed
                     combination_path = study_root_path / obs_mode / env_name / identifier
@@ -425,7 +425,7 @@ if __name__ == '__main__':
         print('Start Baseline Tracking')
         for obs_mode in observation_modes:
             obs_mode_path = next(x for x in study_root_path.iterdir() if x.is_dir() and x.name == obs_mode)
-            # For trained policy in study_root_path / identifier
+            # For trained policy in study_root_path / _identifier
             for env_path in [x for x in obs_mode_path.iterdir() if x.is_dir()]:
                 for policy_path in [x for x in env_path.iterdir() if x. is_dir()]:
                     # Iteration
@@ -440,7 +440,7 @@ if __name__ == '__main__':
         print('Start OOD Tracking')
         for obs_mode in observation_modes:
             obs_mode_path = next(x for x in study_root_path.iterdir() if x.is_dir() and x.name == obs_mode)
-            # For trained policy in study_root_path / identifier
+            # For trained policy in study_root_path / _identifier
             for env_path in [x for x in obs_mode_path.iterdir() if x.is_dir()]:
                 for policy_path in [x for x in env_path.iterdir() if x. is_dir()]:
                     # FIXME: Pick random seed or iterate over available seeds

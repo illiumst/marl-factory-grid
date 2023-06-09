@@ -1,5 +1,5 @@
 import torch
-from typing import Union, List
+from typing import Union, List, Dict
 import numpy as np
 from torch.distributions import Categorical
 from algorithms.marl.memory import MARLActorCriticMemory
@@ -74,7 +74,7 @@ class BaseActorCritic:
         actions = [Categorical(logits=logits).sample().item() for logits in out[nms.LOGITS]]
         return actions
 
-    def init_hidden(self) -> dict[ListOrTensor]:
+    def init_hidden(self) -> Dict[str, ListOrTensor]:
         pass
 
     def forward(self,
@@ -82,7 +82,7 @@ class BaseActorCritic:
                 actions:       ListOrTensor,
                 hidden_actor:  ListOrTensor,
                 hidden_critic: ListOrTensor
-                ) -> dict[ListOrTensor]:
+                ) -> Dict[str, ListOrTensor]:
         pass
 
     @torch.no_grad()

@@ -1,0 +1,5 @@
+MAINTAIN_VALID: float = 0.5
+MAINTAIN_FAIL: float = -0.1
+FAIL_MISSING_MAINTENANCE: float = -0.5
+
+NONE: float = 0

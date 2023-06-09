@@ -39,7 +39,7 @@ class LoopIAC(BaseActorCritic):
     def forward(self, observations, actions, hidden_actor, hidden_critic):
         outputs = [
             net(
-                self._as_torch(observations[ag_i]).unsqueeze(0).unsqueeze(0),  # agents x time
+                self._as_torch(observations[ag_i]).unsqueeze(0).unsqueeze(0),  # agent x time
                 self._as_torch(actions[ag_i]).unsqueeze(0),
                 hidden_actor[ag_i],
                 hidden_critic[ag_i]

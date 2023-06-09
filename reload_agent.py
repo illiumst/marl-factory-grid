@@ -2,13 +2,13 @@ import warnings
 from pathlib import Path
 
 import yaml
-from stable_baselines3 import A2C, PPO, DQN
+from stable_baselines3 import PPO
 
-from environments.factory.additional.dirt.dirt_util import Constants
+from environment.factory import BaseFactory
+from environment.logging.envmonitor import EnvMonitor
+from environment.logging.recorder import EnvRecorder
 
-from environments.factory.additional.dirt.factory_dirt import DirtFactory
-from environments.logging.envmonitor import EnvMonitor
-from environments.logging.recorder import EnvRecorder
+from modules.doors import constants as d
 
 warnings.filterwarnings('ignore', category=FutureWarning)
 warnings.filterwarnings('ignore', category=UserWarning)
@@ -42,7 +42,7 @@ if __name__ == '__main__':
         pass
 
     # Init Env
-    with DirtFactory(**env_kwargs) as env:
+    with BaseFactory(**env_kwargs) as env:
         env = EnvMonitor(env)
         env = EnvRecorder(env) if record else env
         obs_shape = env.observation_space.shape
@@ -62,7 +62,7 @@ if __name__ == '__main__':
                 if render:
                     env.render()
                 try:
-                    door = next(x for x in env.unwrapped.unwrapped[Constants.DOORS] if x.is_open)
+                    door = next(x for x in env.unwrapped.unwrapped[d.DOORS] if x.is_open)
                     print('openDoor found')
                 except StopIteration:
                     pass

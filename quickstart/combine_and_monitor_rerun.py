@@ -134,7 +134,7 @@ if __name__ == '__main__':
                     else:
                         assert combined_env_kwargs[key] == val, "Check the combinations you try to make!"
 
-            # Update and combine all kwargs to account for multiple agents etc.
+            # Update and combine all kwargs to account for multiple agent etc.
             # We cannot capture all configuration cases!
             for key, val in factory_kwargs.items():
                 if key not in combined_env_kwargs:

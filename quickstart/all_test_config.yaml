@@ -1,0 +1,111 @@
+---
+General:
+  level_name: large
+  env_seed: 69
+  verbose: !!bool False
+  pomdp_r: 3
+  individual_rewards: !!bool True
+
+Entities:
+  Defaults: {}
+  DirtPiles:
+      initial_dirt_ratio: 0.01          # On INIT, on max how many tiles does the dirt spawn in percent.
+      dirt_spawn_r_var: 0.5             # How much does the dirt spawn amount vary?
+      initial_amount: 1
+      max_local_amount: 3               # Max dirt amount per tile.
+      max_global_amount: 30             # Max dirt amount in the whole environment.
+  Doors:
+      closed_on_init: True
+      auto_close_interval: 10
+      indicate_area: False
+  Batteries: {}
+  ChargePods: {}
+  Destinations: {}
+  ReachedDestinations: {}
+  Items: {}
+  Inventories: {}
+  DropOffLocations: {}
+
+Agents:
+  Wolfgang:
+    Actions:
+      - Move8
+      - DoorUse
+      - CleanUp
+    Observations:
+      - Self
+      - Placeholder
+      - Walls
+      - DirtPiles
+      - Placeholder
+      - Doors
+      - Doors
+  Bjoern:
+    Actions:
+      # Move4, Noop
+      - Move8
+      - DoorUse
+      - ItemAction
+    Observations:
+      - Defaults
+      - Combined:
+          - Other
+          - Walls
+      - Items
+      - Inventory
+  Karl-Heinz:
+    Actions:
+      - Move8
+      - DoorUse
+    Observations:
+      # Wall, Only Other Agents
+      - Defaults
+      - Combined:
+          - Other
+          - Self
+          - Walls
+          - Doors
+      - Destinations
+  Manfred:
+    Actions:
+      - Move8
+      - ItemAction
+      - DoorUse
+      - CleanUp
+      - DestAction
+      - BtryCharge
+    Observations:
+      - Defaults
+      - Battery
+      - Destinations
+      - DirtPiles
+      - Doors
+      - Items
+      - Inventory
+      - DropOffLocations
+Rules:
+  Defaults: {}
+  Collision:
+    done_at_collisions: !!bool False
+  DirtRespawnRule:
+    spawn_freq: 15
+  DirtSmearOnMove:
+    smear_amount: 0.12
+  DoorAutoClose: {}
+  DirtAllCleanDone: {}
+  Btry: {}
+  BtryDoneAtDischarge: {}
+  DestinationReach: {}
+  DestinationSpawn: {}
+  DestinationDone: {}
+  ItemRules: {}
+
+Assets:
+  - Defaults
+  - Dirt
+  - Door
+  - Machine
+  - Item
+  - Destination
+  - DropOffLocation
+  - Chargepod

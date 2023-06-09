@@ -54,7 +54,7 @@ if __name__ == '__main__':
     # Define a global studi save path
     start_time = int(time.time())
     study_root_path = Path(__file__).parent.parent / 'study_out' / f'{Path(__file__).stem}_{start_time}'
-    # Create an identifier, which is unique for every combination and easy to read in filesystem
+    # Create an _identifier, which is unique for every combination and easy to read in filesystem
     identifier = f'{model_class.__name__}_{env_class.__name__}_{start_time}'
     exp_path = study_root_path / identifier
 
@@ -65,9 +65,9 @@ if __name__ == '__main__':
     #  'ObservationProperties' are for specifying how the agent sees the env.
     obs_props = ObservationProperties(render_agents=AgentRenderOptions.NOT,  # Agents won`t be shown in the obs at all
                                       omit_agent_self=True,                  # This is default
-                                      additional_agent_placeholder=None,     # We will not take care of future agents
+                                      additional_agent_placeholder=None,     # We will not take care of future agent
                                       frames_to_stack=3,                     # To give the agent a notion of time
-                                      pomdp_r=2                              # the agents view-radius
+                                      pomdp_r=2                              # the agent view-radius
                                       )
     #  'MovementProperties' are for specifying how the agent is allowed to move in the env.
     move_props = MovementProperties(allow_diagonal_movement=True,   # Euclidean style (vertices)
@@ -157,7 +157,7 @@ if __name__ == '__main__':
     # Evaluation starts here #####################################################
     # First Iterate over every model and monitor "as trained"
     print('Start Measurement Tracking')
-    # For trained policy in study_root_path / identifier
+    # For trained policy in study_root_path / _identifier
     for policy_path in [x for x in exp_path.iterdir() if x.is_dir()]:
 
         # retrieve model class

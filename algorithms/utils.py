@@ -1,4 +1,3 @@
-import re
 import torch
 import numpy as np
 import yaml

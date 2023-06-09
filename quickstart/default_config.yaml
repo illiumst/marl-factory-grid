@@ -1,0 +1,68 @@
+---
+General:
+  level_name: rooms
+  env_seed: 69
+  verbose: !!bool False
+  pomdp_r: 5
+  individual_rewards: !!bool True
+
+Entities:
+  Defaults: {}
+  DirtPiles:
+      initial_dirt_ratio: 0.3           # On INIT, on max how many tiles does the dirt spawn in percent.
+      dirt_spawn_r_var: 0.05    # How much does the dirt spawn amount vary?
+      initial_amount: 3
+      max_local_amount: 5               # Max dirt amount per tile.
+      max_global_amount: 20             # Max dirt amount in the whole environment.
+  Doors:
+      closed_on_init: True
+      auto_close_interval: 10
+      indicate_area: False
+Agents:
+  Wolfgang:
+    Actions:
+      - Move8
+      - Noop
+      - DoorUse
+      - CleanUp
+    Observations:
+      - Self
+      - Placeholder
+      - Walls
+      - DirtPiles
+      - Placeholder
+      - Doors
+      - Doors
+  Björn:
+    Actions:
+      # Move4, Noop
+      - Move4
+      - DoorUse
+      - CleanUp
+    Observations:
+      - Defaults
+      - Combined
+  Jürgen:
+    Actions:
+      # Move4, Noop
+      - Defaults
+      - DoorUse
+      - CleanUp
+    Observations:
+      - Walls
+      - Placeholder
+      - Agent[Björn]
+Rules:
+  Defaults: {}
+  Collision:
+    done_at_collisions: !!bool False
+  DirtRespawnRule:
+    spawn_freq: 5
+  DirtSmearOnMove:
+    smear_amount: 0.12
+  DoorAutoClose: {}
+  DirtAllCleanDone: {}
+Assets:
+  - Defaults
+  - Dirt
+  - Doors
