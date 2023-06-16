@@ -10,7 +10,7 @@ Entities:
   Defaults: {}
   DirtPiles:
       initial_dirt_ratio: 0.3           # On INIT, on max how many tiles does the dirt spawn in percent.
-      dirt_spawn_r_var: 0.05    # How much does the dirt spawn amount vary?
+      dirt_spawn_r_var: 0.05            # How much does the dirt spawn amount vary?
       initial_amount: 3
       max_local_amount: 5               # Max dirt amount per tile.
       max_global_amount: 20             # Max dirt amount in the whole environment.

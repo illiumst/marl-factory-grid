@@ -77,14 +77,35 @@ Varying levels are created by defining Walls, Floor or Doors in *.txt*-files (se
 Define which *level* to use in your *configfile* as: 
 ```yaml
 General:
-    level_name: rooms    
+    level_name: rooms  # 'double', 'large', 'simple', ...
 ```
-... or create your own , maybe witht he help of [asciiflow.com](https://asciiflow.com/#/).
+... or create your own , maybe with the help of [asciiflow.com](https://asciiflow.com/#/).
+Be sure to use '#' as Walls, '-' as free (walkable) Floor-Tiles, 'D' for Doors.
+Custom Entites (define you own) may bring their own "Symbol"
 
 #### Entites
-TODO
+Entites are either [Objects](./environment/entity/object.py) for tracking stats or env. [Entity](./environment/entity/entity.py) which can interact.
+Abstract Entities are provided.
+
+#### Groups
+[Groups](./environment/groups/objects.py) are entity Sets that provide administrative access to all group members. 
+All [Entites](./environment/entity/global_entities.py) are available at runtime as EnvState property.
+
+
 #### Rules
-TODO
- - Results
+[Rules](./environment/entity/object.py)
+
+
+[Results](./environment/entity/object.py) provide a way to return 'rule' evaluations such as rewards and state reports 
+back to the environment.
 #### Assets
-TODO
+Make sure to bring your own assets for each Entity, that is living in the Gridworld, the 'Renderer' relies on it.
+PNG-files (transparent background) of square aspect-ratio should do the job, in general.
+
+<div style="margin:0 auto;">
+<img src=".\environment\assets\wall.png"  width="10%"> | <img src=".\environment\assets\agent\agent.png"  width="10%">
+</div>
+
+
+
+
