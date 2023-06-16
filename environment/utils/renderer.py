@@ -3,11 +3,11 @@ import sys
 from pathlib import Path
 from collections import deque
 from itertools import product
+
+import numpy as np
 import pygame
 from typing import Tuple, Union
 import time
-
-import torch
 
 from environment.utils.render import RenderEntity
 
@@ -133,7 +133,8 @@ class Renderer:
         pygame.display.flip()
         self.clock.tick(self.fps)
         rgb_obs = pygame.surfarray.array3d(self.screen)
-        return torch.from_numpy(rgb_obs).permute(2, 0, 1)
+        return np.transpose(rgb_obs, (2, 0, 1))
+        # return torch.from_numpy(rgb_obs).permute(2, 0, 1)
 
 
 if __name__ == '__main__':

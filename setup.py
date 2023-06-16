@@ -4,29 +4,34 @@ this_directory = Path(__file__).parent
 long_description = (this_directory / "README.md").read_text()
 
 
-setup(name='Marl-Neon-Grid',
-      version='0.1.4.4',
-      description='A collection of MARL gridworlds to study coordination and cooperation.',
-      author='Robert Müller',
+setup(name='Marl-Factory-Grid',
+      version='0.0.5',
+      description='A framework to research MARL agents in various setings.',
+      author='Steffen Illium',
       author_email='steffen.illium@ifi.lmu.de',
-      url='https://github.com/romue404/marl-neon-grid',
+      url='https://github.com/illiumst/marl-factory-grid/import',
       license='MIT',
       keywords=[
             'artificial intelligence',
             'pytorch',
             'multiagent reinforcement learning',
-            'simulation'
+            'simulation',
+            'emergence',
+            'gymnasium',
+            'environment',
+
       ],
       classifiers=[
             'Development Status :: 4 - Beta',
             'Intended Audience :: Developers',
             'Topic :: Scientific/Engineering :: Artificial Intelligence',
             'License :: OSI Approved :: MIT License',
-            'Programming Language :: Python :: 3.6',
+            'Programming Language :: Python :: 3.11',
       ],
       long_description=long_description,
       long_description_content_type='text/markdown',
       packages=find_packages(exclude=['examples']),
       include_package_data=True,
-      install_requires=['numpy', 'pygame>=2.0', 'numba>=0.56', 'gymnasium>=0.26', 'seaborn', 'pandas']
+      install_requires=['numpy', 'pygame>=2.0', 'numba>=0.56', 'gymnasium>=0.26', 'seaborn', 'pandas',
+                        'pyyaml', 'networkx', 'torch', 'tqdm']
       )

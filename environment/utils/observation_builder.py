@@ -191,6 +191,9 @@ class RayCaster:
         self.ray_targets = self.build_ray_targets()
         self.obs_shape_cube = np.array([self.pomdp_r, self.pomdp_r])
 
+    def __repr__(self):
+        return f'{self.__class__.__name__}({self.agent.name})'
+
     def build_ray_targets(self):
         north = np.array([0, -1])*self.pomdp_r
         thetas = [np.deg2rad(deg) for deg in np.linspace(-self.degs // 2, self.degs // 2, self.n_rays)[::-1]]
@@ -202,12 +205,9 @@ class RayCaster:
         rot_M = np.unique(np.round(rot_M @ north), axis=0)
         return rot_M.astype(int)
 
-    @staticmethod
-    def ray_block_cache(cache_dict, key, callback, ents):
+    def ray_block_cache(self, cache_dict, key, callback, ents):
         if key not in cache_dict:
             cache_dict[key] = callback()
-        if any(True for e in ents.pos_dict[key] if e.is_blocking_light) and not cache_dict[key]:
-            print()
         return cache_dict[key]
 
     def visible_entities(self, entities):
@@ -222,14 +222,23 @@ class RayCaster:
                 entities_hit = entities.pos_dict[(x, y)]
                 hits = self.ray_block_cache(cache_blocking,
                                             (x, y),
-                                            lambda: any(True for e in entities_hit if e.is_blocking_light),
+                                            lambda: any(e.is_blocking_light for e in entities_hit),
                                             entities)
 
-                diag_hits = all([
+                try:
+                    d = next(x for x in entities_hit if 'Door' in x.name)
+                    if d.pos in entities.pos_dict.keys():
+                        if d.is_closed and not entities.pos_dict[d.pos]:
+                            print()
+                except StopIteration:
+                    pass
+
+                diag_hits = any([
                     self.ray_block_cache(
                         cache_blocking,
                         key,
-                        lambda: all(False for e in entities.pos_dict[key] if not e.is_blocking_light),
+                        # lambda: all(False for e in entities.pos_dict[key] if not e.is_blocking_light),
+                        lambda: any(e.is_blocking_light for e in entities.pos_dict[key]),
                                             entities)
                     for key in ((x, y-cy), (x-cx, y))
                 ]) if (cx != 0 and cy != 0) else False
@@ -238,13 +247,6 @@ class RayCaster:
                 if hits or diag_hits:
                     break
                 rx, ry = x, y
-        try:
-            d = next(x for x in visible if 'Door' in x.name)
-            v = [x for x in visible if tuple(np.subtract(x.pos, d.pos)) in [(1, 0), (0, 1), (-1, 0), (0, -1)] and x.name.startswith('Floor')]
-            if len(v) > 2:
-                pass
-        except StopIteration:
-            pass
         return visible
 
     def get_rays(self):

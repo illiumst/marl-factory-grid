@@ -57,7 +57,7 @@ class BaseFactory(gym.Env):
         self.conf = FactoryConfigParser(self._config_file)
         # Attribute Assignment
         self.level_filepath = Path(__file__).parent.parent / h.LEVELS_DIR / f'{self.conf.level_name}.txt'
-        self._renderer = None  # expensive - don't use it when not required !
+        self._renderer = None  # expensive - don't use; unless required !
 
         parsed_entities = self.conf.load_entities()
         self.map = LevelParser(self.level_filepath, parsed_entities, self.conf.pomdp_r)
@@ -173,7 +173,7 @@ class BaseFactory(gym.Env):
         if not self._renderer:  # lazy init
             from environment.utils.renderer import Renderer
             global Renderer
-            self._renderer = Renderer(self.map.level_shape,  view_radius=self.conf.pomdp_r, fps=20)
+            self._renderer = Renderer(self.map.level_shape,  view_radius=self.conf.pomdp_r, fps=10)
 
         render_entities = self.state.entities.render()
         if self.conf.pomdp_r:

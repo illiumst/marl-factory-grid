@@ -1,10 +1,9 @@
 import importlib
-import itertools
+
 from collections import defaultdict
 from pathlib import PurePath, Path
 from typing import Union, Dict, List
 
-import networkx as nx
 import numpy as np
 from numpy.typing import ArrayLike
 
@@ -210,58 +209,25 @@ def asset_str(agent):
         return c.AGENT, 'idle'
 
 
-def points_to_graph(coordiniates_or_tiles, allow_euclidean_connections=True, allow_manhattan_connections=True):
-    """
-    Given a set of coordinates, this function contructs a non-directed graph, by conncting adjected points.
-    There are three combinations of settings:
-        Allow all neigbors:     Distance(a, b) <= sqrt(2)
-        Allow only manhattan:   Distance(a, b) == 1
-        Allow only euclidean:   Distance(a, b) == sqrt(2)
-
-
-    :param coordiniates_or_tiles: A set of coordinates.
-    :type coordiniates_or_tiles: Tiles
-    :param allow_euclidean_connections: Whether to regard diagonal adjected cells as neighbors
-    :type: bool
-    :param allow_manhattan_connections: Whether to regard directly adjected cells as neighbors
-    :type: bool
-
-    :return: A graph with nodes that are conneceted as specified by the parameters.
-    :rtype: nx.Graph
-    """
-    assert allow_euclidean_connections or allow_manhattan_connections
-    if hasattr(coordiniates_or_tiles, 'positions'):
-        coordiniates_or_tiles = coordiniates_or_tiles.positions
-    possible_connections = itertools.combinations(coordiniates_or_tiles, 2)
-    graph = nx.Graph()
-    for a, b in possible_connections:
-        diff = np.linalg.norm(np.asarray(a)-np.asarray(b))
-        if allow_manhattan_connections and allow_euclidean_connections and diff <= np.sqrt(2):
-            graph.add_edge(a, b)
-        elif not allow_manhattan_connections and allow_euclidean_connections and diff == np.sqrt(2):
-            graph.add_edge(a, b)
-        elif allow_manhattan_connections and not allow_euclidean_connections and diff == 1:
-            graph.add_edge(a, b)
-    return graph
-
-
 def locate_and_import_class(class_name, folder_path: Union[str, PurePath] = ''):
     """Locate an object by name or dotted path, importing as necessary."""
     import sys
     sys.path.append("..")
-    folder_path = Path(folder_path)
-    module_paths = [x for x in folder_path.rglob('*.py') if x.is_file() and '__init__' not in x.name]
+    folder_path = Path(folder_path).resolve()
+    module_paths = [x.resolve() for x in folder_path.rglob('*.py') if x.is_file() and '__init__' not in x.name]
     # possible_package_path = folder_path / '__init__.py'
     # package = str(possible_package_path) if possible_package_path.exists() else None
     all_found_modules = list()
+    package_pos = next(idx for idx, x in enumerate(Path(__file__).resolve().parts) if x == 'environment')
     for module_path in module_paths:
-        mod = importlib.import_module('.'.join([x.replace('.py', '') for x in module_path.parts]))
+        module_parts = [x.replace('.py', '') for idx, x in enumerate(module_path.parts) if idx >= package_pos]
+        mod = importlib.import_module('.'.join(module_parts))
         all_found_modules.extend([x for x in dir(mod) if not(x.startswith('__') or len(x) < 2 or x.isupper())
                                   and x not in ['Entity',  'NamedTuple', 'List', 'Rule', 'Union', 'random', 'Floor'
                                                 'TickResult', 'ActionResult', 'Action', 'Agent', 'deque',
                                                 'BoundEntityMixin', 'RenderEntity', 'TemplateRule', 'defaultdict',
                                                 'is_move', 'Objects', 'PositionMixin', 'IsBoundMixin', 'EnvObject',
-                                                'EnvObjects',]])
+                                                'EnvObjects']])
         try:
             model_class = mod.__getattribute__(class_name)
             return model_class

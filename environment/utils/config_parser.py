@@ -1,4 +1,6 @@
+from os import PathLike
 from pathlib import Path
+from typing import Union
 
 import yaml
 
@@ -20,9 +22,10 @@ class FactoryConfigParser(object):
     default_actions = [c.MOVE8, c.NOOP]
     default_observations = [c.WALLS, c.AGENTS]
 
-    def __init__(self, config_path):
+    def __init__(self, config_path, custom_modules_path: Union[None, PathLike] = None):
         self.config_path = Path(config_path)
-        self.config = yaml.safe_load(config_path.open())
+        self.custom_modules_path = Path(config_path) if custom_modules_path is not None else custom_modules_path
+        self.config = yaml.safe_load(self.config_path.open())
         self.do_record = False
 
     def __getattr__(self, item):
@@ -67,8 +70,13 @@ class FactoryConfigParser(object):
         entities.extend(x for x in self.entities if x != c.DEFAULTS)
 
         for entity in entities:
-            folder_path = MODULE_PATH if entity not in self.default_entites else DEFAULT_PATH
-            entity_class = locate_and_import_class(entity, folder_path)
+            try:
+                folder_path = MODULE_PATH if entity not in self.default_entites else DEFAULT_PATH
+                folder_path = (Path(__file__) / '..' / '..' / '..' / folder_path)
+                entity_class = locate_and_import_class(entity, folder_path)
+            except AttributeError:
+                folder_path = self.custom_modules_path
+                entity_class = locate_and_import_class(entity, folder_path)
             entity_kwargs = self.entities.get(entity, {})
             entity_symbol = entity_class.symbol if hasattr(entity_class, 'symbol') else None
             entity_classes.update({entity: {'class': entity_class, 'kwargs': entity_kwargs, 'symbol': entity_symbol}})
@@ -86,11 +94,15 @@ class FactoryConfigParser(object):
             parsed_actions = list()
             for action in actions:
                 folder_path = MODULE_PATH if action not in base_env_actions else DEFAULT_PATH
-                class_or_classes = locate_and_import_class(action, folder_path)
+                try:
+                    class_or_classes = locate_and_import_class(action, folder_path)
+                except AttributeError:
+                    class_or_classes = locate_and_import_class(action, self.custom_modules_path)
                 try:
                     parsed_actions.extend(class_or_classes)
                 except TypeError:
                     parsed_actions.append(class_or_classes)
+
             parsed_actions = [x() for x in parsed_actions]
 
             # Observation
@@ -114,7 +126,10 @@ class FactoryConfigParser(object):
 
         for rule in rules:
             folder_path = MODULE_PATH if rule not in self.default_rules else DEFAULT_PATH
-            rule_class = locate_and_import_class(rule, folder_path)
+            try:
+                rule_class = locate_and_import_class(rule, folder_path)
+            except AttributeError:
+                rule_class = locate_and_import_class(rule, self.custom_modules_path)
             rule_kwargs = self.rules.get(rule, {})
             rules_classes.update({rule: {'class': rule_class, 'kwargs': rule_kwargs}})
         return rules_classes
