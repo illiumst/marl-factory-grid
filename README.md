@@ -93,7 +93,11 @@ All [Entites](./environment/entity/global_entities.py) are available at runtime 
 
 
 #### Rules
-[Rules](./environment/entity/object.py)
+[Rules](./environment/entity/object.py) define how the environment behaves on micro-scale.
+Each of the hookes ('on_init', 'pre-step', 'on_step', 'post_step', 'on_done') 
+provide env-access to implement customn logic, calculate rewards, or gather information.
+
+
 
 
 [Results](./environment/entity/object.py) provide a way to return 'rule' evaluations such as rewards and state reports 
