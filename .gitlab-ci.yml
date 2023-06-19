@@ -1,4 +1,4 @@
-image: python:3.11.0-alpine
+# image: python:3.11.0-alpine
 
 stages:          # List of stages for jobs, and their order of execution
   - build
