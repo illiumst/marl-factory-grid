@@ -1,3 +1,5 @@
+image: python:3.11.0-alpine
+
 stages:          # List of stages for jobs, and their order of execution
   - build
 
@@ -5,4 +7,12 @@ build-job:       # This job runs in the build stage, which runs first.
   stage: build
   script:
     - echo "Compiling the code..."
+    - pip install -U twine
+    - python setup.py sdist
     - echo "Compile complete."
+    - twine upload dist/*
+    - echo "Upload complete."
+  cache: {}
+  only:
+      - tags
+
