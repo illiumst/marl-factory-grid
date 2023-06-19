@@ -12,6 +12,7 @@ deploy_production:
   variables:
     TWINE_USERNAME: $USER_NAME
     TWINE_PASSWORD: $API_KEY
-    script: twine upload dist/*
+  script: 
+    - twine upload dist/*
   only:
     - tags
