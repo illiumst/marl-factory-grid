@@ -5,7 +5,7 @@ long_description = (this_directory / "README.md").read_text()
 
 
 setup(name='Marl-Factory-Grid',
-      version='0.0.5',
+      version='0.0.6',
       description='A framework to research MARL agents in various setings.',
       author='Steffen Illium',
       author_email='steffen.illium@ifi.lmu.de',
@@ -18,8 +18,7 @@ setup(name='Marl-Factory-Grid',
             'simulation',
             'emergence',
             'gymnasium',
-            'environment',
-
+            'environment'
       ],
       classifiers=[
             'Development Status :: 4 - Beta',

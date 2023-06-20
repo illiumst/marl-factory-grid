@@ -16,6 +16,3 @@ build-job:       # This job runs in the build stage, which runs first.
     - echo "Compile complete."
     - twine upload dist/*
     - echo "Upload complete."
-  # cache: {}
-  # only:
-  #       - tags
