@@ -34,9 +34,9 @@ Welcome to this quick start file. Here we will see how to:
     1. Setup parameters for the environments (dest-factory).
     2. Setup parameters for the agent training (SB3: PPO) and save metrics.
         Run the training.
-    3. Save env and agent for later analysis.
+    3. Save environment and agent for later analysis.
     4. Load the agent from drive
-    5. Rendering the env with a run of the trained agent.
+    5. Rendering the environment with a run of the trained agent.
     6. Plot metrics 
 """
 
@@ -63,14 +63,14 @@ if __name__ == '__main__':
 
 
     # Define property object parameters.
-    #  'ObservationProperties' are for specifying how the agent sees the env.
+    #  'ObservationProperties' are for specifying how the agent sees the environment.
     obs_props = ObservationProperties(render_agents=AgentRenderOptions.NOT,  # Agents won`t be shown in the obs at all
                                       omit_agent_self=True,                  # This is default
                                       additional_agent_placeholder=None,     # We will not take care of future agent
                                       frames_to_stack=3,                     # To give the agent a notion of time
                                       pomdp_r=2                              # the agent view-radius
                                       )
-    #  'MovementProperties' are for specifying how the agent is allowed to move in the env.
+    #  'MovementProperties' are for specifying how the agent is allowed to move in the environment.
     move_props = MovementProperties(allow_diagonal_movement=True,   # Euclidean style (vertices)
                                     allow_square_movement=True,     # Manhattan (edges)
                                     allow_no_op=False)              # Pause movement (do nothing)
@@ -85,7 +85,7 @@ if __name__ == '__main__':
         spawn_mode           = DestModeOptions.DONE,
     )
 
-    #  These are the EnvKwargs for initializing the env class, holding all former parameter-classes
+    #  These are the EnvKwargs for initializing the environment class, holding all former parameter-classes
     # TODO: Comments
     factory_kwargs = dict(n_agents=1,
                           max_steps=400,
@@ -139,8 +139,8 @@ if __name__ == '__main__':
             model.learn(total_timesteps=int(train_steps), callback=[env_monitor_callback, env_recorder_callback])
 
             #########################################################
-            # 3. Save env and agent for later analysis.
-            #   Save the trained Model, the monitor (env measures) and the env parameters
+            # 3. Save environment and agent for later analysis.
+            #   Save the trained Model, the monitor (environment measures) and the environment parameters
             model.named_observation_space = env_factory.named_observation_space
             model.named_action_space = env_factory.named_action_space
             model.save(model_save_path)
@@ -166,10 +166,10 @@ if __name__ == '__main__':
         model_cls = next(val for key, val in h.MODEL_MAP.items() if key in policy_path.parent.name)
         # Load the agent agent
         model = model_cls.load(policy_path / 'model.zip', device='cpu')
-        # Load old env kwargs
+        # Load old environment kwargs
         with next(policy_path.glob(env_params_json)).open('r') as f:
             env_kwargs = simplejson.load(f)
-            # Make the env stop ar collisions
+            # Make the environment stop ar collisions
             # (you only want to have a single collision per episode hence the statistics)
             env_kwargs.update(done_at_collision=True)
 

@@ -2,13 +2,12 @@ import warnings
 from pathlib import Path
 
 import yaml
-from stable_baselines3 import PPO
 
-from environment.factory import BaseFactory
-from environment.logging.envmonitor import EnvMonitor
-from environment.logging.recorder import EnvRecorder
+from mfg_package.environment.factory import BaseFactory
+from mfg_package.logging.envmonitor import EnvMonitor
+from mfg_package.logging.recorder import EnvRecorder
 
-from modules.doors import constants as d
+from mfg_package.modules.doors import constants as d
 
 warnings.filterwarnings('ignore', category=FutureWarning)
 warnings.filterwarnings('ignore', category=UserWarning)
@@ -32,7 +31,7 @@ if __name__ == '__main__':
 
     this_model = out_path / 'model.zip'
 
-    model_cls = PPO  # next(val for key, val in h.MODEL_MAP.items() if key in out_path.parent.name)
+    model_cls = None  # next(val for key, val in h.MODEL_MAP.items() if key in out_path.parent.name)
     models = [model_cls.load(this_model)]
     try:
         # Legacy Cleanups

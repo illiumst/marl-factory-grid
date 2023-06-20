@@ -96,7 +96,7 @@ if __name__ == '__main__':
     max_seed = 0
     # Define this folder
     combinations_path = Path('combinations')
-    # Those are all differently trained combinations of mdoels, env and parameters
+    # Those are all differently trained combinations of mdoels, environment and parameters
     for combination in (x for x in combinations_path.iterdir() if x.is_dir()):
         # These are all the models for this specific combination
         for model_run in (x for x in combination.iterdir() if x.is_dir()):
@@ -108,7 +108,7 @@ if __name__ == '__main__':
             # Those are all available seeds
             for seed_run in (x for x in model_run.iterdir() if x.is_dir()):
                 max_seed = max(int(seed_run.name.split('_')[0]), max_seed)
-                # Read the env configuration from ROM
+                # Read the environment configuration from ROM
                 with next(seed_run.glob('env_params.json')).open('r') as f:
                     env_kwargs = simplejson.load(f)
                 available_runs_kwargs[seed_run.name] = env_kwargs

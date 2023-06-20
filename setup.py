@@ -18,7 +18,10 @@ setup(name='Marl-Factory-Grid',
             'simulation',
             'emergence',
             'gymnasium',
-            'environment'
+            'environment',
+            'deepdiff',
+            'natsort',
+
       ],
       classifiers=[
             'Development Status :: 4 - Beta',

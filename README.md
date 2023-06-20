@@ -80,36 +80,35 @@ General:
     level_name: rooms  # 'double', 'large', 'simple', ...
 ```
 ... or create your own , maybe with the help of [asciiflow.com](https://asciiflow.com/#/).
-Be sure to use '#' as Walls, '-' as free (walkable) Floor-Tiles, 'D' for Doors.
-Custom Entites (define you own) may bring their own "Symbol"
+Make sure to use `#` as [Walls](mfg_package/environment/entity/wall_floor.py), `-` as free (walkable) [Floor](mfg_package/environment/entity/wall_floor.py)-Tiles, `D` for [Walls](./modules/doors/entities.py).
+Other Entites (define you own) may bring their own `Symbols`
 
 #### Entites
-Entites are either [Objects](./environment/entity/object.py) for tracking stats or env. [Entity](./environment/entity/entity.py) which can interact.
+Entites, either [Objects](mfg_package/environment/entity/object.py) for tracking stats 
+or env. [Entity](mfg_package/environment/entity/entity.py) which can interact.
 Abstract Entities are provided.
 
 #### Groups
-[Groups](./environment/groups/objects.py) are entity Sets that provide administrative access to all group members. 
-All [Entites](./environment/entity/global_entities.py) are available at runtime as EnvState property.
+[Groups](mfg_package/environment/groups/objects.py) are entity Sets that provide administrative access to all group members. 
+All [Entites](mfg_package/environment/entity/global_entities.py) are available at runtime as EnvState property.
 
 
 #### Rules
-[Rules](./environment/entity/object.py) define how the environment behaves on micro-scale.
-Each of the hookes ('on_init', 'pre-step', 'on_step', 'post_step', 'on_done') 
+[Rules](mfg_package/environment/entity/object.py) define how the environment behaves on micro-scale.
+Each of the hookes (`on_init`, `pre_step`, `on_step`, '`post_step`', `on_done`) 
 provide env-access to implement customn logic, calculate rewards, or gather information.
 
+![Hooks](./images/Hooks_FIKS.png)
 
-
-
-[Results](./environment/entity/object.py) provide a way to return 'rule' evaluations such as rewards and state reports 
+[Results](mfg_package/environment/entity/object.py) provide a way to return `rule` evaluations such as rewards and state reports 
 back to the environment.
 #### Assets
-Make sure to bring your own assets for each Entity, that is living in the Gridworld, the 'Renderer' relies on it.
+Make sure to bring your own assets for each Entity living in the Gridworl as the `Renderer` relies on it.
 PNG-files (transparent background) of square aspect-ratio should do the job, in general.
 
-<div style="margin:0 auto;">
-<img src=".\environment\assets\wall.png"  width="10%"> | <img src=".\environment\assets\agent\agent.png"  width="10%">
-</div>
-
+<img src=".\environment\assets\wall.png"  width="5%"> 
+&nbsp&nbsp&nbsp&nbsp 
+<img src=".\environment\assets\agent\agent.png"  width="5%">
 
 
 
