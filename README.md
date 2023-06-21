@@ -80,27 +80,27 @@ General:
     level_name: rooms  # 'double', 'large', 'simple', ...
 ```
 ... or create your own , maybe with the help of [asciiflow.com](https://asciiflow.com/#/).
-Make sure to use `#` as [Walls](mfg_package/environment/entity/wall_floor.py), `-` as free (walkable) [Floor](mfg_package/environment/entity/wall_floor.py)-Tiles, `D` for [Walls](./modules/doors/entities.py).
+Make sure to use `#` as [Walls](marl_factory_grid/environment/entity/wall_floor.py), `-` as free (walkable) [Floor](marl_factory_grid/environment/entity/wall_floor.py)-Tiles, `D` for [Walls](./modules/doors/entities.py).
 Other Entites (define you own) may bring their own `Symbols`
 
 #### Entites
-Entites, either [Objects](mfg_package/environment/entity/object.py) for tracking stats 
-or env. [Entity](mfg_package/environment/entity/entity.py) which can interact.
+Entites, either [Objects](marl_factory_grid/environment/entity/object.py) for tracking stats 
+or env. [Entity](marl_factory_grid/environment/entity/entity.py) which can interact.
 Abstract Entities are provided.
 
 #### Groups
-[Groups](mfg_package/environment/groups/objects.py) are entity Sets that provide administrative access to all group members. 
-All [Entites](mfg_package/environment/entity/global_entities.py) are available at runtime as EnvState property.
+[Groups](marl_factory_grid/environment/groups/objects.py) are entity Sets that provide administrative access to all group members. 
+All [Entites](marl_factory_grid/environment/entity/global_entities.py) are available at runtime as EnvState property.
 
 
 #### Rules
-[Rules](mfg_package/environment/entity/object.py) define how the environment behaves on micro-scale.
+[Rules](marl_factory_grid/environment/entity/object.py) define how the environment behaves on micro-scale.
 Each of the hookes (`on_init`, `pre_step`, `on_step`, '`post_step`', `on_done`) 
 provide env-access to implement customn logic, calculate rewards, or gather information.
 
 ![Hooks](./images/Hooks_FIKS.png)
 
-[Results](mfg_package/environment/entity/object.py) provide a way to return `rule` evaluations such as rewards and state reports 
+[Results](marl_factory_grid/environment/entity/object.py) provide a way to return `rule` evaluations such as rewards and state reports 
 back to the environment.
 #### Assets
 Make sure to bring your own assets for each Entity living in the Gridworl as the `Renderer` relies on it.

@@ -3,11 +3,11 @@ from pathlib import Path
 
 import yaml
 
-from mfg_package.environment.factory import BaseFactory
-from mfg_package.logging.envmonitor import EnvMonitor
-from mfg_package.logging.recorder import EnvRecorder
+from marl_factory_grid.environment.factory import BaseFactory
+from marl_factory_grid.logging.envmonitor import EnvMonitor
+from marl_factory_grid.logging.recorder import EnvRecorder
 
-from mfg_package.modules.doors import constants as d
+from marl_factory_grid.modules.doors import constants as d
 
 warnings.filterwarnings('ignore', category=FutureWarning)
 warnings.filterwarnings('ignore', category=UserWarning)
