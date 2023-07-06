@@ -18,11 +18,11 @@ class FactoryConfigParser(object):
     default_entites = []
     default_rules = ['MaxStepsReached', 'Collision']
     default_actions = [c.MOVE8, c.NOOP]
-    default_observations = [c.WALLS, c.AGENTS]
+    default_observations = [c.WALLS, c.AGENT]
 
     def __init__(self, config_path, custom_modules_path: Union[None, PathLike] = None):
         self.config_path = Path(config_path)
-        self.custom_modules_path = Path(config_path) if custom_modules_path is not None else custom_modules_path
+        self.custom_modules_path = Path(custom_modules_path) if custom_modules_path is not None else custom_modules_path
         self.config = yaml.safe_load(self.config_path.open())
         self.do_record = False
 
@@ -69,12 +69,20 @@ class FactoryConfigParser(object):
 
         for entity in entities:
             try:
-                folder_path = MODULE_PATH if entity not in self.default_entites else DEFAULT_PATH
-                folder_path = (Path(__file__) / '..' / '..' / '..' / folder_path)
+                folder_path = Path(__file__).parent.parent / DEFAULT_PATH
                 entity_class = locate_and_import_class(entity, folder_path)
-            except AttributeError:
-                folder_path = self.custom_modules_path
-                entity_class = locate_and_import_class(entity, folder_path)
+            except AttributeError as e1:
+                try:
+                    folder_path = Path(__file__).parent.parent / MODULE_PATH
+                    entity_class = locate_and_import_class(entity, folder_path)
+                except AttributeError as e2:
+                    try:
+                        folder_path = self.custom_modules_path
+                        entity_class = locate_and_import_class(entity, folder_path)
+                    except AttributeError as e3:
+                        ents = [y for x in [e1.argss[1], e2.argss[1], e3.argss[1]] for y in x]
+                        raise AttributeError(e1.argss[0], e2.argss[0], e3.argss[0], 'Possible Entitys are>:', str(ents))
+
             entity_kwargs = self.entities.get(entity, {})
             entity_symbol = entity_class.symbol if hasattr(entity_class, 'symbol') else None
             entity_classes.update({entity: {'class': entity_class, 'kwargs': entity_kwargs, 'symbol': entity_symbol}})
@@ -92,7 +100,7 @@ class FactoryConfigParser(object):
             parsed_actions = list()
             for action in actions:
                 folder_path = MODULE_PATH if action not in base_env_actions else DEFAULT_PATH
-                folder_path = (Path(__file__) / '..' / '..' / '..' / folder_path)
+                folder_path = Path(__file__).parent.parent / folder_path
                 try:
                     class_or_classes = locate_and_import_class(action, folder_path)
                 except AttributeError:
@@ -124,12 +132,15 @@ class FactoryConfigParser(object):
         rules.extend(x for x in self.rules if x != c.DEFAULTS)
 
         for rule in rules:
-            folder_path = MODULE_PATH if rule not in self.default_rules else DEFAULT_PATH
-            folder_path = (Path(__file__) / '..' / '..' / '..' / folder_path)
             try:
+                folder_path = (Path(__file__).parent.parent / DEFAULT_PATH)
                 rule_class = locate_and_import_class(rule, folder_path)
             except AttributeError:
-                rule_class = locate_and_import_class(rule, self.custom_modules_path)
+                try:
+                    folder_path = (Path(__file__).parent.parent / MODULE_PATH)
+                    rule_class = locate_and_import_class(rule, folder_path)
+                except AttributeError:
+                    rule_class = locate_and_import_class(rule, self.custom_modules_path)
             rule_kwargs = self.rules.get(rule, {})
             rules_classes.update({rule: {'class': rule_class, 'kwargs': rule_kwargs}})
         return rules_classes

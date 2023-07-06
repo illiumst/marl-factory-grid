@@ -11,7 +11,7 @@ class DirtRespawnRule(Rule):
         self.spawn_freq = spawn_freq
         self._next_dirt_spawn = spawn_freq
 
-    def on_init(self, state) -> str:
+    def on_init(self, state, lvl_map) -> str:
         state[d.DIRT].trigger_dirt_spawn(state, initial_spawn=True)
         return f'Initial Dirt was spawned on: {[x.pos for x in state[d.DIRT]]}'
 

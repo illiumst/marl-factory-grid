@@ -2,10 +2,11 @@ from typing import List, Dict
 
 import numpy as np
 
+
+from marl_factory_grid.environment import constants as c
 from marl_factory_grid.environment.entity.wall_floor import Floor
 from marl_factory_grid.environment.rules import Rule
 from marl_factory_grid.utils.results import Result
-from marl_factory_grid.environment import constants as c
 
 
 class StepRules:
@@ -26,9 +27,9 @@ class StepRules:
         self.rules.append(item)
         return True
 
-    def do_all_init(self, state):
+    def do_all_init(self, state, lvl_map):
         for rule in self.rules:
-            if rule_init_printline := rule.on_init(state):
+            if rule_init_printline := rule.on_init(state, lvl_map):
                 state.print(rule_init_printline)
         return c.VALID
 
@@ -58,7 +59,7 @@ class Gamestate(object):
 
     @property
     def moving_entites(self):
-        return [y for x in self.entities for y in x if x.can_move]
+        return [y for x in self.entities for y in x if x.var_can_move]
 
     def __init__(self, entitites, rules: Dict[str, dict], env_seed=69, verbose=False):
         self.entities = entitites
@@ -107,6 +108,6 @@ class Gamestate(object):
 
     def get_all_tiles_with_collisions(self) -> List[Floor]:
         tiles = [self[c.FLOOR].by_pos(pos) for pos, e in self.entities.pos_dict.items()
-                 if sum([x.can_collide for x in e]) > 1]
+                 if sum([x.var_can_collide for x in e]) > 1]
         # tiles = [x for x in self[c.FLOOR] if len(x.guests_that_can_collide) > 1]
         return tiles

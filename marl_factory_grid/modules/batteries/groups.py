@@ -13,17 +13,12 @@ class Batteries(HasBoundedMixin, EnvObjects):
     def obs_tag(self):
         return self.__class__.__name__
 
-    @property
-    def obs_pairs(self):
-        return [(x.name, x) for x in self]
-
     def __init__(self, *args, **kwargs):
         super(Batteries, self).__init__(*args, **kwargs)
 
-    def spawn_batteries(self, agents, initial_charge_level):
+    def spawn(self, agents, initial_charge_level):
         batteries = [self._entity(initial_charge_level, agent) for _, agent in enumerate(agents)]
         self.add_items(batteries)
-
 
 class ChargePods(PositionMixin, EnvObjects):
 

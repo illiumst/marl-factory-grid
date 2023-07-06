@@ -1,6 +1,7 @@
 from marl_factory_grid.environment.groups.env_objects import EnvObjects
 from marl_factory_grid.environment.groups.mixins import PositionMixin
-from marl_factory_grid.modules.machines.entitites import Machine
+
+from .entitites import Machine
 
 
 class Machines(PositionMixin, EnvObjects):

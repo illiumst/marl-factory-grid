@@ -1,15 +1,19 @@
+from typing import List
+
 from marl_factory_grid.environment import constants as c
-
 from marl_factory_grid.environment.entity.entity import Entity
+from marl_factory_grid.environment.entity.wall_floor import Floor
 
 
-# noinspection PyUnresolvedReferences,PyTypeChecker,PyArgumentList
 class PositionMixin:
 
     _entity = Entity
-    is_blocking_light: bool = True
-    can_collide: bool = True
-    has_position: bool = True
+    var_is_blocking_light: bool = True
+    var_can_collide: bool = True
+    var_has_position: bool = True
+
+    def spawn(self, tiles: List[Floor]):
+        self.add_items([self._entity(tile) for tile in tiles])
 
     def render(self):
         return [y for y in [x.render() for x in self] if y is not None]
@@ -81,8 +85,8 @@ class IsBoundMixin:
 class HasBoundedMixin:
 
     @property
-    def obs_names(self):
-        return [x.name for x in self]
+    def obs_pairs(self):
+        return [(x.name, x) for x in self]
 
     def by_entity(self, entity):
         try:

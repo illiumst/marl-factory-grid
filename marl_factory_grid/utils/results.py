@@ -1,8 +1,6 @@
 from typing import Union
 from dataclasses import dataclass
 
-from marl_factory_grid.environment.entity.entity import Entity
-
 TYPE_VALUE  = 'value'
 TYPE_REWARD = 'reward'
 types = [TYPE_VALUE, TYPE_REWARD]
@@ -20,7 +18,7 @@ class Result:
     validity: bool
     reward: Union[float, None] = None
     value: Union[float, None] = None
-    entity: Union[Entity, None] = None
+    entity: None = None
 
     def get_infos(self):
         n = self.entity.name if self.entity is not None else "Global"

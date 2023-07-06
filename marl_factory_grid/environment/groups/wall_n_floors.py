@@ -30,8 +30,8 @@ class Walls(PositionMixin, EnvObjects):
 class Floors(Walls):
     _entity = Floor
     symbol = c.SYMBOL_FLOOR
-    is_blocking_light: bool = False
-    can_collide: bool = False
+    var_is_blocking_light: bool = False
+    var_can_collide: bool = False
 
     def __init__(self, *args, **kwargs):
         super(Floors, self).__init__(*args, **kwargs)

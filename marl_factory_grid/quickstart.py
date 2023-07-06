@@ -10,10 +10,10 @@ def init():
     ce = ConfigExplainer()
     cwd = Path(os.getcwd())
     ce.save_all(cwd / 'full_config.yaml')
-    template_path = Path(__file__) / 'marl_factory_grid' / 'modules' / '_template'
+    template_path = Path(__file__).parent / 'modules' / '_template'
     print(f'Available config options saved to: {(cwd / "full_config.yaml").resolve()}')
     print('-----------------------------')
     print(f'Copying Templates....')
     shutil.copytree(template_path, cwd)
-    print(f'Templates copied to {template_path.resolve()}')
+    print(f'Templates copied to {cwd}"/"{template_path.name}')
     print(':wave:')

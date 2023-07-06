@@ -19,7 +19,7 @@ from marl_factory_grid.utils.states import Gamestate
 REC_TAC = 'rec_'
 
 
-class BaseFactory(gym.Env):
+class Factory(gym.Env):
 
     @property
     def action_space(self):
@@ -52,11 +52,15 @@ class BaseFactory(gym.Env):
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
 
-    def __init__(self, config_file: Union[str, PathLike]):
+    def __init__(self, config_file: Union[str, PathLike], custom_modules_path: Union[None, PathLike] = None,
+                 custom_level_path: Union[None, PathLike] = None):
         self._config_file = config_file
-        self.conf = FactoryConfigParser(self._config_file)
+        self.conf = FactoryConfigParser(self._config_file, custom_modules_path)
         # Attribute Assignment
-        self.level_filepath = Path(__file__).parent.parent / h.LEVELS_DIR / f'{self.conf.level_name}.txt'
+        if custom_level_path is not None:
+            self.level_filepath = Path(custom_level_path)
+        else:
+            self.level_filepath = Path(__file__).parent.parent / h.LEVELS_DIR / f'{self.conf.level_name}.txt'
         self._renderer = None  # expensive - don't use; unless required !
 
         parsed_entities = self.conf.load_entities()
@@ -90,7 +94,7 @@ class BaseFactory(gym.Env):
         self.state.entities.add_item({c.AGENT: agents})
 
         # All is set up, trigger additional init (after agent entity spawn etc)
-        self.state.rules.do_all_init(self.state)
+        self.state.rules.do_all_init(self.state, self.map)
 
         # Observations
         # noinspection PyAttributeOutsideInit
@@ -144,7 +148,7 @@ class BaseFactory(gym.Env):
         try:
             done_reason = next(x for x in done_check_results if x.validity)
             done = True
-            self.state.print(f'Env done, Reason: {done_reason.name}.')
+            self.state.print(f'Env done, Reason: {done_reason.identifier}.')
         except StopIteration:
             done = False
 

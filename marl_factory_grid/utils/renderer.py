@@ -27,13 +27,13 @@ class Renderer:
     BG_COLOR = (178, 190, 195)         # (99, 110, 114)
     WHITE = (223, 230, 233)            # (200, 200, 200)
     AGENT_VIEW_COLOR = (9, 132, 227)
-    ASSETS = Path(__file__).parent.parent / 'assets'
-    MODULE_ASSETS = Path(__file__).parent.parent.parent / 'modules'
+    ASSETS = Path(__file__).parent.parent
 
     def __init__(self, lvl_shape: Tuple[int, int] = (16, 16),
                  lvl_padded_shape: Union[Tuple[int, int], None] = None,
                  cell_size: int = 40, fps: int = 7,
                  grid_lines: bool = True, view_radius: int = 2):
+        # TODO: Customn_assets paths
         self.grid_h, self.grid_w = lvl_shape
         self.lvl_padded_shape = lvl_padded_shape if lvl_padded_shape is not None else lvl_shape
         self.cell_size = cell_size
@@ -44,7 +44,7 @@ class Renderer:
         self.screen_size = (self.grid_w*cell_size, self.grid_h*cell_size)
         self.screen = pygame.display.set_mode(self.screen_size)
         self.clock = pygame.time.Clock()
-        assets = list(self.ASSETS.rglob('*.png')) + list(self.MODULE_ASSETS.rglob('*.png'))
+        assets = list(self.ASSETS.rglob('*.png'))
         self.assets = {path.stem: self.load_asset(str(path), 1) for path in assets}
         self.fill_bg()
 

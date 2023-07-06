@@ -5,10 +5,10 @@ from marl_factory_grid.environment.entity.object import EnvObject
 class EnvObjects(Objects):
 
     _entity = EnvObject
-    is_blocking_light: bool = False
-    can_collide: bool = False
-    has_position: bool = False
-    can_move: bool = False
+    var_is_blocking_light: bool = False
+    var_can_collide: bool = False
+    var_has_position: bool = False
+    var_can_move: bool = False
 
     @property
     def encodings(self):
@@ -19,7 +19,7 @@ class EnvObjects(Objects):
         self.size = size
 
     def add_item(self, item: EnvObject):
-        assert self.has_position or (len(self) <= self.size)
+        assert self.var_has_position or (len(self) <= self.size)
         super(EnvObjects, self).add_item(item)
         return self
 

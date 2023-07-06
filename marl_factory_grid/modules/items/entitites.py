@@ -8,6 +8,8 @@ from marl_factory_grid.modules.items import constants as i
 
 class Item(Entity):
 
+    var_can_collide = False
+
     def render(self):
         return RenderEntity(i.ITEM, self.tile.pos) if self.pos != c.VALUE_NO_POS else None
 
@@ -37,6 +39,22 @@ class Item(Entity):
 
 
 class DropOffLocation(Entity):
+
+    @property
+    def var_can_collide(self):
+        return False
+
+    @property
+    def var_can_move(self):
+        return False
+
+    @property
+    def var_is_blocking_light(self):
+        return False
+
+    @property
+    def var_has_position(self):
+        return True
 
     def render(self):
         return RenderEntity(i.DROP_OFF, self.tile.pos)

@@ -1,12 +1,13 @@
 from typing import List, Union
 
-from marl_factory_grid.environment import constants as c
 from marl_factory_grid.environment.actions import Action
 from marl_factory_grid.environment.entity.entity import Entity
 from marl_factory_grid.utils.render import RenderEntity
 from marl_factory_grid.utils import renderer
 from marl_factory_grid.utils.helpers import is_move
 from marl_factory_grid.utils.results import ActionResult, Result
+
+from marl_factory_grid.environment import constants as c
 
 
 class Agent(Entity):
@@ -24,7 +25,7 @@ class Agent(Entity):
         return self._observations
 
     @property
-    def can_collide(self):
+    def var_can_collide(self):
         return True
 
     def step_result(self):

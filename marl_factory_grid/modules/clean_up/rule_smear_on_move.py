@@ -18,7 +18,7 @@ class DirtSmearOnMove(Rule):
             if is_move(entity.state.identifier) and entity.state.validity == c.VALID:
                 if old_pos_dirt := state[d.DIRT].by_pos(entity.last_pos):
                     if smeared_dirt := round(old_pos_dirt.amount * self.smear_amount, 2):
-                        if state[d.DIRT].spawn_dirt(entity.tile, amount=smeared_dirt):
+                        if state[d.DIRT].spawn(entity.tile, amount=smeared_dirt):
                             results.append(TickResult(identifier=self.name, entity=entity,
                                                       reward=0, validity=c.VALID))
         return results

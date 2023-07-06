@@ -1,10 +1,9 @@
 from typing import Union
 
 from marl_factory_grid.environment.actions import Action
-from marl_factory_grid.utils.results import ActionResult
-
 from marl_factory_grid.modules.doors import constants as d, rewards as r
 from marl_factory_grid.environment import constants as c
+from marl_factory_grid.utils.results import ActionResult
 
 
 class DoorUse(Action):

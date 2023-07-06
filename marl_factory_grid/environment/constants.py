@@ -9,15 +9,13 @@ WALL                    = 'Wall'                # Identifier of Wall-objects and
 WALLS                   = 'Walls'               # Identifier of Wall-objects and groups (groups).
 LEVEL                   = 'Level'               # Identifier of Level-objects and groups (groups).
 AGENT                   = 'Agent'               # Identifier of Agent-objects and groups (groups).
-AGENTS                  = 'Agents'              # Identifier of Agent-objects and groups (groups).
 OTHERS                  = 'Other'
 COMBINED                = 'Combined'
-GLOBAL_POSITION         = 'GLOBAL_POSITION'     # Identifier of the global position slice
-
+GLOBALPOSITIONS        = 'GlobalPositions'     # Identifier of the global position slice
 
 # Attributes
-IS_BLOCKING_LIGHT       = 'is_blocking_light'
-HAS_POSITION            = 'has_position'
+IS_BLOCKING_LIGHT       = 'var_is_blocking_light'
+HAS_POSITION            = 'var_has_position'
 HAS_NO_POSITION         = 'has_no_position'
 ALL                     = 'All'
 

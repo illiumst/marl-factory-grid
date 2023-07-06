@@ -6,10 +6,9 @@ from typing import Dict, List
 import numpy as np
 from numba import njit
 
+from marl_factory_grid.environment import constants as c
 from marl_factory_grid.environment.groups.utils import Combined
 from marl_factory_grid.utils.states import Gamestate
-
-from marl_factory_grid.environment import constants as c
 
 
 class OBSBuilder(object):
@@ -111,10 +110,10 @@ class OBSBuilder(object):
                                 e = next(x for x in self.all_obs if l_name in x and agent.name in x)
                             except StopIteration:
                                 raise KeyError(
-                                    f'Check typing!\n{l_name} could not be found in:\n{dict(self.all_obs).keys()}')
+                                    f'Check typing! {l_name} could not be found in: {list(dict(self.all_obs).keys())}')
 
                     try:
-                        positional = e.has_position
+                        positional = e.var_has_position
                     except AttributeError:
                         positional = False
                     if positional:
@@ -172,7 +171,7 @@ class OBSBuilder(object):
                 obs_layers.append(combined.name)
             elif obs_str == c.OTHERS:
                 obs_layers.extend([x for x in self.all_obs if x != agent.name and x.startswith(f'{c.AGENT}[')])
-            elif obs_str == c.AGENTS:
+            elif obs_str == c.AGENT:
                 obs_layers.extend([x for x in self.all_obs if x.startswith(f'{c.AGENT}[')])
             else:
                 obs_layers.append(obs_str)
@@ -222,7 +221,7 @@ class RayCaster:
                 entities_hit = entities.pos_dict[(x, y)]
                 hits = self.ray_block_cache(cache_blocking,
                                             (x, y),
-                                            lambda: any(e.is_blocking_light for e in entities_hit),
+                                            lambda: any(e.var_is_blocking_light for e in entities_hit),
                                             entities)
 
                 try:
@@ -237,8 +236,8 @@ class RayCaster:
                     self.ray_block_cache(
                         cache_blocking,
                         key,
-                        # lambda: all(False for e in entities.pos_dict[key] if not e.is_blocking_light),
-                        lambda: any(e.is_blocking_light for e in entities.pos_dict[key]),
+                        # lambda: all(False for e in entities.pos_dict[key] if not e.var_is_blocking_light),
+                        lambda: any(e.var_is_blocking_light for e in entities.pos_dict[key]),
                                             entities)
                     for key in ((x, y-cy), (x-cx, y))
                 ]) if (cx != 0 and cy != 0) else False

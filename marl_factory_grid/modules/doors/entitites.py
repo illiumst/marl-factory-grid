@@ -22,15 +22,15 @@ class DoorIndicator(Entity):
 class Door(Entity):
 
     @property
-    def is_blocking_pos(self):
+    def var_is_blocking_pos(self):
         return False if self.is_open else True
 
     @property
-    def is_blocking_light(self):
+    def var_is_blocking_light(self):
         return False if self.is_open else True
 
     @property
-    def can_collide(self):
+    def var_can_collide(self):
         return False if self.is_open else True
 
     @property
@@ -42,12 +42,14 @@ class Door(Entity):
         return 'open' if self.is_open else 'closed'
 
     def __init__(self, *args, closed_on_init=True, auto_close_interval=10, indicate_area=False, **kwargs):
-        self._state = d.STATE_CLOSED
+        self._status = d.STATE_CLOSED
         super(Door, self).__init__(*args, **kwargs)
         self.auto_close_interval = auto_close_interval
         self.time_to_close = 0
         if not closed_on_init:
             self._open()
+        else:
+            self._close()
         if indicate_area:
             self._collection.add_items([DoorIndicator(x) for x in self.tile.neighboring_floor])
 
@@ -58,22 +60,22 @@ class Door(Entity):
 
     @property
     def is_closed(self):
-        return self._state == d.STATE_CLOSED
+        return self._status == d.STATE_CLOSED
 
     @property
     def is_open(self):
-        return self._state == d.STATE_OPEN
+        return self._status == d.STATE_OPEN
 
     @property
     def status(self):
-        return self._state
+        return self._status
 
     def render(self):
         name, state = 'door_open' if self.is_open else 'door_closed', 'blank'
         return RenderEntity(name, self.pos, 1, 'none', state, self.identifier_int + 1)
 
     def use(self):
-        if self._state == d.STATE_OPEN:
+        if self._status == d.STATE_OPEN:
             self._close()
         else:
             self._open()
@@ -90,8 +92,8 @@ class Door(Entity):
             return c.NOT_VALID
 
     def _open(self):
-        self._state = d.STATE_OPEN
+        self._status = d.STATE_OPEN
         self.time_to_close = self.auto_close_interval
 
     def _close(self):
-        self._state = d.STATE_CLOSED
+        self._status = d.STATE_CLOSED

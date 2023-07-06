@@ -2,10 +2,11 @@ from typing import List, Union
 
 import numpy as np
 
-from marl_factory_grid.environment.groups.env_objects import EnvObjects
-from marl_factory_grid.environment.groups.objects import Objects
-from marl_factory_grid.environment.groups.mixins import HasBoundedMixin, PositionMixin
 from marl_factory_grid.environment.entity.util import GlobalPosition
+from marl_factory_grid.environment.groups.env_objects import EnvObjects
+from marl_factory_grid.environment.groups.mixins import PositionMixin, HasBoundedMixin
+from marl_factory_grid.environment.groups.objects import Objects
+from marl_factory_grid.modules.zones import Zone
 from marl_factory_grid.utils import helpers as h
 from marl_factory_grid.environment import constants as c
 
@@ -44,7 +45,9 @@ class GlobalPositions(HasBoundedMixin, EnvObjects):
         super(GlobalPositions, self).__init__(*args, **kwargs)
 
 
-class Zones(Objects):
+class ZonesOLD(Objects):
+
+    _entity = Zone
 
     @property
     def accounting_zones(self):

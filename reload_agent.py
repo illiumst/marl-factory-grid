@@ -3,7 +3,7 @@ from pathlib import Path
 
 import yaml
 
-from marl_factory_grid.environment.factory import BaseFactory
+from marl_factory_grid.environment.factory import Factory
 from marl_factory_grid.logging.envmonitor import EnvMonitor
 from marl_factory_grid.logging.recorder import EnvRecorder
 
@@ -41,7 +41,7 @@ if __name__ == '__main__':
         pass
 
     # Init Env
-    with BaseFactory(**env_kwargs) as env:
+    with Factory(**env_kwargs) as env:
         env = EnvMonitor(env)
         env = EnvRecorder(env) if record else env
         obs_shape = env.observation_space.shape

@@ -78,37 +78,37 @@ class EnvObject(Object):
             return self.name
 
     @property
-    def is_blocking_light(self):
+    def var_is_blocking_light(self):
         try:
-            return self._collection.is_blocking_light or False
+            return self._collection.var_is_blocking_light or False
         except AttributeError:
             return False
 
     @property
-    def can_move(self):
+    def var_can_move(self):
         try:
-            return self._collection.can_move or False
+            return self._collection.var_can_move or False
         except AttributeError:
             return False
 
     @property
-    def is_blocking_pos(self):
+    def var_is_blocking_pos(self):
         try:
-            return self._collection.is_blocking_pos or False
+            return self._collection.var_is_blocking_pos or False
         except AttributeError:
             return False
 
     @property
-    def has_position(self):
+    def var_has_position(self):
         try:
-            return self._collection.has_position or False
+            return self._collection.var_has_position or False
         except AttributeError:
             return False
 
     @property
-    def can_collide(self):
+    def var_can_collide(self):
         try:
-            return self._collection.can_collide or False
+            return self._collection.var_can_collide or False
         except AttributeError:
             return False
 

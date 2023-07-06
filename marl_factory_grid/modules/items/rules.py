@@ -18,7 +18,7 @@ class ItemRules(Rule):
         self.max_dropoff_storage_size = max_dropoff_storage_size
         self.n_locations = n_locations
 
-    def on_init(self, state):
+    def on_init(self, state, lvl_map):
         self.trigger_drop_off_location_spawn(state)
         self._next_item_spawn = self.spawn_frequency
         self.trigger_inventory_spawn(state)
@@ -42,7 +42,7 @@ class ItemRules(Rule):
     def trigger_item_spawn(self, state):
         if item_to_spawns := max(0, (self.n_items - len(state[i.ITEM]))):
             empty_tiles = state[c.FLOOR].empty_tiles[:item_to_spawns]
-            state[i.ITEM].spawn_items(empty_tiles)
+            state[i.ITEM].spawn(empty_tiles)
             self._next_item_spawn = self.spawn_frequency
             state.print(f'{item_to_spawns} new items have been spawned; next spawn in {self._next_item_spawn}')
             return len(empty_tiles)
@@ -52,7 +52,7 @@ class ItemRules(Rule):
 
     @staticmethod
     def trigger_inventory_spawn(state):
-        state[i.INVENTORY].spawn_inventories(state[c.AGENT])
+        state[i.INVENTORY].spawn(state[c.AGENT])
 
     def tick_post_step(self, state) -> List[TickResult]:
         for item in list(state[i.ITEM].values()):

@@ -11,23 +11,23 @@ from marl_factory_grid.utils import helpers as h
 class Floor(EnvObject):
 
     @property
-    def has_position(self):
+    def var_has_position(self):
         return True
 
     @property
-    def can_collide(self):
+    def var_can_collide(self):
         return False
 
     @property
-    def can_move(self):
+    def var_can_move(self):
         return False
 
     @property
-    def is_blocking_pos(self):
+    def var_is_blocking_pos(self):
         return False
 
     @property
-    def is_blocking_light(self):
+    def var_is_blocking_light(self):
         return False
 
     @property
@@ -51,7 +51,7 @@ class Floor(EnvObject):
 
     @property
     def guests_that_can_collide(self):
-        return [x for x in self.guests if x.can_collide]
+        return [x for x in self.guests if x.var_can_collide]
 
     @property
     def guests(self):
@@ -67,7 +67,7 @@ class Floor(EnvObject):
 
     @property
     def is_blocked(self):
-        return any([x.is_blocking_pos for x in self.guests])
+        return any([x.var_is_blocking_pos for x in self.guests])
 
     def __init__(self, pos, **kwargs):
         super(Floor, self).__init__(**kwargs)
@@ -86,7 +86,7 @@ class Floor(EnvObject):
         return bool(len(self._guests))
 
     def enter(self, guest):
-        if (guest.name not in self._guests and not self.is_blocked) and not (guest.is_blocking_pos and self.is_occupied()):
+        if (guest.name not in self._guests and not self.is_blocked) and not (guest.var_is_blocking_pos and self.is_occupied()):
             self._guests.update({guest.name: guest})
             return c.VALID
         else:
@@ -112,7 +112,7 @@ class Floor(EnvObject):
 class Wall(Floor):
 
     @property
-    def can_collide(self):
+    def var_can_collide(self):
         return True
 
     @property
@@ -123,9 +123,9 @@ class Wall(Floor):
         return RenderEntity(c.WALL, self.pos)
 
     @property
-    def is_blocking_pos(self):
+    def var_is_blocking_pos(self):
         return True
 
     @property
-    def is_blocking_light(self):
+    def var_is_blocking_light(self):
         return True

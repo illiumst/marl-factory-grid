@@ -13,8 +13,8 @@ class Btry(Rule):
         self.per_action_costs = per_action_costs
         self.initial_charge = initial_charge
 
-    def on_init(self, state):
-        state[b.BATTERIES].spawn_batteries(state[c.AGENT], self.initial_charge)
+    def on_init(self, state, lvl_map):
+        state[b.BATTERIES].spawn(state[c.AGENT], self.initial_charge)
 
     def tick_pre_step(self, state) -> List[TickResult]:
         pass

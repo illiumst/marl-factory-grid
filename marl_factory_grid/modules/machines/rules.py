@@ -12,7 +12,7 @@ class MachineRule(Rule):
         super(MachineRule, self).__init__()
         self.n_machines = n_machines
 
-    def on_init(self, state):
+    def on_init(self, state, lvl_map):
         empty_tiles = state[c.FLOOR].empty_tiles[:self.n_machines]
         state[m.MACHINES].add_items(Machine(tile) for tile in empty_tiles)
 
@@ -24,6 +24,12 @@ class MachineRule(Rule):
 
     def tick_post_step(self, state) -> List[TickResult]:
         pass
+
+    def on_check_done(self, state) -> List[DoneResult]:
+        pass
+
+
+class DoneOnBreakRule(Rule):
 
     def on_check_done(self, state) -> List[DoneResult]:
         pass

@@ -35,11 +35,11 @@ class GlobalPosition(BoundEntityMixin, EnvObject):
     @property
     def encoding(self):
         if self._normalized:
-            return tuple(np.divide(self._bound_entity.pos, self._level_shape))
+            return tuple(np.divide(self._bound_entity.pos, self._shape))
         else:
             return self.bound_entity.pos
 
-    def __init__(self, *args, normalized: bool = True, **kwargs):
+    def __init__(self, level_shape, *args, normalized: bool = True, **kwargs):
         super(GlobalPosition, self).__init__(*args, **kwargs)
-        self._level_shape = math.sqrt(self.size)
         self._normalized = normalized
+        self._shape = level_shape

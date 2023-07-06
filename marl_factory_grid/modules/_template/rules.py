@@ -8,7 +8,7 @@ class TemplateRule(Rule):
     def __init__(self, *args, **kwargs):
         super(TemplateRule, self).__init__(*args, **kwargs)
 
-    def on_init(self, state):
+    def on_init(self, state, lvl_map):
         pass
 
     def tick_pre_step(self, state) -> List[TickResult]:

@@ -62,7 +62,7 @@ class DestinationSpawn(Rule):
         self.n_dests = n_dests
         self.spawn_mode = spawn_mode
 
-    def on_init(self, state):
+    def on_init(self, state, lvl_map):
         # noinspection PyAttributeOutsideInit
         self._dest_spawn_timer = self.spawn_frequency
         self.trigger_destination_spawn(self.n_dests, state)

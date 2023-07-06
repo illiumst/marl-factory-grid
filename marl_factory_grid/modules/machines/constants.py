@@ -2,6 +2,8 @@
 MACHINES = 'Machines'
 MACHINE  = 'Machine'
 
+MACHINE_ACTION = 'Maintain'
+
 STATE_WORK = 'working'
 STATE_IDLE = 'idling'
 STATE_MAINTAIN = 'maintenance'

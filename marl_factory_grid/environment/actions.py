@@ -98,3 +98,5 @@ class NorthWest(Move):
 Move4 = [North, East, South, West]
 # noinspection PyTypeChecker
 Move8 = Move4 + [NorthEast, SouthEast, SouthWest, NorthWest]
+
+ALL_BASEACTIONS = Move8 + [Noop]

@@ -1,15 +1,20 @@
 import abc
 
-from marl_factory_grid.environment import constants as c
-from marl_factory_grid.environment.entity.object import EnvObject
-from marl_factory_grid.utils.render import RenderEntity
+from .. import constants as c
+from .object import EnvObject
+from ...utils.render import RenderEntity
+from ...utils.results import ActionResult
 
 
 class Entity(EnvObject, abc.ABC):
     """Full Env Entity that lives on the environment Grid. Doors, Items, DirtPile etc..."""
 
     @property
-    def has_position(self):
+    def state(self):
+        return self._status or ActionResult(entity=self, identifier=c.NOOP, validity=c.VALID, reward=0)
+
+    @property
+    def var_has_position(self):
         return self.pos != c.VALUE_NO_POS
 
     @property
@@ -64,12 +69,13 @@ class Entity(EnvObject, abc.ABC):
 
     def __init__(self, tile, **kwargs):
         super().__init__(**kwargs)
+        self._status = None
         self._tile = tile
         tile.enter(self)
 
     def summarize_state(self) -> dict:
         return dict(name=str(self.name), x=int(self.x), y=int(self.y),
-                    tile=str(self.tile.name), can_collide=bool(self.can_collide))
+                    tile=str(self.tile.name), can_collide=bool(self.var_can_collide))
 
     @abc.abstractmethod
     def render(self):

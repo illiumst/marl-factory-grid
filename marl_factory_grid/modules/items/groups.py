@@ -17,15 +17,6 @@ class Items(PositionMixin, EnvObjects):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def spawn_items(self, tiles: List[Floor]):
-        items = [self._entity(tile) for tile in tiles]
-        self.add_items(items)
-
-    def despawn_items(self, items: List[Item]):
-        items = [items] if isinstance(items, Item) else items
-        for item in items:
-            del self[item]
-
 
 class Inventory(IsBoundMixin, EnvObjects):
 
@@ -58,11 +49,7 @@ class Inventory(IsBoundMixin, EnvObjects):
 class Inventories(HasBoundedMixin, Objects):
 
     _entity = Inventory
-    can_move = False
-
-    @property
-    def obs_pairs(self):
-        return [(x.name, x) for x in self]
+    var_can_move = False
 
     def __init__(self, size, *args, **kwargs):
         super(Inventories, self).__init__(*args, **kwargs)
@@ -70,7 +57,7 @@ class Inventories(HasBoundedMixin, Objects):
         self._obs = None
         self._lazy_eval_transforms = []
 
-    def spawn_inventories(self, agents):
+    def spawn(self, agents):
         inventories = [self._entity(agent, self.size,)
                        for _, agent in enumerate(agents)]
         self.add_items(inventories)

@@ -4,6 +4,7 @@ from typing import List
 import numpy as np
 
 from marl_factory_grid.environment.entity.object import Object
+import marl_factory_grid.environment.constants as c
 
 
 class Objects:
@@ -116,12 +117,21 @@ class Objects:
     def __repr__(self):
         return f'{self.__class__.__name__}[{dict(self._data)}]'
 
+    def spawn(self, n: int):
+        self.add_items([self._entity() for _ in range(n)])
+        return c.VALID
+
+    def despawn(self, items: List[Object]):
+        items = [items] if isinstance(items, Object) else items
+        for item in items:
+            del self[item]
+
     def notify_change_pos(self, entity: object):
         try:
             self.pos_dict[entity.last_pos].remove(entity)
         except (ValueError, AttributeError):
             pass
-        if entity.has_position:
+        if entity.var_has_position:
             try:
                 self.pos_dict[entity.pos].append(entity)
             except (ValueError, AttributeError):
