@@ -82,7 +82,7 @@ class IsBoundMixin:
 
 
 # noinspection PyUnresolvedReferences,PyTypeChecker
-class HasBoundedMixin:
+class HasBoundMixin:
 
     @property
     def obs_pairs(self):

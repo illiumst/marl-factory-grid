@@ -1,6 +1,6 @@
 from marl_factory_grid.environment.groups.env_objects import EnvObjects
-from marl_factory_grid.environment.groups.mixins import PositionMixin
-from marl_factory_grid.modules.destinations.entitites import Destination
+from marl_factory_grid.environment.groups.mixins import PositionMixin, HasBoundMixin
+from marl_factory_grid.modules.destinations.entitites import Destination, BoundDestination
 
 
 class Destinations(PositionMixin, EnvObjects):
@@ -14,6 +14,14 @@ class Destinations(PositionMixin, EnvObjects):
 
     def __repr__(self):
         return super(Destinations, self).__repr__()
+
+
+class BoundDestinations(HasBoundMixin, Destinations):
+
+    _entity = BoundDestination
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
 
 class ReachedDestinations(Destinations):

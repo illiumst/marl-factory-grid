@@ -21,7 +21,7 @@ class Object:
     def name(self):
         if self._str_ident is not None:
             return f'{self.__class__.__name__}[{self._str_ident}]'
-        return f'{self.__class__.__name__}#{self.identifier_int}'
+        return f'{self.__class__.__name__}#{self.u_int}'
 
     @property
     def identifier(self):
@@ -30,10 +30,14 @@ class Object:
         else:
             return self.name
 
+    def reset_uid(self):
+        self._u_idx = defaultdict(lambda: 0)
+        return True
+
     def __init__(self, str_ident: Union[str, None] = None, **kwargs):
         self._observers = []
         self._str_ident = str_ident
-        self.identifier_int = self._identify_and_count_up()
+        self.u_int = self._identify_and_count_up()
         self._collection = None
 
         if kwargs:

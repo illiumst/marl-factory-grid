@@ -2,7 +2,7 @@ from typing import List
 
 from marl_factory_grid.environment.groups.env_objects import EnvObjects
 from marl_factory_grid.environment.groups.objects import Objects
-from marl_factory_grid.environment.groups.mixins import PositionMixin, IsBoundMixin, HasBoundedMixin
+from marl_factory_grid.environment.groups.mixins import PositionMixin, IsBoundMixin, HasBoundMixin
 from marl_factory_grid.environment.entity.wall_floor import Floor
 from marl_factory_grid.environment.entity.agent import Agent
 from marl_factory_grid.modules.items.entitites import Item, DropOffLocation
@@ -46,7 +46,7 @@ class Inventory(IsBoundMixin, EnvObjects):
         self._collection = collection
 
 
-class Inventories(HasBoundedMixin, Objects):
+class Inventories(HasBoundMixin, Objects):
 
     _entity = Inventory
     var_can_move = False

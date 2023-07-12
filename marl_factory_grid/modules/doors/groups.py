@@ -14,12 +14,6 @@ class Doors(PositionMixin, EnvObjects):
     def __init__(self, *args, **kwargs):
         super(Doors, self).__init__(*args, can_collide=True, **kwargs)
 
-    def get_near_position(self, position: (int, int)) -> Union[None, Door]:
-        try:
-            return next(door for door in self if position in door.tile.neighboring_floor_pos)
-        except StopIteration:
-            return None
-
     def tick_doors(self):
         result_dict = dict()
         for door in self:

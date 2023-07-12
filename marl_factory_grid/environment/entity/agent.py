@@ -13,6 +13,22 @@ from marl_factory_grid.environment import constants as c
 class Agent(Entity):
 
     @property
+    def var_is_blocking_light(self):
+        return False
+
+    @property
+    def var_can_move(self):
+        return True
+
+    @property
+    def var_is_blocking_pos(self):
+        return False
+
+    @property
+    def var_has_position(self):
+        return True
+
+    @property
     def obs_tag(self):
         return self.name
 

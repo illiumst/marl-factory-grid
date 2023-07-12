@@ -9,7 +9,7 @@ class BoundEntityMixin:
 
     @property
     def name(self):
-        return f'{self.__class__.__name__}({self._bound_entity.name})'
+        return f'{self.__class__.__name__}({self.bound_entity.name})'
 
     def belongs_to_entity(self, entity):
         return entity == self.bound_entity

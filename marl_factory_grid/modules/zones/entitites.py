@@ -12,6 +12,10 @@ from marl_factory_grid.modules.doors import constants as d
 
 class Zone(Object):
 
+    @property
+    def positions(self):
+        return [x.pos for x in self.tiles]
+
     def __init__(self, tiles: List[Floor], *args, **kwargs):
         super(Zone, self).__init__(*args, **kwargs)
         self.tiles = tiles

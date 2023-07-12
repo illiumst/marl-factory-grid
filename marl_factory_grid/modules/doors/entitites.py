@@ -72,7 +72,7 @@ class Door(Entity):
 
     def render(self):
         name, state = 'door_open' if self.is_open else 'door_closed', 'blank'
-        return RenderEntity(name, self.pos, 1, 'none', state, self.identifier_int + 1)
+        return RenderEntity(name, self.pos, 1, 'none', state, self.u_int + 1)
 
     def use(self):
         if self._status == d.STATE_OPEN:

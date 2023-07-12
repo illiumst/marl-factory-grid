@@ -1,9 +1,9 @@
 from marl_factory_grid.environment.groups.env_objects import EnvObjects
-from marl_factory_grid.environment.groups.mixins import PositionMixin, HasBoundedMixin
+from marl_factory_grid.environment.groups.mixins import PositionMixin, HasBoundMixin
 from marl_factory_grid.modules.batteries.entitites import ChargePod, Battery
 
 
-class Batteries(HasBoundedMixin, EnvObjects):
+class Batteries(HasBoundMixin, EnvObjects):
 
     _entity = Battery
     is_blocking_light: bool = False

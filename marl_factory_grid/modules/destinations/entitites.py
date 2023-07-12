@@ -3,11 +3,18 @@ from collections import defaultdict
 from marl_factory_grid.environment.entity.agent import Agent
 from marl_factory_grid.environment.entity.entity import Entity
 from marl_factory_grid.environment import constants as c
+from marl_factory_grid.environment.entity.mixin import BoundEntityMixin
 from marl_factory_grid.utils.render import RenderEntity
 from marl_factory_grid.modules.destinations import constants as d
 
 
 class Destination(Entity):
+
+    var_can_move = False
+    var_can_collide = False
+    var_has_position = True
+    var_is_blocking_pos = False
+    var_is_blocking_light = False
 
     @property
     def any_agent_has_dwelled(self):
@@ -49,3 +56,21 @@ class Destination(Entity):
 
     def render(self):
         return RenderEntity(d.DESTINATION, self.pos)
+
+
+class BoundDestination(BoundEntityMixin, Destination):
+
+    @property
+    def encoding(self):
+        return d.DEST_SYMBOL
+
+    def __init__(self, entity, *args, **kwargs):
+        self.bind_to(entity)
+        super().__init__(*args, **kwargs)
+
+
+    @property
+    def is_considered_reached(self):
+        agent_at_position = any(self.bound_entity == x for x in self.tile.guests_that_can_collide)
+        return (agent_at_position and not self.dwell_time) \
+            or any(x == 0 for x in self._per_agent_times[self.bound_entity.name])

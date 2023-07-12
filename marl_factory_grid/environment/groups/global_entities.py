@@ -41,6 +41,9 @@ class Entities(Objects):
             val.add_observer(self)
         return self
 
+    def __contains__(self, item):
+        return item in self._data
+
     def __delitem__(self, name):
         assert_str = 'This group of entity does not exist in this collection!'
         assert any([key for key in name.keys() if key in self.keys()]), assert_str
@@ -51,7 +54,10 @@ class Entities(Objects):
 
     @property
     def obs_pairs(self):
-        return [y for x in self for y in x.obs_pairs]
+        try:
+            return [y for x in self for y in x.obs_pairs]
+        except AttributeError:
+            print('OhOh (debug me)')
 
     def by_pos(self, pos: (int, int)):
         return self.pos_dict[pos]

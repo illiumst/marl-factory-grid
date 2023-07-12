@@ -13,7 +13,9 @@ class DestAction(Action):
         super().__init__(d.DESTINATION)
 
     def do(self, entity, state) -> Union[None, ActionResult]:
-        if destination := state[d.DESTINATION].by_pos(entity.pos):
+        dest_entities = d.DESTINATION if d.DESTINATION in state else d.BOUNDDESTINATION
+        assert dest_entities
+        if destination := state[dest_entities].by_pos(entity.pos):
             valid = destination.do_wait_action(entity)
             state.print(f'{entity.name} just waited at {entity.pos}')
         else:

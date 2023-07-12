@@ -76,6 +76,9 @@ class Gamestate(object):
     def __iter__(self):
         return iter(e for e in self.entities.values())
 
+    def __contains__(self, item):
+        return item in self.entities
+
     def __repr__(self):
         return f'{self.__class__.__name__}({len(self.entities)} Entitites @ Step {self.curr_step})'
 

@@ -37,7 +37,7 @@ class Objects:
 
     def __init__(self, *args, **kwargs):
         self._data = defaultdict(lambda: None)
-        self._observers = list()
+        self._observers = [self]
         self.pos_dict = defaultdict(list)
 
     def __len__(self):
@@ -52,6 +52,7 @@ class Objects:
         assert self._data[item.name] is None, f'{item.name} allready exists!!!'
         self._data.update({item.name: item})
         item.set_collection(self)
+        # self.notify_add_entity(item)
         for observer in self.observers:
             observer.notify_add_entity(item)
         return self
@@ -95,8 +96,6 @@ class Objects:
             return next(i for i, v in enumerate(self._data.values()) if v == item)
         except StopIteration:
             return None
-
-
 
     def __getitem__(self, item):
         if isinstance(item, (int, np.int64, np.int32)):

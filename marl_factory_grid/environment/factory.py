@@ -78,12 +78,19 @@ class Factory(gym.Env):
         return self.state.entities[item]
 
     def reset(self) -> (dict, dict):
+        if hasattr(self, 'state'):
+            for entity_group in self.state.entities:
+                try:
+                    entity_group[0].reset_uid()
+                except (AttributeError, TypeError):
+                    pass
+
         self.state = None
 
         # Init entity:
         entities = self.map.do_init()
 
-        # Grab all rules:
+        # Grab all )rules:
         rules = self.conf.load_rules()
 
         # Agents

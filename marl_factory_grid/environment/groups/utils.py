@@ -4,7 +4,7 @@ import numpy as np
 
 from marl_factory_grid.environment.entity.util import GlobalPosition
 from marl_factory_grid.environment.groups.env_objects import EnvObjects
-from marl_factory_grid.environment.groups.mixins import PositionMixin, HasBoundedMixin
+from marl_factory_grid.environment.groups.mixins import PositionMixin, HasBoundMixin
 from marl_factory_grid.environment.groups.objects import Objects
 from marl_factory_grid.modules.zones import Zone
 from marl_factory_grid.utils import helpers as h
@@ -35,7 +35,7 @@ class Combined(PositionMixin, EnvObjects):
         return [(name, None) for name in self.names]
 
 
-class GlobalPositions(HasBoundedMixin, EnvObjects):
+class GlobalPositions(HasBoundMixin, EnvObjects):
 
     _entity = GlobalPosition
     is_blocking_light = False,

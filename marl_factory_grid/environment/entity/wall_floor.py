@@ -31,10 +31,6 @@ class Floor(EnvObject):
         return False
 
     @property
-    def neighboring_floor_pos(self):
-        return [x.pos for x in self.neighboring_floor]
-
-    @property
     def neighboring_floor(self):
         if self._neighboring_floor:
             pass
