@@ -204,7 +204,7 @@ class RayCaster:
         rot_M = np.unique(np.round(rot_M @ north), axis=0)
         return rot_M.astype(int)
 
-    def ray_block_cache(self, cache_dict, key, callback, ents):
+    def ray_block_cache(self, cache_dict, key, callback):
         if key not in cache_dict:
             cache_dict[key] = callback()
         return cache_dict[key]
@@ -221,24 +221,13 @@ class RayCaster:
                 entities_hit = entities.pos_dict[(x, y)]
                 hits = self.ray_block_cache(cache_blocking,
                                             (x, y),
-                                            lambda: any(e.var_is_blocking_light for e in entities_hit),
-                                            entities)
+                                            lambda: any(True for e in entities_hit if e.var_is_blocking_light))
 
-                try:
-                    d = next(x for x in entities_hit if 'Door' in x.name)
-                    if d.pos in entities.pos_dict.keys():
-                        if d.is_closed and not entities.pos_dict[d.pos]:
-                            print()
-                except StopIteration:
-                    pass
-
-                diag_hits = any([
+                diag_hits = all([
                     self.ray_block_cache(
                         cache_blocking,
                         key,
-                        # lambda: all(False for e in entities.pos_dict[key] if not e.var_is_blocking_light),
-                        lambda: any(e.var_is_blocking_light for e in entities.pos_dict[key]),
-                                            entities)
+                        lambda: all(False for e in entities.pos_dict[key] if not e.var_is_blocking_light))
                     for key in ((x, y-cy), (x-cx, y))
                 ]) if (cx != 0 and cy != 0) else False
 
