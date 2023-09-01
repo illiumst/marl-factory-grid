@@ -59,3 +59,19 @@ class BtryDoneAtDischarge(Rule):
         else:
             return [DoneResult(self.name, validity=c.NOT_VALID, reward=0)]
 
+
+class PodRules(Rule):
+
+    def __init__(self, n_pods: int, charge_rate: float = 0.4, multi_charge: bool = False):
+        super().__init__()
+        self.multi_charge = multi_charge
+        self.charge_rate = charge_rate
+        self.n_pods = n_pods
+
+    def on_init(self, state, lvl_map):
+        pod_collection = state[b.CHARGE_PODS]
+        empty_tiles = state[c.FLOOR].empty_tiles[:self.n_pods]
+        pods = pod_collection.from_tiles(empty_tiles, entity_kwargs=dict(
+            multi_charge=self.multi_charge, charge_rate=self.charge_rate)
+                                         )
+        pod_collection.add_items(pods)

@@ -4,8 +4,8 @@ from pathlib import Path
 import yaml
 
 from marl_factory_grid.environment.factory import Factory
-from marl_factory_grid.logging.envmonitor import EnvMonitor
-from marl_factory_grid.logging.recorder import EnvRecorder
+from marl_factory_grid.utils.logging.envmonitor import EnvMonitor
+from marl_factory_grid.utils.logging.recorder import EnvRecorder
 
 from marl_factory_grid.modules.doors import constants as d
 

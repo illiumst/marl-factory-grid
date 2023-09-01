@@ -120,6 +120,7 @@ class ConfigExplainer:
 
     def _save_to_file(self, data: dict, filepath: PathLike, tag: str = ''):
         filepath = Path(filepath)
+        yaml.Dumper.ignore_aliases = lambda *args: True
         with filepath.open('w') as f:
             yaml.dump(data, f, encoding='utf-8')
         print(f'Example config {"for " + tag + " " if tag else " "}dumped')

@@ -7,7 +7,7 @@ from typing import Union, List
 import pandas as pd
 
 from marl_factory_grid.utils.helpers import IGNORED_DF_COLUMNS
-from marl_factory_grid.plotting.plotting import prepare_plot
+from marl_factory_grid.utils.plotting.plotting import prepare_plot
 
 MODEL_MAP = None
 

@@ -45,7 +45,8 @@ class PositionMixin:
     def by_pos(self, pos: (int, int)):
         pos = tuple(pos)
         try:
-            return next(e for e in self if e.pos == pos)
+            return self.pos_dict[pos]
+            # return next(e for e in self if e.pos == pos)
         except StopIteration:
             pass
         except ValueError:

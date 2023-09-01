@@ -21,7 +21,6 @@ Agents:
     - Items
     - Inventory
     - DropOffLocations
-    - Machines
     - Maintainers
 Entities:
   Batteries: {}
@@ -79,10 +78,6 @@ Rules:
     n_items: 5
     n_locations: 5
     spawn_frequency: 15
-  MachineRule:
-    n_machines: 2
-  MaintenanceRule:
-    n_maintainer: 1
   MaxStepsReached:
     max_steps: 500
 #  AgentSingleZonePlacement:

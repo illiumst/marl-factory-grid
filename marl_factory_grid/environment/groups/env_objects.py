@@ -23,9 +23,6 @@ class EnvObjects(Objects):
         super(EnvObjects, self).add_item(item)
         return self
 
-    def summarize_states(self):
-        return [entity.summarize_state() for entity in self.values()]
-
     def delete_env_object(self, env_object: EnvObject):
         del self[env_object.name]
 

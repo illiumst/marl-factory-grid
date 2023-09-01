@@ -42,16 +42,16 @@ class Battery(BoundEntityMixin, EnvObject):
         else:
             return c.NOT_VALID
 
-    def summarize_state(self, **_):
-        attr_dict = {key: str(val) for key, val in self.__dict__.items() if not key.startswith('_') and key != 'data'}
-        attr_dict.update(dict(name=self.name, belongs_to=self._bound_entity.name))
-        return attr_dict
+    def summarize_state(self):
+        summary = super().summarize_state()
+        summary.update(dict(belongs_to=self._bound_entity.name, chargeLevel=self.charge_level))
+        return summary
 
     def render(self):
         return None
 
 
-class ChargePod(Entity):
+class Pod(Entity):
 
     @property
     def encoding(self):
@@ -59,7 +59,7 @@ class ChargePod(Entity):
 
     def __init__(self, *args, charge_rate: float = 0.4,
                  multi_charge: bool = False, **kwargs):
-        super(ChargePod, self).__init__(*args, **kwargs)
+        super(Pod, self).__init__(*args, **kwargs)
         self.charge_rate = charge_rate
         self.multi_charge = multi_charge
 
@@ -73,3 +73,8 @@ class ChargePod(Entity):
 
     def render(self):
         return RenderEntity(b.CHARGE_PODS, self.pos)
+
+    def summarize_state(self) -> dict:
+        summery = super().summarize_state()
+        summery.update(charge_rate=self.charge_rate)
+        return summery

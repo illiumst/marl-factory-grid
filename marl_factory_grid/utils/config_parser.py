@@ -24,7 +24,6 @@ class FactoryConfigParser(object):
         self.config_path = Path(config_path)
         self.custom_modules_path = Path(custom_modules_path) if custom_modules_path is not None else custom_modules_path
         self.config = yaml.safe_load(self.config_path.open())
-        self.do_record = False
 
     def __getattr__(self, item):
         return self['General'][item]

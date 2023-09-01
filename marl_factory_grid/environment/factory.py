@@ -16,8 +16,6 @@ import marl_factory_grid.environment.constants as c
 
 from marl_factory_grid.utils.states import Gamestate
 
-REC_TAC = 'rec_'
-
 
 class Factory(gym.Env):
 
@@ -43,11 +41,6 @@ class Factory(gym.Env):
         config_path = Path(self._config_file)
         config_dict = yaml.safe_load(config_path.open())
         return config_dict
-
-    @property
-    def summarize_header(self):
-        summary_dict = self._summarize_state(stateless_entities=True)
-        return summary_dict
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
@@ -125,9 +118,6 @@ class Factory(gym.Env):
         info = reward_info
 
         info.update(step_reward=sum(reward), step=self.state.curr_step)
-        # TODO:
-        #  if self._record_episodes:
-        #      info.update(self._summarize_state())
 
         obs, reset_info = self.obs_builder.refresh_and_build_for_all(self.state)
         info.update(reset_info)
@@ -171,14 +161,6 @@ class Factory(gym.Env):
             self.state.print(f"reward is {reward}")
         return reward, combined_info_dict, done
 
-    def start_recording(self):
-        self.conf.do_record = True
-        return self.conf.do_record
-
-    def stop_recording(self):
-        self.conf.do_record = False
-        return not self.conf.do_record
-
     # noinspection PyGlobalUndefined
     def render(self, mode='human'):
         if not self._renderer:  # lazy init
@@ -193,12 +175,23 @@ class Factory(gym.Env):
                     render_entity.aux = self.obs_builder.curr_lightmaps[render_entity.real_name]
         return self._renderer.render(render_entities)
 
-    def _summarize_state(self, stateless_entities=False):
-        summary = {f'{REC_TAC}step': self.state.curr_step}
+    def summarize_header(self):
+        header = {'rec_step': self.state.curr_step}
+        for entity_group in (x for x in self.state if x.name in ['Walls', 'Floors', 'DropOffLocations', 'ChargePods']):
+            header.update({f'rec{entity_group.name}': entity_group.summarize_states()})
+        return header
 
-        for entity_group in self.state:
-            if entity_group.is_stateless == stateless_entities:
-                summary.update({f'{REC_TAC}{entity_group.name}': entity_group.summarize_states()})
+    def summarize_state(self):
+        summary = {'step': self.state.curr_step}
+
+        # Todo: Protobuff Compatibility Section                                      #######
+        #  for entity_group in (x for x in self.state if x.name not in [c.WALLS, c.FLOORS]):
+        for entity_group in (x for x in self.state if x.name not in [c.FLOORS]):
+            summary.update({entity_group.name.lower(): entity_group.summarize_states()})
+        # TODO Section End                                                          ########
+        for key in list(summary.keys()):
+            if key not in ['step', 'walls', 'doors', 'agents', 'items', 'dirtPiles', 'batteries']:
+                del summary[key]
         return summary
 
     def print(self, string):

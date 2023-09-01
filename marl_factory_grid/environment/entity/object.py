@@ -62,10 +62,13 @@ class Object:
 
     def add_observer(self, observer):
         self.observers.append(observer)
-        observer.notify_change_pos(self)
+        observer.notify_add_entity(self)
 
     def del_observer(self, observer):
         self.observers.remove(observer)
+
+    def summarize_state(self):
+        return dict()
 
 
 class EnvObject(Object):
@@ -128,3 +131,6 @@ class EnvObject(Object):
         self._collection.delete_env_object(self)
         self._collection = other_collection
         return self._collection == other_collection
+
+    def summarize_state(self):
+        return dict(name=str(self.name))

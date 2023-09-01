@@ -6,11 +6,10 @@ from typing import Union
 from gymnasium import Wrapper
 
 from marl_factory_grid.utils.helpers import IGNORED_DF_COLUMNS
-from marl_factory_grid.environment.factory import REC_TAC
 
 import pandas as pd
 
-from marl_factory_grid.plotting.compare_runs import plot_single_run
+from marl_factory_grid.utils.plotting.compare_runs import plot_single_run
 
 
 class EnvMonitor(Wrapper):
@@ -23,8 +22,6 @@ class EnvMonitor(Wrapper):
         self._monitor_df = pd.DataFrame()
         self._monitor_dict = dict()
 
-    def __getattr__(self, item):
-        return getattr(self.unwrapped, item)
 
     def step(self, action):
         obs_type, obs, reward, done, info = self.env.step(action)
@@ -33,12 +30,12 @@ class EnvMonitor(Wrapper):
         return obs_type, obs, reward, done, info
 
     def reset(self):
-        return self.unwrapped.reset()
+        return self.env.reset()
 
     def _read_info(self, info: dict):
         self._monitor_dict[len(self._monitor_dict)] = {
             key: val for key, val in info.items() if
-            key not in ['terminal_observation', 'episode'] and not key.startswith(REC_TAC)}
+            key not in ['terminal_observation', 'episode']}
         return
 
     def _read_done(self, done):
@@ -50,7 +47,7 @@ class EnvMonitor(Wrapper):
                 {col: 'mean' if col.endswith('ount') else 'sum' for col in columns}
             )
             env_monitor_df['episode'] = len(self._monitor_df)
-            self._monitor_df = self._monitor_df.append([env_monitor_df])
+            self._monitor_df = pd.concat([self._monitor_df, pd.DataFrame([env_monitor_df])], ignore_index=True)
         else:
             pass
         return

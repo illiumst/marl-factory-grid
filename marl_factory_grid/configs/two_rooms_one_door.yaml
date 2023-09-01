@@ -1,3 +1,31 @@
+General:
+  env_seed: 69
+  individual_rewards: true
+  level_name: two_rooms
+  pomdp_r: 3
+  verbose: false
+
+Entities:
+  BoundDestinations: {}
+  ReachedDestinations: {}
+  Doors: {}
+  GlobalPositions: {}
+  Zones: {}
+
+Rules:
+  # Init:
+  AssignGlobalPositions: {}
+  ZoneInit: {}
+  AgentSingleZonePlacement: {}
+  IndividualDestinationZonePlacement: {}
+  # Env Rules
+  MaxStepsReached:
+    max_steps: 10
+  Collision:
+    done_at_collisions: false
+  DoorAutoClose:
+    close_frequency: 10
+
 Agents:
   Wolfgang:
     Actions:
@@ -22,26 +50,3 @@ Agents:
       - Walls
       - BoundDestination
       - Doors
-Entities:
-  BoundDestinations: {}
-  ReachedDestinations: {}
-  Doors: {}
-  GlobalPositions: {}
-  Zones: {}
-
-General:
-  env_seed: 69
-  individual_rewards: true
-  level_name: two_rooms
-  pomdp_r: 3
-  verbose: false
-
-Rules:
-  Collision:
-    done_at_collisions: false
-  AssignGlobalPositions: {}
-  DoorAutoClose:
-    close_frequency: 10
-  ZoneInit: {}
-  AgentSingleZonePlacement: {}
-  IndividualDestinationZonePlacement: {}

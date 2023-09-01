@@ -1,6 +1,6 @@
 from marl_factory_grid.environment.groups.env_objects import EnvObjects
 from marl_factory_grid.environment.groups.mixins import PositionMixin, HasBoundMixin
-from marl_factory_grid.modules.batteries.entitites import ChargePod, Battery
+from marl_factory_grid.modules.batteries.entitites import Pod, Battery
 
 
 class Batteries(HasBoundMixin, EnvObjects):
@@ -20,9 +20,10 @@ class Batteries(HasBoundMixin, EnvObjects):
         batteries = [self._entity(initial_charge_level, agent) for _, agent in enumerate(agents)]
         self.add_items(batteries)
 
+
 class ChargePods(PositionMixin, EnvObjects):
 
-    _entity = ChargePod
+    _entity = Pod
 
     def __init__(self, *args, **kwargs):
         super(ChargePods, self).__init__(*args, **kwargs)

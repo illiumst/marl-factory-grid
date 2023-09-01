@@ -144,7 +144,13 @@ class Objects:
 
     def notify_add_entity(self, entity: Object):
         try:
-            entity.add_observer(self)
+            if self not in entity.observers:
+                entity.add_observer(self)
             self.pos_dict[entity.pos].append(entity)
         except (ValueError, AttributeError):
             pass
+
+    def summarize_states(self):
+        # FIXME PROTOBUFF
+        #  return [e.summarize_state() for e in self]
+        return [e.summarize_state() for e in self]

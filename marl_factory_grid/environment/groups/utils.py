@@ -43,38 +43,3 @@ class GlobalPositions(HasBoundMixin, EnvObjects):
 
     def __init__(self, *args, **kwargs):
         super(GlobalPositions, self).__init__(*args, **kwargs)
-
-
-class ZonesOLD(Objects):
-
-    _entity = Zone
-
-    @property
-    def accounting_zones(self):
-        return [self[idx] for idx, name in self.items() if name != c.DANGER_ZONE]
-
-    def __init__(self, parsed_level):
-        raise NotImplementedError('This needs a Rework')
-        super(Zones, self).__init__()
-        slices = list()
-        self._accounting_zones = list()
-        self._danger_zones = list()
-        for symbol in np.unique(parsed_level):
-            if symbol == c.VALUE_OCCUPIED_CELL:
-                continue
-            elif symbol == c.DANGER_ZONE:
-                self + symbol
-                slices.append(h.one_hot_level(parsed_level, symbol))
-                self._danger_zones.append(symbol)
-            else:
-                self + symbol
-                slices.append(h.one_hot_level(parsed_level, symbol))
-                self._accounting_zones.append(symbol)
-
-        self._zone_slices = np.stack(slices)
-
-    def __getitem__(self, item):
-        return self._zone_slices[item]
-
-    def add_items(self, other: Union[str, List[str]]):
-        raise AttributeError('You are not allowed to add additional Zones in runtime.')

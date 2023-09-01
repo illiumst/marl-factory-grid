@@ -26,7 +26,8 @@ class ItemAction(Action):
             reward = r.DROP_OFF_VALID if valid else r.DROP_OFF_FAIL
             return ActionResult(entity=entity, identifier=self._identifier, validity=valid, reward=reward)
 
-        elif item := state[i.ITEM].by_pos(entity.pos):
+        elif items := state[i.ITEM].by_pos(entity.pos):
+            item = items[0]
             item.change_parent_collection(inventory)
             item.set_tile_to(state.NO_POS_TILE)
             state.print(f'{entity.name} just picked up an item at {entity.pos}')

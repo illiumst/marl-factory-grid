@@ -51,7 +51,7 @@ class Destination(Entity):
     def summarize_state(self) -> dict:
         state_summary = super().summarize_state()
         state_summary.update(per_agent_times=[
-            dict(belongs_to=key, time=val) for key, val in self._per_agent_times.keys()], dwell_time=self.dwell_time)
+            dict(belongs_to=key, time=val) for key, val in self._per_agent_times.items()], dwell_time=self.dwell_time)
         return state_summary
 
     def render(self):

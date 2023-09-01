@@ -26,6 +26,12 @@ class Walls(PositionMixin, EnvObjects):
     def from_tiles(cls, tiles, *args, **kwargs):
         raise RuntimeError()
 
+    def by_pos(self, pos: (int, int)):
+        try:
+            return super().by_pos(pos)[0]
+        except IndexError:
+            return None
+
 
 class Floors(Walls):
     _entity = Floor

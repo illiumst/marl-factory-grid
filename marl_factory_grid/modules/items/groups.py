@@ -51,7 +51,7 @@ class Inventories(HasBoundMixin, Objects):
     _entity = Inventory
     var_can_move = False
 
-    def __init__(self, size, *args, **kwargs):
+    def __init__(self, size: int, *args, **kwargs):
         super(Inventories, self).__init__(*args, **kwargs)
         self.size = size
         self._obs = None
