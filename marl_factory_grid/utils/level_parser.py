@@ -35,11 +35,13 @@ class LevelParser(object):
         entities = Entities()
         # Walls
         walls = Walls.from_coordinates(self.get_coordinates_for_symbol(c.SYMBOL_WALL), self.size)
+        # walls = self.get_coordinates_for_symbol(c.SYMBOL_WALL)
         entities.add_items({c.WALL: walls})
 
         # Floor
         floor = Floors.from_coordinates(self.get_coordinates_for_symbol(c.SYMBOL_WALL, negate=True), self.size)
         entities.add_items({c.FLOOR: floor})
+        # entities.add_items({c.WALL: self.get_coordinates_for_symbol(c.SYMBOL_WALL, negative=True)})
 
         # All other
         for es_name in self.e_p_dict:
@@ -55,6 +57,8 @@ class LevelParser(object):
                         e = e_class.from_coordinates(np.argwhere(level_array == c.VALUE_OCCUPIED_CELL).tolist(),
                                                      entities[c.FLOOR], self.size, entity_kwargs=e_kwargs
                                                      )
+                        # e_coords = (np.argwhere(level_array == c.VALUE_OCCUPIED_CELL).tolist())   # braucht e_class?
+                        # entities.add_items({e.name: e_coords})
                     else:
                         raise ValueError(f'No {e_class} (Symbol: {e_class.symbol}) could be found!\n'
                                          f'Check your level file!')

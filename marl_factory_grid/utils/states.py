@@ -59,11 +59,10 @@ class Gamestate(object):
 
     @property
     def moving_entites(self):
-        return [y for x in self.entities for y in x if x.var_can_move]
+        return [y for x in self.entities for y in x if x.var_can_move]  # wird das aus dem String gelesen?
 
-    def __init__(self, entitites, rules: Dict[str, dict], env_seed=69, verbose=False):
-        self.entities = entitites
-        self.NO_POS_TILE = Floor(c.VALUE_NO_POS)
+    def __init__(self, entities, rules: Dict[str, dict], env_seed=69, verbose=False):
+        self.entities = entities
         self.curr_step = 0
         self.curr_actions = None
         self.verbose = verbose
@@ -109,7 +108,7 @@ class Gamestate(object):
                 results.extend(on_check_done_result)
         return results
 
-    def get_all_tiles_with_collisions(self) -> List[Floor]:
+    def get_all_tiles_with_collisions(self) -> List[Floor]: # -> List[Tuple(Int,Int)]
         tiles = [self[c.FLOOR].by_pos(pos) for pos, e in self.entities.pos_dict.items()
                  if sum([x.var_can_collide for x in e]) > 1]
         # tiles = [x for x in self[c.FLOOR] if len(x.guests_that_can_collide) > 1]

@@ -48,4 +48,4 @@ class DirtPile(Entity):
         return state_dict
 
     def render(self):
-        return RenderEntity(d.DIRT, self.tile.pos, min(0.15 + self.amount, 1.5), 'scale')
+        return RenderEntity(d.DIRT, self.pos, min(0.15 + self.amount, 1.5), 'scale')

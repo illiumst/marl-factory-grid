@@ -27,55 +27,49 @@ class Entity(EnvObject, abc.ABC):
 
     @property
     def pos(self):
-        return self._tile.pos
+        return self._pos
 
     @property
     def tile(self):
-        return self._tile
+        return self._tile   # wall_n_floors funktionalität
 
-    @property
-    def last_tile(self):
-        try:
-            return self._last_tile
-        except AttributeError:
-            # noinspection PyAttributeOutsideInit
-            self._last_tile = None
-            return self._last_tile
-
-    @property
-    def last_pos(self):
-        try:
-            return self.last_tile.pos
-        except AttributeError:
-            return c.VALUE_NO_POS
+    # @property
+    # def last_tile(self):
+    #     try:
+    #         return self._last_tile
+    #     except AttributeError:
+    #         # noinspection PyAttributeOutsideInit
+    #         self._last_tile = None
+    #         return self._last_tile
 
     @property
     def direction_of_view(self):
-        last_x, last_y = self.last_pos
+        last_x, last_y = self._last_pos
         curr_x, curr_y = self.pos
         return last_x - curr_x, last_y - curr_y
 
-    def move(self, next_tile):
-        curr_tile = self.tile
-        if not_same_tile := curr_tile != next_tile:
-            if valid := next_tile.enter(self):
-                curr_tile.leave(self)
-                self._tile = next_tile
-                self._last_tile = curr_tile
+    def move(self, next_pos):
+        next_pos = next_pos
+        curr_pos = self._pos
+        if not_same_pos := curr_pos != next_pos:
+            if valid := next_tile.enter(self):  # muss abgefragt werden über observer? alle obs? wie sonst posdict
+                # curr_tile.leave(self) kann raus wegen notify change pos
+                self._pos = next_pos
+                self._last_pos = curr_pos
                 for observer in self.observers:
                     observer.notify_change_pos(self)
             return valid
-        return not_same_tile
+        return not_same_pos
 
-    def __init__(self, tile, **kwargs):
+    def __init__(self, position, **kwargs):
         super().__init__(**kwargs)
         self._status = None
-        self._tile = tile
-        tile.enter(self)
+        self._pos = position
+        self._last_pos = c.VALUE_NO_POS
+        # tile.enter(self)
 
-    def summarize_state(self) -> dict:
-        return dict(name=str(self.name), x=int(self.x), y=int(self.y),
-                    tile=str(self.tile.name), can_collide=bool(self.var_can_collide))
+    def summarize_state(self) -> dict:  # tile=str(self.tile.name)
+        return dict(name=str(self.name), x=int(self.x), y=int(self.y), can_collide=bool(self.var_can_collide))
 
     @abc.abstractmethod
     def render(self):

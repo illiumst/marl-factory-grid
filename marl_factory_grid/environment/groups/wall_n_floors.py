@@ -51,10 +51,9 @@ class Floors(Walls):
 
     @property
     def empty_tiles(self) -> List[Floor]:
+        # def empty_tiles(self) -> List[Tuple[int, int]]:
         tiles = [tile for tile in self if tile.is_empty()]
+        # positions = [tile.pos for tile in self if tile.is_empty()]
         random.shuffle(tiles)
         return tiles
 
-    @classmethod
-    def from_tiles(cls, tiles, *args, **kwargs):
-        raise RuntimeError()
