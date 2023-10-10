@@ -23,6 +23,7 @@ class OBSBuilder(object):
             return 0
 
     def __init__(self, level_shape: np.size, state: Gamestate, pomdp_r: int):
+        self._curr_env_step = None
         self.all_obs = dict()
         self.light_blockers = defaultdict(lambda: False)
         self.positional = defaultdict(lambda: False)
@@ -36,12 +37,16 @@ class OBSBuilder(object):
 
         self.obs_layers = dict()
 
-        self.build_structured_obs_block(state)
+        self.reset_struc_obs_block(state)
         self.curr_lightmaps = dict()
 
-    def build_structured_obs_block(self, state):
+    def reset_struc_obs_block(self, state):
+        self._curr_env_step = state.curr_step.copy()
+        # Construct an empty obs (array) for possible placeholders
         self.all_obs[c.PLACEHOLDER] = np.full(self.obs_shape, 0, dtype=float)
+        # Fill the all_obs-dict with all available entities
         self.all_obs.update({key: obj for key, obj in state.entities.obs_pairs})
+        return True
 
     def observation_space(self, state):
         from gymnasium.spaces import Tuple, Box
@@ -56,12 +61,11 @@ class OBSBuilder(object):
         return self.refresh_and_build_for_all(state)
 
     def refresh_and_build_for_all(self, state) -> (dict, dict):
-        self.build_structured_obs_block(state)
-        info = {}
-        return {agent.name: self.build_for_agent(agent, state)[0] for agent in state[c.AGENT]}, info
+        self.reset_struc_obs_block(state)
+        return {agent.name: self.build_for_agent(agent, state)[0] for agent in state[c.AGENT]}
 
     def refresh_and_build_named_for_all(self, state) -> Dict[str, Dict[str, np.ndarray]]:
-        self.build_structured_obs_block(state)
+        self.reset_struc_obs_block(state)
         named_obs_dict = {}
         for agent in state[c.AGENT]:
             obs, names = self.build_for_agent(agent, state)
@@ -69,6 +73,9 @@ class OBSBuilder(object):
         return named_obs_dict
 
     def build_for_agent(self, agent, state) -> (List[str], np.ndarray):
+        assert self._curr_env_step == state.curr_step, (
+            "The observation objekt has not been reset this state! Call 'reset_struc_obs_block(state)'"
+        )
         try:
             agent_want_obs = self.obs_layers[agent.name]
         except KeyError:

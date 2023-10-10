@@ -88,14 +88,17 @@ class Gamestate(object):
 
         # Main Agent Step
         results.extend(self.rules.tick_pre_step_all(self))
+
         for idx, action_int in enumerate(actions):
             agent = self[c.AGENT][idx].clear_temp_state()
             action = agent.actions[action_int]
             action_result = action.do(agent, self)
             results.append(action_result)
             agent.set_state(action_result)
+
         results.extend(self.rules.tick_step_all(self))
         results.extend(self.rules.tick_post_step_all(self))
+
         return results
 
     def print(self, string):
