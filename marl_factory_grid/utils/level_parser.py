@@ -4,6 +4,7 @@ from typing import Dict
 
 import numpy as np
 
+from marl_factory_grid.environment.groups.agents import Agents
 from marl_factory_grid.environment.groups.global_entities import Entities
 from marl_factory_grid.environment.groups.wall_n_floors import Walls, Floors
 from marl_factory_grid.utils import helpers as h
@@ -35,11 +36,12 @@ class LevelParser(object):
         entities = Entities()
         # Walls
         walls = Walls.from_coordinates(self.get_coordinates_for_symbol(c.SYMBOL_WALL), self.size)
-        entities.add_items({c.WALL: walls})
+        entities.add_items({c.WALLS: walls})
 
         # Floor
         floor = Floors.from_coordinates(self.get_coordinates_for_symbol(c.SYMBOL_WALL, negate=True), self.size)
-        entities.add_items({c.FLOOR: floor})
+        entities.add_items({c.FLOORS: floor})
+        entities.add_items({c.AGENT: Agents(self.size)})
 
         # All other
         for es_name in self.e_p_dict:
@@ -52,8 +54,9 @@ class LevelParser(object):
                 for symbol in symbols:
                     level_array = h.one_hot_level(self._parsed_level, symbol=symbol)
                     if np.any(level_array):
+                        # TODO: Get rid of this!
                         e = e_class.from_coordinates(np.argwhere(level_array == c.VALUE_OCCUPIED_CELL).tolist(),
-                                                     entities[c.FLOOR], self.size, entity_kwargs=e_kwargs
+                                                     entities[c.FLOORS], self.size, entity_kwargs=e_kwargs
                                                      )
                     else:
                         raise ValueError(f'No {e_class} (Symbol: {e_class.symbol}) could be found!\n'

@@ -42,13 +42,15 @@ class Move(Action, abc.ABC):
 
     def do(self, entity, env):
         new_pos = self._calc_new_pos(entity.pos)
-        if next_tile := env[c.FLOOR].by_pos(new_pos):
+        if next_tile := env[c.FLOORS].by_pos(new_pos):
             # noinspection PyUnresolvedReferences
-            valid = entity.move(next_tile)
-        else:
-            valid = c.NOT_VALID
-        reward = r.MOVEMENTS_VALID if valid else r.MOVEMENTS_FAIL
-        return ActionResult(entity=entity, identifier=self._identifier, validity=valid, reward=reward)
+            move_validity = entity.move(next_tile)
+            reward = r.MOVEMENTS_VALID if move_validity else r.MOVEMENTS_FAIL
+            return ActionResult(entity=entity, identifier=self._identifier, validity=move_validity, reward=reward)
+        else:  # There is no floor, propably collision
+            # This is currently handeld by the Collision rule, so that it can be switched on and off by conf.yml
+            # return ActionResult(entity=entity, identifier=self._identifier, validity=c.NOT_VALID, reward=r.COLLISION)
+            return ActionResult(entity=entity, identifier=self._identifier, validity=c.NOT_VALID, reward=0)
 
     def _calc_new_pos(self, pos):
         x_diff, y_diff = MOVEMAP[self._identifier]

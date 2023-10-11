@@ -55,6 +55,12 @@ class Entity(EnvObject, abc.ABC):
         curr_x, curr_y = self.pos
         return last_x - curr_x, last_y - curr_y
 
+    def destroy(self):
+        valid = self._collection.remove_item(self)
+        for observer in self.observers:
+            observer.notify_del_entity(self)
+        return valid
+
     def move(self, next_tile):
         curr_tile = self.tile
         if not_same_tile := curr_tile != next_tile:
@@ -71,7 +77,7 @@ class Entity(EnvObject, abc.ABC):
         super().__init__(**kwargs)
         self._status = None
         self._tile = tile
-        tile.enter(self)
+        assert tile.enter(self, spawn=True), "Positions was not valid!"
 
     def summarize_state(self) -> dict:
         return dict(name=str(self.name), x=int(self.x), y=int(self.y),

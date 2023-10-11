@@ -41,7 +41,7 @@ class OBSBuilder(object):
         self.curr_lightmaps = dict()
 
     def reset_struc_obs_block(self, state):
-        self._curr_env_step = state.curr_step.copy()
+        self._curr_env_step = state.curr_step
         # Construct an empty obs (array) for possible placeholders
         self.all_obs[c.PLACEHOLDER] = np.full(self.obs_shape, 0, dtype=float)
         # Fill the all_obs-dict with all available entities

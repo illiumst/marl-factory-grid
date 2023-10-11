@@ -23,14 +23,3 @@ class BoundDestinations(HasBoundMixin, Destinations):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-
-class ReachedDestinations(Destinations):
-    _entity = Destination
-    is_blocking_light = False
-    can_collide = False
-
-    def __init__(self, *args, **kwargs):
-        super(ReachedDestinations, self).__init__(*args, **kwargs)
-
-    def __repr__(self):
-        return super(ReachedDestinations, self).__repr__()

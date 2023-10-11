@@ -81,8 +81,12 @@ class Floor(EnvObject):
     def is_occupied(self):
         return bool(len(self._guests))
 
-    def enter(self, guest):
-        if (guest.name not in self._guests and not self.is_blocked) and not (guest.var_is_blocking_pos and self.is_occupied()):
+    def enter(self, guest, spawn=False):
+        same_pos = guest.name not in self._guests
+        not_blocked = not self.is_blocked
+        no_become_blocked_when_occupied = not (guest.var_is_blocking_pos and self.is_occupied())
+        not_introduce_collision = not (spawn and guest.var_can_collide and any(x.var_can_collide for x in self.guests))
+        if same_pos and not_blocked and no_become_blocked_when_occupied and not_introduce_collision:
             self._guests.update({guest.name: guest})
             return c.VALID
         else:

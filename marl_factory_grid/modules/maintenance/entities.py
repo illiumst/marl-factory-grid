@@ -39,7 +39,7 @@ class Maintainer(Entity):
         self._next = []
         self._last = []
         self._last_serviced = 'None'
-        self._floortile_graph = points_to_graph(state[c.FLOOR].positions)
+        self._floortile_graph = points_to_graph(state[c.FLOORS].positions)
 
     def tick(self, state):
         if found_objective := state[self.objective].by_pos(self.pos):
@@ -89,7 +89,7 @@ class Maintainer(Entity):
 
     def _predict_move(self, state):
         next_pos = self._path[0]
-        if len(state[c.FLOOR].by_pos(next_pos).guests_that_can_collide) > 0:
+        if len(state[c.FLOORS].by_pos(next_pos).guests_that_can_collide) > 0:
             action = c.NOOP
         else:
             next_pos = self._path.pop(0)

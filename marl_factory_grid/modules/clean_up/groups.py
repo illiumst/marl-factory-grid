@@ -47,7 +47,7 @@ class DirtPiles(PositionMixin, EnvObjects):
         return c.VALID
 
     def trigger_dirt_spawn(self, state, initial_spawn=False) -> bool:
-        free_for_dirt = [x for x in state[c.FLOOR]
+        free_for_dirt = [x for x in state[c.FLOORS]
                          if len(x.guests) == 0 or (
                                  len(x.guests) == 1 and
                                  isinstance(next(y for y in x.guests), DirtPile))

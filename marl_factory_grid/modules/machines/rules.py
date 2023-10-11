@@ -13,7 +13,7 @@ class MachineRule(Rule):
         self.n_machines = n_machines
 
     def on_init(self, state, lvl_map):
-        empty_tiles = state[c.FLOOR].empty_tiles[:self.n_machines]
+        empty_tiles = state[c.FLOORS].empty_tiles[:self.n_machines]
         state[m.MACHINES].add_items(Machine(tile) for tile in empty_tiles)
 
     def tick_pre_step(self, state) -> List[TickResult]:

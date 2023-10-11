@@ -1,0 +1,44 @@
+Agents:
+  Wolfgang:
+    Actions:
+    - Noop
+    - Move8
+    Observations:
+    - Walls
+    - BoundDestination
+    Positions:
+      - (2, 1)
+      - (2, 5)
+  Karl-Heinz:
+    Actions:
+      - Noop
+      - Move8
+    Observations:
+      - Walls
+      - BoundDestination
+    Positions:
+      - (2, 1)
+      - (2, 5)
+Entities:
+  BoundDestinations: {}
+
+General:
+  env_seed: 69
+  individual_rewards: true
+  level_name: narrow_corridor
+  pomdp_r: 0
+  verbose: true
+
+Rules:
+  SpawnAgents: {}
+  Collision:
+    done_at_collisions: true
+  FixedDestinationSpawn:
+    per_agent_positions:
+      Wolfgang:
+        - (2, 1)
+        - (2, 5)
+      Karl-Heinz:
+        - (2, 1)
+        - (2, 5)
+  DestinationReachAll: {}

@@ -1,3 +1,5 @@
+import ast
+from collections import defaultdict
 from os import PathLike
 from pathlib import Path
 from typing import Union
@@ -80,15 +82,15 @@ class FactoryConfigParser(object):
                         entity_class = locate_and_import_class(entity, folder_path)
                     except AttributeError as e3:
                         ents = [y for x in [e1.argss[1], e2.argss[1], e3.argss[1]] for y in x]
-                        raise AttributeError(e1.argss[0], e2.argss[0], e3.argss[0], 'Possible Entitys are>:', str(ents))
+                        raise AttributeError(e1.argss[0], e2.argss[0], e3.argss[0], 'Possible Entitys are:', str(ents))
 
             entity_kwargs = self.entities.get(entity, {})
             entity_symbol = entity_class.symbol if hasattr(entity_class, 'symbol') else None
             entity_classes.update({entity: {'class': entity_class, 'kwargs': entity_kwargs, 'symbol': entity_symbol}})
         return entity_classes
 
-    def load_agents(self, size, free_tiles):
-        agents = Agents(size)
+    def parse_agents_conf(self):
+        parsed_agents_conf = dict()
         base_env_actions  = self.default_actions.copy() + [c.MOVE4]
         for name in self.agents:
             # Actions
@@ -116,9 +118,9 @@ class FactoryConfigParser(object):
             if c.DEFAULTS in self.agents[name]['Observations']:
                 observations.extend(self.default_observations)
             observations.extend(x for x in self.agents[name]['Observations'] if x != c.DEFAULTS)
-            agent = Agent(parsed_actions, observations, free_tiles.pop(), str_ident=name)
-            agents.add_item(agent)
-        return agents
+            positions = [ast.literal_eval(x) for x in self.agents[name].get('Positions', [])]
+            parsed_agents_conf[name] = dict(actions=parsed_actions, observations=observations, positions=positions)
+        return parsed_agents_conf
 
     def load_rules(self):
         # entites = Entities()

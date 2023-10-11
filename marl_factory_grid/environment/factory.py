@@ -85,17 +85,14 @@ class Factory(gym.Env):
         # Init entity:
         entities = self.map.do_init()
 
-        # Grab all )rules:
+        # Grab all env-rules:
         rules = self.conf.load_rules()
 
-        # Agents
-        # noinspection PyAttributeOutsideInit
-        self.state = Gamestate(entities, rules, self.conf.env_seed)
+        # Parse the agent conf
+        parsed_agents_conf = self.conf.parse_agents_conf()
+        self.state = Gamestate(entities, parsed_agents_conf, rules, self.conf.env_seed)
 
-        agents = self.conf.load_agents(self.map.size, self[c.FLOOR].empty_tiles)
-        self.state.entities.add_item({c.AGENT: agents})
-
-        # All is set up, trigger additional init (after agent entity spawn etc)
+        # All is set up, trigger entity init with variable pos
         self.state.rules.do_all_init(self.state, self.map)
 
         # Observations
@@ -173,6 +170,8 @@ class Factory(gym.Env):
         # Combine Info dicts into a global one
         combined_info_dict = defaultdict(lambda: 0.0)
         for result in chain(tick_results, done_check_results):
+            if not result:
+                raise ValueError()
             if result.reward is not None:
                 try:
                     rewards[result.entity.name] += result.reward

@@ -1,84 +1,61 @@
-from typing import List, Union
+import ast
+from random import shuffle
+from typing import List, Union, Dict, Tuple
 from marl_factory_grid.environment.rules import Rule
 from marl_factory_grid.utils.results import TickResult, DoneResult
 from marl_factory_grid.environment import constants as c
 
 from marl_factory_grid.modules.destinations import constants as d, rewards as r
-from marl_factory_grid.modules.destinations.entitites import Destination
+from marl_factory_grid.modules.destinations.entitites import Destination, BoundDestination
 
 
-class DestinationReach(Rule):
+class DestinationReachAll(Rule):
 
-    def __init__(self, n_dests: int = 1, tiles: Union[List, None] = None):
-        super(DestinationReach, self).__init__()
-        self.n_dests = n_dests or len(tiles)
-        self._tiles = tiles
+    def __init__(self):
+        super(DestinationReachAll, self).__init__()
 
     def tick_step(self, state) -> List[TickResult]:
-
-        for dest in list(state[d.DESTINATION].values()):
+        results = []
+        for dest in list(state[next(key for key in state.entities.names if d.DESTINATION in key)]):
             if dest.is_considered_reached:
-                dest.change_parent_collection(state[d.DEST_REACHED])
+                agent = state[c.AGENT].by_pos(dest.pos)
+                results.append(TickResult(self.name, validity=c.VALID, reward=r.DEST_REACHED, entity=agent))
                 state.print(f'{dest.name} is reached now, removing...')
+                assert dest.destroy(), f'{dest.name} could not be destroyed. Critical Error.'
             else:
-                for agent_name in dest.currently_dwelling_names:
-                    agent = state[c.AGENT][agent_name]
-                    if agent.pos == dest.pos:
-                        state.print(f'{agent.name} is still waiting.')
-                        pass
-                    else:
-                        dest.leave(agent)
-                        state.print(f'{agent.name} left the destination early.')
+               pass
         return [TickResult(self.name, validity=c.VALID, reward=0, entity=None)]
 
     def tick_post_step(self, state) -> List[TickResult]:
-        results = list()
-        for reached_dest in state[d.DEST_REACHED]:
-            for guest in reached_dest.tile.guests:
-                if guest in state[c.AGENT]:
-                    state.print(f'{guest.name} just reached destination at {guest.pos}')
-                    state[d.DEST_REACHED].delete_env_object(reached_dest)
-                    results.append(TickResult(self.name, validity=c.VALID, reward=r.DEST_REACHED, entity=guest))
-        return results
-
-
-class DestinationDone(Rule):
-
-    def __init__(self):
-        super(DestinationDone, self).__init__()
-
-    def on_check_done(self, state) -> List[DoneResult]:
-        if not len(state[d.DESTINATION]):
-            return [DoneResult(self.name, validity=c.VALID, reward=r.DEST_REACHED)]
         return []
 
-
-class DoneOnReach(Rule):
-
-    def __init__(self):
-        super(DoneOnReach, self).__init__()
-
     def on_check_done(self, state) -> List[DoneResult]:
-        dests = [x.pos for x in state[d.DESTINATION]]
-        agents = [x.pos for x in state[c.AGENT]]
-
-        if any([x in dests for x in agents]):
+        if not len(state[next(key for key in state.entities.names if d.DESTINATION in key)]):
             return [DoneResult(self.name, validity=c.VALID, reward=r.DEST_REACHED)]
         return [DoneResult(self.name, validity=c.NOT_VALID, reward=0)]
 
 
+class DestinationReachAny(DestinationReachAll):
+
+    def __init__(self):
+        super(DestinationReachAny, self).__init__()
+
+    def on_check_done(self, state) -> List[DoneResult]:
+        if not len(state[next(key for key in state.entities.names if d.DESTINATION in key)]):
+            return [DoneResult(self.name, validity=c.VALID, reward=r.DEST_REACHED)]
+        return []
+
+
 class DestinationSpawn(Rule):
 
-    def __init__(self, spawn_frequency: int = 5, n_dests: int = 1,
+    def __init__(self, n_dests: int = 1,
                  spawn_mode: str = d.MODE_GROUPED):
         super(DestinationSpawn, self).__init__()
-        self.spawn_frequency = spawn_frequency
         self.n_dests = n_dests
         self.spawn_mode = spawn_mode
 
     def on_init(self, state, lvl_map):
         # noinspection PyAttributeOutsideInit
-        self._dest_spawn_timer = self.spawn_frequency
         self.trigger_destination_spawn(self.n_dests, state)
         pass
 
@@ -88,16 +65,40 @@ class DestinationSpawn(Rule):
     def tick_step(self, state) -> List[TickResult]:
         if n_dest_spawn := max(0, self.n_dests - len(state[d.DESTINATION])):
             if self.spawn_mode == d.MODE_GROUPED and n_dest_spawn == self.n_dests:
-                validity = state.rules['DestinationReach'].trigger_destination_spawn(n_dest_spawn, state)
+                validity = self.trigger_destination_spawn(n_dest_spawn, state)
                 return [TickResult(self.name, validity=validity, entity=None, value=n_dest_spawn)]
+            elif self.spawn_mode == d.MODE_SINGLE and n_dest_spawn:
+                validity = self.trigger_destination_spawn(n_dest_spawn, state)
+                return [TickResult(self.name, validity=validity, entity=None, value=n_dest_spawn)]
+            else:
+                pass
 
-    @staticmethod
-    def trigger_destination_spawn(n_dests, state, tiles=None):
-        tiles = tiles or state[c.FLOOR].empty_tiles[:n_dests]
-        if destinations := [Destination(tile) for tile in tiles]:
+    def trigger_destination_spawn(self, n_dests, state):
+        empty_positions = state[c.FLOORS].empty_tiles[:n_dests]
+        if destinations := [Destination(pos) for pos in empty_positions]:
             state[d.DESTINATION].add_items(destinations)
             state.print(f'{n_dests} new destinations have been spawned')
             return c.VALID
         else:
             state.print('No Destiantions are spawning, limit is reached.')
             return c.NOT_VALID
+
+
+class FixedDestinationSpawn(Rule):
+    def __init__(self, per_agent_positions: Dict[str, List[Tuple[int, int]]]):
+        super(Rule, self).__init__()
+        self.per_agent_positions = {key: [ast.literal_eval(x) for x in val] for key, val in per_agent_positions.items()}
+
+    def on_init(self, state, lvl_map):
+        for (agent_name, position_list) in self.per_agent_positions.items():
+            agent = next(x for x in state[c.AGENT] if agent_name in x.name)  # Fixme: Ugly AF
+            shuffle(position_list)
+            while True:
+                pos = position_list.pop()
+                if pos != agent.pos and not state[d.BOUNDDESTINATION].by_pos(pos):
+                    destination = BoundDestination(agent, state[c.FLOORS].by_pos(pos))
+                    break
+                else:
+                    continue
+            state[d.BOUNDDESTINATION].add_item(destination)
+        pass

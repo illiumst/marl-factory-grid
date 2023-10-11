@@ -21,7 +21,7 @@ class AgentSingleZonePlacementBeta(Rule):
             coordinates = random.choices(self.coordinates, k=len(agents))
         else:
             raise ValueError
-        tiles = [state[c.FLOOR].by_pos(pos) for pos in coordinates]
+        tiles = [state[c.FLOORS].by_pos(pos) for pos in coordinates]
         for agent, tile in zip(agents, tiles):
             agent.move(tile)
 

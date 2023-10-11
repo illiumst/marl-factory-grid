@@ -3,8 +3,6 @@
 DESTINATION             = 'Destinations'
 BOUNDDESTINATION        = 'BoundDestinations'
 DEST_SYMBOL             = 1
-DEST_REACHED_REWARD     = 0.5
-DEST_REACHED            = 'ReachedDestinations'
 
 WAIT_ON_DEST    = 'WAIT'
 

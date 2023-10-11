@@ -1,4 +1,4 @@
 from .actions import DestAction
 from .entitites import Destination
-from .groups import ReachedDestinations, Destinations
-from .rules import DestinationDone, DestinationReach, DestinationSpawn
+from .groups import Destinations, BoundDestinations
+from .rules import DestinationReachAll, DestinationSpawn

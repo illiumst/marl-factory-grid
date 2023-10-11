@@ -1,4 +1,10 @@
 Agents:
+  Eberhart:
+   Actions:
+     - Move8
+     - Noop
+     - ItemAction
+   Observations:
   Wolfgang:
     Actions:
     - Noop
@@ -41,7 +47,6 @@ Entities:
   Machines: {}
   Maintainers: {}
   Zones: {}
-  ReachedDestinations: {}
 
 General:
   env_seed: 69

@@ -19,7 +19,7 @@ class ZoneInit(Rule):
         while z_idx:
             zone_positions = lvl_map.get_coordinates_for_symbol(z_idx)
             if len(zone_positions):
-                zones.append(Zone([state[c.FLOOR].by_pos(pos) for pos in zone_positions]))
+                zones.append(Zone([state[c.FLOORS].by_pos(pos) for pos in zone_positions]))
                 z_idx += 1
             else:
                 z_idx = 0

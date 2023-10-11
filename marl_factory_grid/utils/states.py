@@ -5,6 +5,7 @@ import numpy as np
 
 from marl_factory_grid.environment import constants as c
 from marl_factory_grid.environment.entity.wall_floor import Floor
+from marl_factory_grid.environment.groups.global_entities import Entities
 from marl_factory_grid.environment.rules import Rule
 from marl_factory_grid.utils.results import Result
 
@@ -43,7 +44,7 @@ class StepRules:
     def tick_pre_step_all(self, state):
         results = list()
         for rule in self.rules:
-            if tick_pre_step_result := rule.tick_post_step(state):
+            if tick_pre_step_result := rule.tick_pre_step(state):
                 results.extend(tick_pre_step_result)
         return results
 
@@ -61,11 +62,12 @@ class Gamestate(object):
     def moving_entites(self):
         return [y for x in self.entities for y in x if x.var_can_move]
 
-    def __init__(self, entitites, rules: Dict[str, dict], env_seed=69, verbose=False):
-        self.entities = entitites
+    def __init__(self, entitites, agents_conf, rules: Dict[str, dict], env_seed=69, verbose=False):
+        self.entities: Entities = entitites
         self.NO_POS_TILE = Floor(c.VALUE_NO_POS)
         self.curr_step = 0
         self.curr_actions = None
+        self.agents_conf = agents_conf
         self.verbose = verbose
         self.rng = np.random.default_rng(env_seed)
         self.rules = StepRules(*(v['class'](**v['kwargs']) for v in rules.values()))
@@ -113,7 +115,7 @@ class Gamestate(object):
         return results
 
     def get_all_tiles_with_collisions(self) -> List[Floor]:
-        tiles = [self[c.FLOOR].by_pos(pos) for pos, e in self.entities.pos_dict.items()
+        tiles = [self[c.FLOORS].by_pos(pos) for pos, e in self.entities.pos_dict.items()
                  if sum([x.var_can_collide for x in e]) > 1]
         # tiles = [x for x in self[c.FLOOR] if len(x.guests_that_can_collide) > 1]
         return tiles

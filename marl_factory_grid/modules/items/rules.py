@@ -41,7 +41,7 @@ class ItemRules(Rule):
 
     def trigger_item_spawn(self, state):
         if item_to_spawns := max(0, (self.n_items - len(state[i.ITEM]))):
-            empty_tiles = state[c.FLOOR].empty_tiles[:item_to_spawns]
+            empty_tiles = state[c.FLOORS].empty_tiles[:item_to_spawns]
             state[i.ITEM].spawn(empty_tiles)
             self._next_item_spawn = self.spawn_frequency
             state.print(f'{item_to_spawns} new items have been spawned; next spawn in {self._next_item_spawn}')
@@ -73,7 +73,7 @@ class ItemRules(Rule):
             return []
 
     def trigger_drop_off_location_spawn(self, state):
-        empty_tiles = state[c.FLOOR].empty_tiles[:self.n_locations]
+        empty_tiles = state[c.FLOORS].empty_tiles[:self.n_locations]
         do_entites = state[i.DROP_OFF]
         drop_offs = [DropOffLocation(tile) for tile in empty_tiles]
         do_entites.add_items(drop_offs)

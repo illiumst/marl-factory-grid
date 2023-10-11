@@ -57,6 +57,16 @@ class Objects:
             observer.notify_add_entity(item)
         return self
 
+    def remove_item(self, item: _entity):
+        for observer in self.observers:
+            observer.notify_del_entity(item)
+        # noinspection PyTypeChecker
+        del self._data[item.name]
+        return True
+
+    def __delitem__(self, name):
+        return self.remove_item(self[name])
+
     # noinspection PyUnresolvedReferences
     def del_observer(self, observer):
         self.observers.remove(observer)
@@ -70,12 +80,6 @@ class Objects:
         for entity in self:
             if observer not in entity.observers:
                 entity.add_observer(observer)
-
-    def __delitem__(self, name):
-        for observer in self.observers:
-            observer.notify_del_entity(name)
-        # noinspection PyTypeChecker
-        del self._data[name]
 
     def add_items(self, items: List[_entity]):
         for item in items:
@@ -114,7 +118,8 @@ class Objects:
             raise TypeError
 
     def __repr__(self):
-        return f'{self.__class__.__name__}[{dict(self._data)}]'
+        repr_dict = { key: val for key, val in self._data.items() if key not in [c.WALLS, c.FLOORS]}
+        return f'{self.__class__.__name__}[{repr_dict}]'
 
     def spawn(self, n: int):
         self.add_items([self._entity() for _ in range(n)])
@@ -138,6 +143,7 @@ class Objects:
 
     def notify_del_entity(self, entity: Object):
         try:
+            entity.del_observer(self)
             self.pos_dict[entity.pos].remove(entity)
         except (ValueError, AttributeError):
             pass
@@ -146,7 +152,9 @@ class Objects:
         try:
             if self not in entity.observers:
                 entity.add_observer(self)
-            self.pos_dict[entity.pos].append(entity)
+            if entity.var_has_position:
+                if entity not in self.pos_dict[entity.pos]:
+                    self.pos_dict[entity.pos].append(entity)
         except (ValueError, AttributeError):
             pass
 

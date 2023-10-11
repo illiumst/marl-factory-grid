@@ -17,41 +17,30 @@ class Destination(Entity):
     var_is_blocking_light = False
 
     @property
-    def any_agent_has_dwelled(self):
-        return bool(len(self._per_agent_times))
-
-    @property
-    def currently_dwelling_names(self):
-        return list(self._per_agent_times.keys())
-
-    @property
     def encoding(self):
         return d.DEST_SYMBOL
 
-    def __init__(self, *args, dwell_time: int = 0, **kwargs):
+    def __init__(self, *args, action_counts=0, **kwargs):
         super(Destination, self).__init__(*args, **kwargs)
-        self.dwell_time = dwell_time
-        self._per_agent_times = defaultdict(lambda: dwell_time)
+        self.action_counts = action_counts
+        self._per_agent_actions = defaultdict(lambda: 0)
 
     def do_wait_action(self, agent: Agent):
-        self._per_agent_times[agent.name] -= 1
+        self._per_agent_actions[agent.name] += 1
         return c.VALID
-
-    def leave(self, agent: Agent):
-        del self._per_agent_times[agent.name]
 
     @property
     def is_considered_reached(self):
         agent_at_position = any(c.AGENT.lower() in x.name.lower() for x in self.tile.guests_that_can_collide)
-        return (agent_at_position and not self.dwell_time) or any(x == 0 for x in self._per_agent_times.values())
+        return agent_at_position or any(x >= self.action_counts for x in self._per_agent_actions.values())
 
-    def agent_is_dwelling(self, agent: Agent):
-        return self._per_agent_times[agent.name] < self.dwell_time
+    def agent_did_action(self, agent: Agent):
+        return self._per_agent_actions[agent.name] >= self.action_counts
 
     def summarize_state(self) -> dict:
         state_summary = super().summarize_state()
         state_summary.update(per_agent_times=[
-            dict(belongs_to=key, time=val) for key, val in self._per_agent_times.items()], dwell_time=self.dwell_time)
+            dict(belongs_to=key, time=val) for key, val in self._per_agent_actions.items()], counts=self.action_counts)
         return state_summary
 
     def render(self):
@@ -68,9 +57,8 @@ class BoundDestination(BoundEntityMixin, Destination):
         self.bind_to(entity)
         super().__init__(*args, **kwargs)
 
-
     @property
     def is_considered_reached(self):
         agent_at_position = any(self.bound_entity == x for x in self.tile.guests_that_can_collide)
-        return (agent_at_position and not self.dwell_time) \
-            or any(x == 0 for x in self._per_agent_times[self.bound_entity.name])
+        return ((agent_at_position and not self.action_counts)
+                or self._per_agent_actions[self.bound_entity.name] >= self.action_counts >= 1)
