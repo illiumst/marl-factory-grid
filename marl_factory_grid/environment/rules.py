@@ -124,12 +124,13 @@ class Collision(Rule):
                         pass
                     results.append(TickResult(entity=guest, identifier=c.COLLISION,
                                               reward=r.COLLISION, validity=c.VALID))
-                self.curr_done = True
+                self.curr_done = True if self.done_at_collisions else False
         return results
 
     def on_check_done(self, state) -> List[DoneResult]:
-        inter_entity_collision_detected = self.curr_done and self.done_at_collisions
-        move_failed = any(h.is_move(x.state.identifier) and not x.state.validity for x in state[c.AGENT])
-        if inter_entity_collision_detected or move_failed:
-            return [DoneResult(validity=c.VALID, identifier=c.COLLISION, reward=r.COLLISION)]
+        if self.done_at_collisions:
+            inter_entity_collision_detected = self.curr_done
+            move_failed = any(h.is_move(x.state.identifier) and not x.state.validity for x in state[c.AGENT])
+            if inter_entity_collision_detected or move_failed:
+                return [DoneResult(validity=c.VALID, identifier=c.COLLISION, reward=r.COLLISION)]
         return [DoneResult(validity=c.NOT_VALID, identifier=self.name, reward=0)]

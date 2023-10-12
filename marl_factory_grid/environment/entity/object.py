@@ -92,6 +92,13 @@ class EnvObject(Object):
             return False
 
     @property
+    def var_can_be_bound(self):
+        try:
+            return self._collection.var_can_be_bound or False
+        except AttributeError:
+            return False
+
+    @property
     def var_can_move(self):
         try:
             return self._collection.var_can_move or False

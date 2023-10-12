@@ -56,6 +56,7 @@ class Entity(EnvObject, abc.ABC):
         return last_x - curr_x, last_y - curr_y
 
     def destroy(self):
+        if
         valid = self._collection.remove_item(self)
         for observer in self.observers:
             observer.notify_del_entity(self)
@@ -73,10 +74,17 @@ class Entity(EnvObject, abc.ABC):
             return valid
         return not_same_tile
 
-    def __init__(self, tile, **kwargs):
+    def __init__(self, tile, bind_to=None, **kwargs):
         super().__init__(**kwargs)
         self._status = None
         self._tile = tile
+        if bind_to:
+            try:
+                self.bind_to(bind_to)
+            except AttributeError:
+                print(f'Objects of {self.__class__.__name__} can not be bound to other entities.')
+                exit()
+
         assert tile.enter(self, spawn=True), "Positions was not valid!"
 
     def summarize_state(self) -> dict:

@@ -2,7 +2,7 @@ from random import choices, choice
 
 from . import constants as z, Zone
 from ..destinations import constants as d
-from ..destinations.entitites import BoundDestination
+from ... import Destination
 from ...environment.rules import Rule
 from ...environment import constants as c
 
@@ -66,9 +66,10 @@ class IndividualDestinationZonePlacement(Rule):
         already_has_destination = True
         while already_has_destination:
             tile = choice(other_zones).random_tile
-            if state[d.BOUNDDESTINATION].by_pos(tile.pos) is None:
+            if state[d.DESTINATION].by_pos(tile.pos) is None:
                 already_has_destination = False
-                destination = BoundDestination(agent, tile)
-                state[d.BOUNDDESTINATION].add_item(destination)
+                destination = Destination(tile, bind_to=agent)
+
+                state[d.DESTINATION].add_item(destination)
             continue
         return c.VALID

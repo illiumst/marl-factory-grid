@@ -90,7 +90,7 @@ class Factory(gym.Env):
 
         # Parse the agent conf
         parsed_agents_conf = self.conf.parse_agents_conf()
-        self.state = Gamestate(entities, parsed_agents_conf, rules, self.conf.env_seed)
+        self.state = Gamestate(entities, parsed_agents_conf, rules, self.conf.env_seed, self.conf.verbose)
 
         # All is set up, trigger entity init with variable pos
         self.state.rules.do_all_init(self.state, self.map)
@@ -234,10 +234,6 @@ class Factory(gym.Env):
             if key not in ['step', 'walls', 'doors', 'agents', 'items', 'dirtPiles', 'batteries']:
                 del summary[key]
         return summary
-
-    def print(self, string):
-        if self.conf.verbose:
-            print(string)
 
     def save_params(self, filepath: Path):
         # noinspection PyProtectedMember

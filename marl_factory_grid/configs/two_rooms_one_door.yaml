@@ -6,7 +6,7 @@ General:
   verbose: false
 
 Entities:
-  BoundDestinations: {}
+  Destinations: {}
   Doors: {}
   GlobalPositions: {}
   Zones: {}
@@ -36,7 +36,7 @@ Agents:
     - Walls
     - Other
     - Doors
-    - BoundDestination
+    - Destination
   Sigmund:
     Actions:
     - Move8
@@ -47,5 +47,5 @@ Agents:
     - Combined:
       - Other
       - Walls
-      - BoundDestination
+      - Destination
       - Doors

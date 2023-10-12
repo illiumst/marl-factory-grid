@@ -12,10 +12,6 @@ class Agents(PositionMixin, EnvObjects):
         super().__init__(*args, **kwargs)
 
     @property
-    def obs_pairs(self):
-        return [(a.name, a) for a in self]
-
-    @property
     def action_space(self):
         from gymnasium import spaces
         space = spaces.Tuple([spaces.Discrete(len(x.actions)) for x in self])

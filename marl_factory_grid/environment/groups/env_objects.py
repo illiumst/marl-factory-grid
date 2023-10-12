@@ -9,6 +9,7 @@ class EnvObjects(Objects):
     var_can_collide: bool = False
     var_has_position: bool = False
     var_can_move: bool = False
+    var_can_be_bound: bool = False
 
     @property
     def encodings(self):

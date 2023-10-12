@@ -9,10 +9,16 @@ class BoundEntityMixin:
 
     @property
     def name(self):
-        return f'{self.__class__.__name__}({self.bound_entity.name})'
+        if self.bound_entity:
+            return f'{self.__class__.__name__}({self.bound_entity.name})'
+        else:
+            print()
 
     def belongs_to_entity(self, entity):
         return entity == self.bound_entity
 
     def bind_to(self, entity):
         self._bound_entity = entity
+
+    def unbind(self):
+        self._bound_entity = None

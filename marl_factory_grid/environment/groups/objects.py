@@ -24,7 +24,9 @@ class Objects:
 
     @property
     def obs_pairs(self):
-        return [(self.name, self)]
+        pair_list = [(self.name, self)]
+        pair_list.extend([(a.name, a) for a in self])
+        return pair_list
 
     @property
     def names(self):

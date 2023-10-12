@@ -1,7 +1,6 @@
 
 # Destination Env
 DESTINATION             = 'Destinations'
-BOUNDDESTINATION        = 'BoundDestinations'
 DEST_SYMBOL             = 1
 
 WAIT_ON_DEST    = 'WAIT'

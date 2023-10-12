@@ -5,7 +5,8 @@ Agents:
     - Move8
     Observations:
     - Walls
-    - BoundDestination
+    - Other
+    - Destination
     Positions:
       - (2, 1)
       - (2, 5)
@@ -15,12 +16,13 @@ Agents:
       - Move8
     Observations:
       - Walls
-      - BoundDestination
+      - Other
+      - Destination
     Positions:
       - (2, 1)
       - (2, 5)
 Entities:
-  BoundDestinations: {}
+  Destinations: {}
 
 General:
   env_seed: 69
@@ -32,7 +34,7 @@ General:
 Rules:
   SpawnAgents: {}
   Collision:
-    done_at_collisions: true
+    done_at_collisions: false
   FixedDestinationSpawn:
     per_agent_positions:
       Wolfgang:
