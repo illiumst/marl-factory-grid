@@ -106,9 +106,9 @@ back to the environment.
 Make sure to bring your own assets for each Entity living in the Gridworld as the `Renderer` relies on it.
 PNG-files (transparent background) of square aspect-ratio should do the job, in general.
 
-<img src=".\marl_factory_grid\environment\assets\wall.png"  width="5%"> 
+<img src="/marl_factory_grid/environment/assets/wall.png"  width="5%"> 
 &nbsp&nbsp&nbsp&nbsp 
-<img src=".\marl_factory_grid\environment\assets\agent\agent.png"  width="5%">
+<img src="/marl_factory_grid/environment/assets/agent/agent.png"  width="5%">
 
 
 
