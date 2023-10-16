@@ -22,7 +22,7 @@ class LevelParser(object):
         self._parsed_level = h.parse_level(Path(level_file_path))
         level_array = h.one_hot_level(self._parsed_level, c.SYMBOL_WALL)
         self.level_shape = level_array.shape
-        self.size = self.pomdp_r**2 if self.pomdp_r else np.prod(self.level_shape)
+        self.size = self.pomdp_r ** 2 if self.pomdp_r else np.prod(self.level_shape)
 
     def get_coordinates_for_symbol(self, symbol, negate=False):
         level_array = h.one_hot_level(self._parsed_level, symbol)
@@ -32,16 +32,16 @@ class LevelParser(object):
             return np.argwhere(level_array == c.VALUE_OCCUPIED_CELL)
 
     def do_init(self):
-        entities = Entities()
+        list_of_all_floors = ([tuple(floor) for floor in self.get_coordinates_for_symbol(c.SYMBOL_WALL, negate=True)])
+        entities = Entities(list_of_all_floors)
+
         # Walls
         walls = Walls.from_coordinates(self.get_coordinates_for_symbol(c.SYMBOL_WALL), self.size)
-        # walls = self.get_coordinates_for_symbol(c.SYMBOL_WALL)
         entities.add_items({c.WALL: walls})
 
         # Floor
-        floor = Floors.from_coordinates(self.get_coordinates_for_symbol(c.SYMBOL_WALL, negate=True), self.size)
+        floor = Floors.from_coordinates(list_of_all_floors, self.size)
         entities.add_items({c.FLOOR: floor})
-        # entities.add_items({c.WALL: self.get_coordinates_for_symbol(c.SYMBOL_WALL, negative=True)})
 
         # All other
         for es_name in self.e_p_dict:
@@ -55,10 +55,7 @@ class LevelParser(object):
                     level_array = h.one_hot_level(self._parsed_level, symbol=symbol)
                     if np.any(level_array):
                         e = e_class.from_coordinates(np.argwhere(level_array == c.VALUE_OCCUPIED_CELL).tolist(),
-                                                     entities[c.FLOOR], self.size, entity_kwargs=e_kwargs
-                                                     )
-                        # e_coords = (np.argwhere(level_array == c.VALUE_OCCUPIED_CELL).tolist())   # braucht e_class?
-                        # entities.add_items({e.name: e_coords})
+                                                     self.size, entity_kwargs=e_kwargs)
                     else:
                         raise ValueError(f'No {e_class} (Symbol: {e_class.symbol}) could be found!\n'
                                          f'Check your level file!')

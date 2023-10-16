@@ -9,7 +9,6 @@ from marl_factory_grid.modules.destinations import constants as d
 
 
 class Destination(Entity):
-
     var_can_move = False
     var_can_collide = False
     var_has_position = True
@@ -40,9 +39,9 @@ class Destination(Entity):
     def leave(self, agent: Agent):
         del self._per_agent_times[agent.name]
 
-    @property
-    def is_considered_reached(self):
-        agent_at_position = any(c.AGENT.lower() in x.name.lower() for x in self.tile.guests_that_can_collide)
+    def is_considered_reached(self, state):
+        agent_at_position = any(
+            c.AGENT.lower() in x.name.lower() for x in state.entities.pos_dict[self.pos] if x.var_can_collide)
         return (agent_at_position and not self.dwell_time) or any(x == 0 for x in self._per_agent_times.values())
 
     def agent_is_dwelling(self, agent: Agent):
@@ -68,9 +67,9 @@ class BoundDestination(BoundEntityMixin, Destination):
         self.bind_to(entity)
         super().__init__(*args, **kwargs)
 
-
     @property
     def is_considered_reached(self):
-        agent_at_position = any(self.bound_entity == x for x in self.tile.guests_that_can_collide)
+        agent_at_position = any(
+            self.bound_entity == x for x in self.state.entities.pos_dict[self.pos] if x.var_can_collide)
         return (agent_at_position and not self.dwell_time) \
             or any(x == 0 for x in self._per_agent_times[self.bound_entity.name])

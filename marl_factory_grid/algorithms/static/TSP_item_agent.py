@@ -24,7 +24,7 @@ class TSPItemAgent(TSPBaseAgent):
         elif self._env.state[i.DROP_OFF].by_pos(self.state.pos) is not None:
             # Translate the action_object to an integer to have the same output as any other model
             action = i.ITEM_ACTION
-        elif door := self._door_is_close():
+        elif door := self._door_is_close(self._env):
             action = self._use_door_or_move(door, i.DROP_OFF if self.mode == MODE_BRING else i.ITEM)
         else:
             action = self._choose()

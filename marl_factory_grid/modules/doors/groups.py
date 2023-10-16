@@ -14,9 +14,9 @@ class Doors(PositionMixin, EnvObjects):
     def __init__(self, *args, **kwargs):
         super(Doors, self).__init__(*args, can_collide=True, **kwargs)
 
-    def tick_doors(self):
+    def tick_doors(self, state):
         result_dict = dict()
         for door in self:
-            did_tick = door.tick()
+            did_tick = door.tick(state)
             result_dict.update({door.name: did_tick})
         return result_dict

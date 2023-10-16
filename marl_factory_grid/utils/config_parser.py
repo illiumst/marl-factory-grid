@@ -14,7 +14,6 @@ MODULE_PATH = 'modules'
 
 
 class FactoryConfigParser(object):
-
     default_entites = []
     default_rules = ['MaxStepsReached', 'Collision']
     default_actions = [c.MOVE8, c.NOOP]
@@ -89,7 +88,7 @@ class FactoryConfigParser(object):
 
     def load_agents(self, size, free_tiles):
         agents = Agents(size)
-        base_env_actions  = self.default_actions.copy() + [c.MOVE4]
+        base_env_actions = self.default_actions.copy() + [c.MOVE4]
         for name in self.agents:
             # Actions
             actions = list()

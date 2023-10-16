@@ -64,7 +64,8 @@ class Factory(gym.Env):
         self.map: LevelParser
         self.obs_builder: OBSBuilder
 
-        # TODO: Reset ---> document this
+        # reset env to initial state, preparing env for new episode.
+        # returns tuple where the first dict contains initial observation for each agent in the env
         self.reset()
 
     def __getitem__(self, item):
@@ -80,22 +81,22 @@ class Factory(gym.Env):
 
         self.state = None
 
-        # Init entity:
-        entities = self.map.do_init()  # done
+        # Init entities
+        entities = self.map.do_init()
 
-        # Grab all )rules:
+        # Init rules
         rules = self.conf.load_rules()
 
-        # Agents
+        # Init agents
         # noinspection PyAttributeOutsideInit
         self.state = Gamestate(entities, rules, self.conf.env_seed)  # get_all_tiles_with_collisions
-        agents = self.conf.load_agents(self.map.size, self[c.FLOOR].empty_tiles)    # empty_tiles -> entity(tile)
+        agents = self.conf.load_agents(self.map.size, self.state.entities.floorlist)
         self.state.entities.add_item({c.AGENT: agents})
 
         # All is set up, trigger additional init (after agent entity spawn etc)
         self.state.rules.do_all_init(self.state, self.map)
 
-        # Observations
+        # Build initial observations for all agents
         # noinspection PyAttributeOutsideInit
         self.obs_builder = OBSBuilder(self.map.level_shape, self.state, self.map.pomdp_r)
         return self.obs_builder.refresh_and_build_for_all(self.state)
@@ -165,7 +166,7 @@ class Factory(gym.Env):
         if not self._renderer:  # lazy init
             from marl_factory_grid.utils.renderer import Renderer
             global Renderer
-            self._renderer = Renderer(self.map.level_shape, view_radius=self.conf.pomdp_r, fps=10)
+            self._renderer = Renderer(self.map.level_shape,  view_radius=self.conf.pomdp_r, fps=10)
 
         render_entities = self.state.entities.render()
         if self.conf.pomdp_r:

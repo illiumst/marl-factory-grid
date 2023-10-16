@@ -45,9 +45,9 @@ class Floor(EnvObject):
     def encoding(self):
         return c.VALUE_OCCUPIED_CELL
 
-    @property
-    def guests_that_can_collide(self):
-        return [x for x in self.guests if x.var_can_collide]
+    # @property
+    # def guests_that_can_collide(self):
+    #     return [x for x in self.guests if x.var_can_collide]
 
     @property
     def guests(self):

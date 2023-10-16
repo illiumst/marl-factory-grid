@@ -40,11 +40,11 @@ class Move(Action, abc.ABC):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def do(self, entity, env):
+    def do(self, entity, state):
         new_pos = self._calc_new_pos(entity.pos)
-        if next_tile := env[c.FLOOR].by_pos(new_pos):
+        if state.check_move_validity(entity, new_pos):  # next_tile := state[c.FLOOR].by_pos(new_pos):
             # noinspection PyUnresolvedReferences
-            valid = entity.move(next_tile)
+            valid = entity.move(new_pos, state)
         else:
             valid = c.NOT_VALID
         reward = r.MOVEMENTS_VALID if valid else r.MOVEMENTS_FAIL

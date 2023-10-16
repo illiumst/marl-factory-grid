@@ -4,7 +4,6 @@ from marl_factory_grid.environment.rules import Rule
 from marl_factory_grid.environment import constants as c
 from marl_factory_grid.utils.results import TickResult
 from marl_factory_grid.modules.items import constants as i
-from marl_factory_grid.modules.items.entitites import DropOffLocation
 
 
 class ItemRules(Rule):
@@ -19,10 +18,10 @@ class ItemRules(Rule):
         self.n_locations = n_locations
 
     def on_init(self, state, lvl_map):
-        self.trigger_drop_off_location_spawn(state)
+        state[i.DROP_OFF].trigger_drop_off_location_spawn(state, self.n_locations)
         self._next_item_spawn = self.spawn_frequency
-        self.trigger_inventory_spawn(state)
-        self.trigger_item_spawn(state)
+        state[i.INVENTORY].trigger_inventory_spawn(state)
+        state[i.ITEM].trigger_item_spawn(state, self.n_items, self.spawn_frequency)
 
     def tick_step(self, state):
         for item in list(state[i.ITEM].values()):
@@ -34,25 +33,10 @@ class ItemRules(Rule):
                 pass
 
         if not self._next_item_spawn:
-            self.trigger_item_spawn(state)
+            state[i.ITEM].trigger_item_spawn(state, self.n_items, self.spawn_frequency)
         else:
             self._next_item_spawn = max(0, self._next_item_spawn - 1)
         return []
-
-    def trigger_item_spawn(self, state):
-        if item_to_spawns := max(0, (self.n_items - len(state[i.ITEM]))):
-            empty_tiles = state[c.FLOOR].empty_tiles[:item_to_spawns]
-            state[i.ITEM].spawn(empty_tiles)
-            self._next_item_spawn = self.spawn_frequency
-            state.print(f'{item_to_spawns} new items have been spawned; next spawn in {self._next_item_spawn}')
-            return len(empty_tiles)
-        else:
-            state.print('No Items are spawning, limit is reached.')
-            return 0
-
-    @staticmethod
-    def trigger_inventory_spawn(state):
-        state[i.INVENTORY].spawn(state[c.AGENT])
 
     def tick_post_step(self, state) -> List[TickResult]:
         for item in list(state[i.ITEM].values()):
@@ -64,7 +48,7 @@ class ItemRules(Rule):
                 pass
 
         if not self._next_item_spawn:
-            if spawned_items := self.trigger_item_spawn(state):
+            if spawned_items := state[i.ITEM].trigger_item_spawn(state, self.n_items, self.spawn_frequency):
                 return [TickResult(self.name, validity=c.VALID, value=spawned_items, entity=None)]
             else:
                 return [TickResult(self.name, validity=c.NOT_VALID, value=0, entity=None)]
@@ -72,8 +56,3 @@ class ItemRules(Rule):
             self._next_item_spawn = max(0, self._next_item_spawn-1)
             return []
 
-    def trigger_drop_off_location_spawn(self, state):
-        empty_tiles = state[c.FLOOR].empty_tiles[:self.n_locations]
-        do_entites = state[i.DROP_OFF]
-        drop_offs = [DropOffLocation(tile) for tile in empty_tiles]
-        do_entites.add_items(drop_offs)

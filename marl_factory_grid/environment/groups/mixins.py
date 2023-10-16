@@ -1,5 +1,7 @@
 from typing import List, Tuple
 
+import numpy as np
+
 from marl_factory_grid.environment import constants as c
 from marl_factory_grid.environment.entity.entity import Entity
 from marl_factory_grid.environment.entity.wall_floor import Floor
@@ -11,30 +13,31 @@ class PositionMixin:
     var_can_collide: bool = True
     var_has_position: bool = True
 
-    def spawn(self, coords: List[Tuple[(int, int)]]):    # runde klammern?
+    def spawn(self, coords: List[Tuple[(int, int)]]):
         self.add_items([self._entity(pos) for pos in coords])
 
     def render(self):
         return [y for y in [x.render() for x in self] if y is not None]
 
-    @classmethod
-    def from_tiles(cls, tiles, *args, entity_kwargs=None, **kwargs):
-        collection = cls(*args, **kwargs)
-        entities = [cls._entity(tile, str_ident=i,
-                                **entity_kwargs if entity_kwargs is not None else {})
-                    for i, tile in enumerate(tiles)]
-        collection.add_items(entities)
-        return collection
+    # @classmethod
+    # def from_tiles(cls, tiles, *args, entity_kwargs=None, **kwargs):
+    #     collection = cls(*args, **kwargs)
+    #     entities = [cls._entity(tile, str_ident=i,
+    #                             **entity_kwargs if entity_kwargs is not None else {})
+    #                 for i, tile in enumerate(tiles)]
+    #     collection.add_items(entities)
+    #     return collection
 
     @classmethod
-    def from_coordinates(cls, positions: [(int, int)], tiles, *args, entity_kwargs=None, **kwargs, ):
-        return cls.from_tiles([tiles.by_pos(position) for position in positions], tiles.size, *args,
-                              entity_kwargs=entity_kwargs,
-                              **kwargs)
+    def from_coordinates(cls, positions: [(int, int)], *args, entity_kwargs=None, **kwargs, ):
+        collection = cls(*args, **kwargs)
+        collection.add_items(
+            [cls._entity(tuple(pos), **entity_kwargs if entity_kwargs is not None else {}) for pos in positions])
+        return collection
 
     def __delitem__(self, name):
         idx, obj = next((i, obj) for i, obj in enumerate(self) if obj.name == name)
-        obj.tile.leave(obj)
+        obj.tile.leave(obj)     # observer notify?
         super().__delitem__(name)
 
     def by_pos(self, pos: (int, int)):

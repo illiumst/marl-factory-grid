@@ -31,7 +31,7 @@ class Entity(EnvObject, abc.ABC):
 
     @property
     def tile(self):
-        return self._tile   # wall_n_floors funktionalität
+        return self._tile  # wall_n_floors funktionalität
 
     # @property
     # def last_tile(self):
@@ -48,12 +48,11 @@ class Entity(EnvObject, abc.ABC):
         curr_x, curr_y = self.pos
         return last_x - curr_x, last_y - curr_y
 
-    def move(self, next_pos):
+    def move(self, next_pos, state):
         next_pos = next_pos
         curr_pos = self._pos
         if not_same_pos := curr_pos != next_pos:
-            if valid := next_tile.enter(self):  # muss abgefragt werden über observer? alle obs? wie sonst posdict
-                # curr_tile.leave(self) kann raus wegen notify change pos
+            if valid := state.check_move_validity(self, next_pos):
                 self._pos = next_pos
                 self._last_pos = curr_pos
                 for observer in self.observers:
@@ -66,7 +65,6 @@ class Entity(EnvObject, abc.ABC):
         self._status = None
         self._pos = position
         self._last_pos = c.VALUE_NO_POS
-        # tile.enter(self)
 
     def summarize_state(self) -> dict:  # tile=str(self.tile.name)
         return dict(name=str(self.name), x=int(self.x), y=int(self.y), can_collide=bool(self.var_can_collide))

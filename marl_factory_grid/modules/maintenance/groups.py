@@ -23,5 +23,5 @@ class Maintainers(PositionMixin, EnvObjects):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def spawn(self, tiles: List[Floor], state: Gamestate):
-        self.add_items([self._entity(state, mc.MACHINES, MachineAction(), tile) for tile in tiles])
+    def spawn(self, position, state: Gamestate):
+        self.add_items([self._entity(state, mc.MACHINES, MachineAction(), pos) for pos in position])

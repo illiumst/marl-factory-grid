@@ -12,12 +12,12 @@ class DestinationReach(Rule):
     def __init__(self, n_dests: int = 1, tiles: Union[List, None] = None):
         super(DestinationReach, self).__init__()
         self.n_dests = n_dests or len(tiles)
-        self._tiles = tiles
+        # self._tiles = tiles
 
     def tick_step(self, state) -> List[TickResult]:
 
         for dest in list(state[d.DESTINATION].values()):
-            if dest.is_considered_reached:
+            if dest.is_considered_reached(state):
                 dest.change_parent_collection(state[d.DEST_REACHED])
                 state.print(f'{dest.name} is reached now, removing...')
             else:
@@ -34,7 +34,7 @@ class DestinationReach(Rule):
     def tick_post_step(self, state) -> List[TickResult]:
         results = list()
         for reached_dest in state[d.DEST_REACHED]:
-            for guest in reached_dest.tile.guests:
+            for guest in state.entities.pos_dict[reached_dest].values():     # reached_dest.tile.guests:
                 if guest in state[c.AGENT]:
                     state.print(f'{guest.name} just reached destination at {guest.pos}')
                     state[d.DEST_REACHED].delete_env_object(reached_dest)
@@ -79,7 +79,7 @@ class DestinationSpawn(Rule):
     def on_init(self, state, lvl_map):
         # noinspection PyAttributeOutsideInit
         self._dest_spawn_timer = self.spawn_frequency
-        self.trigger_destination_spawn(self.n_dests, state)
+        state[d.DESTINATION].trigger_destination_spawn(self.n_dests, state)
         pass
 
     def tick_pre_step(self, state) -> List[TickResult]:
@@ -91,13 +91,3 @@ class DestinationSpawn(Rule):
                 validity = state.rules['DestinationReach'].trigger_destination_spawn(n_dest_spawn, state)
                 return [TickResult(self.name, validity=validity, entity=None, value=n_dest_spawn)]
 
-    @staticmethod
-    def trigger_destination_spawn(n_dests, state, tiles=None):
-        tiles = tiles or state[c.FLOOR].empty_tiles[:n_dests]
-        if destinations := [Destination(tile) for tile in tiles]:
-            state[d.DESTINATION].add_items(destinations)
-            state.print(f'{n_dests} new destinations have been spawned')
-            return c.VALID
-        else:
-            state.print('No Destiantions are spawning, limit is reached.')
-            return c.NOT_VALID

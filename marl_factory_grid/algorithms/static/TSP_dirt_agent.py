@@ -14,7 +14,7 @@ class TSPDirtAgent(TSPBaseAgent):
         if self._env.state[di.DIRT].by_pos(self.state.pos) is not None:
             # Translate the action_object to an integer to have the same output as any other model
             action = di.CLEAN_UP
-        elif door := self._door_is_close():
+        elif door := self._door_is_close(self._env):
             action = self._use_door_or_move(door, di.DIRT)
         else:
             action = self._predict_move(di.DIRT)

@@ -126,17 +126,12 @@ class Objects:
             del self[item]
 
     def notify_change_pos(self, entity: object):
-        # print("notifychange")
         try:
-            # print("lastpos")
-            # print(self.pos_dict[entity.last_pos])
             self.pos_dict[entity.last_pos].remove(entity)
         except (ValueError, AttributeError):
             pass
         if entity.var_has_position:
             try:
-                # print("pos")
-                # print(self.pos_dict[entity.pos])
                 self.pos_dict[entity.pos].append(entity)
             except (ValueError, AttributeError):
                 pass

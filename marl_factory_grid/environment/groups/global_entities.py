@@ -23,9 +23,32 @@ class Entities(Objects):
     def names(self):
         return list(self._data.keys())
 
-    def __init__(self):
+    @property
+    def floorlist(self):
+        return self._floor_positions
+
+    def __init__(self, floor_positions):
+        self._floor_positions = floor_positions
         self.pos_dict = defaultdict(list)
         super().__init__()
+
+    # def all_floors(self):
+    #     return[key for key, val in self.pos_dict.items() if any('floor' in x.name.lower() for x in val)]
+
+    def guests_that_can_collide(self, pos):
+        return[x for val in self.pos_dict[pos] for x in val if x.var_can_collide]
+
+    def empty_tiles(self):
+        return[key for key in self.floorlist if not any(self.pos_dict[key])]
+
+    def occupied_tiles(self):   # positions that are not empty
+        return[key for key in self.floorlist if any(self.pos_dict[key])]
+
+    def is_blocked(self):
+        return[key for key, val in self.pos_dict.items() if any([x.var_is_blocking_pos for x in val])]
+
+    def is_not_blocked(self):
+        return[key for key, val in self.pos_dict.items() if not all([x.var_is_blocking_pos for x in val])]
 
     def iter_entities(self):
         return iter((x for sublist in self.values() for x in sublist))
