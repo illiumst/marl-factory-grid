@@ -38,7 +38,7 @@ class AgentSingleZonePlacement(Rule):
 
         z_idxs = choices(list(range(len(state[z.ZONES]))), k=n_agents)
         for agent in state[c.AGENT]:
-            agent.move(state[z.ZONES][z_idxs.pop()].random_tile)
+            agent.move(state[z.ZONES][z_idxs.pop()].random_tile, state)
         return []
 
     def tick_step(self, state):

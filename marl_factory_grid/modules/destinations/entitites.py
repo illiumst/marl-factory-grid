@@ -39,7 +39,8 @@ class Destination(BoundEntityMixin, Entity):
     def has_just_been_reached(self):
         if self.was_reached:
             return False
-        agent_at_position = any(self.bound_entity == x for x in self.tile.guests_that_can_collide)
+        agent_at_position = any(c.AGENT.lower() in x.name.lower() for x in state.entities.pos_dict[self.pos] if x.var_can_collide)
+
         if self.bound_entity:
             return ((agent_at_position and not self.action_counts)
                     or self._per_agent_actions[self.bound_entity.name] >= self.action_counts >= 1)

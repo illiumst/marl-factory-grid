@@ -11,15 +11,16 @@ class TSPTargetAgent(TSPBaseAgent):
     def __init__(self, *args, **kwargs):
         super(TSPTargetAgent, self).__init__(*args, **kwargs)
 
-    def _handle_doors(self):
+    def _handle_doors(self, state):
 
         try:
-            return next(y for x in self.state.tile.neighboring_floor for y in x.guests if do.DOOR in y.name)
+            # return next(y for x in self.state.tile.neighboring_floor for y in x.guests if do.DOOR in y.name)
+            return next(y for x in state.entities.neighboring_positions(self.state.pos) for y in state.entities.pos_dict[x] if do.DOOR in y.name)
         except StopIteration:
             return None
 
     def predict(self, *_, **__):
-        if door := self._door_is_close():
+        if door := self._door_is_close(self._env):
             action = self._use_door_or_move(door, d.DESTINATION)
         else:
             action = self._predict_move(d.DESTINATION)

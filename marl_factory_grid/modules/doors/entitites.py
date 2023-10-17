@@ -81,11 +81,11 @@ class Door(Entity):
             self._open()
         return c.VALID
 
-    def tick(self):
-        if self.is_open and len(self.tile) == 1 and self.time_to_close:
+    def tick(self, state):
+        if self.is_open and len(state.entities.pos_dict[self.pos]) == 2 and self.time_to_close:
             self.time_to_close -= 1
             return c.NOT_VALID
-        elif self.is_open and not self.time_to_close and len(self.tile) == 1:
+        elif self.is_open and not self.time_to_close and len(state.entities.pos_dict[self.pos]) == 2:
             self.use()
             return c.VALID
         else:

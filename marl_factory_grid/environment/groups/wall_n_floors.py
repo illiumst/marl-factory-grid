@@ -1,5 +1,5 @@
 import random
-from typing import List
+from typing import List, Tuple
 
 from marl_factory_grid.environment import constants as c
 from marl_factory_grid.environment.groups.env_objects import EnvObjects
@@ -15,16 +15,12 @@ class Walls(PositionMixin, EnvObjects):
         super(Walls, self).__init__(*args, **kwargs)
         self._value = c.VALUE_OCCUPIED_CELL
 
-    @classmethod
-    def from_coordinates(cls, argwhere_coordinates, *args, **kwargs):
-        tiles = cls(*args, **kwargs)
-        # noinspection PyTypeChecker
-        tiles.add_items([cls._entity(pos) for pos in argwhere_coordinates])
-        return tiles
-
-    @classmethod
-    def from_tiles(cls, tiles, *args, **kwargs):
-        raise RuntimeError()
+    # @classmethod
+    # def from_coordinates(cls, argwhere_coordinates, *args, **kwargs):
+    #     tiles = cls(*args, **kwargs)
+    #     # noinspection PyTypeChecker
+    #     tiles.add_items([cls._entity(pos) for pos in argwhere_coordinates])
+    #     return tiles
 
     def by_pos(self, pos: (int, int)):
         try:
@@ -43,18 +39,4 @@ class Floors(Walls):
         super(Floors, self).__init__(*args, **kwargs)
         self._value = c.VALUE_FREE_CELL
 
-    @property
-    def occupied_tiles(self):
-        tiles = [tile for tile in self if tile.is_occupied()]
-        random.shuffle(tiles)
-        return tiles
 
-    @property
-    def empty_tiles(self) -> List[Floor]:
-        tiles = [tile for tile in self if tile.is_empty()]
-        random.shuffle(tiles)
-        return tiles
-
-    @classmethod
-    def from_tiles(cls, tiles, *args, **kwargs):
-        raise RuntimeError()

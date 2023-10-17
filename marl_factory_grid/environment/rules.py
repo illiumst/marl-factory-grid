@@ -111,10 +111,10 @@ class Collision(Rule):
 
     def tick_post_step(self, state) -> List[TickResult]:
         self.curr_done = False
-        tiles_with_collisions = state.get_all_tiles_with_collisions()
+        pos_with_collisions = state.get_all_pos_with_collisions()
         results = list()
-        for tile in tiles_with_collisions:
-            guests = tile.guests_that_can_collide
+        for pos in pos_with_collisions:
+            guests = [x for x in state.entities.pos_dict[pos] if x.var_can_collide]
             if len(guests) >= 2:
                 for i, guest in enumerate(guests):
                     try:

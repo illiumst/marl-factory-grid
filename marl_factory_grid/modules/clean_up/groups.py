@@ -7,7 +7,6 @@ from marl_factory_grid.environment import constants as c
 
 
 class DirtPiles(PositionMixin, EnvObjects):
-
     _entity = DirtPile
     is_blocking_light: bool = False
     can_collide: bool = False
@@ -31,27 +30,28 @@ class DirtPiles(PositionMixin, EnvObjects):
         self.max_global_amount = max_global_amount
         self.max_local_amount = max_local_amount
 
-    def spawn(self, then_dirty_tiles, amount) -> bool:
-        if isinstance(then_dirty_tiles, Floor):
-            then_dirty_tiles = [then_dirty_tiles]
-        for tile in then_dirty_tiles:
+    def spawn(self, then_dirty_positions, amount) -> bool:
+        # if isinstance(then_dirty_tiles, Floor):
+        #     then_dirty_tiles = [then_dirty_tiles]
+        for pos in then_dirty_positions:
             if not self.amount > self.max_global_amount:
-                if dirt := self.by_pos(tile.pos):
+                if dirt := self.by_pos(pos):
                     new_value = dirt.amount + amount
                     dirt.set_new_amount(new_value)
                 else:
-                    dirt = DirtPile(tile, initial_amount=amount, spawn_variation=self.dirt_spawn_r_var)
+                    dirt = DirtPile(pos, initial_amount=amount, spawn_variation=self.dirt_spawn_r_var)
                     self.add_item(dirt)
             else:
                 return c.NOT_VALID
         return c.VALID
 
     def trigger_dirt_spawn(self, state, initial_spawn=False) -> bool:
-        free_for_dirt = [x for x in state[c.FLOORS]
-                         if len(x.guests) == 0 or (
-                                 len(x.guests) == 1 and
-                                 isinstance(next(y for y in x.guests), DirtPile))
-                         ]
+        free_for_dirt = [x for x in state.entities.floorlist if len(state.entities.pos_dict[x]) == 1 or (
+                    len(state.entities.pos_dict[x]) == 2 and isinstance(next(y for y in x), DirtPile))]
+        # free_for_dirt = [x for x in state[c.FLOOR]
+        #                  if len(x.guests) == 0 or (
+        #                          len(x.guests) == 1 and
+        #                          isinstance(next(y for y in x.guests), DirtPile))]
         state.rng.shuffle(free_for_dirt)
 
         var = self.dirt_spawn_r_var

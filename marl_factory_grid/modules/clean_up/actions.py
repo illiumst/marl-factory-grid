@@ -14,7 +14,7 @@ class CleanUp(Action):
         super().__init__(d.CLEAN_UP)
 
     def do(self, entity, state) -> Union[None, ActionResult]:
-        if dirt := state[d.DIRT].by_pos(entity.pos):
+        if dirt := next((x for x in state.entities.pos_dict[entity.pos] if "dirt" in x.name.lower()), None):
             new_dirt_amount = dirt.amount - state[d.DIRT].clean_amount
 
             if new_dirt_amount <= 0:

@@ -12,7 +12,7 @@ class DoorAutoClose(Rule):
 
     def tick_step(self, state):
         if doors := state[d.DOORS]:
-            doors_tick_result = doors.tick_doors()
+            doors_tick_result = doors.tick_doors(state)
             doors_that_ticked = [key for key, val in doors_tick_result.items() if val]
             state.print(f'{doors_that_ticked} were auto-closed'
                         if doors_that_ticked else 'No Doors were auto-closed')

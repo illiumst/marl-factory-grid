@@ -16,7 +16,6 @@ MODULE_PATH = 'modules'
 
 
 class FactoryConfigParser(object):
-
     default_entites = []
     default_rules = ['MaxStepsReached', 'Collision']
     default_actions = [c.MOVE8, c.NOOP]

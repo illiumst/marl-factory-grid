@@ -23,7 +23,7 @@ class LevelParser(object):
         self._parsed_level = h.parse_level(Path(level_file_path))
         level_array = h.one_hot_level(self._parsed_level, c.SYMBOL_WALL)
         self.level_shape = level_array.shape
-        self.size = self.pomdp_r**2 if self.pomdp_r else np.prod(self.level_shape)
+        self.size = self.pomdp_r ** 2 if self.pomdp_r else np.prod(self.level_shape)
 
     def get_coordinates_for_symbol(self, symbol, negate=False):
         level_array = h.one_hot_level(self._parsed_level, symbol)
@@ -33,14 +33,17 @@ class LevelParser(object):
             return np.argwhere(level_array == c.VALUE_OCCUPIED_CELL)
 
     def do_init(self):
-        entities = Entities()
+        # Global Entities
+        list_of_all_floors = ([tuple(floor) for floor in self.get_coordinates_for_symbol(c.SYMBOL_WALL, negate=True)])
+        entities = Entities(list_of_all_floors)
+
         # Walls
         walls = Walls.from_coordinates(self.get_coordinates_for_symbol(c.SYMBOL_WALL), self.size)
         entities.add_items({c.WALLS: walls})
 
         # Floor
-        floor = Floors.from_coordinates(self.get_coordinates_for_symbol(c.SYMBOL_WALL, negate=True), self.size)
-        entities.add_items({c.FLOORS: floor})
+        floor = Floors.from_coordinates(list_of_all_floors, self.size)
+        entities.add_items({c.FLOOR: floor})
         entities.add_items({c.AGENT: Agents(self.size)})
 
         # All other
@@ -56,8 +59,7 @@ class LevelParser(object):
                     if np.any(level_array):
                         # TODO: Get rid of this!
                         e = e_class.from_coordinates(np.argwhere(level_array == c.VALUE_OCCUPIED_CELL).tolist(),
-                                                     entities[c.FLOORS], self.size, entity_kwargs=e_kwargs
-                                                     )
+                                                     self.size, entity_kwargs=e_kwargs)
                     else:
                         raise ValueError(f'No {e_class} (Symbol: {e_class.symbol}) could be found!\n'
                                          f'Check your level file!')

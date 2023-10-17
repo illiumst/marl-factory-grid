@@ -47,9 +47,11 @@ class Machine(Entity):
             return c.NOT_VALID
 
     def tick(self):
-        if self.status == m.STATE_MAINTAIN and any([c.AGENT in x.name for x in self.tile.guests]):
+        # if self.status == m.STATE_MAINTAIN and any([c.AGENT in x.name for x in self.tile.guests]):
+        if self.status == m.STATE_MAINTAIN and any([c.AGENT in x.name for x in self.state.entities.pos_dict[self.pos]]):
             return TickResult(identifier=self.name, validity=c.VALID, reward=0, entity=self)
-        elif self.status == m.STATE_MAINTAIN and not any([c.AGENT in x.name for x in self.tile.guests]):
+        # elif self.status == m.STATE_MAINTAIN and not any([c.AGENT in x.name for x in self.tile.guests]):
+        elif self.status == m.STATE_MAINTAIN and not any([c.AGENT in x.name for x in self.state.entities.pos_dict[self.pos]]):
             self.status = m.STATE_WORK
             self.reset_counter()
             return None

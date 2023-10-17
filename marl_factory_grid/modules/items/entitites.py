@@ -11,7 +11,7 @@ class Item(Entity):
     var_can_collide = False
 
     def render(self):
-        return RenderEntity(i.ITEM, self.tile.pos) if self.pos != c.VALUE_NO_POS else None
+        return RenderEntity(i.ITEM, self.pos) if self.pos != c.VALUE_NO_POS else None
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -29,8 +29,8 @@ class Item(Entity):
     def set_auto_despawn(self, auto_despawn):
         self._auto_despawn = auto_despawn
 
-    def set_tile_to(self, no_pos_tile):
-        self._tile = no_pos_tile
+    def set_pos_to(self, no_pos):
+        self._pos = no_pos
 
     def summarize_state(self) -> dict:
         super_summarization = super(Item, self).summarize_state()
@@ -57,7 +57,7 @@ class DropOffLocation(Entity):
         return True
 
     def render(self):
-        return RenderEntity(i.DROP_OFF, self.tile.pos)
+        return RenderEntity(i.DROP_OFF, self.pos)
 
     @property
     def encoding(self):

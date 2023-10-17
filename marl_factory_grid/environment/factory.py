@@ -66,7 +66,8 @@ class Factory(gym.Env):
         self.map: LevelParser
         self.obs_builder: OBSBuilder
 
-        # TODO: Reset ---> document this
+        # reset env to initial state, preparing env for new episode.
+        # returns tuple where the first dict contains initial observation for each agent in the env
         self.reset()
 
     def __getitem__(self, item):
@@ -82,10 +83,10 @@ class Factory(gym.Env):
 
         self.state = None
 
-        # Init entity:
+        # Init entities
         entities = self.map.do_init()
 
-        # Grab all env-rules:
+        # Init rules
         rules = self.conf.load_rules()
 
         # Parse the agent conf
@@ -93,9 +94,10 @@ class Factory(gym.Env):
         self.state = Gamestate(entities, parsed_agents_conf, rules, self.conf.env_seed, self.conf.verbose)
 
         # All is set up, trigger entity init with variable pos
+        # All is set up, trigger additional init (after agent entity spawn etc)
         self.state.rules.do_all_init(self.state, self.map)
 
-        # Observations
+        # Build initial observations for all agents
         # noinspection PyAttributeOutsideInit
         self.obs_builder = OBSBuilder(self.map.level_shape, self.state, self.map.pomdp_r)
         return self.obs_builder.refresh_and_build_for_all(self.state)

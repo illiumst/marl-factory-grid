@@ -23,7 +23,7 @@ class AgentSingleZonePlacementBeta(Rule):
             raise ValueError
         tiles = [state[c.FLOORS].by_pos(pos) for pos in coordinates]
         for agent, tile in zip(agents, tiles):
-            agent.move(tile)
+            agent.move(tile, state)
 
     def tick_step(self, state):
         return []
