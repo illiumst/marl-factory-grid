@@ -2,7 +2,7 @@ from typing import List
 
 from .entities import Maintainer
 from marl_factory_grid.environment.entity.wall_floor import Floor
-from marl_factory_grid.environment.groups.env_objects import EnvObjects
+from marl_factory_grid.environment.groups.env_objects import Collection
 from marl_factory_grid.environment.groups.mixins import PositionMixin
 from ..machines.actions import MachineAction
 from ...utils.states import Gamestate
@@ -10,7 +10,7 @@ from ...utils.states import Gamestate
 from ..machines import constants as mc
 
 
-class Maintainers(PositionMixin, EnvObjects):
+class Maintainers(PositionMixin, Collection):
 
     _entity = Maintainer
     var_can_collide = True

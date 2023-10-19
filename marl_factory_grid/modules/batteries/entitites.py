@@ -1,5 +1,5 @@
 from marl_factory_grid.environment.entity.mixin import BoundEntityMixin
-from marl_factory_grid.environment.entity.object import EnvObject
+from marl_factory_grid.environment.entity.object import EnvObject, Object
 from marl_factory_grid.environment.entity.entity import Entity
 from marl_factory_grid.environment import constants as c
 from marl_factory_grid.utils.render import RenderEntity
@@ -7,7 +7,7 @@ from marl_factory_grid.utils.render import RenderEntity
 from marl_factory_grid.modules.batteries import constants as b
 
 
-class Battery(BoundEntityMixin, EnvObject):
+class Battery(Object):
 
     @property
     def is_discharged(self):

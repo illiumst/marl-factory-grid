@@ -51,7 +51,7 @@ class Door(Entity):
         else:
             self._close()
         if indicate_area:
-            self._collection.add_items([DoorIndicator(x) for x in self.tile.neighboring_floor])
+            self._collection.add_items([DoorIndicator(x) for x in self.state.entities.neighboring_positions(self.pos)])
 
     def summarize_state(self):
         state_dict = super().summarize_state()

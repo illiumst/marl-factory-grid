@@ -1,4 +1,4 @@
-from marl_factory_grid.environment.groups.env_objects import EnvObjects
+from marl_factory_grid.environment.groups.env_objects import Collection
 from marl_factory_grid.environment.groups.mixins import PositionMixin
 from marl_factory_grid.environment.entity.wall_floor import Floor
 from marl_factory_grid.modules.clean_up.entitites import DirtPile
@@ -6,7 +6,7 @@ from marl_factory_grid.modules.clean_up.entitites import DirtPile
 from marl_factory_grid.environment import constants as c
 
 
-class DirtPiles(PositionMixin, EnvObjects):
+class DirtPiles(PositionMixin, Collection):
     _entity = DirtPile
     is_blocking_light: bool = False
     can_collide: bool = False

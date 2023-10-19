@@ -1,12 +1,12 @@
 from typing import Union
 
-from marl_factory_grid.environment.groups.env_objects import EnvObjects
+from marl_factory_grid.environment.groups.env_objects import Collection
 from marl_factory_grid.environment.groups.mixins import PositionMixin
 from marl_factory_grid.modules.doors import constants as d
 from marl_factory_grid.modules.doors.entitites import Door
 
 
-class Doors(PositionMixin, EnvObjects):
+class Doors(PositionMixin, Collection):
 
     symbol = d.SYMBOL_DOOR
     _entity = Door

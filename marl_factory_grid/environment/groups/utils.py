@@ -3,7 +3,7 @@ from typing import List, Union
 import numpy as np
 
 from marl_factory_grid.environment.entity.util import GlobalPosition
-from marl_factory_grid.environment.groups.env_objects import EnvObjects
+from marl_factory_grid.environment.groups.env_objects import Collection
 from marl_factory_grid.environment.groups.mixins import PositionMixin, HasBoundMixin
 from marl_factory_grid.environment.groups.objects import Objects
 from marl_factory_grid.modules.zones import Zone
@@ -11,7 +11,7 @@ from marl_factory_grid.utils import helpers as h
 from marl_factory_grid.environment import constants as c
 
 
-class Combined(PositionMixin, EnvObjects):
+class Combined(PositionMixin, Collection):
 
     @property
     def name(self):
@@ -35,7 +35,7 @@ class Combined(PositionMixin, EnvObjects):
         return [(name, None) for name in self.names]
 
 
-class GlobalPositions(HasBoundMixin, EnvObjects):
+class GlobalPositions(Collection):
 
     _entity = GlobalPosition
     is_blocking_light = False,

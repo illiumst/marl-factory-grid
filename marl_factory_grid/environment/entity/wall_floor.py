@@ -3,6 +3,7 @@ from typing import List
 import numpy as np
 
 from marl_factory_grid.environment import constants as c
+from marl_factory_grid.environment.entity.entity import Entity
 from marl_factory_grid.environment.entity.object import EnvObject
 from marl_factory_grid.utils.render import RenderEntity
 from marl_factory_grid.utils import helpers as h
@@ -109,7 +110,7 @@ class Floor(EnvObject):
         return None
 
 
-class Wall(Floor):
+class Wall(Entity):
 
     @property
     def var_can_collide(self):

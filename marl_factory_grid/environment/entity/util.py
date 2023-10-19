@@ -30,7 +30,7 @@ class PlaceHolder(Object):
         return "PlaceHolder"
 
 
-class GlobalPosition(BoundEntityMixin, EnvObject):
+class GlobalPosition(Object):
 
     @property
     def encoding(self):

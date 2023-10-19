@@ -1,9 +1,9 @@
 from marl_factory_grid.environment.entity.agent import Agent
-from marl_factory_grid.environment.groups.env_objects import EnvObjects
+from marl_factory_grid.environment.groups.env_objects import Collection
 from marl_factory_grid.environment.groups.mixins import PositionMixin
 
 
-class Agents(PositionMixin, EnvObjects):
+class Agents(PositionMixin, Collection):
     _entity = Agent
     is_blocking_light = False
     can_move = True

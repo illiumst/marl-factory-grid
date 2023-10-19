@@ -12,6 +12,19 @@ class Object:
 
     def __bool__(self):
         return True
+    @property
+    def var_has_position(self):  # brauchen wir das hier jetzt?
+        try:
+            return self.pos != c.VALUE_NO_POS or False
+        except AttributeError:
+            return False
+
+    @property
+    def var_can_be_bound(self):
+        try:
+            return self._collection.var_can_be_bound or False
+        except AttributeError:
+            return False
 
     @property
     def observers(self):
@@ -69,6 +82,14 @@ class Object:
 
     def summarize_state(self):
         return dict()
+
+    def bind(self, entity):
+        # noinspection PyAttributeOutsideInit
+        self._bound_entity = entity
+        return c.VALID
+
+    def belongs_to_entity(self, entity):
+        return self._bound_entity == entity
 
 
 class EnvObject(Object):

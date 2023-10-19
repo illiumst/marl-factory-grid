@@ -2,12 +2,12 @@ import random
 from typing import List, Tuple
 
 from marl_factory_grid.environment import constants as c
-from marl_factory_grid.environment.groups.env_objects import EnvObjects
+from marl_factory_grid.environment.groups.env_objects import Collection
 from marl_factory_grid.environment.groups.mixins import PositionMixin
 from marl_factory_grid.environment.entity.wall_floor import Wall, Floor
 
 
-class Walls(PositionMixin, EnvObjects):
+class Walls(PositionMixin, Collection):
     _entity = Wall
     symbol = c.SYMBOL_WALL
 

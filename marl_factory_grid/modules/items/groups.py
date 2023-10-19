@@ -1,14 +1,14 @@
 from marl_factory_grid.modules.items import constants as i
 from marl_factory_grid.environment import constants as c
 
-from marl_factory_grid.environment.groups.env_objects import EnvObjects
+from marl_factory_grid.environment.groups.env_objects import Collection
 from marl_factory_grid.environment.groups.objects import Objects
 from marl_factory_grid.environment.groups.mixins import PositionMixin, IsBoundMixin, HasBoundMixin
 from marl_factory_grid.environment.entity.agent import Agent
 from marl_factory_grid.modules.items.entitites import Item, DropOffLocation
 
 
-class Items(PositionMixin, EnvObjects):
+class Items(PositionMixin, Collection):
     _entity = Item
     is_blocking_light: bool = False
     can_collide: bool = False
@@ -28,7 +28,7 @@ class Items(PositionMixin, EnvObjects):
             return 0
 
 
-class Inventory(IsBoundMixin, EnvObjects):
+class Inventory(IsBoundMixin, Collection):
     _accepted_objects = Item
 
     @property
@@ -90,7 +90,7 @@ class Inventories(HasBoundMixin, Objects):
         state[i.INVENTORY].spawn(state[c.AGENT])
 
 
-class DropOffLocations(PositionMixin, EnvObjects):
+class DropOffLocations(PositionMixin, Collection):
     _entity = DropOffLocation
     is_blocking_light: bool = False
     can_collide: bool = False
