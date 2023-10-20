@@ -19,15 +19,6 @@ class PositionMixin:
     def render(self):
         return [y for y in [x.render() for x in self] if y is not None]
 
-    # @classmethod
-    # def from_tiles(cls, tiles, *args, entity_kwargs=None, **kwargs):
-    #     collection = cls(*args, **kwargs)
-    #     entities = [cls._entity(tile, str_ident=i,
-    #                             **entity_kwargs if entity_kwargs is not None else {})
-    #                 for i, tile in enumerate(tiles)]
-    #     collection.add_items(entities)
-    #     return collection
-
     @classmethod
     def from_coordinates(cls, positions: [(int, int)], *args, entity_kwargs=None, **kwargs, ):
         collection = cls(*args, **kwargs)

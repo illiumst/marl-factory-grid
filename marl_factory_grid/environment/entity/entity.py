@@ -73,7 +73,7 @@ class Entity(EnvObject, abc.ABC):
                 print(f'Objects of {self.__class__.__name__} can not be bound to other entities.')
                 exit()
 
-    def summarize_state(self) -> dict:  # tile=str(self.tile.name)
+    def summarize_state(self) -> dict:
         return dict(name=str(self.name), x=int(self.x), y=int(self.y), can_collide=bool(self.var_can_collide))
 
     @abc.abstractmethod
