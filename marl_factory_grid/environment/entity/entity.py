@@ -16,10 +16,9 @@ class Entity(Object, abc.ABC):
     def state(self):
         return self._status or ActionResult(entity=self, identifier=c.NOOP, validity=c.VALID, reward=0)
 
-    # @property
-    # def var_has_position(self):
-    #     return self.pos != c.VALUE_NO_POS
-    var_has_position: bool = True
+    @property
+    def var_has_position(self):
+        return self.pos != c.VALUE_NO_POS
 
     @property
     def var_is_blocking_light(self):
@@ -28,7 +27,6 @@ class Entity(Object, abc.ABC):
         except AttributeError:
             return False
 
-    # var_is_blocking_light: bool = True
 
     @property
     def var_can_move(self):
@@ -51,7 +49,6 @@ class Entity(Object, abc.ABC):
         except AttributeError:
             return False
 
-    # var_can_collide: bool = True
 
     @property
     def x(self):

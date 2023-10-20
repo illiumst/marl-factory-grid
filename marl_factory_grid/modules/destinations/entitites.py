@@ -8,14 +8,31 @@ from marl_factory_grid.utils.render import RenderEntity
 from marl_factory_grid.modules.destinations import constants as d
 
 
-class Destination(BoundEntityMixin, Entity):
+class Destination(Entity):
 
-    var_can_move = False
-    var_can_collide = False
-    var_has_position = True
-    var_is_blocking_pos = False
-    var_is_blocking_light = False
-    var_can_be_bound = True  # Introduce this globally!
+    @property
+    def var_can_move(self):
+        return False
+
+    @property
+    def var_can_collide(self):
+        return False
+
+    @property
+    def var_has_position(self):
+        return True
+
+    @property
+    def var_is_blocking_pos(self):
+        return False
+
+    @property
+    def var_is_blocking_light(self):
+        return False
+
+    @property
+    def var_can_be_bound(self):
+        return True
 
     @property
     def was_reached(self):
@@ -39,7 +56,8 @@ class Destination(BoundEntityMixin, Entity):
     def has_just_been_reached(self):
         if self.was_reached:
             return False
-        agent_at_position = any(c.AGENT.lower() in x.name.lower() for x in state.entities.pos_dict[self.pos] if x.var_can_collide)
+        agent_at_position = any(
+            c.AGENT.lower() in x.name.lower() for x in state.entities.pos_dict[self.pos] if x.var_can_collide)
 
         if self.bound_entity:
             return ((agent_at_position and not self.action_counts)

@@ -2,7 +2,7 @@ import random
 from typing import List, Tuple
 
 from marl_factory_grid.environment import constants as c
-from marl_factory_grid.environment.groups.env_objects import Collection
+from marl_factory_grid.environment.groups.collection import Collection
 from marl_factory_grid.environment.groups.mixins import PositionMixin
 from marl_factory_grid.environment.entity.wall_floor import Wall, Floor
 

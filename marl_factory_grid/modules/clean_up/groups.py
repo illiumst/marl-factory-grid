@@ -1,4 +1,4 @@
-from marl_factory_grid.environment.groups.env_objects import Collection
+from marl_factory_grid.environment.groups.collection import Collection
 from marl_factory_grid.environment.groups.mixins import PositionMixin
 from marl_factory_grid.environment.entity.wall_floor import Floor
 from marl_factory_grid.modules.clean_up.entitites import DirtPile

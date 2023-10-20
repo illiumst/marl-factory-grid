@@ -10,6 +10,10 @@ from marl_factory_grid.modules.batteries import constants as b
 class Battery(Object):
 
     @property
+    def var_can_be_bound(self):
+        return True
+
+    @property
     def is_discharged(self):
         return self.charge_level == 0
 
@@ -67,7 +71,8 @@ class Pod(Entity):
         if battery.charge_level == 1.0:
             return c.NOT_VALID
         # if sum(guest for guest in self.tile.guests if 'agent' in guest.name.lower()) > 1:
-        if sum(1 for key, val in self.state.entities.pos_dict[self.pos] for guest in val if 'agent' in guest.name.lower()) > 1:
+        if sum(1 for key, val in self.state.entities.pos_dict[self.pos] for guest in val if
+               'agent' in guest.name.lower()) > 1:
             return c.NOT_VALID
         valid = battery.do_charge_action(self.charge_rate)
         return valid

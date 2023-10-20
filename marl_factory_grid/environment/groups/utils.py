@@ -3,7 +3,7 @@ from typing import List, Union
 import numpy as np
 
 from marl_factory_grid.environment.entity.util import GlobalPosition
-from marl_factory_grid.environment.groups.env_objects import Collection
+from marl_factory_grid.environment.groups.collection import Collection
 from marl_factory_grid.environment.groups.mixins import PositionMixin, HasBoundMixin
 from marl_factory_grid.environment.groups.objects import Objects
 from marl_factory_grid.modules.zones import Zone

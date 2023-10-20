@@ -1,7 +1,7 @@
 from marl_factory_grid.modules.items import constants as i
 from marl_factory_grid.environment import constants as c
 
-from marl_factory_grid.environment.groups.env_objects import Collection
+from marl_factory_grid.environment.groups.collection import Collection
 from marl_factory_grid.environment.groups.objects import Objects
 from marl_factory_grid.environment.groups.mixins import PositionMixin, IsBoundMixin, HasBoundMixin
 from marl_factory_grid.environment.entity.agent import Agent
@@ -10,8 +10,14 @@ from marl_factory_grid.modules.items.entitites import Item, DropOffLocation
 
 class Items(PositionMixin, Collection):
     _entity = Item
-    is_blocking_light: bool = False
-    can_collide: bool = False
+
+    @property
+    def is_blocking_light(self):
+        return False
+
+    @property
+    def can_collide(self):
+        return False
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -21,7 +27,8 @@ class Items(PositionMixin, Collection):
         if item_to_spawns := max(0, (n_items - len(state[i.ITEM]))):
             floor_list = state.entities.floorlist[:item_to_spawns]
             state[i.ITEM].spawn(floor_list)
-            state.print(f'{item_to_spawns} new items have been spawned; next spawn in {spawn_frequency}')   # spawn in self._next_item_spawn ?
+            state.print(
+                f'{item_to_spawns} new items have been spawned; next spawn in {spawn_frequency}')  # spawn in self._next_item_spawn ?
             return len(floor_list)
         else:
             state.print('No Items are spawning, limit is reached.')
@@ -57,7 +64,10 @@ class Inventory(IsBoundMixin, Collection):
 
 class Inventories(HasBoundMixin, Objects):
     _entity = Inventory
-    var_can_move = False
+
+    @property
+    def var_can_move(self):
+        return False
 
     def __init__(self, size: int, *args, **kwargs):
         super(Inventories, self).__init__(*args, **kwargs)
@@ -92,8 +102,14 @@ class Inventories(HasBoundMixin, Objects):
 
 class DropOffLocations(PositionMixin, Collection):
     _entity = DropOffLocation
-    is_blocking_light: bool = False
-    can_collide: bool = False
+
+    @property
+    def is_blocking_light(self):
+        return False
+
+    @property
+    def can_collide(self):
+        return False
 
     def __init__(self, *args, **kwargs):
         super(DropOffLocations, self).__init__(*args, **kwargs)

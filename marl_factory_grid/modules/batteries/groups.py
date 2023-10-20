@@ -1,4 +1,4 @@
-from marl_factory_grid.environment.groups.env_objects import Collection
+from marl_factory_grid.environment.groups.collection import Collection
 from marl_factory_grid.environment.groups.mixins import PositionMixin, HasBoundMixin
 from marl_factory_grid.modules.batteries.entitites import Pod, Battery
 

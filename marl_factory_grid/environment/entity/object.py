@@ -5,13 +5,13 @@ from marl_factory_grid.environment import constants as c
 
 
 class Object:
-
     """Generell Objects for Organisation and Maintanance such as Actions etc..."""
 
     _u_idx = defaultdict(lambda: 0)
 
     def __bool__(self):
         return True
+
     @property
     def var_has_position(self):  # brauchen wir das hier jetzt?
         try:
@@ -93,11 +93,10 @@ class Object:
 
 
 class EnvObject(Object):
-
     """Objects that hold Information that are observable, but have no position on the environment grid. Inventories etc..."""
 
     _u_idx = defaultdict(lambda: 0)
-    
+
     @property
     def obs_tag(self):
         try:
