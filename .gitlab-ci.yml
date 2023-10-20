@@ -1,7 +1,12 @@
+.only-pypi:
+  only:
+   - pypi
+
 stages:          # List of stages for jobs, and their order of execution
   - build
 
 build-job:       # This job runs in the build stage, which runs first.
+  extends: .only-pypi
   stage: build
 
   variables:
