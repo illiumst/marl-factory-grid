@@ -19,7 +19,7 @@ class ZoneInit(Rule):
         while z_idx:
             zone_positions = lvl_map.get_coordinates_for_symbol(z_idx)
             if len(zone_positions):
-                zones.append(Zone([state[c.FLOORS].by_pos(pos) for pos in zone_positions]))
+                zones.append(Zone(zone_positions))
                 z_idx += 1
             else:
                 z_idx = 0
@@ -38,7 +38,7 @@ class AgentSingleZonePlacement(Rule):
 
         z_idxs = choices(list(range(len(state[z.ZONES]))), k=n_agents)
         for agent in state[c.AGENT]:
-            agent.move(state[z.ZONES][z_idxs.pop()].random_tile, state)
+            agent.move(state[z.ZONES][z_idxs.pop()].random_pos, state)
         return []
 
     def tick_step(self, state):
@@ -65,10 +65,10 @@ class IndividualDestinationZonePlacement(Rule):
         other_zones = [x for x in state[z.ZONES] if x not in agent_zones]
         already_has_destination = True
         while already_has_destination:
-            tile = choice(other_zones).random_tile
-            if state[d.DESTINATION].by_pos(tile.pos) is None:
+            pos = choice(other_zones).random_pos
+            if state[d.DESTINATION].by_pos(pos) is None:
                 already_has_destination = False
-                destination = Destination(tile, bind_to=agent)
+                destination = Destination(pos, bind_to=agent)
 
                 state[d.DESTINATION].add_item(destination)
             continue

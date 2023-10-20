@@ -1,5 +1,6 @@
 from collections import defaultdict
 from operator import itemgetter
+from random import shuffle
 from typing import Dict
 
 from marl_factory_grid.environment.groups.objects import Objects
@@ -13,7 +14,7 @@ class Entities(Objects):
     def neighboring_positions(pos):
         return (POS_MASK + pos).reshape(-1, 2)
 
-    def get_near_pos(self, pos):
+    def get_entities_near_pos(self, pos):
         return [y for x in itemgetter(*(tuple(x) for x in self.neighboring_positions(pos)))(self.pos_dict) for y in x]
 
     def render(self):
@@ -38,11 +39,17 @@ class Entities(Objects):
     def guests_that_can_collide(self, pos):
         return[x for val in self.pos_dict[pos] for x in val if x.var_can_collide]
 
-    def empty_tiles(self):
-        return[key for key in self.floorlist if not any(self.pos_dict[key])]
+    @property
+    def empty_positions(self):
+        empty_positions= [key for key in self.floorlist if self.pos_dict[key]]
+        shuffle(empty_positions)
+        return empty_positions
 
-    def occupied_tiles(self):   # positions that are not empty
-        return[key for key in self.floorlist if any(self.pos_dict[key])]
+    @property
+    def occupied_positions(self):   # positions that are not empty
+        empty_positions = [key for key in self.floorlist if self.pos_dict[key]]
+        shuffle(empty_positions)
+        return empty_positions
 
     def is_blocked(self):
         return[key for key, val in self.pos_dict.items() if any([x.var_is_blocking_pos for x in val])]

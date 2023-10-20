@@ -14,7 +14,8 @@ class MaintenanceRule(Rule):
         self.n_maintainer = n_maintainer
 
     def on_init(self, state: Gamestate, lvl_map):
-        state[M.MAINTAINERS].spawn(state[c.FLOORS].empty_tiles[:self.n_maintainer], state)
+        # Move to spawn? : #TODO
+        state[M.MAINTAINERS].spawn(state.entities.empty_positions[:self.n_maintainer], state)
         pass
 
     def tick_pre_step(self, state) -> List[TickResult]:

@@ -42,12 +42,12 @@ class Move(Action, abc.ABC):
 
     def do(self, entity, state):
         new_pos = self._calc_new_pos(entity.pos)
-        if state.check_move_validity(entity, new_pos):  # next_tile := state[c.FLOOR].by_pos(new_pos):
+        if state.check_move_validity(entity, new_pos):
             # noinspection PyUnresolvedReferences
             move_validity = entity.move(new_pos, state)
             reward = r.MOVEMENTS_VALID if move_validity else r.MOVEMENTS_FAIL
             return ActionResult(entity=entity, identifier=self._identifier, validity=move_validity, reward=reward)
-        else:  # There is no floor, propably collision
+        else:  # There is no place to go, propably collision
             # This is currently handeld by the Collision rule, so that it can be switched on and off by conf.yml
             # return ActionResult(entity=entity, identifier=self._identifier, validity=c.NOT_VALID, reward=r.COLLISION)
             return ActionResult(entity=entity, identifier=self._identifier, validity=c.NOT_VALID, reward=0)

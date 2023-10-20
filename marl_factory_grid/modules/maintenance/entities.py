@@ -8,7 +8,7 @@ from ...environment.entity.entity import Entity
 from ..doors import constants as do
 from ..maintenance import constants as mi
 from ...utils.helpers import MOVEMAP
-from ...utils.render import RenderEntity
+from ...utils.utility_classes import RenderEntity
 from ...utils.states import Gamestate
 
 
@@ -39,7 +39,7 @@ class Maintainer(Entity):
         self._next = []
         self._last = []
         self._last_serviced = 'None'
-        self._floortile_graph = points_to_graph(state[c.FLOORS].positions)
+        self._floortile_graph = points_to_graph(state.entities.floorlist)
 
     def tick(self, state):
         if found_objective := state[self.objective].by_pos(self.pos):

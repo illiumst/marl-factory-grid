@@ -1,3 +1,5 @@
+from random import shuffle
+
 from marl_factory_grid.modules.items import constants as i
 from marl_factory_grid.environment import constants as c
 
@@ -25,11 +27,12 @@ class Items(PositionMixin, Collection):
     @staticmethod
     def trigger_item_spawn(state, n_items, spawn_frequency):
         if item_to_spawns := max(0, (n_items - len(state[i.ITEM]))):
-            floor_list = state.entities.floorlist[:item_to_spawns]
-            state[i.ITEM].spawn(floor_list)
-            state.print(
-                f'{item_to_spawns} new items have been spawned; next spawn in {spawn_frequency}')  # spawn in self._next_item_spawn ?
-            return len(floor_list)
+            position_list = [x for x in state.entities.floorlist]
+            shuffle(position_list)
+            position_list = state.entities.floorlist[:item_to_spawns]
+            state[i.ITEM].spawn(position_list)
+            state.print(f'{item_to_spawns} new items have been spawned; next spawn in {spawn_frequency}')
+            return len(position_list)
         else:
             state.print('No Items are spawning, limit is reached.')
             return 0
@@ -116,7 +119,7 @@ class DropOffLocations(PositionMixin, Collection):
 
     @staticmethod
     def trigger_drop_off_location_spawn(state, n_locations):
-        empty_tiles = state.entities.floorlist[:n_locations]
+        empty_positions = state.entities.empty_positions()[:n_locations]
         do_entites = state[i.DROP_OFF]
-        drop_offs = [DropOffLocation(tile) for tile in empty_tiles]
+        drop_offs = [DropOffLocation(pos) for pos in empty_positions]
         do_entites.add_items(drop_offs)

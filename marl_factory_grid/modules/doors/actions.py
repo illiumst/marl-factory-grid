@@ -13,8 +13,9 @@ class DoorUse(Action):
 
     def do(self, entity, state) -> Union[None, ActionResult]:
         # Check if agent really is standing on a door:
-        e = state.entities.get_near_pos(entity.pos)
+        e = state.entities.get_entities_near_pos(entity.pos)
         try:
+            # Only one door opens TODO introcude loop
             door = next(x for x in e if x.name.startswith(d.DOOR))
             valid = door.use()
             state.print(f'{entity.name} just used a {door.name} at {door.pos}')

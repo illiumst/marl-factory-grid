@@ -49,7 +49,7 @@ class SpawnAgents(Rule):
         agent_conf = state.agents_conf
         # agents = Agents(lvl_map.size)
         agents = state[c.AGENT]
-        empty_tiles = state[c.FLOORS].empty_tiles[:len(agent_conf)]
+        empty_positions = state.entities.empty_positions[:len(agent_conf)]
         for agent_name in agent_conf:
             actions = agent_conf[agent_name]['actions'].copy()
             observations = agent_conf[agent_name]['observations'].copy()
@@ -58,18 +58,17 @@ class SpawnAgents(Rule):
                 shuffle(positions)
                 while True:
                     try:
-                        tile = state[c.FLOORS].by_pos(positions.pop())
+                        pos = positions.pop()
                     except IndexError as e:
                         raise ValueError(f'It was not possible to spawn an Agent on the available position: '
                                          f'\n{agent_name[agent_name]["positions"].copy()}')
-                    try:
-                        agents.add_item(Agent(actions, observations, tile, str_ident=agent_name))
-                    except AssertionError:
-                        state.print(f'No valid pos:{tile.pos} for {agent_name}')
+                    if agents.by_pos(pos) and state.check_pos_validity(pos):
                         continue
+                    else:
+                        agents.add_item(Agent(actions, observations, pos, str_ident=agent_name))
                     break
             else:
-                agents.add_item(Agent(actions, observations, empty_tiles.pop(), str_ident=agent_name))
+                agents.add_item(Agent(actions, observations, empty_positions.pop(), str_ident=agent_name))
         pass
 
 

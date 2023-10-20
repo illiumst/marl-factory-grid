@@ -1,6 +1,5 @@
 from marl_factory_grid.environment.groups.collection import Collection
 from marl_factory_grid.environment.groups.mixins import PositionMixin
-from marl_factory_grid.environment.entity.wall_floor import Floor
 from marl_factory_grid.modules.clean_up.entitites import DirtPile
 
 from marl_factory_grid.environment import constants as c
@@ -31,8 +30,6 @@ class DirtPiles(PositionMixin, Collection):
         self.max_local_amount = max_local_amount
 
     def spawn(self, then_dirty_positions, amount) -> bool:
-        # if isinstance(then_dirty_tiles, Floor):
-        #     then_dirty_tiles = [then_dirty_tiles]
         for pos in then_dirty_positions:
             if not self.amount > self.max_global_amount:
                 if dirt := self.by_pos(pos):
@@ -56,8 +53,8 @@ class DirtPiles(PositionMixin, Collection):
 
         var = self.dirt_spawn_r_var
         new_spawn = abs(self.initial_dirt_ratio + (state.rng.uniform(-var, var) if initial_spawn else 0))
-        n_dirt_tiles = max(0, int(new_spawn * len(free_for_dirt)))
-        return self.spawn(free_for_dirt[:n_dirt_tiles], self.initial_amount)
+        n_dirty_positions = max(0, int(new_spawn * len(free_for_dirt)))
+        return self.spawn(free_for_dirt[:n_dirty_positions], self.initial_amount)
 
     def __repr__(self):
         s = super(DirtPiles, self).__repr__()

@@ -28,7 +28,11 @@ class PositionMixin:
 
     def __delitem__(self, name):
         idx, obj = next((i, obj) for i, obj in enumerate(self) if obj.name == name)
-        obj.tile.leave(obj)     # observer notify?
+        try:
+            for observer in obj.observers:
+                observer.notify_del_entity(obj)
+        except AttributeError:
+            pass
         super().__delitem__(name)
 
     def by_pos(self, pos: (int, int)):

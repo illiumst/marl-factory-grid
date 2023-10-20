@@ -9,6 +9,7 @@ from numba import njit
 from marl_factory_grid.environment import constants as c
 from marl_factory_grid.environment.groups.utils import Combined
 from marl_factory_grid.utils.states import Gamestate
+from marl_factory_grid.utils.utility_classes import Floor
 
 
 class OBSBuilder(object):
@@ -39,6 +40,7 @@ class OBSBuilder(object):
 
         self.reset_struc_obs_block(state)
         self.curr_lightmaps = dict()
+        self._floortiles = defaultdict(list, {pos: [Floor(*pos)] for pos in state.entities.floorlist})
 
     def reset_struc_obs_block(self, state):
         self._curr_env_step = state.curr_step
@@ -82,19 +84,23 @@ class OBSBuilder(object):
             self._sort_and_name_observation_conf(agent)
             agent_want_obs = self.obs_layers[agent.name]
 
-        # Handle in-grid observations aka visible observations
-        visible_entitites = self.ray_caster[agent.name].visible_entities(state.entities)
-        pre_sort_obs = defaultdict(lambda:  np.zeros((self.pomdp_d, self.pomdp_d)))
-        for e in set(visible_entitites):
-            x, y = (e.x - agent.x) + self.pomdp_r, (e.y - agent.y) + self.pomdp_r
-            try:
-                pre_sort_obs[e.obs_tag][x, y] += e.encoding
-            except IndexError:
-                # Seemded to be visible but is out or range
-                pass
+        # Handle in-grid observations aka visible observations (Things on the map, with pos)
+        visible_entitites = self.ray_caster[agent.name].visible_entities(state.entities.pos_dict)
+        pre_sort_obs = defaultdict(lambda:  np.zeros(self.obs_shape))
+        if self.pomdp_r:
+            for e in set(visible_entitites):
+                x, y = (e.x - agent.x) + self.pomdp_r, (e.y - agent.y) + self.pomdp_r
+                try:
+                    pre_sort_obs[e.obs_tag][x, y] += e.encoding
+                except IndexError:
+                    # Seemded to be visible but is out or range
+                    pass
+        else:
+            for e in set(visible_entitites):
+                pre_sort_obs[e.obs_tag][e.x, e.y] += e.encoding
 
         pre_sort_obs = dict(pre_sort_obs)
-        obs = np.zeros((len(agent_want_obs), self.pomdp_d, self.pomdp_d))
+        obs = np.zeros((len(agent_want_obs), self.obs_shape[0], self.obs_shape[1]))
 
         for idx, l_name in enumerate(agent_want_obs):
             try:
@@ -144,13 +150,26 @@ class OBSBuilder(object):
                             raise ValueError(f'Max(obs.size) for {e.name}:  {obs[idx].size}, but was: {len(v)}.')
 
         try:
-            self.curr_lightmaps[agent.name] = pre_sort_obs[c.FLOORS].astype(bool)
+            light_map = np.zeros(self.obs_shape)
+            visible_floor = set(self.ray_caster[agent.name].visible_entities(self._floortiles, reset_cache=False))
+            if self.pomdp_r:
+                coords = [((f.x - agent.x) + self.pomdp_r, (f.y - agent.y) + self.pomdp_r) for f in visible_floor]
+            else:
+                coords = [x.pos for x in visible_floor]
+            np.put(light_map, np.ravel_multi_index(np.asarray(coords).T, light_map.shape), 1)
+            self.curr_lightmaps[agent.name] = light_map
         except KeyError:
             print()
         return obs, self.obs_layers[agent.name]
 
     def _sort_and_name_observation_conf(self, agent):
-        self.ray_caster[agent.name] = RayCaster(agent, self.pomdp_r)
+        '''
+        Builds the useable observation scheme per agent from conf.yaml.
+        :param agent:
+        :return:
+        '''
+        # Fixme: no asymetric shapes possible.
+        self.ray_caster[agent.name] = RayCaster(agent, min(self.obs_shape))
         obs_layers = []
 
         for obs_str in agent.observations:
@@ -173,7 +192,7 @@ class OBSBuilder(object):
                         names.extend([x.name for x in agent.collection if x.name != agent.name])
                     else:
                         names.append(val)
-                combined = Combined(names, self.pomdp_r, identifier=agent.name)
+                combined = Combined(names, self.size, identifier=agent.name)
                 self.all_obs[combined.name] = combined
                 obs_layers.append(combined.name)
             elif obs_str == c.OTHERS:
@@ -183,19 +202,18 @@ class OBSBuilder(object):
             else:
                 obs_layers.append(obs_str)
         self.obs_layers[agent.name] = obs_layers
-        self.curr_lightmaps[agent.name] = np.zeros((self.pomdp_d or self.level_shape[0],
-                                                    self.pomdp_d or self.level_shape[1]
-                                                    ))
+        self.curr_lightmaps[agent.name] = np.zeros(self.obs_shape)
 
 
 class RayCaster:
     def __init__(self, agent, pomdp_r, degs=360):
         self.agent = agent
         self.pomdp_r = pomdp_r
-        self.n_rays = 100  # (self.pomdp_r + 1) * 8
+        self.n_rays = (self.pomdp_r + 1) * 8
         self.degs = degs
         self.ray_targets = self.build_ray_targets()
         self.obs_shape_cube = np.array([self.pomdp_r, self.pomdp_r])
+        self._cache_dict = {}
 
     def __repr__(self):
         return f'{self.__class__.__name__}({self.agent.name})'
@@ -211,30 +229,30 @@ class RayCaster:
         rot_M = np.unique(np.round(rot_M @ north), axis=0)
         return rot_M.astype(int)
 
-    def ray_block_cache(self, cache_dict, key, callback):
-        if key not in cache_dict:
-            cache_dict[key] = callback()
-        return cache_dict[key]
+    def ray_block_cache(self, key, callback):
+        if key not in self._cache_dict:
+            self._cache_dict[key] = callback()
+        return self._cache_dict[key]
 
-    def visible_entities(self, entities):
+    def visible_entities(self, pos_dict, reset_cache=True):
         visible = list()
-        cache_blocking = {}
+        if reset_cache:
+            self._cache_dict = {}
 
         for ray in self.get_rays():
             rx, ry = ray[0]
             for x, y in ray:
                 cx, cy = x - rx, y - ry
 
-                entities_hit = entities.pos_dict[(x, y)]
-                hits = self.ray_block_cache(cache_blocking,
-                                            (x, y),
-                                            lambda: any(True for e in entities_hit if e.var_is_blocking_light))
+                entities_hit = pos_dict[(x, y)]
+                hits = self.ray_block_cache((x, y),
+                                            lambda: any(True for e in entities_hit if e.var_is_blocking_light)
+                                            )
 
                 diag_hits = all([
                     self.ray_block_cache(
-                        cache_blocking,
                         key,
-                        lambda: all(False for e in entities.pos_dict[key] if not e.var_is_blocking_light))
+                        lambda: all(False for e in pos_dict[key] if not e.var_is_blocking_light) and bool(pos_dict[key]))
                     for key in ((x, y-cy), (x-cx, y))
                 ]) if (cx != 0 and cy != 0) else False
 

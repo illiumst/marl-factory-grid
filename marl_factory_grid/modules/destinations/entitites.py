@@ -4,7 +4,7 @@ from marl_factory_grid.environment.entity.agent import Agent
 from marl_factory_grid.environment.entity.entity import Entity
 from marl_factory_grid.environment import constants as c
 from marl_factory_grid.environment.entity.mixin import BoundEntityMixin
-from marl_factory_grid.utils.render import RenderEntity
+from marl_factory_grid.utils.utility_classes import RenderEntity
 from marl_factory_grid.modules.destinations import constants as d
 
 
@@ -34,7 +34,6 @@ class Destination(Entity):
     def var_can_be_bound(self):
         return True
 
-    @property
     def was_reached(self):
         return self._was_reached
 
@@ -52,12 +51,10 @@ class Destination(Entity):
         self._per_agent_actions[agent.name] += 1
         return c.VALID
 
-    @property
-    def has_just_been_reached(self):
-        if self.was_reached:
+    def has_just_been_reached(self, state):
+        if self.was_reached():
             return False
-        agent_at_position = any(
-            c.AGENT.lower() in x.name.lower() for x in state.entities.pos_dict[self.pos] if x.var_can_collide)
+        agent_at_position = any(state[c.AGENT].by_pos(self.pos))
 
         if self.bound_entity:
             return ((agent_at_position and not self.action_counts)
@@ -75,7 +72,7 @@ class Destination(Entity):
         return state_summary
 
     def render(self):
-        if self.was_reached:
+        if self.was_reached():
             return None
         else:
             return RenderEntity(d.DESTINATION, self.pos)

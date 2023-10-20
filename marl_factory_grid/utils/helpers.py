@@ -25,10 +25,8 @@ This file is used for:
 LEVELS_DIR = 'modules/levels'                    # for use in studies and experiments
 STEPS_START = 1                                  # Define where to the stepcount; which is the first step
 
-# Not used anymore? Clean!
-# TO_BE_AVERAGED = ['dirt_amount', 'dirty_tiles']
 IGNORED_DF_COLUMNS = ['Episode', 'Run',          # For plotting, which values are ignored when loading monitor files
-                      'train_step', 'step', 'index', 'dirt_amount', 'dirty_tile_count', 'terminal_observation',
+                      'train_step', 'step', 'index', 'dirt_amount', 'dirty_pos_count', 'terminal_observation',
                       'episode']
 
 POS_MASK = np.asarray([[[-1, -1], [0, -1], [1, -1]],
@@ -223,7 +221,7 @@ def locate_and_import_class(class_name, folder_path: Union[str, PurePath] = ''):
         module_parts = [x.replace('.py', '') for idx, x in enumerate(module_path.parts) if idx >= package_pos]
         mod = importlib.import_module('.'.join(module_parts))
         all_found_modules.extend([x for x in dir(mod) if (not(x.startswith('__') or len(x) <= 2) and x.istitle())
-                                  and x not in ['Entity',  'NamedTuple', 'List', 'Rule', 'Union', 'Floor'
+                                  and x not in ['Entity',  'NamedTuple', 'List', 'Rule', 'Union',
                                                 'TickResult', 'ActionResult', 'Action', 'Agent', 'BoundEntityMixin',
                                                 'RenderEntity', 'TemplateRule', 'Objects', 'PositionMixin',
                                                 'IsBoundMixin', 'EnvObject', 'EnvObjects', 'Dict', 'Any'
