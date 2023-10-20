@@ -1,7 +1,7 @@
 from numpy import random
 
 from marl_factory_grid.environment.entity.entity import Entity
-from marl_factory_grid.utils.render import RenderEntity
+from marl_factory_grid.utils.utility_classes import RenderEntity
 from marl_factory_grid.modules.clean_up import constants as d
 
 

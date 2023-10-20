@@ -9,6 +9,8 @@ from marl_factory_grid.utils.results import TickResult
 class AgentSingleZonePlacementBeta(Rule):
 
     def __init__(self):
+        raise NotImplementedError()
+        # TODO!!!! Is this concept needed any more?
         super().__init__()
 
     def on_init(self, state, lvl_map):
@@ -21,9 +23,9 @@ class AgentSingleZonePlacementBeta(Rule):
             coordinates = random.choices(self.coordinates, k=len(agents))
         else:
             raise ValueError
-        tiles = [state[c.FLOORS].by_pos(pos) for pos in coordinates]
-        for agent, tile in zip(agents, tiles):
-            agent.move(tile, state)
+
+        for agent, pos in zip(agents, coordinates):
+            agent.move(pos, state)
 
     def tick_step(self, state):
         return []

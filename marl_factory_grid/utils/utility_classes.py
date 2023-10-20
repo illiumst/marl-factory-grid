@@ -1,4 +1,8 @@
+from dataclasses import dataclass
+from typing import Any
+
 import gymnasium as gym
+import numpy as np
 
 
 class MarlFrameStack(gym.ObservationWrapper):
@@ -10,3 +14,37 @@ class MarlFrameStack(gym.ObservationWrapper):
         if isinstance(self.env, gym.wrappers.FrameStack) and self.env.unwrapped.n_agents > 1:
             return observation[0:].swapaxes(0, 1)
         return observation
+
+
+@dataclass
+class RenderEntity:
+    name: str
+    pos: np.array
+    value: float = 1
+    value_operation: str = 'none'
+    state: str = None
+    id: int = 0
+    aux: Any = None
+    real_name: str = 'none'
+
+
+@dataclass
+class Floor:
+
+    @property
+    def name(self):
+        return f"Floor({self.pos})"
+
+    @property
+    def pos(self):
+        return self.x, self.y
+
+    x: int
+    y: int
+    var_is_blocking_light: bool = False
+
+    def __eq__(self, other):
+        return self.name == other.name
+
+    def __hash__(self):
+        return hash(self.name)

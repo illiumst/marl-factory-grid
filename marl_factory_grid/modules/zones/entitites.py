@@ -3,8 +3,7 @@ from typing import List, Tuple
 
 from marl_factory_grid.environment.entity.entity import Entity
 from marl_factory_grid.environment.entity.object import Object
-from marl_factory_grid.environment.entity.wall_floor import Floor
-from marl_factory_grid.utils.render import RenderEntity
+from marl_factory_grid.utils.utility_classes import RenderEntity
 from marl_factory_grid.environment import constants as c
 
 from marl_factory_grid.modules.doors import constants as d
@@ -21,5 +20,5 @@ class Zone(Object):
         self.coords = coords
 
     @property
-    def random_tile(self):
+    def random_pos(self):
         return random.choice(self.coords)

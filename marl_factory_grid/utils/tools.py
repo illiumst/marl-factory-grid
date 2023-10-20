@@ -15,7 +15,7 @@ ENTITIES     = 'Objects'
 OBSERVATIONS = 'Observations'
 RULES        = 'Rule'
 ASSETS       = 'Assets'
-EXCLUDED     = ['identifier', 'args', 'kwargs', 'Move', 'Floor', 'Agent', 'GlobalPositions', 'Walls',
+EXCLUDED     = ['identifier', 'args', 'kwargs', 'Move', 'Agent', 'GlobalPositions', 'Walls',
                 'TemplateRule', 'Entities', 'EnvObjects', 'Zones', ]
 
 

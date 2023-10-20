@@ -1,7 +1,8 @@
 from marl_factory_grid.environment.rules import Rule
 from marl_factory_grid.environment import constants as c
 from marl_factory_grid.utils.results import TickResult
-from marl_factory_grid.modules.doors import constants as d
+from . import constants as d
+from .entitites import DoorIndicator
 
 
 class DoorAutoClose(Rule):
@@ -19,3 +20,13 @@ class DoorAutoClose(Rule):
             return [TickResult(self.name, validity=c.VALID, value=0)]
         state.print('There are no doors, but you loaded the corresponding Module')
         return []
+
+
+class DoorIndicateArea(Rule):
+
+    def __init__(self):
+        super().__init__()
+
+    def on_init(self, state, lvl_map):
+        for door in state[d.DOORS]:
+            state[d.DOORS].add_items([DoorIndicator(x) for x in state.entities.neighboring_positions(door.pos)])

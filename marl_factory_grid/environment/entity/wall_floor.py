@@ -4,7 +4,7 @@ import numpy as np
 
 from marl_factory_grid.environment import constants as c
 from marl_factory_grid.environment.entity.object import EnvObject
-from marl_factory_grid.utils.render import RenderEntity
+from marl_factory_grid.utils.utility_classes import RenderEntity
 from marl_factory_grid.utils import helpers as h
 
 
@@ -29,17 +29,6 @@ class Floor(EnvObject):
     @property
     def var_is_blocking_light(self):
         return False
-
-    @property
-    def neighboring_floor(self):
-        if self._neighboring_floor:
-            pass
-        else:
-            self._neighboring_floor = [x for x in [self._collection.by_pos(np.add(self.pos, pos))
-                                                   for pos in h.POS_MASK.reshape(-1, 2)
-                                                   if not np.all(pos == [0, 0])]
-                                       if x]
-        return self._neighboring_floor
 
     @property
     def encoding(self):

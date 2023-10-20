@@ -2,7 +2,7 @@ from collections import deque
 
 from marl_factory_grid.environment.entity.entity import Entity
 from marl_factory_grid.environment import constants as c
-from marl_factory_grid.utils.render import RenderEntity
+from marl_factory_grid.utils.utility_classes import RenderEntity
 from marl_factory_grid.modules.items import constants as i
 
 

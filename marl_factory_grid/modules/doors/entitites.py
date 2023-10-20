@@ -1,5 +1,5 @@
 from marl_factory_grid.environment.entity.entity import Entity
-from marl_factory_grid.utils.render import RenderEntity
+from marl_factory_grid.utils.utility_classes import RenderEntity
 from marl_factory_grid.environment import constants as c
 
 from marl_factory_grid.modules.doors import constants as d
@@ -41,7 +41,7 @@ class Door(Entity):
     def str_state(self):
         return 'open' if self.is_open else 'closed'
 
-    def __init__(self, *args, closed_on_init=True, auto_close_interval=10, indicate_area=False, **kwargs):
+    def __init__(self, *args, closed_on_init=True, auto_close_interval=10, **kwargs):
         self._status = d.STATE_CLOSED
         super(Door, self).__init__(*args, **kwargs)
         self.auto_close_interval = auto_close_interval
@@ -50,8 +50,6 @@ class Door(Entity):
             self._open()
         else:
             self._close()
-        if indicate_area:
-            self._collection.add_items([DoorIndicator(x) for x in self.tile.neighboring_floor])
 
     def summarize_state(self):
         state_dict = super().summarize_state()

@@ -1,5 +1,5 @@
 from marl_factory_grid.environment.entity.entity import Entity
-from marl_factory_grid.utils.render import RenderEntity
+from ...utils.utility_classes import RenderEntity
 from marl_factory_grid.environment import constants as c
 from marl_factory_grid.utils.results import TickResult
 

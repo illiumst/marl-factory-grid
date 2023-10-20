@@ -103,6 +103,9 @@ class Objects:
         except StopIteration:
             return None
 
+    def by_name(self, name):
+        return next(x for x in self if x.name == name)
+
     def __getitem__(self, item):
         if isinstance(item, (int, np.int64, np.int32)):
             if item < 0:
@@ -120,7 +123,7 @@ class Objects:
             raise TypeError
 
     def __repr__(self):
-        repr_dict = { key: val for key, val in self._data.items() if key not in [c.WALLS, c.FLOORS]}
+        repr_dict = { key: val for key, val in self._data.items() if key not in [c.WALLS]}
         return f'{self.__class__.__name__}[{repr_dict}]'
 
     def spawn(self, n: int):
@@ -132,22 +135,25 @@ class Objects:
         for item in items:
             del self[item]
 
-    def notify_change_pos(self, entity: object):
-        try:
-            self.pos_dict[entity.last_pos].remove(entity)
-        except (ValueError, AttributeError):
-            pass
-        if entity.var_has_position:
-            try:
-                self.pos_dict[entity.pos].append(entity)
-            except (ValueError, AttributeError):
-                pass
+    # def notify_change_pos(self, entity: object):
+    #     try:
+    #         self.pos_dict[entity.last_pos].remove(entity)
+    #     except (ValueError, AttributeError):
+    #         pass
+    #     if entity.var_has_position:
+    #         try:
+    #             self.pos_dict[entity.pos].append(entity)
+    #         except (ValueError, AttributeError):
+    #             pass
 
     def notify_del_entity(self, entity: Object):
         try:
             entity.del_observer(self)
+        except AttributeError:
+            pass
+        try:
             self.pos_dict[entity.pos].remove(entity)
-        except (ValueError, AttributeError):
+        except (AttributeError, ValueError, IndexError):
             pass
 
     def notify_add_entity(self, entity: Object):

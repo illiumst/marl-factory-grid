@@ -197,7 +197,7 @@ class Factory(gym.Env):
             del rewards['global']
             reward = [rewards[agent.name] for agent in self.state[c.AGENT]]
             reward = [x + global_rewards for x in reward]
-            self.state.print(f"rewards are {rewards}")
+            self.state.print(f"Individual rewards are {dict(rewards)}")
             return reward, combined_info_dict, done
         else:
             reward = sum(rewards.values())
@@ -220,7 +220,7 @@ class Factory(gym.Env):
 
     def summarize_header(self):
         header = {'rec_step': self.state.curr_step}
-        for entity_group in (x for x in self.state if x.name in ['Walls', 'Floors', 'DropOffLocations', 'ChargePods']):
+        for entity_group in (x for x in self.state if x.name in ['Walls', 'DropOffLocations', 'ChargePods']):
             header.update({f'rec{entity_group.name}': entity_group.summarize_states()})
         return header
 
@@ -229,7 +229,7 @@ class Factory(gym.Env):
 
         # Todo: Protobuff Compatibility Section                                      #######
         #  for entity_group in (x for x in self.state if x.name not in [c.WALLS, c.FLOORS]):
-        for entity_group in (x for x in self.state if x.name not in [c.FLOORS]):
+        for entity_group in self.state:
             summary.update({entity_group.name.lower(): entity_group.summarize_states()})
         # TODO Section End                                                          ########
         for key in list(summary.keys()):

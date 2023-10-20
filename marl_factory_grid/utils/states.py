@@ -3,8 +3,6 @@ from typing import List, Dict, Tuple
 import numpy as np
 
 from marl_factory_grid.environment import constants as c
-from marl_factory_grid.environment.entity.wall_floor import Floor
-from marl_factory_grid.environment.groups.global_entities import Entities
 from marl_factory_grid.environment.rules import Rule
 from marl_factory_grid.utils.results import Result
 
@@ -112,15 +110,10 @@ class Gamestate(object):
                 results.extend(on_check_done_result)
         return results
 
-    # def get_all_tiles_with_collisions(self) -> List[Floor]:
-    #     tiles = [self[c.FLOORS].by_pos(pos) for pos, e in self.entities.pos_dict.items()
-    #              if sum([x.var_can_collide for x in e]) > 1]
-    #     # tiles = [x for x in self[c.FLOOR] if len(x.guests_that_can_collide) > 1]
-    #     return tiles
 
     def get_all_pos_with_collisions(self) -> List[Tuple[(int, int)]]:
-        positions = [pos for pos, e in self.entities.pos_dict.items()
-                     if sum([x.var_can_collide for x in e]) > 1]
+        positions = [pos for pos, entity_list_for_position in self.entities.pos_dict.items()
+                     if any([e.var_can_collide for e in entity_list_for_position])]
         return positions
 
     def check_move_validity(self, moving_entity, position):
@@ -128,6 +121,14 @@ class Gamestate(object):
         #         and not (guest.var_is_blocking_pos and self.is_occupied()):
         if moving_entity.pos != position and not any(
                 entity.var_is_blocking_pos for entity in self.entities.pos_dict[position]) and not (
-                moving_entity.var_is_blocking_pos and moving_entity.is_occupied()):
+                moving_entity.var_is_blocking_pos and self.entities.is_occupied(position)):
             return True
-        return False
+        else:
+            return False
+
+    def check_pos_validity(self, position):
+        if not any(entity.var_is_blocking_pos for entity in self.entities.pos_dict[position]):
+            return True
+        else:
+            return False
+

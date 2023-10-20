@@ -6,7 +6,7 @@ import numpy as np
 
 from marl_factory_grid.environment.groups.agents import Agents
 from marl_factory_grid.environment.groups.global_entities import Entities
-from marl_factory_grid.environment.groups.wall_n_floors import Walls, Floors
+from marl_factory_grid.environment.groups.walls import Walls
 from marl_factory_grid.utils import helpers as h
 from marl_factory_grid.environment import constants as c
 
@@ -34,16 +34,14 @@ class LevelParser(object):
 
     def do_init(self):
         # Global Entities
-        list_of_all_floors = ([tuple(floor) for floor in self.get_coordinates_for_symbol(c.SYMBOL_WALL, negate=True)])
-        entities = Entities(list_of_all_floors)
+        list_of_all_positions = ([tuple(f) for f in self.get_coordinates_for_symbol(c.SYMBOL_WALL, negate=True)])
+        entities = Entities(list_of_all_positions)
 
         # Walls
         walls = Walls.from_coordinates(self.get_coordinates_for_symbol(c.SYMBOL_WALL), self.size)
         entities.add_items({c.WALLS: walls})
 
-        # Floor
-        floor = Floors.from_coordinates(list_of_all_floors, self.size)
-        entities.add_items({c.FLOOR: floor})
+        # Agents
         entities.add_items({c.AGENT: Agents(self.size)})
 
         # All other

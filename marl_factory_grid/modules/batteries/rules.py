@@ -70,8 +70,8 @@ class PodRules(Rule):
 
     def on_init(self, state, lvl_map):
         pod_collection = state[b.CHARGE_PODS]
-        empty_tiles = state[c.FLOORS].empty_tiles[:self.n_pods]
-        pods = pod_collection.from_coordinates(empty_tiles, entity_kwargs=dict(
+        empty_positions = state.entities.empty_positions()
+        pods = pod_collection.from_coordinates(empty_positions, entity_kwargs=dict(
             multi_charge=self.multi_charge, charge_rate=self.charge_rate)
                                          )
         pod_collection.add_items(pods)

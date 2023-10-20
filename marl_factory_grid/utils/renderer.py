@@ -9,7 +9,7 @@ import pygame
 from typing import Tuple, Union
 import time
 
-from marl_factory_grid.utils.render import RenderEntity
+from marl_factory_grid.utils.utility_classes import RenderEntity
 
 AGENT: str = 'agent'
 STATE_IDLE: str = 'idle'

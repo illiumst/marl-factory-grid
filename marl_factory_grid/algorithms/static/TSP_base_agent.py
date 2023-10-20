@@ -21,7 +21,7 @@ class TSPBaseAgent(ABC):
         self.local_optimization = True
         self._env = state
         self.state = self._env.state[c.AGENT][agent_i]
-        self._floortile_graph = points_to_graph(self._env[c.FLOORS].positions)
+        self._position_graph = points_to_graph(self._env.entities.floorlist)
         self._static_route = None
 
     @abstractmethod
@@ -50,7 +50,7 @@ class TSPBaseAgent(ABC):
 
         else:
             nodes = [self.state.pos] + positions
-        route = tsp.traveling_salesman_problem(self._floortile_graph,
+        route = tsp.traveling_salesman_problem(self._position_graph,
                                                nodes=nodes, cycle=True, method=tsp.greedy_tsp)
         return route
 
