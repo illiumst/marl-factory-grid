@@ -4,6 +4,9 @@ stages:          # List of stages for jobs, and their order of execution
 build-job:       # This job runs in the build stage, which runs first.
   stage: build
 
+  rules:
+    - if: $CI_COMMIT_REF_NAME == "pypi" #when commit pushed in this branch it will trigger this job
+
   variables:
     TWINE_USERNAME: $USER_NAME
     TWINE_PASSWORD: $API_KEY
