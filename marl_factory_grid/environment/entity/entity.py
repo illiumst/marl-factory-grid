@@ -5,10 +5,8 @@ import numpy as np
 
 from .object import Object
 from .. import constants as c
-from .object import EnvObject
-from ...utils.utility_classes import RenderEntity
-from ...utils.render import RenderEntity
 from ...utils.results import ActionResult
+from ...utils.utility_classes import RenderEntity
 
 
 class Entity(Object, abc.ABC):
@@ -152,7 +150,6 @@ class Entity(Object, abc.ABC):
         pos = tuple(pos)
         try:
             return self.state.entities.pos_dict[pos]
-            # return next(e for e in self if e.pos == pos)
         except StopIteration:
             pass
         except ValueError:

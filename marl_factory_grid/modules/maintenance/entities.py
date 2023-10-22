@@ -84,14 +84,12 @@ class Maintainer(Entity):
     def _door_is_close(self, state):
         state.print("Found a door that is close.")
         try:
-            # return next(y for x in self.tile.neighboring_floor for y in x.guests if do.DOOR in y.name)
             return next(y for x in state.entities.neighboring_positions(self.state.pos) for y in state.entities.pos_dict[x] if do.DOOR in y.name)
         except StopIteration:
             return None
 
     def _predict_move(self, state):
         next_pos = self._path[0]
-        # if len(state[c.FLOORS].by_pos(next_pos).guests_that_can_collide) > 0:
         if any(x for x in state.entities.pos_dict[next_pos] if x.var_can_collide) > 0:
             action = c.NOOP
         else:

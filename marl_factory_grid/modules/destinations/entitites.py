@@ -1,11 +1,10 @@
 from collections import defaultdict
 
+from marl_factory_grid.environment import constants as c
 from marl_factory_grid.environment.entity.agent import Agent
 from marl_factory_grid.environment.entity.entity import Entity
-from marl_factory_grid.environment import constants as c
-from marl_factory_grid.environment.entity.mixin import BoundEntityMixin
-from marl_factory_grid.utils.utility_classes import RenderEntity
 from marl_factory_grid.modules.destinations import constants as d
+from marl_factory_grid.utils.utility_classes import RenderEntity
 
 
 class Destination(Entity):

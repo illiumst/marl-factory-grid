@@ -1,10 +1,7 @@
 from typing import List, Tuple
 
-import numpy as np
-
 from marl_factory_grid.environment import constants as c
 from marl_factory_grid.environment.entity.entity import Entity
-from marl_factory_grid.environment.entity.wall_floor import Floor
 
 
 class PositionMixin:
@@ -39,7 +36,6 @@ class PositionMixin:
         pos = tuple(pos)
         try:
             return self.pos_dict[pos]
-            # return next(e for e in self if e.pos == pos)
         except StopIteration:
             pass
         except ValueError:

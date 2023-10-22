@@ -54,7 +54,6 @@ class Objects:
         assert self._data[item.name] is None, f'{item.name} allready exists!!!'
         self._data.update({item.name: item})
         item.set_collection(self)
-        # self.notify_add_entity(item)
         for observer in self.observers:
             observer.notify_add_entity(item)
         return self

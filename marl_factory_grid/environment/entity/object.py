@@ -13,7 +13,7 @@ class Object:
         return True
 
     @property
-    def var_has_position(self):  # brauchen wir das hier jetzt?
+    def var_has_position(self):
         try:
             return self.pos != c.VALUE_NO_POS or False
         except AttributeError:

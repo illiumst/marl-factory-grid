@@ -80,7 +80,7 @@ General:
     level_name: rooms  # 'double', 'large', 'simple', ...
 ```
 ... or create your own , maybe with the help of [asciiflow.com](https://asciiflow.com/#/).
-Make sure to use `#` as [Walls](marl_factory_grid/environment/entity/wall_floor.py), `-` as free (walkable) [Floor](marl_factory_grid/environment/entity/wall_floor.py)-Tiles, `D` for [Walls](./modules/doors/entities.py).
+Make sure to use `#` as [Walls](marl_factory_grid/environment/entity/wall.py), `-` as free (walkable) [Floor](marl_factory_grid/environment/entity/wall.py)-Tiles, `D` for [Walls](./modules/doors/entities.py).
 Other Entites (define you own) may bring their own `Symbols`
 
 #### Entites

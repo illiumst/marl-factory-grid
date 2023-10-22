@@ -1,10 +1,7 @@
-import random
-from typing import List, Tuple
-
 from marl_factory_grid.environment import constants as c
+from marl_factory_grid.environment.entity.wall import Wall
 from marl_factory_grid.environment.groups.collection import Collection
 from marl_factory_grid.environment.groups.mixins import PositionMixin
-from marl_factory_grid.environment.entity.wall_floor import Wall, Floor
 
 
 class Walls(PositionMixin, Collection):
@@ -28,16 +25,3 @@ class Walls(PositionMixin, Collection):
             return super().by_pos(pos)[0]
         except IndexError:
             return None
-
-
-class Floors(Walls):
-    _entity = Floor
-    symbol = c.SYMBOL_FLOOR
-    var_is_blocking_light: bool = False
-    var_can_collide: bool = False
-
-    def __init__(self, *args, **kwargs):
-        super(Floors, self).__init__(*args, **kwargs)
-        self._value = c.VALUE_FREE_CELL
-
-

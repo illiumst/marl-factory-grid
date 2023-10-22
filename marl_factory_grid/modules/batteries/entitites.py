@@ -1,10 +1,8 @@
-from marl_factory_grid.environment.entity.mixin import BoundEntityMixin
-from marl_factory_grid.environment.entity.object import EnvObject, Object
-from marl_factory_grid.environment.entity.entity import Entity
 from marl_factory_grid.environment import constants as c
-from marl_factory_grid.utils.utility_classes import RenderEntity
-
+from marl_factory_grid.environment.entity.entity import Entity
+from marl_factory_grid.environment.entity.object import Object
 from marl_factory_grid.modules.batteries import constants as b
+from marl_factory_grid.utils.utility_classes import RenderEntity
 
 
 class Battery(Object):
@@ -70,7 +68,6 @@ class Pod(Entity):
     def charge_battery(self, battery: Battery):
         if battery.charge_level == 1.0:
             return c.NOT_VALID
-        # if sum(guest for guest in self.tile.guests if 'agent' in guest.name.lower()) > 1:
         if sum(1 for key, val in self.state.entities.pos_dict[self.pos] for guest in val if
                'agent' in guest.name.lower()) > 1:
             return c.NOT_VALID

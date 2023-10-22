@@ -1,13 +1,9 @@
-from typing import List
-
-from .entities import Maintainer
-from marl_factory_grid.environment.entity.wall_floor import Floor
 from marl_factory_grid.environment.groups.collection import Collection
 from marl_factory_grid.environment.groups.mixins import PositionMixin
+from .entities import Maintainer
+from ..machines import constants as mc
 from ..machines.actions import MachineAction
 from ...utils.states import Gamestate
-
-from ..machines import constants as mc
 
 
 class Maintainers(PositionMixin, Collection):

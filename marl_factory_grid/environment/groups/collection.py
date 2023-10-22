@@ -4,13 +4,29 @@ from marl_factory_grid.environment.entity.object import EnvObject
 
 class Collection(Objects):
     _entity = EnvObject
-    var_is_blocking_light: bool = False
-    var_can_collide: bool = False
-    var_can_move: bool = False
 
-    var_has_position: bool = False  # alles was posmixin hat true
-    var_has_bound = False  # batteries, globalpos, inventories true
-    var_can_be_bound: bool = False  # == ^
+    @property
+    def var_is_blocking_light(self):
+        return False
+
+    @property
+    def var_can_collide(self):
+        return False
+
+    @property
+    def var_can_move(self):
+        return False
+
+    @property
+    def var_has_position(self):
+        return False  # alles was posmixin hat true
+    @property
+    def var_has_bound(self):
+        return False  # batteries, globalpos, inventories true
+
+    @property   # beide bounds hier? inventory can be bound
+    def var_can_be_bound(self):
+        return False
 
     @property
     def encodings(self):

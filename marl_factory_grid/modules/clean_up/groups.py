@@ -45,10 +45,6 @@ class DirtPiles(PositionMixin, Collection):
     def trigger_dirt_spawn(self, state, initial_spawn=False) -> bool:
         free_for_dirt = [x for x in state.entities.floorlist if len(state.entities.pos_dict[x]) == 1 or (
                     len(state.entities.pos_dict[x]) == 2 and isinstance(next(y for y in x), DirtPile))]
-        # free_for_dirt = [x for x in state[c.FLOOR]
-        #                  if len(x.guests) == 0 or (
-        #                          len(x.guests) == 1 and
-        #                          isinstance(next(y for y in x.guests), DirtPile))]
         state.rng.shuffle(free_for_dirt)
 
         var = self.dirt_spawn_r_var
