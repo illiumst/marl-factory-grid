@@ -4,7 +4,7 @@ from marl_factory_grid.modules.items import constants as i
 from marl_factory_grid.environment import constants as c
 
 from marl_factory_grid.environment.groups.collection import Collection
-from marl_factory_grid.environment.groups.objects import Objects
+from marl_factory_grid.environment.groups.objects import _Objects
 from marl_factory_grid.environment.groups.mixins import PositionMixin, IsBoundMixin, HasBoundMixin
 from marl_factory_grid.environment.entity.agent import Agent
 from marl_factory_grid.modules.items.entitites import Item, DropOffLocation
@@ -65,7 +65,7 @@ class Inventory(IsBoundMixin, Collection):
         self._collection = collection
 
 
-class Inventories(HasBoundMixin, Objects):
+class Inventories(HasBoundMixin, _Objects):
     _entity = Inventory
 
     @property

@@ -3,13 +3,13 @@ from collections import defaultdict
 
 import numpy as np
 
-from .object import Object
+from .object import _Object
 from .. import constants as c
 from ...utils.results import ActionResult
 from ...utils.utility_classes import RenderEntity
 
 
-class Entity(Object, abc.ABC):
+class Entity(_Object, abc.ABC):
     """Full Env Entity that lives on the environment Grid. Doors, Items, DirtPile etc..."""
 
     _u_idx = defaultdict(lambda: 0)

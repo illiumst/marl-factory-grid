@@ -4,7 +4,7 @@ from typing import Union
 from marl_factory_grid.environment import constants as c
 
 
-class Object:
+class _Object:
     """Generell Objects for Organisation and Maintanance such as Actions etc..."""
 
     _u_idx = defaultdict(lambda: 0)
@@ -66,8 +66,8 @@ class Object:
         return hash(self.identifier)
 
     def _identify_and_count_up(self):
-        idx = Object._u_idx[self.__class__.__name__]
-        Object._u_idx[self.__class__.__name__] += 1
+        idx = _Object._u_idx[self.__class__.__name__]
+        _Object._u_idx[self.__class__.__name__] += 1
         return idx
 
     def set_collection(self, collection):
@@ -92,7 +92,7 @@ class Object:
         return self._bound_entity == entity
 
 
-class EnvObject(Object):
+class EnvObject(_Object):
     """Objects that hold Information that are observable, but have no position on the environment grid. Inventories etc..."""
 
     _u_idx = defaultdict(lambda: 0)

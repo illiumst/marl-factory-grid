@@ -3,12 +3,12 @@ from typing import List
 
 import numpy as np
 
-from marl_factory_grid.environment.entity.object import Object
+from marl_factory_grid.environment.entity.object import _Object
 import marl_factory_grid.environment.constants as c
 
 
-class Objects:
-    _entity = Object
+class _Objects:
+    _entity = _Object
 
     @property
     def observers(self):
@@ -129,8 +129,8 @@ class Objects:
         self.add_items([self._entity() for _ in range(n)])
         return c.VALID
 
-    def despawn(self, items: List[Object]):
-        items = [items] if isinstance(items, Object) else items
+    def despawn(self, items: List[_Object]):
+        items = [items] if isinstance(items, _Object) else items
         for item in items:
             del self[item]
 
@@ -145,7 +145,7 @@ class Objects:
     #         except (ValueError, AttributeError):
     #             pass
 
-    def notify_del_entity(self, entity: Object):
+    def notify_del_entity(self, entity: _Object):
         try:
             entity.del_observer(self)
         except AttributeError:
@@ -155,7 +155,7 @@ class Objects:
         except (AttributeError, ValueError, IndexError):
             pass
 
-    def notify_add_entity(self, entity: Object):
+    def notify_add_entity(self, entity: _Object):
         try:
             if self not in entity.observers:
                 entity.add_observer(self)

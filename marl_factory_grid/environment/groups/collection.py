@@ -1,8 +1,8 @@
-from marl_factory_grid.environment.groups.objects import Objects
+from marl_factory_grid.environment.groups.objects import _Objects
 from marl_factory_grid.environment.entity.object import EnvObject
 
 
-class Collection(Objects):
+class Collection(_Objects):
     _entity = EnvObject
 
     @property
