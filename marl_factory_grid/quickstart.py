@@ -17,4 +17,3 @@ def init():
     shutil.copytree(template_path, cwd)
     print(f'Templates copied to {cwd}"/"{template_path.name}')
     print(':wave:')
-

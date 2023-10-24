@@ -17,7 +17,7 @@ class DoorAutoClose(Rule):
             doors_that_ticked = [key for key, val in doors_tick_result.items() if val]
             state.print(f'{doors_that_ticked} were auto-closed'
                         if doors_that_ticked else 'No Doors were auto-closed')
-            return [TickResult(self.name, validity=c.VALID, value=0)]
+            return [TickResult(self.name, validity=c.VALID, value=1)]
         state.print('There are no doors, but you loaded the corresponding Module')
         return []
 

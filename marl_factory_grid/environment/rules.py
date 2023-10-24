@@ -59,7 +59,7 @@ class SpawnAgents(Rule):
                 while True:
                     try:
                         pos = positions.pop()
-                    except IndexError as e:
+                    except IndexError:
                         raise ValueError(f'It was not possible to spawn an Agent on the available position: '
                                          f'\n{agent_name[agent_name]["positions"].copy()}')
                     if agents.by_pos(pos) and state.check_pos_validity(pos):
