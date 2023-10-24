@@ -1,9 +1,9 @@
 
 # Destination Env
-DESTINATION             = 'Destinations'
-DEST_SYMBOL             = 1
+DESTINATION      = 'Destinations'
+DEST_SYMBOL      = 1
 
-WAIT_ON_DEST    = 'WAIT'
+WAIT_ON_DEST     = 'WAIT'
 
 MODE_SINGLE      = 'SINGLE'
 MODE_GROUPED     = 'GROUPED'

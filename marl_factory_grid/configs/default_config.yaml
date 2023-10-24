@@ -63,7 +63,7 @@ Rules:
   Collision:
     done_at_collisions: false
   AssignGlobalPositions: {}
-  DestinationDone: {}
+  DestinationReachAny: {}
   DestinationReach:
     n_dests: 1
   DestinationSpawn:
