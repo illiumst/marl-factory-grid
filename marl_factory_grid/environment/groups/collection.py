@@ -1,9 +1,12 @@
+from typing import List, Tuple
+
+from marl_factory_grid.environment.entity.entity import Entity
 from marl_factory_grid.environment.groups.objects import _Objects
 from marl_factory_grid.environment.entity.object import EnvObject
 
 
 class Collection(_Objects):
-    _entity = EnvObject
+    _entity = EnvObject  # entity? object? objects?
 
     @property
     def var_is_blocking_light(self):
@@ -20,11 +23,12 @@ class Collection(_Objects):
     @property
     def var_has_position(self):
         return False  # alles was posmixin hat true
+
     @property
     def var_has_bound(self):
         return False  # batteries, globalpos, inventories true
 
-    @property   # beide bounds hier? inventory can be bound
+    @property  # beide bounds hier? inventory can be bound
     def var_can_be_bound(self):
         return False
 
@@ -62,3 +66,44 @@ class Collection(_Objects):
             return next((idx for idx, x in enumerate(self) if x.belongs_to_entity(entity)))
         except (StopIteration, AttributeError):
             return None
+
+    def spawn(self, coords: List[Tuple[(int, int)]]):
+        self.add_items([self._entity(pos) for pos in coords])
+
+    def render(self):
+        return [y for y in [x.render() for x in self] if y is not None]
+
+    @classmethod
+    def from_coordinates(cls, positions: [(int, int)], *args, entity_kwargs=None, **kwargs, ):
+        collection = cls(*args, **kwargs)
+        collection.add_items(
+            [cls._entity(tuple(pos), **entity_kwargs if entity_kwargs is not None else {}) for pos in positions])
+        return collection
+
+    def __delitem__(self, name):
+        idx, obj = next((i, obj) for i, obj in enumerate(self) if obj.name == name)
+        try:
+            for observer in obj.observers:
+                observer.notify_del_entity(obj)
+        except AttributeError:
+            pass
+        super().__delitem__(name)
+
+    def by_pos(self, pos: (int, int)):
+        pos = tuple(pos)
+        try:
+            return self.pos_dict[pos]
+        except StopIteration:
+            pass
+        except ValueError:
+            print()
+
+    @property
+    def positions(self):
+        return [e.pos for e in self]
+
+    def notify_del_entity(self, entity: Entity):
+        try:
+            self.pos_dict[entity.pos].remove(entity)
+        except (ValueError, AttributeError):
+            pass

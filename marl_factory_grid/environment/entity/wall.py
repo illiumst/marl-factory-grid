@@ -1,15 +1,13 @@
-from typing import List
-
-import numpy as np
-
 from marl_factory_grid.environment import constants as c
 from marl_factory_grid.environment.entity.entity import Entity
-from marl_factory_grid.environment.entity.object import EnvObject
 from marl_factory_grid.utils.utility_classes import RenderEntity
-from marl_factory_grid.utils import helpers as h
 
 
 class Wall(Entity):
+
+    @property
+    def var_has_position(self):
+        return True
 
     @property
     def var_can_collide(self):

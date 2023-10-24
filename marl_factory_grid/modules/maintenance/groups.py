@@ -1,18 +1,28 @@
 from marl_factory_grid.environment.groups.collection import Collection
-from marl_factory_grid.environment.groups.mixins import PositionMixin
 from .entities import Maintainer
 from ..machines import constants as mc
 from ..machines.actions import MachineAction
 from ...utils.states import Gamestate
 
 
-class Maintainers(PositionMixin, Collection):
-
+class Maintainers(Collection):
     _entity = Maintainer
-    var_can_collide = True
-    var_can_move = True
-    var_is_blocking_light = False
-    var_has_position = True
+
+    @property
+    def var_can_collide(self):
+        return True
+
+    @property
+    def var_can_move(self):
+        return True
+
+    @property
+    def var_is_blocking_light(self):
+        return False
+
+    @property
+    def var_has_position(self):
+        return True
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

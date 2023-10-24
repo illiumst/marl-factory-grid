@@ -1,12 +1,15 @@
 from marl_factory_grid.environment import constants as c
 from marl_factory_grid.environment.entity.wall import Wall
 from marl_factory_grid.environment.groups.collection import Collection
-from marl_factory_grid.environment.groups.mixins import PositionMixin
 
 
-class Walls(PositionMixin, Collection):
+class Walls(Collection):
     _entity = Wall
     symbol = c.SYMBOL_WALL
+
+    @property
+    def var_has_position(self):
+        return True
 
     def __init__(self, *args, **kwargs):
         super(Walls, self).__init__(*args, **kwargs)

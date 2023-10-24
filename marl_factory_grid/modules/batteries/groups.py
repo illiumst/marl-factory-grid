@@ -1,13 +1,26 @@
 from marl_factory_grid.environment.groups.collection import Collection
-from marl_factory_grid.environment.groups.mixins import PositionMixin, HasBoundMixin
 from marl_factory_grid.modules.batteries.entitites import Pod, Battery
 
 
 class Batteries(Collection):
 
     _entity = Battery
-    is_blocking_light: bool = False
-    can_collide: bool = False
+
+    @property
+    def var_is_blocking_light(self):
+        return False
+
+    @property
+    def var_can_collide(self):
+        return False
+
+    @property
+    def var_can_move(self):
+        return False
+
+    @property
+    def var_has_position(self):
+        return True
 
     @property
     def obs_tag(self):
@@ -21,7 +34,7 @@ class Batteries(Collection):
         self.add_items(batteries)
 
 
-class ChargePods(PositionMixin, Collection):
+class ChargePods(Collection):
 
     _entity = Pod
 
