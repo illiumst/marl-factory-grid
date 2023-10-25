@@ -22,7 +22,7 @@ This file is used for:
 """
 
 
-LEVELS_DIR = 'modules/levels'                    # for use in studies and experiments
+LEVELS_DIR = 'levels'                    # for use in studies and experiments
 STEPS_START = 1                                  # Define where to the stepcount; which is the first step
 
 IGNORED_DF_COLUMNS = ['Episode', 'Run',          # For plotting, which values are ignored when loading monitor files
