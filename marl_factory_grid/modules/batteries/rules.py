@@ -14,6 +14,7 @@ class Btry(Rule):
         self.initial_charge = initial_charge
 
     def on_init(self, state, lvl_map):
+        assert len(state[c.AGENT]), "There are no agents, did you already spawn them?"
         state[b.BATTERIES].spawn(state[c.AGENT], self.initial_charge)
 
     def tick_pre_step(self, state) -> List[TickResult]:

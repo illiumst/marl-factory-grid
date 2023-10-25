@@ -41,7 +41,7 @@ class Entities(Objects):
 
     @property
     def empty_positions(self):
-        empty_positions= [key for key in self.floorlist if self.pos_dict[key]]
+        empty_positions = [key for key in self.floorlist if not self.pos_dict[key]]
         shuffle(empty_positions)
         return empty_positions
 

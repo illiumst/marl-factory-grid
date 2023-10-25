@@ -70,7 +70,7 @@ class Entity(EnvObject, abc.ABC):
             try:
                 self.bind_to(bind_to)
             except AttributeError:
-                print(f'Objects of {self.__class__.__name__} can not be bound to other entities.')
+                print(f'Objects of class "{self.__class__.__name__}" can not be bound to other entities.')
                 exit()
 
     def summarize_state(self) -> dict:  # tile=str(self.tile.name)
