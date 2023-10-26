@@ -88,11 +88,15 @@ class Gamestate(object):
         results.extend(self.rules.tick_pre_step_all(self))
 
         for idx, action_int in enumerate(actions):
-            agent = self[c.AGENT][idx].clear_temp_state()
-            action = agent.actions[action_int]
-            action_result = action.do(agent, self)
-            results.append(action_result)
-            agent.set_state(action_result)
+            if not agent.var_is_paralyzed:
+                agent = self[c.AGENT][idx].clear_temp_state()
+                action = agent.actions[action_int]
+                action_result = action.do(agent, self)
+                results.append(action_result)
+                agent.set_state(action_result)
+            else:
+                self.print(f"{agent.name} is paralied because of: {agent.paralyze_reasons}")
+                continue
 
         results.extend(self.rules.tick_step_all(self))
         results.extend(self.rules.tick_post_step_all(self))

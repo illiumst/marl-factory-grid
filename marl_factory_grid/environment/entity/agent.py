@@ -21,6 +21,14 @@ class Agent(Entity):
         return True
 
     @property
+    def var_is_paralyzed(self):
+        return len(self._paralyzed)
+
+    @property
+    def paralyze_reasons(self):
+        return [x for x in self._paralyzed]
+
+    @property
     def var_is_blocking_pos(self):
         return False
 
@@ -57,6 +65,7 @@ class Agent(Entity):
 
     def __init__(self, actions: List[Action], observations: List[str], *args, **kwargs):
         super(Agent, self).__init__(*args, **kwargs)
+        self._paralyzed = set()
         self.step_result = dict()
         self._actions = actions
         self._observations = observations
@@ -74,6 +83,17 @@ class Agent(Entity):
 
     def set_state(self, action_result):
         self._state = action_result
+
+    def paralyze(self, reason):
+        self._paralyzed.add(reason)
+        return c.VALID
+
+    def de_paralyze(self, reason):
+        try:
+            self._paralyzed.remove(reason)
+            return c.VALID
+        except KeyError:
+            return c.NOT_VALID
 
     def render(self):
         i = next(idx for idx, x in enumerate(self._collection) if x.name == self.name)
