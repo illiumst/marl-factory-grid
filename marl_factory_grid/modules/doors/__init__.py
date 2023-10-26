@@ -1,4 +1,4 @@
 from .actions import DoorUse
 from .entitites import Door, DoorIndicator
 from .groups import Doors
-from .rules import DoorAutoClose, DoorIndicateArea
+from .rules import DoDoorAutoClose, IndicateDoorAreaInObservation
