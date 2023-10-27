@@ -103,6 +103,7 @@ class OBSBuilder(object):
         obs = np.zeros((len(agent_want_obs), self.obs_shape[0], self.obs_shape[1]))
 
         for idx, l_name in enumerate(agent_want_obs):
+            print(l_name)
             try:
                 obs[idx] = pre_sort_obs[l_name]
             except KeyError:
@@ -141,6 +142,8 @@ class OBSBuilder(object):
                             try:
                                 v = e.encoding
                             except AttributeError:
+                                print(e)
+                                print(e.var_has_position)
                                 raise AttributeError(f'This env. expects Entity-Clases to report their "encoding"')
                         try:
                             np.put(obs[idx], range(len(v)), v, mode='raise')

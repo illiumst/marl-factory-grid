@@ -20,7 +20,7 @@ class Batteries(Collection):
 
     @property
     def var_has_position(self):
-        return True
+        return False
 
     @property
     def obs_tag(self):

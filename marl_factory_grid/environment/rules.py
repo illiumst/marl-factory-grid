@@ -49,7 +49,7 @@ class SpawnAgents(Rule):
         agent_conf = state.agents_conf
         # agents = Agents(lvl_map.size)
         agents = state[c.AGENT]
-        empty_positions = state.entities.empty_positions[:len(agent_conf)]
+        empty_positions = state.entities.empty_positions()[:len(agent_conf)]
         for agent_name in agent_conf:
             actions = agent_conf[agent_name]['actions'].copy()
             observations = agent_conf[agent_name]['observations'].copy()

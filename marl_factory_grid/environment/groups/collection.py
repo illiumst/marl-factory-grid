@@ -2,11 +2,11 @@ from typing import List, Tuple
 
 from marl_factory_grid.environment.entity.entity import Entity
 from marl_factory_grid.environment.groups.objects import _Objects
-from marl_factory_grid.environment.entity.object import EnvObject
+from marl_factory_grid.environment.entity.object import _Object
 
 
 class Collection(_Objects):
-    _entity = EnvObject  # entity? object? objects?
+    _entity = _Object  # entity?
 
     @property
     def var_is_blocking_light(self):
@@ -22,13 +22,13 @@ class Collection(_Objects):
 
     @property
     def var_has_position(self):
-        return False  # alles was posmixin hat true
+        return False
+
+    # @property
+    # def var_has_bound(self):
+    #     return False  # batteries, globalpos, inventories true
 
     @property
-    def var_has_bound(self):
-        return False  # batteries, globalpos, inventories true
-
-    @property  # beide bounds hier? inventory can be bound
     def var_can_be_bound(self):
         return False
 
@@ -40,12 +40,12 @@ class Collection(_Objects):
         super(Collection, self).__init__(*args, **kwargs)
         self.size = size
 
-    def add_item(self, item: EnvObject):
+    def add_item(self, item: Entity):
         assert self.var_has_position or (len(self) <= self.size)
         super(Collection, self).add_item(item)
         return self
 
-    def delete_env_object(self, env_object: EnvObject):
+    def delete_env_object(self, env_object):
         del self[env_object.name]
 
     def delete_env_object_by_name(self, name):

@@ -3,10 +3,12 @@ from marl_factory_grid.modules.zones import Zone
 
 
 class Zones(_Objects):
-
     symbol = None
     _entity = Zone
-    var_can_move = False
+
+    @property
+    def var_can_move(self):
+        return False
 
     def __init__(self, *args, **kwargs):
         super(Zones, self).__init__(*args, can_collide=True, **kwargs)

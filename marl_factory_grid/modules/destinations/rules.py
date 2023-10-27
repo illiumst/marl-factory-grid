@@ -36,7 +36,6 @@ class DestinationReachAll(Rule):
                 results.append(TickResult(self.name, validity=c.VALID, reward=r.DEST_REACHED, entity=agent))
         return results
 
-
     def on_check_done(self, state) -> List[DoneResult]:
         if all(x.was_reached() for x in state[d.DESTINATION]):
             return [DoneResult(self.name, validity=c.VALID, reward=r.DEST_REACHED)]
@@ -56,7 +55,7 @@ class DestinationReachAny(DestinationReachAll):
 
 class DestinationSpawn(Rule):
 
-    def __init__(self, n_dests: int = 1,
+    def __init__(self, n_dests: int = 1, spawn_frequency: int = 5,
                  spawn_mode: str = d.MODE_GROUPED):
         super(DestinationSpawn, self).__init__()
         self.n_dests = n_dests

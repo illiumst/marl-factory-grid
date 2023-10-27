@@ -122,7 +122,7 @@ class _Objects:
             raise TypeError
 
     def __repr__(self):
-        repr_dict = { key: val for key, val in self._data.items() if key not in [c.WALLS]}
+        repr_dict = {key: val for key, val in self._data.items() if key not in [c.WALLS]}
         return f'{self.__class__.__name__}[{repr_dict}]'
 
     def spawn(self, n: int):
@@ -169,3 +169,15 @@ class _Objects:
         # FIXME PROTOBUFF
         #  return [e.summarize_state() for e in self]
         return [e.summarize_state() for e in self]
+
+    def by_entity(self, entity):
+        try:
+            return next((x for x in self if x.belongs_to_entity(entity)))
+        except (StopIteration, AttributeError):
+            return None
+
+    def idx_by_entity(self, entity):
+        try:
+            return next((idx for idx, x in enumerate(self) if x.belongs_to_entity(entity)))
+        except (StopIteration, AttributeError):
+            return None

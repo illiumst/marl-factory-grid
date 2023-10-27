@@ -5,7 +5,7 @@ from marl_factory_grid.environment import constants as c
 
 from marl_factory_grid.environment.groups.collection import Collection
 from marl_factory_grid.environment.groups.objects import _Objects
-from marl_factory_grid.environment.groups.mixins import IsBoundMixin, HasBoundMixin
+from marl_factory_grid.environment.groups.mixins import IsBoundMixin
 from marl_factory_grid.environment.entity.agent import Agent
 from marl_factory_grid.modules.items.entitites import Item, DropOffLocation
 
@@ -46,6 +46,10 @@ class Inventory(IsBoundMixin, Collection):
     _accepted_objects = Item
 
     @property
+    def var_can_be_bound(self):
+        return True
+
+    @property
     def obs_tag(self):
         return self.name
 
@@ -69,7 +73,7 @@ class Inventory(IsBoundMixin, Collection):
         self._collection = collection
 
 
-class Inventories(HasBoundMixin, _Objects):
+class Inventories(_Objects):
     _entity = Inventory
 
     @property

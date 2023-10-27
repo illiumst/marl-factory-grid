@@ -1,9 +1,6 @@
-import math
-
 import numpy as np
 
-from marl_factory_grid.environment.entity.mixin import BoundEntityMixin
-from marl_factory_grid.environment.entity.object import _Object, EnvObject
+from marl_factory_grid.environment.entity.object import _Object
 
 
 ##########################################################################

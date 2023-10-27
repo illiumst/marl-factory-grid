@@ -36,7 +36,6 @@ class Entities(_Objects):
     def guests_that_can_collide(self, pos):
         return[x for val in self.pos_dict[pos] for x in val if x.var_can_collide]
 
-    @property
     def empty_positions(self):
         empty_positions= [key for key in self.floorlist if self.pos_dict[key]]
         shuffle(empty_positions)

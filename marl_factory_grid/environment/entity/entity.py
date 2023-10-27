@@ -12,8 +12,6 @@ from ...utils.utility_classes import RenderEntity
 class Entity(_Object, abc.ABC):
     """Full Env Entity that lives on the environment Grid. Doors, Items, DirtPile etc..."""
 
-    _u_idx = defaultdict(lambda: 0)
-
     @property
     def state(self):
         return self._status or ActionResult(entity=self, identifier=c.NOOP, validity=c.VALID, reward=0)
@@ -28,7 +26,6 @@ class Entity(_Object, abc.ABC):
             return self._collection.var_is_blocking_light or False
         except AttributeError:
             return False
-
 
     @property
     def var_can_move(self):
@@ -50,7 +47,6 @@ class Entity(_Object, abc.ABC):
             return self._collection.var_can_collide or False
         except AttributeError:
             return False
-
 
     @property
     def x(self):
@@ -87,7 +83,7 @@ class Entity(_Object, abc.ABC):
             if valid := state.check_move_validity(self, next_pos):
                 for observer in self.observers:
                     observer.notify_del_entity(self)
-                self._view_directory = curr_pos[0]-next_pos[0], curr_pos[1]-next_pos[1]
+                self._view_directory = curr_pos[0] - next_pos[0], curr_pos[1] - next_pos[1]
                 self._pos = next_pos
                 for observer in self.observers:
                     observer.notify_add_entity(self)

@@ -5,6 +5,19 @@ Agents:
      - Noop
      - ItemAction
    Observations:
+     - Combined:
+         - Other
+         - Walls
+     - GlobalPosition
+     - Battery
+     - ChargePods
+     - DirtPiles
+     - Destinations
+     - Doors
+     - Items
+     - Inventory
+     - DropOffLocations
+     - Maintainers
   Wolfgang:
     Actions:
     - Noop
@@ -64,8 +77,6 @@ Rules:
     done_at_collisions: false
   AssignGlobalPositions: {}
   DestinationReachAny: {}
-  DestinationReach:
-    n_dests: 1
   DestinationSpawn:
     n_dests: 1
     spawn_frequency: 5
