@@ -69,6 +69,7 @@ General:
   verbose: false
 
 Rules:
+  SpawnAgents: {}
   BtryDoneAtDischarge: {}
   Collision:
     done_at_collisions: false

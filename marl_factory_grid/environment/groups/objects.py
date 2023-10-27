@@ -125,26 +125,6 @@ class _Objects:
         repr_dict = {key: val for key, val in self._data.items() if key not in [c.WALLS]}
         return f'{self.__class__.__name__}[{repr_dict}]'
 
-    def spawn(self, n: int):
-        self.add_items([self._entity() for _ in range(n)])
-        return c.VALID
-
-    def despawn(self, items: List[_Object]):
-        items = [items] if isinstance(items, _Object) else items
-        for item in items:
-            del self[item]
-
-    # def notify_change_pos(self, entity: object):
-    #     try:
-    #         self.pos_dict[entity.last_pos].remove(entity)
-    #     except (ValueError, AttributeError):
-    #         pass
-    #     if entity.var_has_position:
-    #         try:
-    #             self.pos_dict[entity.pos].append(entity)
-    #         except (ValueError, AttributeError):
-    #             pass
-
     def notify_del_entity(self, entity: _Object):
         try:
             entity.del_observer(self)

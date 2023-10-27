@@ -15,14 +15,6 @@ class Walls(Collection):
         super(Walls, self).__init__(*args, **kwargs)
         self._value = c.VALUE_OCCUPIED_CELL
 
-    #ToDo: Do we need this? Move to spawn methode?
-    # @classmethod
-    # def from_coordinates(cls, argwhere_coordinates, *args, **kwargs):
-    #     tiles = cls(*args, **kwargs)
-    #     # noinspection PyTypeChecker
-    #     tiles.add_items([cls._entity(pos) for pos in argwhere_coordinates])
-    #     return tiles
-
     def by_pos(self, pos: (int, int)):
         try:
             return super().by_pos(pos)[0]

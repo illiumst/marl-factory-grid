@@ -49,7 +49,7 @@ class BatteryDecharge(Rule):
         self.per_action_costs = per_action_costs
         self.initial_charge = initial_charge
 
-    def on_init(self, state, lvl_map):
+    def on_init(self, state, lvl_map):  # on reset?
         assert len(state[c.AGENT]), "There are no agents, did you already spawn them?"
         state[b.BATTERIES].spawn(state[c.AGENT], self.initial_charge)
 

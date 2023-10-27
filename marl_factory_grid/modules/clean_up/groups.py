@@ -1,3 +1,5 @@
+from typing import Union, List, Tuple
+
 from marl_factory_grid.environment import constants as c
 from marl_factory_grid.utils.results import Result
 from marl_factory_grid.environment.groups.collection import Collection
@@ -36,9 +38,10 @@ class DirtPiles(Collection):
         self.max_global_amount = max_global_amount
         self.max_local_amount = max_local_amount
 
-    def spawn(self, then_dirty_positions, amount_s) -> Result:
+    def spawn(self, coords_or_quantity: Union[int, List[Tuple[(int, int)]]], *entity_args):
+        amount_s = entity_args[0]
         spawn_counter = 0
-        for idx, pos in enumerate(then_dirty_positions):
+        for idx, pos in enumerate(coords_or_quantity):
             if not self.amount > self.max_global_amount:
                 amount = amount_s[idx] if isinstance(amount_s, list) else amount_s
                 if dirt := self.by_pos(pos):

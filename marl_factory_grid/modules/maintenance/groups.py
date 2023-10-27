@@ -1,3 +1,5 @@
+from typing import Union, List, Tuple
+
 from marl_factory_grid.environment.groups.collection import Collection
 from .entities import Maintainer
 from ..machines import constants as mc
@@ -27,5 +29,6 @@ class Maintainers(Collection):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def spawn(self, position, state: Gamestate):
-        self.add_items([self._entity(state, mc.MACHINES, MachineAction(), pos) for pos in position])
+    def spawn(self, coords_or_quantity: Union[int, List[Tuple[(int, int)]]], *entity_args):
+        state = entity_args[0]
+        self.add_items([self._entity(state, mc.MACHINES, MachineAction(), pos) for pos in coords_or_quantity])

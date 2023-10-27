@@ -1,3 +1,5 @@
+from typing import Union, List, Tuple
+
 from marl_factory_grid.environment.groups.collection import Collection
 
 from .entitites import Machine
@@ -21,3 +23,4 @@ class Machines(Collection):
 
     def __init__(self, *args, **kwargs):
         super(Machines, self).__init__(*args, **kwargs)
+

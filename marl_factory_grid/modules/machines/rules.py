@@ -13,8 +13,7 @@ class MachineRule(Rule):
         self.n_machines = n_machines
 
     def on_init(self, state, lvl_map):
-        # TODO Move to spawn!!!
-        state[m.MACHINES].add_items(Machine(pos) for pos in state.entities.empty_positions())
+        state[m.MACHINES].spawn(state.entities.empty_positions())
 
     def tick_pre_step(self, state) -> List[TickResult]:
         pass
