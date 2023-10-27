@@ -69,24 +69,23 @@ General:
   verbose: false
 
 Rules:
-  Btry:
-    initial_charge: 0.8
-    per_action_costs: 0.02
   BtryDoneAtDischarge: {}
   Collision:
     done_at_collisions: false
   AssignGlobalPositions: {}
-  DestinationReachAny: {}
-  DestinationSpawn:
+  DestinationReachReward: {}
+  SpawnDestinations:
     n_dests: 1
-    spawn_frequency: 5
     spawn_mode: GROUPED
-  DirtAllCleanDone: {}
-  DirtRespawnRule:
+  DoneOnAllDirtCleaned: {}
+  SpawnDirt:
+    initial_n: 4
+    initial_amount: 0.5
+    respawn_n: 2
+    respawn_amount: 0.2
     spawn_freq: 15
-  DirtSmearOnMove:
-    smear_amount: 0.2
-  DoorAutoClose:
+  EntitiesSmearDirtOnMove: {}
+  DoDoorAutoClose:
     close_frequency: 10
   ItemRules:
     max_dropoff_storage_size: 0
