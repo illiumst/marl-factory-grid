@@ -32,11 +32,9 @@ class DirtPile(Entity):
         # Edit this if you want items to be drawn in the ops differntly
         return self._amount
 
-    def __init__(self, *args, max_local_amount=5, initial_amount=2, spawn_variation=0.05, **kwargs):
+    def __init__(self, *args, amount=2, max_local_amount=5, **kwargs):
         super(DirtPile, self).__init__(*args, **kwargs)
-        self._amount = abs(initial_amount + (
-                random.normal(loc=0, scale=spawn_variation, size=1).item() * initial_amount)
-                           )
+        self._amount = amount
         self.max_local_amount = max_local_amount
 
     def set_new_amount(self, amount):

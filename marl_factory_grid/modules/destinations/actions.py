@@ -1,9 +1,10 @@
 from typing import Union
 
+import marl_factory_grid.modules.destinations.constants
 from marl_factory_grid.environment.actions import Action
 from marl_factory_grid.utils.results import ActionResult
 
-from marl_factory_grid.modules.destinations import constants as d, rewards as r
+from marl_factory_grid.modules.destinations import constants as d
 from marl_factory_grid.environment import constants as c
 
 
@@ -20,4 +21,4 @@ class DestAction(Action):
             valid = c.NOT_VALID
             state.print(f'{entity.name} just tried to do_wait_action do_wait_action at {entity.pos} but failed')
         return ActionResult(entity=entity, identifier=self._identifier, validity=valid,
-                            reward=r.WAIT_VALID if valid else r.WAIT_FAIL)
+                            reward=marl_factory_grid.modules.destinations.constants.REWARD_WAIT_VALID if valid else marl_factory_grid.modules.destinations.constants.REWARD_WAIT_FAIL)

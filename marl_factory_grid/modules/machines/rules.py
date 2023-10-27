@@ -27,9 +27,3 @@ class MachineRule(Rule):
 
     def on_check_done(self, state) -> List[DoneResult]:
         pass
-
-
-class DoneOnBreakRule(Rule):
-
-    def on_check_done(self, state) -> List[DoneResult]:
-        pass

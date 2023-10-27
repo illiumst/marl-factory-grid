@@ -37,7 +37,7 @@ class Entities(_Objects):
         return[x for val in self.pos_dict[pos] for x in val if x.var_can_collide]
 
     def empty_positions(self):
-        empty_positions= [key for key in self.floorlist if self.pos_dict[key]]
+        empty_positions = [key for key in self.floorlist if not self.pos_dict[key]]
         shuffle(empty_positions)
         return empty_positions
 
