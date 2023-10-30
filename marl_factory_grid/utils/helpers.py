@@ -239,7 +239,7 @@ def add_bound_name(name_str, bound_e):
 
 
 def add_pos_name(name_str, bound_e):
-    if bound_e.var_has_pos:
+    if bound_e.var_has_position:
         return f'{name_str}({bound_e.pos})'
     return name_str
 
