@@ -32,6 +32,10 @@ class RenderEntity:
 class Floor:
 
     @property
+    def encoding(self):
+        return 1
+
+    @property
     def name(self):
         return f"Floor({self.pos})"
 
