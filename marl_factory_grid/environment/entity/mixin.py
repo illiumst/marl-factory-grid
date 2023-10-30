@@ -12,7 +12,7 @@ class BoundEntityMixin:
         if self.bound_entity:
             return f'{self.__class__.__name__}({self.bound_entity.name})'
         else:
-            print()
+            pass
 
     def belongs_to_entity(self, entity):
         return entity == self.bound_entity

@@ -131,6 +131,7 @@ class EnvObject(Object):
         return c.VALUE_OCCUPIED_CELL
 
     def __init__(self, **kwargs):
+        self._bound_entity = None
         super(EnvObject, self).__init__(**kwargs)
 
     def change_parent_collection(self, other_collection):

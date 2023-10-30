@@ -13,7 +13,7 @@ from marl_factory_grid.modules.destinations.entitites import Destination
 
 class DestinationReachReward(Rule):
 
-    def __init__(self, dest_reach_reward=marl_factory_grid.modules.destinations.constants.REWARD_DEST_REACHED):
+    def __init__(self, dest_reach_reward=d.REWARD_DEST_REACHED):
         """
         This rule introduces the basic functionality, so that targts (Destinations) can be reached and marked as such.
         Additionally, rewards are reported.
@@ -50,7 +50,7 @@ class DestinationReachReward(Rule):
 
 class DoneAtDestinationReachAll(DestinationReachReward):
 
-    def __init__(self, reward_at_done=marl_factory_grid.modules.destinations.constants.REWARD_DEST_DONE, **kwargs):
+    def __init__(self, reward_at_done=d.REWARD_DEST_DONE, **kwargs):
         """
         This rule triggers and sets the done flag if ALL Destinations have been reached.
 

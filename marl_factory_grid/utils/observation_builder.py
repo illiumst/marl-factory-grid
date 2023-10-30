@@ -148,18 +148,19 @@ class OBSBuilder(object):
                             np.put(obs[idx], 0, v, mode='raise')
                         except IndexError:
                             raise ValueError(f'Max(obs.size) for {e.name}:  {obs[idx].size}, but was: {len(v)}.')
-
-        try:
-            light_map = np.zeros(self.obs_shape)
-            visible_floor = set(self.ray_caster[agent.name].visible_entities(self._floortiles, reset_cache=False))
-            if self.pomdp_r:
-                coords = [((f.x - agent.x) + self.pomdp_r, (f.y - agent.y) + self.pomdp_r) for f in visible_floor]
-            else:
-                coords = [x.pos for x in visible_floor]
-            np.put(light_map, np.ravel_multi_index(np.asarray(coords).T, light_map.shape), 1)
-            self.curr_lightmaps[agent.name] = light_map
-        except KeyError:
-            print()
+        if self.pomdp_r:
+            try:
+                light_map = np.zeros(self.obs_shape)
+                visible_floor = set(self.ray_caster[agent.name].visible_entities(self._floortiles, reset_cache=False))
+                if self.pomdp_r:
+                    # Fixme: This Sucks if the Map is too small!!
+                    coords = [((f.x - agent.x) + self.pomdp_r, (f.y - agent.y) + self.pomdp_r) for f in visible_floor]
+                else:
+                    coords = [x.pos for x in visible_floor]
+                np.put(light_map, np.ravel_multi_index(np.asarray(coords).T, light_map.shape), 1)
+                self.curr_lightmaps[agent.name] = light_map
+            except (KeyError, ValueError):
+                pass
         return obs, self.obs_layers[agent.name]
 
     def _sort_and_name_observation_conf(self, agent):

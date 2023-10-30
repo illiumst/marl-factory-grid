@@ -104,7 +104,7 @@ class DropOffLocations(PositionMixin, EnvObjects):
 
     @staticmethod
     def trigger_drop_off_location_spawn(state, n_locations):
-        empty_positions = state.entities.empty_positions()[:n_locations]
+        empty_positions = state.entities.empty_positions[:n_locations]
         do_entites = state[i.DROP_OFF]
         drop_offs = [DropOffLocation(pos) for pos in empty_positions]
         do_entites.add_items(drop_offs)

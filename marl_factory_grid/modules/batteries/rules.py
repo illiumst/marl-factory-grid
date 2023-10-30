@@ -94,7 +94,7 @@ class BatteryDecharge(Rule):
         return results
 
 
-class BtryDoneAtDischarge(BatteryDecharge):
+class DoneAtBatteryDischarge(BatteryDecharge):
 
     def __init__(self, reward_discharge_done=b.REWARD_DISCHARGE_DONE, mode: str = b.SINGLE, **kwargs):
         f"""
