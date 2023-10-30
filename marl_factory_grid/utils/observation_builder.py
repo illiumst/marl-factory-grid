@@ -8,6 +8,7 @@ from numba import njit
 
 from marl_factory_grid.environment import constants as c
 from marl_factory_grid.environment.groups.utils import Combined
+import marl_factory_grid.utils.helpers as h
 from marl_factory_grid.utils.states import Gamestate
 from marl_factory_grid.utils.utility_classes import Floor
 
@@ -118,13 +119,16 @@ class OBSBuilder(object):
                         e = self.all_obs[l_name]
                     except KeyError:
                         try:
-                            e = self.all_obs[f'{l_name}({agent.name})']
+                            # Look for bound entity names!
+                            e = self.all_obs[h.add_bound_name(l_name, agent)]
                         except KeyError:
                             try:
                                 e = next(x for x in self.all_obs if l_name in x and agent.name in x)
                             except StopIteration:
                                 raise KeyError(
-                                    f'Check typing! {l_name} could not be found in: {list(dict(self.all_obs).keys())}')
+                                    f'Check for spelling errors! \n '
+                                    f'No combination of "{l_name} and {agent.name}" could not be found in:\n '
+                                    f'{list(dict(self.all_obs).keys())}')
 
                     try:
                         positional = e.var_has_position

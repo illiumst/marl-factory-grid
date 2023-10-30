@@ -2,6 +2,7 @@ from collections import defaultdict
 from typing import Union
 
 from marl_factory_grid.environment import constants as c
+import marl_factory_grid.utils.helpers as h
 
 
 class _Object:
@@ -30,8 +31,14 @@ class _Object:
     @property
     def name(self):
         if self._str_ident is not None:
-            return f'{self.__class__.__name__}[{self._str_ident}]'
-        return f'{self.__class__.__name__}#{self.u_int}'
+            name = f'{self.__class__.__name__}[{self._str_ident}]'
+        else:
+            name = f'{self.__class__.__name__}#{self.u_int}'
+        if self.bound_entity:
+            name = h.add_bound_name(name, self.bound_entity)
+        if self.var_has_position:
+            name = h.add_pos_name(name, self)
+        return name
 
     # @property
     # def name(self):
