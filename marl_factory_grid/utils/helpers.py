@@ -235,7 +235,7 @@ def locate_and_import_class(class_name, folder_path: Union[str, PurePath] = ''):
 
 
 def add_bound_name(name_str, bound_e):
-    return f'{name_str}({bound_e.identifier})'
+    return f'{name_str}({bound_e.name})'
 
 
 def add_pos_name(name_str, bound_e):
