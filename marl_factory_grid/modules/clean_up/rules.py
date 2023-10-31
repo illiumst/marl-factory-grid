@@ -27,7 +27,8 @@ class DoneOnAllDirtCleaned(Rule):
 
 class SpawnDirt(Rule):
 
-    def __init__(self, initial_n: int, initial_amount: float, respawn_n: int, respawn_amount: float,
+    def __init__(self, initial_n: int = 5, initial_amount: float = 1.3,
+                 respawn_n: int = 3, respawn_amount: float = 0.8,
                  n_var: float = 0.2, amount_var: float = 0.2, spawn_freq: int = 15):
         """
         Defines the spawn pattern of intial and additional 'Dirt'-entitites.

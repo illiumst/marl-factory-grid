@@ -5,7 +5,7 @@ from . import constants as d
 from .entitites import DoorIndicator
 
 
-class DoDoorAutoClose(Rule):
+class DoorAutoClose(Rule):
 
     def __init__(self, close_frequency: int = 10):
         """

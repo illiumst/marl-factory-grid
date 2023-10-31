@@ -59,7 +59,7 @@ class _Objects:
         return self
 
     def remove_item(self, item: _entity):
-        for observer in self.observers:
+        for observer in item.observers:
             observer.notify_del_entity(item)
         # noinspection PyTypeChecker
         del self._data[item.name]
@@ -126,10 +126,6 @@ class _Objects:
         return f'{self.__class__.__name__}[{repr_dict}]'
 
     def notify_del_entity(self, entity: _Object):
-        try:
-            entity.del_observer(self)
-        except AttributeError:
-            pass
         try:
             self.pos_dict[entity.pos].remove(entity)
         except (AttributeError, ValueError, IndexError):

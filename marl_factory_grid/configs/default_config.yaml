@@ -1,23 +1,4 @@
 Agents:
-  Eberhart:
-   Actions:
-     - Move8
-     - Noop
-     - ItemAction
-   Observations:
-     - Combined:
-         - Other
-         - Walls
-     - GlobalPosition
-     - Battery
-     - ChargePods
-     - DirtPiles
-     - Destinations
-     - Doors
-     - Items
-     - Inventory
-     - DropOffLocations
-     - Maintainers
   Wolfgang:
     Actions:
     - Noop
@@ -42,7 +23,9 @@ Agents:
     - DropOffLocations
     - Maintainers
 Entities:
-  Batteries: {}
+  Batteries:
+    initial_charge: 0.8
+    per_action_costs: 0.02
   ChargePods: {}
   Destinations: {}
   DirtPiles:
@@ -70,23 +53,21 @@ General:
 
 Rules:
   SpawnAgents: {}
-  BtryDoneAtDischarge: {}
+  DoneAtBatteryDischarge: {}
   Collision:
     done_at_collisions: false
   AssignGlobalPositions: {}
+  DoneAtDestinationReachAny: {}
   DestinationReachReward: {}
   SpawnDestinations:
     n_dests: 1
     spawn_mode: GROUPED
   DoneOnAllDirtCleaned: {}
   SpawnDirt:
-    initial_n: 4
-    initial_amount: 0.5
-    respawn_n: 2
-    respawn_amount: 0.2
     spawn_freq: 15
-  EntitiesSmearDirtOnMove: {}
-  DoDoorAutoClose:
+  EntitiesSmearDirtOnMove:
+    smear_ratio: 0.2
+  DoorAutoClose:
     close_frequency: 10
   ItemRules:
     max_dropoff_storage_size: 0

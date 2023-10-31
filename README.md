@@ -60,7 +60,7 @@ Just define what your environment needs in a *yaml*-configfile like:
             done_at_collisions: !!bool True
         ItemRespawn:
             spawn_freq: 5
-        DoDoorAutoClose: {}
+        DoorAutoClose: {}
 
     Assets:
     - Defaults

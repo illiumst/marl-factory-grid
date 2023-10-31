@@ -1,6 +1,6 @@
 from collections import defaultdict
 from operator import itemgetter
-from random import shuffle
+from random import shuffle, random
 from typing import Dict
 
 from marl_factory_grid.environment.groups.objects import _Objects
@@ -26,6 +26,7 @@ class Entities(_Objects):
 
     @property
     def floorlist(self):
+        shuffle(self._floor_positions)
         return self._floor_positions
 
     def __init__(self, floor_positions):

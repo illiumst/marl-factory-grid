@@ -8,6 +8,7 @@ import yaml
 
 from marl_factory_grid.environment.groups.agents import Agents
 from marl_factory_grid.environment.entity.agent import Agent
+from marl_factory_grid.environment.rules import Rule
 from marl_factory_grid.utils.helpers import locate_and_import_class
 from marl_factory_grid.environment import constants as c
 
@@ -81,7 +82,15 @@ class FactoryConfigParser(object):
                         entity_class = locate_and_import_class(entity, folder_path)
                     except AttributeError as e3:
                         ents = [y for x in [e1.argss[1], e2.argss[1], e3.argss[1]] for y in x]
-                        raise AttributeError(e1.argss[0], e2.argss[0], e3.argss[0], 'Possible Entitys are:', str(ents))
+                        print('### Error  ###  Error  ###  Error  ###  Error  ###  Error  ###')
+                        print()
+                        print(f'Class "{entity}" was not found in "{folder_path.name}"')
+                        print('Possible Entitys are:', str(ents))
+                        print()
+                        print('Goodbye')
+                        print()
+                        exit()
+                        # raise AttributeError(e1.argss[0], e2.argss[0], e3.argss[0], 'Possible Entitys are:', str(ents))
 
             entity_kwargs = self.entities.get(entity, {})
             entity_symbol = entity_class.symbol if hasattr(entity_class, 'symbol') else None
@@ -114,6 +123,7 @@ class FactoryConfigParser(object):
 
             # Observation
             observations = list()
+            assert self.agents[name]['Observations'] is not None, 'Did you specify any Observation?'
             if c.DEFAULTS in self.agents[name]['Observations']:
                 observations.extend(self.default_observations)
             observations.extend(x for x in self.agents[name]['Observations'] if x != c.DEFAULTS)
@@ -141,6 +151,8 @@ class FactoryConfigParser(object):
                     rule_class = locate_and_import_class(rule, folder_path)
                 except AttributeError:
                     rule_class = locate_and_import_class(rule, self.custom_modules_path)
+            # Fixme This check does not work!
+            #  assert isinstance(rule_class, Rule), f'{rule_class.__name__} is no valid "Rule".'
             rule_kwargs = self.rules.get(rule, {})
             rules_classes.update({rule: {'class': rule_class, 'kwargs': rule_kwargs}})
         return rules_classes

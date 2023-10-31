@@ -45,6 +45,7 @@ class DirtPiles(Collection):
             if not self.amount > self.max_global_amount:
                 amount = amount_s[idx] if isinstance(amount_s, list) else amount_s
                 if dirt := self.by_pos(pos):
+                    dirt = next(dirt.iter())
                     new_value = dirt.amount + amount
                     dirt.set_new_amount(new_value)
                 else:
@@ -57,8 +58,8 @@ class DirtPiles(Collection):
         return Result(identifier=f'{self.name}_spawn', validity=c.VALID, reward=0, value=spawn_counter)
 
     def trigger_dirt_spawn(self, n, amount, state, n_var=0.2, amount_var=0.2) -> Result:
-        free_for_dirt = [x for x in state.entities.floorlist if len(state.entities.pos_dict[x]) == 1 or (
-                len(state.entities.pos_dict[x]) == 2 and isinstance(next(y for y in x), DirtPile))]
+        free_for_dirt = [x for x in state.entities.floorlist if len(state.entities.pos_dict[x]) == 0 or (
+                len(state.entities.pos_dict[x]) >= 1 and isinstance(next(y for y in x), DirtPile))]
         # free_for_dirt = [x for x in state[c.FLOOR]
         #                  if len(x.guests) == 0 or (
         #                          len(x.guests) == 1 and

@@ -40,17 +40,6 @@ class _Object:
             name = h.add_pos_name(name, self)
         return name
 
-    # @property
-    # def name(self):
-    #     name = f"{self.__class__.__name__}"
-    #     if self.bound_entity:
-    #         name += f"[{self.bound_entity.name}]"
-    #     if self._str_ident is not None:
-    #         name += f"({self._str_ident})"
-    #     else:
-    #         name += f"(#{self.u_int})"
-    #     return name
-
     @property
     def identifier(self):
         if self._str_ident is not None:
@@ -165,25 +154,30 @@ class _Object:
 #         except AttributeError:
 #             return False
 #
-#     @property
-#     def var_can_collide(self):
-#         try:
-#             return self._collection.var_can_collide or False
-#         except AttributeError:
-#             return False
+# @property
+# def var_can_collide(self):
+#     try:
+#         return self._collection.var_can_collide or False
+#     except AttributeError:
+#         return False
 #
-#     @property
-#     def encoding(self):
-#         return c.VALUE_OCCUPIED_CELL
 #
-#     def __init__(self, **kwargs):
-#         super(EnvObject, self).__init__(**kwargs)
+# @property
+# def encoding(self):
+#     return c.VALUE_OCCUPIED_CELL
 #
-#     def change_parent_collection(self, other_collection):
-#         other_collection.add_item(self)
-#         self._collection.delete_env_object(self)
-#         self._collection = other_collection
-#         return self._collection == other_collection
 #
-#     def summarize_state(self):
-#         return dict(name=str(self.name))
+# def __init__(self, **kwargs):
+#     self._bound_entity = None
+#     super(EnvObject, self).__init__(**kwargs)
+#
+#
+# def change_parent_collection(self, other_collection):
+#     other_collection.add_item(self)
+#     self._collection.delete_env_object(self)
+#     self._collection = other_collection
+#     return self._collection == other_collection
+#
+#
+# def summarize_state(self):
+#     return dict(name=str(self.name))
