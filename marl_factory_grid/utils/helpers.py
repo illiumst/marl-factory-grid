@@ -232,3 +232,15 @@ def locate_and_import_class(class_name, folder_path: Union[str, PurePath] = ''):
         except AttributeError:
             continue
     raise AttributeError(f'Class "{class_name}" was not found in "{folder_path.name}"', list(set(all_found_modules)))
+
+
+def add_bound_name(name_str, bound_e):
+    return f'{name_str}({bound_e.name})'
+
+
+def add_pos_name(name_str, bound_e):
+    if bound_e.var_has_position:
+        return f'{name_str}({bound_e.pos})'
+    return name_str
+
+

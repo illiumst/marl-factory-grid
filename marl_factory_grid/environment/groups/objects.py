@@ -3,12 +3,12 @@ from typing import List
 
 import numpy as np
 
-from marl_factory_grid.environment.entity.object import Object
+from marl_factory_grid.environment.entity.object import _Object
 import marl_factory_grid.environment.constants as c
 
 
-class Objects:
-    _entity = Object
+class _Objects:
+    _entity = _Object
 
     @property
     def observers(self):
@@ -54,7 +54,6 @@ class Objects:
         assert self._data[item.name] is None, f'{item.name} allready exists!!!'
         self._data.update({item.name: item})
         item.set_collection(self)
-        # self.notify_add_entity(item)
         for observer in self.observers:
             observer.notify_add_entity(item)
         return self
@@ -123,36 +122,16 @@ class Objects:
             raise TypeError
 
     def __repr__(self):
-        repr_dict = { key: val for key, val in self._data.items() if key not in [c.WALLS]}
+        repr_dict = {key: val for key, val in self._data.items() if key not in [c.WALLS]}
         return f'{self.__class__.__name__}[{repr_dict}]'
 
-    def spawn(self, n: int):
-        self.add_items([self._entity() for _ in range(n)])
-        return c.VALID
-
-    def despawn(self, items: List[Object]):
-        items = [items] if isinstance(items, Object) else items
-        for item in items:
-            del self[item]
-
-    # def notify_change_pos(self, entity: object):
-    #     try:
-    #         self.pos_dict[entity.last_pos].remove(entity)
-    #     except (ValueError, AttributeError):
-    #         pass
-    #     if entity.var_has_position:
-    #         try:
-    #             self.pos_dict[entity.pos].append(entity)
-    #         except (ValueError, AttributeError):
-    #             pass
-
-    def notify_del_entity(self, entity: Object):
+    def notify_del_entity(self, entity: _Object):
         try:
             self.pos_dict[entity.pos].remove(entity)
         except (AttributeError, ValueError, IndexError):
             pass
 
-    def notify_add_entity(self, entity: Object):
+    def notify_add_entity(self, entity: _Object):
         try:
             if self not in entity.observers:
                 entity.add_observer(self)
@@ -166,3 +145,15 @@ class Objects:
         # FIXME PROTOBUFF
         #  return [e.summarize_state() for e in self]
         return [e.summarize_state() for e in self]
+
+    def by_entity(self, entity):
+        try:
+            return next((x for x in self if x.belongs_to_entity(entity)))
+        except (StopIteration, AttributeError):
+            return None
+
+    def idx_by_entity(self, entity):
+        try:
+            return next((idx for idx, x in enumerate(self) if x.belongs_to_entity(entity)))
+        except (StopIteration, AttributeError):
+            return None

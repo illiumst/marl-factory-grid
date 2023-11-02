@@ -1,15 +1,18 @@
 from typing import Union
 
-from marl_factory_grid.environment.groups.env_objects import EnvObjects
-from marl_factory_grid.environment.groups.mixins import PositionMixin
+from marl_factory_grid.environment.groups.collection import Collection
 from marl_factory_grid.modules.doors import constants as d
 from marl_factory_grid.modules.doors.entitites import Door
 
 
-class Doors(PositionMixin, EnvObjects):
+class Doors(Collection):
 
     symbol = d.SYMBOL_DOOR
     _entity = Door
+
+    @property
+    def var_has_position(self):
+        return True
 
     def __init__(self, *args, **kwargs):
         super(Doors, self).__init__(*args, can_collide=True, **kwargs)

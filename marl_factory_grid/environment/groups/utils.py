@@ -1,17 +1,14 @@
 from typing import List, Union
 
-import numpy as np
-
 from marl_factory_grid.environment.entity.util import GlobalPosition
-from marl_factory_grid.environment.groups.env_objects import EnvObjects
-from marl_factory_grid.environment.groups.mixins import PositionMixin, HasBoundMixin
-from marl_factory_grid.environment.groups.objects import Objects
-from marl_factory_grid.modules.zones import Zone
-from marl_factory_grid.utils import helpers as h
-from marl_factory_grid.environment import constants as c
+from marl_factory_grid.environment.groups.collection import Collection
 
 
-class Combined(PositionMixin, EnvObjects):
+class Combined(Collection):
+
+    @property
+    def var_has_position(self):
+        return True
 
     @property
     def name(self):
@@ -35,11 +32,21 @@ class Combined(PositionMixin, EnvObjects):
         return [(name, None) for name in self.names]
 
 
-class GlobalPositions(HasBoundMixin, EnvObjects):
+class GlobalPositions(Collection):
 
     _entity = GlobalPosition
-    is_blocking_light = False,
-    can_collide = False
+
+    @property
+    def var_is_blocking_light(self):
+        return False
+
+    @property
+    def var_can_collide(self):
+        return False
+
+    @property
+    def var_can_be_bound(self):
+        return True
 
     def __init__(self, *args, **kwargs):
         super(GlobalPositions, self).__init__(*args, **kwargs)

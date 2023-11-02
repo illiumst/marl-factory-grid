@@ -1,13 +1,31 @@
-from marl_factory_grid.environment.groups.env_objects import EnvObjects
-from marl_factory_grid.environment.groups.mixins import PositionMixin, HasBoundMixin
+from typing import Union, List, Tuple
+
+from marl_factory_grid.environment.groups.collection import Collection
 from marl_factory_grid.modules.batteries.entitites import Pod, Battery
 
 
-class Batteries(HasBoundMixin, EnvObjects):
-
+class Batteries(Collection):
     _entity = Battery
-    is_blocking_light: bool = False
-    can_collide: bool = False
+
+    @property
+    def var_is_blocking_light(self):
+        return False
+
+    @property
+    def var_can_collide(self):
+        return False
+
+    @property
+    def var_can_move(self):
+        return False
+
+    @property
+    def var_has_position(self):
+        return False
+
+    @property
+    def var_can_be_bound(self):
+        return True
 
     @property
     def obs_tag(self):
@@ -20,9 +38,14 @@ class Batteries(HasBoundMixin, EnvObjects):
         batteries = [self._entity(initial_charge_level, agent) for _, agent in enumerate(agents)]
         self.add_items(batteries)
 
+    # def spawn(self, coords_or_quantity: Union[int, List[Tuple[(int, int)]]], *entity_args):           hat keine pos
+    #     agents = entity_args[0]
+    #     initial_charge_level = entity_args[1]
+    #     batteries = [self._entity(initial_charge_level, agent) for _, agent in enumerate(agents)]
+    #     self.add_items(batteries)
 
-class ChargePods(PositionMixin, EnvObjects):
 
+class ChargePods(Collection):
     _entity = Pod
 
     def __init__(self, *args, **kwargs):

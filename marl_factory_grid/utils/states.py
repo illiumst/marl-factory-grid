@@ -57,7 +57,7 @@ class Gamestate(object):
 
     @property
     def moving_entites(self):
-        return [y for x in self.entities for y in x if x.var_can_move]  # wird das aus dem String gelesen?
+        return [y for x in self.entities for y in x if x.var_can_move]
 
     def __init__(self, entities, agents_conf, rules: Dict[str, dict], env_seed=69, verbose=False):
         self.entities = entities
@@ -114,15 +114,12 @@ class Gamestate(object):
                 results.extend(on_check_done_result)
         return results
 
-
     def get_all_pos_with_collisions(self) -> List[Tuple[(int, int)]]:
         positions = [pos for pos, entity_list_for_position in self.entities.pos_dict.items()
                      if any([e.var_can_collide for e in entity_list_for_position])]
         return positions
 
     def check_move_validity(self, moving_entity, position):
-        #         if (guest.name not in self._guests and not self.is_blocked)
-        #         and not (guest.var_is_blocking_pos and self.is_occupied()):
         if moving_entity.pos != position and not any(
                 entity.var_is_blocking_pos for entity in self.entities.pos_dict[position]) and not (
                 moving_entity.var_is_blocking_pos and self.entities.is_occupied(position)):

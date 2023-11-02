@@ -3,12 +3,12 @@ from operator import itemgetter
 from random import shuffle, random
 from typing import Dict
 
-from marl_factory_grid.environment.groups.objects import Objects
+from marl_factory_grid.environment.groups.objects import _Objects
 from marl_factory_grid.utils.helpers import POS_MASK
 
 
-class Entities(Objects):
-    _entity = Objects
+class Entities(_Objects):
+    _entity = _Objects
 
     @staticmethod
     def neighboring_positions(pos):
@@ -34,13 +34,9 @@ class Entities(Objects):
         self.pos_dict = defaultdict(list)
         super().__init__()
 
-    # def all_floors(self):
-    #     return[key for key, val in self.pos_dict.items() if any('floor' in x.name.lower() for x in val)]
-
     def guests_that_can_collide(self, pos):
         return[x for val in self.pos_dict[pos] for x in val if x.var_can_collide]
 
-    @property
     def empty_positions(self):
         empty_positions = [key for key in self.floorlist if not self.pos_dict[key]]
         shuffle(empty_positions)
@@ -92,8 +88,6 @@ class Entities(Objects):
 
     def by_pos(self, pos: (int, int)):
         return self.pos_dict[pos]
-        # found_entities = [y for y in (x.by_pos(pos) for x in self.values() if hasattr(x, 'by_pos')) if y is not None]
-        # return found_entities
 
     @property
     def positions(self):

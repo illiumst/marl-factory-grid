@@ -1,5 +1,3 @@
-from typing import NamedTuple, Union
-
 # Battery Env
 CHARGE_PODS          = 'ChargePods'
 BATTERIES            = 'Batteries'

@@ -1,9 +1,6 @@
-import math
-
 import numpy as np
 
-from marl_factory_grid.environment.entity.mixin import BoundEntityMixin
-from marl_factory_grid.environment.entity.object import Object, EnvObject
+from marl_factory_grid.environment.entity.object import _Object
 
 
 ##########################################################################
@@ -11,7 +8,7 @@ from marl_factory_grid.environment.entity.object import Object, EnvObject
 ##########################################################################
 
 
-class PlaceHolder(Object):
+class PlaceHolder(_Object):
 
     def __init__(self, *args, fill_value=0, **kwargs):
         super().__init__(*args, **kwargs)
@@ -30,7 +27,7 @@ class PlaceHolder(Object):
         return "PlaceHolder"
 
 
-class GlobalPosition(BoundEntityMixin, EnvObject):
+class GlobalPosition(_Object):
 
     @property
     def encoding(self):

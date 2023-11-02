@@ -1,21 +1,37 @@
 from collections import defaultdict
 
+from marl_factory_grid.environment import constants as c
 from marl_factory_grid.environment.entity.agent import Agent
 from marl_factory_grid.environment.entity.entity import Entity
-from marl_factory_grid.environment import constants as c
-from marl_factory_grid.environment.entity.mixin import BoundEntityMixin
-from marl_factory_grid.utils.utility_classes import RenderEntity
 from marl_factory_grid.modules.destinations import constants as d
+from marl_factory_grid.utils.utility_classes import RenderEntity
 
 
-class Destination(BoundEntityMixin, Entity):
+class Destination(Entity):
 
-    var_can_move = False
-    var_can_collide = False
-    var_has_position = True
-    var_is_blocking_pos = False
-    var_is_blocking_light = False
-    var_can_be_bound = True  # Introduce this globally!
+    @property
+    def var_can_move(self):
+        return False
+
+    @property
+    def var_can_collide(self):
+        return False
+
+    @property
+    def var_has_position(self):
+        return True
+
+    @property
+    def var_is_blocking_pos(self):
+        return False
+
+    @property
+    def var_is_blocking_light(self):
+        return False
+
+    @property
+    def var_can_be_bound(self):
+        return True
 
     def was_reached(self):
         return self._was_reached

@@ -8,7 +8,9 @@ from marl_factory_grid.modules.items import constants as i
 
 class Item(Entity):
 
-    var_can_collide = False
+    @property
+    def var_can_collide(self):
+        return False
 
     def render(self):
         return RenderEntity(i.ITEM, self.pos) if self.pos != c.VALUE_NO_POS else None
@@ -71,7 +73,7 @@ class DropOffLocation(Entity):
     def place_item(self, item: Item):
         if self.is_full:
             raise RuntimeWarning("There is currently no way to clear the storage or make it unfull.")
-            return bc.NOT_VALID
+            return bc.NOT_VALID  # in Zeile 81 verschieben?
         else:
             self.storage.append(item)
             item.set_auto_despawn(self.auto_item_despawn_interval)

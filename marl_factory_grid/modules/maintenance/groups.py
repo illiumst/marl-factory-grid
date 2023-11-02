@@ -1,25 +1,34 @@
-from typing import List
+from typing import Union, List, Tuple
 
+from marl_factory_grid.environment.groups.collection import Collection
 from .entities import Maintainer
-from marl_factory_grid.environment.entity.wall_floor import Floor
-from marl_factory_grid.environment.groups.env_objects import EnvObjects
-from marl_factory_grid.environment.groups.mixins import PositionMixin
+from ..machines import constants as mc
 from ..machines.actions import MachineAction
 from ...utils.states import Gamestate
 
-from ..machines import constants as mc
 
-
-class Maintainers(PositionMixin, EnvObjects):
-
+class Maintainers(Collection):
     _entity = Maintainer
-    var_can_collide = True
-    var_can_move = True
-    var_is_blocking_light = False
-    var_has_position = True
+
+    @property
+    def var_can_collide(self):
+        return True
+
+    @property
+    def var_can_move(self):
+        return True
+
+    @property
+    def var_is_blocking_light(self):
+        return False
+
+    @property
+    def var_has_position(self):
+        return True
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def spawn(self, position, state: Gamestate):
-        self.add_items([self._entity(state, mc.MACHINES, MachineAction(), pos) for pos in position])
+    def spawn(self, coords_or_quantity: Union[int, List[Tuple[(int, int)]]], *entity_args):
+        state = entity_args[0]
+        self.add_items([self._entity(state, mc.MACHINES, MachineAction(), pos) for pos in coords_or_quantity])

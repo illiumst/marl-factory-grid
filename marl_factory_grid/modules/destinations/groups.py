@@ -1,14 +1,27 @@
-from marl_factory_grid.environment.groups.env_objects import EnvObjects
-from marl_factory_grid.environment.groups.mixins import PositionMixin
+from marl_factory_grid.environment.groups.collection import Collection
 from marl_factory_grid.modules.destinations.entitites import Destination
 from marl_factory_grid.environment import constants as c
 from marl_factory_grid.modules.destinations import constants as d
 
 
-class Destinations(PositionMixin, EnvObjects):
+class Destinations(Collection):
     _entity = Destination
-    is_blocking_light: bool = False
-    can_collide: bool = False
+
+    @property
+    def var_is_blocking_light(self):
+        return False
+
+    @property
+    def var_can_collide(self):
+        return False
+
+    @property
+    def var_can_move(self):
+        return False
+
+    @property
+    def var_has_position(self):
+        return True
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

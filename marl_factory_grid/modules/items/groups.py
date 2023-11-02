@@ -3,17 +3,27 @@ from random import shuffle
 from marl_factory_grid.modules.items import constants as i
 from marl_factory_grid.environment import constants as c
 
-from marl_factory_grid.environment.groups.env_objects import EnvObjects
-from marl_factory_grid.environment.groups.objects import Objects
-from marl_factory_grid.environment.groups.mixins import PositionMixin, IsBoundMixin, HasBoundMixin
+from marl_factory_grid.environment.groups.collection import Collection
+from marl_factory_grid.environment.groups.objects import _Objects
+from marl_factory_grid.environment.groups.mixins import IsBoundMixin
 from marl_factory_grid.environment.entity.agent import Agent
 from marl_factory_grid.modules.items.entitites import Item, DropOffLocation
 
 
-class Items(PositionMixin, EnvObjects):
+class Items(Collection):
     _entity = Item
-    is_blocking_light: bool = False
-    can_collide: bool = False
+
+    @property
+    def var_has_position(self):
+        return False
+
+    @property
+    def is_blocking_light(self):
+        return False
+
+    @property
+    def can_collide(self):
+        return False
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -32,8 +42,12 @@ class Items(PositionMixin, EnvObjects):
             return 0
 
 
-class Inventory(IsBoundMixin, EnvObjects):
+class Inventory(IsBoundMixin, Collection):
     _accepted_objects = Item
+
+    @property
+    def var_can_be_bound(self):
+        return True
 
     @property
     def obs_tag(self):
@@ -59,9 +73,12 @@ class Inventory(IsBoundMixin, EnvObjects):
         self._collection = collection
 
 
-class Inventories(HasBoundMixin, Objects):
+class Inventories(_Objects):
     _entity = Inventory
-    var_can_move = False
+
+    @property
+    def var_can_move(self):
+        return False
 
     def __init__(self, size: int, *args, **kwargs):
         super(Inventories, self).__init__(*args, **kwargs)
@@ -94,17 +111,31 @@ class Inventories(HasBoundMixin, Objects):
         state[i.INVENTORY].spawn(state[c.AGENT])
 
 
-class DropOffLocations(PositionMixin, EnvObjects):
+class DropOffLocations(Collection):
     _entity = DropOffLocation
-    is_blocking_light: bool = False
-    can_collide: bool = False
+
+    @property
+    def var_is_blocking_light(self):
+        return False
+
+    @property
+    def var_can_collide(self):
+        return False
+
+    @property
+    def var_can_move(self):
+        return False
+
+    @property
+    def var_has_position(self):
+        return True
 
     def __init__(self, *args, **kwargs):
         super(DropOffLocations, self).__init__(*args, **kwargs)
 
     @staticmethod
     def trigger_drop_off_location_spawn(state, n_locations):
-        empty_positions = state.entities.empty_positions[:n_locations]
+        empty_positions = state.entities.empty_positions()[:n_locations]
         do_entites = state[i.DROP_OFF]
         drop_offs = [DropOffLocation(pos) for pos in empty_positions]
         do_entites.add_items(drop_offs)

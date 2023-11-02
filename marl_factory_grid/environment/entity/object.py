@@ -2,10 +2,10 @@ from collections import defaultdict
 from typing import Union
 
 from marl_factory_grid.environment import constants as c
+import marl_factory_grid.utils.helpers as h
 
 
-class Object:
-
+class _Object:
     """Generell Objects for Organisation and Maintanance such as Actions etc..."""
 
     _u_idx = defaultdict(lambda: 0)
@@ -14,14 +14,31 @@ class Object:
         return True
 
     @property
+    def var_has_position(self):
+        return False
+
+    @property
+    def var_can_be_bound(self):
+        try:
+            return self._collection.var_can_be_bound or False
+        except AttributeError:
+            return False
+
+    @property
     def observers(self):
         return self._observers
 
     @property
     def name(self):
         if self._str_ident is not None:
-            return f'{self.__class__.__name__}[{self._str_ident}]'
-        return f'{self.__class__.__name__}#{self.u_int}'
+            name = f'{self.__class__.__name__}[{self._str_ident}]'
+        else:
+            name = f'{self.__class__.__name__}#{self.u_int}'
+        if self.bound_entity:
+            name = h.add_bound_name(name, self.bound_entity)
+        if self.var_has_position:
+            name = h.add_pos_name(name, self)
+        return name
 
     @property
     def identifier(self):
@@ -35,6 +52,7 @@ class Object:
         return True
 
     def __init__(self, str_ident: Union[str, None] = None, **kwargs):
+        self._bound_entity = None
         self._observers = []
         self._str_ident = str_ident
         self.u_int = self._identify_and_count_up()
@@ -53,8 +71,8 @@ class Object:
         return hash(self.identifier)
 
     def _identify_and_count_up(self):
-        idx = Object._u_idx[self.__class__.__name__]
-        Object._u_idx[self.__class__.__name__] += 1
+        idx = _Object._u_idx[self.__class__.__name__]
+        _Object._u_idx[self.__class__.__name__] += 1
         return idx
 
     def set_collection(self, collection):
@@ -70,75 +88,96 @@ class Object:
     def summarize_state(self):
         return dict()
 
+    def bind(self, entity):
+        # noinspection PyAttributeOutsideInit
+        self._bound_entity = entity
+        return c.VALID
 
-class EnvObject(Object):
-
-    """Objects that hold Information that are observable, but have no position on the environment grid. Inventories etc..."""
-
-    _u_idx = defaultdict(lambda: 0)
-    
-    @property
-    def obs_tag(self):
-        try:
-            return self._collection.name or self.name
-        except AttributeError:
-            return self.name
+    def belongs_to_entity(self, entity):
+        return self._bound_entity == entity
 
     @property
-    def var_is_blocking_light(self):
-        try:
-            return self._collection.var_is_blocking_light or False
-        except AttributeError:
-            return False
+    def bound_entity(self):
+        return self._bound_entity
 
-    @property
-    def var_can_be_bound(self):
-        try:
-            return self._collection.var_can_be_bound or False
-        except AttributeError:
-            return False
+    def bind_to(self, entity):
+        self._bound_entity = entity
 
-    @property
-    def var_can_move(self):
-        try:
-            return self._collection.var_can_move or False
-        except AttributeError:
-            return False
-
-    @property
-    def var_is_blocking_pos(self):
-        try:
-            return self._collection.var_is_blocking_pos or False
-        except AttributeError:
-            return False
-
-    @property
-    def var_has_position(self):
-        try:
-            return self._collection.var_has_position or False
-        except AttributeError:
-            return False
-
-    @property
-    def var_can_collide(self):
-        try:
-            return self._collection.var_can_collide or False
-        except AttributeError:
-            return False
-
-    @property
-    def encoding(self):
-        return c.VALUE_OCCUPIED_CELL
-
-    def __init__(self, **kwargs):
+    def unbind(self):
         self._bound_entity = None
-        super(EnvObject, self).__init__(**kwargs)
 
-    def change_parent_collection(self, other_collection):
-        other_collection.add_item(self)
-        self._collection.delete_env_object(self)
-        self._collection = other_collection
-        return self._collection == other_collection
 
-    def summarize_state(self):
-        return dict(name=str(self.name))
+# class EnvObject(_Object):
+#     """Objects that hold Information that are observable, but have no position on the environment grid. Inventories etc..."""
+#
+    # _u_idx = defaultdict(lambda: 0)
+#
+#     @property
+#     def obs_tag(self):
+#         try:
+#             return self._collection.name or self.name
+#         except AttributeError:
+#             return self.name
+#
+#     @property
+#     def var_is_blocking_light(self):
+#         try:
+#             return self._collection.var_is_blocking_light or False
+#         except AttributeError:
+#             return False
+#
+#     @property
+#     def var_can_be_bound(self):
+#         try:
+#             return self._collection.var_can_be_bound or False
+#         except AttributeError:
+#             return False
+#
+#     @property
+#     def var_can_move(self):
+#         try:
+#             return self._collection.var_can_move or False
+#         except AttributeError:
+#             return False
+#
+#     @property
+#     def var_is_blocking_pos(self):
+#         try:
+#             return self._collection.var_is_blocking_pos or False
+#         except AttributeError:
+#             return False
+#
+#     @property
+#     def var_has_position(self):
+#         try:
+#             return self._collection.var_has_position or False
+#         except AttributeError:
+#             return False
+#
+# @property
+# def var_can_collide(self):
+#     try:
+#         return self._collection.var_can_collide or False
+#     except AttributeError:
+#         return False
+#
+#
+# @property
+# def encoding(self):
+#     return c.VALUE_OCCUPIED_CELL
+#
+#
+# def __init__(self, **kwargs):
+#     self._bound_entity = None
+#     super(EnvObject, self).__init__(**kwargs)
+#
+#
+# def change_parent_collection(self, other_collection):
+#     other_collection.add_item(self)
+#     self._collection.delete_env_object(self)
+#     self._collection = other_collection
+#     return self._collection == other_collection
+#
+#
+# def summarize_state(self):
+#     return dict(name=str(self.name))
