@@ -12,7 +12,7 @@ class DoorIndicator(Entity):
         return d.VALUE_ACCESS_INDICATOR
 
     def render(self):
-        return None
+        return []
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

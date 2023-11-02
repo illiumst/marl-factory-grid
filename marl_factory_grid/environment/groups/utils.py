@@ -44,5 +44,9 @@ class GlobalPositions(Collection):
     def var_can_collide(self):
         return False
 
+    @property
+    def var_can_be_bound(self):
+        return True
+
     def __init__(self, *args, **kwargs):
         super(GlobalPositions, self).__init__(*args, **kwargs)

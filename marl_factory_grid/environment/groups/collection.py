@@ -41,7 +41,7 @@ class Collection(_Objects):
         super(Collection, self).__init__(*args, **kwargs)
         self.size = size
 
-    def spawn(self, coords_or_quantity: Union[int, List[Tuple[(int, int)]]], *entity_args):    # woihn mit den args
+    def spawn(self, coords_or_quantity: Union[int, List[Tuple[(int, int)]]], *entity_args):  # woihn mit den args
         if isinstance(coords_or_quantity, int):
             self.add_items([self._entity() for _ in range(coords_or_quantity)])
         else:
@@ -66,7 +66,13 @@ class Collection(_Objects):
 
     @property
     def obs_pairs(self):
-        return [(x.name, x) for x in self]
+        pair_list = [(self.name, self)]
+        try:
+            if self.var_can_be_bound:
+                pair_list.extend([(a.name, a) for a in self])
+        except AttributeError:
+            pass
+        return pair_list
 
     def by_entity(self, entity):
         try:
@@ -81,7 +87,10 @@ class Collection(_Objects):
             return None
 
     def render(self):
-        return [y for y in [x.render() for x in self] if y is not None]
+        if self.var_has_position:
+            return [y for y in [x.render() for x in self] if y is not None]
+        else:
+            return []
 
     @classmethod
     def from_coordinates(cls, positions: [(int, int)], *args, entity_kwargs=None, **kwargs, ):

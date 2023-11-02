@@ -24,6 +24,10 @@ class Batteries(Collection):
         return False
 
     @property
+    def var_can_be_bound(self):
+        return True
+
+    @property
     def obs_tag(self):
         return self.__class__.__name__
 

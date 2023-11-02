@@ -49,9 +49,6 @@ class Battery(_Object):
         summary.update(dict(belongs_to=self._bound_entity.name, chargeLevel=self.charge_level))
         return summary
 
-    def render(self):
-        return None
-
 
 class Pod(Entity):
 
