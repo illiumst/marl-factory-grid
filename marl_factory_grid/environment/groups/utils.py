@@ -1,7 +1,10 @@
 from typing import List, Union
 
+from marl_factory_grid.environment import constants as c
 from marl_factory_grid.environment.entity.util import GlobalPosition
 from marl_factory_grid.environment.groups.collection import Collection
+from marl_factory_grid.utils.results import Result
+from marl_factory_grid.utils.states import Gamestate
 
 
 class Combined(Collection):
@@ -36,17 +39,17 @@ class GlobalPositions(Collection):
 
     _entity = GlobalPosition
 
-    @property
-    def var_is_blocking_light(self):
-        return False
-
-    @property
-    def var_can_collide(self):
-        return False
-
-    @property
-    def var_can_be_bound(self):
-        return True
+    var_is_blocking_light = False
+    var_can_be_bound = True
+    var_can_collide = False
+    var_has_position = False
 
     def __init__(self, *args, **kwargs):
         super(GlobalPositions, self).__init__(*args, **kwargs)
+
+    def spawn(self, agents, level_shape, *args, **kwargs):
+        self.add_items([self._entity(agent, level_shape, *args, **kwargs) for agent in agents])
+        return [Result(identifier=f'{self.name}_spawn', validity=c.VALID, value=len(self))]
+
+    def trigger_spawn(self, state: Gamestate, *args, **kwargs) -> [Result]:
+        return self.spawn(state[c.AGENT], state.lvl_shape, *args, **kwargs)

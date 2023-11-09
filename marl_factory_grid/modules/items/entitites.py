@@ -8,16 +8,11 @@ from marl_factory_grid.modules.items import constants as i
 
 class Item(Entity):
 
-    @property
-    def var_can_collide(self):
-        return False
-
     def render(self):
         return RenderEntity(i.ITEM, self.pos) if self.pos != c.VALUE_NO_POS else None
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._auto_despawn = -1
 
     @property
     def auto_despawn(self):
@@ -31,9 +26,6 @@ class Item(Entity):
     def set_auto_despawn(self, auto_despawn):
         self._auto_despawn = auto_despawn
 
-    def set_pos_to(self, no_pos):
-        self._pos = no_pos
-
     def summarize_state(self) -> dict:
         super_summarization = super(Item, self).summarize_state()
         super_summarization.update(dict(auto_despawn=self.auto_despawn))
@@ -42,21 +34,6 @@ class Item(Entity):
 
 class DropOffLocation(Entity):
 
-    @property
-    def var_can_collide(self):
-        return False
-
-    @property
-    def var_can_move(self):
-        return False
-
-    @property
-    def var_is_blocking_light(self):
-        return False
-
-    @property
-    def var_has_position(self):
-        return True
 
     def render(self):
         return RenderEntity(i.DROP_OFF, self.pos)

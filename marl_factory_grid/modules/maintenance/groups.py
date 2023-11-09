@@ -1,4 +1,4 @@
-from typing import Union, List, Tuple
+from typing import Union, List, Tuple, Dict
 
 from marl_factory_grid.environment.groups.collection import Collection
 from .entities import Maintainer
@@ -10,25 +10,21 @@ from ...utils.states import Gamestate
 class Maintainers(Collection):
     _entity = Maintainer
 
-    @property
-    def var_can_collide(self):
-        return True
+    var_can_collide = True
+    var_can_move = True
+    var_is_blocking_light = False
+    var_has_position = True
 
-    @property
-    def var_can_move(self):
-        return True
-
-    @property
-    def var_is_blocking_light(self):
-        return False
-
-    @property
-    def var_has_position(self):
-        return True
+    def __init__(self, size, *args, coords_or_quantity: int = None,
+                 spawnrule: Union[None, Dict[str, dict]] = None,
+                 **kwargs):
+        super(Collection, self).__init__(*args, **kwargs)
+        self._coords_or_quantity = coords_or_quantity
+        self.size = size
+        self._spawnrule = spawnrule
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
     def spawn(self, coords_or_quantity: Union[int, List[Tuple[(int, int)]]], *entity_args):
-        state = entity_args[0]
-        self.add_items([self._entity(state, mc.MACHINES, MachineAction(), pos) for pos in coords_or_quantity])
+        self.add_items([self._entity(mc.MACHINES, MachineAction(), pos) for pos in coords_or_quantity])

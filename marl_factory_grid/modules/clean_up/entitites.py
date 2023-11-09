@@ -8,22 +8,6 @@ from marl_factory_grid.modules.clean_up import constants as d
 class DirtPile(Entity):
 
     @property
-    def var_can_collide(self):
-        return False
-
-    @property
-    def var_can_move(self):
-        return False
-
-    @property
-    def var_is_blocking_light(self):
-        return False
-
-    @property
-    def var_has_position(self):
-        return True
-
-    @property
     def amount(self):
         return self._amount
 

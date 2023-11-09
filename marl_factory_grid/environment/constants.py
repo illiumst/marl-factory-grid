@@ -10,6 +10,7 @@ AGENT                   = 'Agent'               # Identifier of Agent-objects an
 OTHERS                  = 'Other'
 COMBINED                = 'Combined'
 GLOBALPOSITIONS         = 'GlobalPositions'     # Identifier of the global position slice
+SPAWN_ENTITY_RULE       = 'SpawnEntity'
 
 # Attributes
 IS_BLOCKING_LIGHT       = 'var_is_blocking_light'
@@ -29,7 +30,7 @@ VALUE_NO_POS            = (-9999, -9999)  # Invalid Position value used in the e
 
 
 ACTION                  = 'action'  # Identifier of Action-objects and groups (groups).
-COLLISION               = 'Collision'  # Identifier to use in the context of collitions.
+COLLISION               = 'Collisions'  # Identifier to use in the context of collitions.
 # LAST_POS                = 'LAST_POS'  # Identifiert for retrieving an enitites last pos.
 VALIDITY                = 'VALIDITY'  # Identifiert for retrieving the Validity of Action, Tick, etc. ...
 
@@ -54,3 +55,5 @@ NOOP                    = 'Noop'
 # Result Identifier
 MOVEMENTS_VALID = 'motion_valid'
 MOVEMENTS_FAIL  = 'motion_not_valid'
+DEFAULT_PATH = 'environment'
+MODULE_PATH = 'modules'

@@ -1,8 +1,8 @@
 from random import choices, choice
 
 from . import constants as z, Zone
+from .. import Destination
 from ..destinations import constants as d
-from ... import Destination
 from ...environment.rules import Rule
 from ...environment import constants as c
 

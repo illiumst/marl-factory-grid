@@ -135,4 +135,3 @@ if __name__ == '__main__':
     ce.get_observations()
     ce.get_assets()
     all_conf = ce.get_all()
-    print()

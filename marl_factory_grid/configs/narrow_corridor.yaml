@@ -1,3 +1,10 @@
+General:
+  env_seed: 69
+  individual_rewards: true
+  level_name: narrow_corridor
+  pomdp_r: 0
+  verbose: true
+
 Agents:
   Wolfgang:
     Actions:
@@ -10,6 +17,7 @@ Agents:
     Positions:
       - (2, 1)
       - (2, 5)
+    is_blocking_pos: true
   Karl-Heinz:
     Actions:
       - Noop
@@ -21,26 +29,30 @@ Agents:
     Positions:
       - (2, 1)
       - (2, 5)
-Entities:
-  Destinations: {}
+    is_blocking_pos: true
 
-General:
-  env_seed: 69
-  individual_rewards: true
-  level_name: narrow_corridor
-  pomdp_r: 0
-  verbose: true
+Entities:
+  Destinations:
+    ignore_blocking: true
+    spawnrule:
+      SpawnDestinationsPerAgent:
+        coords_or_quantity:
+          Wolfgang:
+              - (2, 1)
+              - (2, 5)
+          Karl-Heinz:
+              - (2, 1)
+              - (2, 5)
+    # Whether you want to provide a numeric Position observation.
+    # GlobalPositions:
+    #   normalized: false
 
 Rules:
-  SpawnAgents: {}
-  Collision:
+  # Utilities
+  WatchCollisions:
     done_at_collisions: false
-  FixedDestinationSpawn:
-    per_agent_positions:
-      Wolfgang:
-        - (2, 1)
-        - (2, 5)
-      Karl-Heinz:
-        - (2, 1)
-        - (2, 5)
-  DestinationReachAll: {}
+  # Done Conditions
+  # DoneAtDestinationReachAny:
+  DoneAtDestinationReachAll:
+  DoneAtMaxStepsReached:
+    max_steps: 500

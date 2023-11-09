@@ -4,10 +4,6 @@ from marl_factory_grid.environment import constants as c
 # noinspection PyUnresolvedReferences,PyTypeChecker
 class IsBoundMixin:
 
-    @property
-    def name(self):
-        return f'{self.__class__.__name__}({self._bound_entity.name})'
-
     def __repr__(self):
         return f'{self.__class__.__name__}#{self._bound_entity.name}({self._data})'
 

@@ -30,4 +30,3 @@ class TSPTargetAgent(TSPBaseAgent):
         except (StopIteration, UnboundLocalError):
             print('Will not happen')
         return action_obj
-

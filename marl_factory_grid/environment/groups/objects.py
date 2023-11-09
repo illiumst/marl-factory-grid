@@ -5,10 +5,15 @@ import numpy as np
 
 from marl_factory_grid.environment.entity.object import _Object
 import marl_factory_grid.environment.constants as c
+from marl_factory_grid.utils import helpers as h
 
 
 class _Objects:
     _entity = _Object
+
+    @property
+    def var_can_be_bound(self):
+        return False
 
     @property
     def observers(self):
@@ -148,12 +153,12 @@ class _Objects:
 
     def by_entity(self, entity):
         try:
-            return next((x for x in self if x.belongs_to_entity(entity)))
+            return h.get_first(self, filter_by=lambda x: x.belongs_to_entity(entity))
         except (StopIteration, AttributeError):
             return None
 
     def idx_by_entity(self, entity):
         try:
-            return next((idx for idx, x in enumerate(self) if x.belongs_to_entity(entity)))
+            return h.get_first_index(self, filter_by=lambda x: x.belongs_to_entity(entity))
         except (StopIteration, AttributeError):
             return None

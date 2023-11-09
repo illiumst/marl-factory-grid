@@ -56,7 +56,7 @@ Just define what your environment needs in a *yaml*-configfile like:
                     - Items
     Rules:
         Defaults: {}
-        Collision:
+        WatchCollisions:
             done_at_collisions: !!bool True
         ItemRespawn:
             spawn_freq: 5

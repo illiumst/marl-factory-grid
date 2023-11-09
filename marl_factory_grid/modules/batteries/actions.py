@@ -6,6 +6,7 @@ from marl_factory_grid.utils.results import ActionResult
 
 from marl_factory_grid.modules.batteries import constants as b
 from marl_factory_grid.environment import constants as c
+from marl_factory_grid.utils import helpers as h
 
 
 class BtryCharge(Action):
@@ -14,8 +15,8 @@ class BtryCharge(Action):
         super().__init__(b.ACTION_CHARGE)
 
     def do(self, entity, state) -> Union[None, ActionResult]:
-        if charge_pod := state[b.CHARGE_PODS].by_pos(entity.pos):
-            valid = charge_pod.charge_battery(state[b.BATTERIES].by_entity(entity))
+        if charge_pod := h.get_first(state[b.CHARGE_PODS].by_pos(entity.pos)):
+            valid = h.get_first(charge_pod.charge_battery(state[b.BATTERIES].by_entity(entity)))
             if valid:
                 state.print(f'{entity.name} just charged batteries at {charge_pod.name}.')
             else:

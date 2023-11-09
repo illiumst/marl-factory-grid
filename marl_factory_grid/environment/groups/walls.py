@@ -7,9 +7,12 @@ class Walls(Collection):
     _entity = Wall
     symbol = c.SYMBOL_WALL
 
-    @property
-    def var_has_position(self):
-        return True
+    var_can_collide = True
+    var_is_blocking_light = True
+    var_can_move = False
+    var_has_position = True
+    var_can_be_bound = False
+    var_is_blocking_pos = True
 
     def __init__(self, *args, **kwargs):
         super(Walls, self).__init__(*args, **kwargs)

@@ -19,10 +19,10 @@ class DoorAutoClose(Rule):
 
     def tick_step(self, state):
         if doors := state[d.DOORS]:
-            doors_tick_result = doors.tick_doors(state)
-            doors_that_ticked = [key for key, val in doors_tick_result.items() if val]
-            state.print(f'{doors_that_ticked} were auto-closed'
-                        if doors_that_ticked else 'No Doors were auto-closed')
+            doors_tick_results = doors.tick_doors(state)
+            doors_that_closed = [x.entity.name for x in doors_tick_results if 'closed' in x.identifier]
+            door_str = doors_that_closed if doors_that_closed else "No Doors"
+            state.print(f'{door_str} were auto-closed')
             return [TickResult(self.name, validity=c.VALID, value=1)]
         state.print('There are no doors, but you loaded the corresponding Module')
         return []

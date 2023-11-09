@@ -14,10 +14,6 @@ class _Object:
         return True
 
     @property
-    def var_has_position(self):
-        return False
-
-    @property
     def var_can_be_bound(self):
         try:
             return self._collection.var_can_be_bound or False
@@ -30,22 +26,14 @@ class _Object:
 
     @property
     def name(self):
-        if self._str_ident is not None:
-            name = f'{self.__class__.__name__}[{self._str_ident}]'
-        else:
-            name = f'{self.__class__.__name__}#{self.u_int}'
-        if self.bound_entity:
-            name = h.add_bound_name(name, self.bound_entity)
-        if self.var_has_position:
-            name = h.add_pos_name(name, self)
-        return name
+        return f'{self.__class__.__name__}[{self.identifier}]'
 
     @property
     def identifier(self):
         if self._str_ident is not None:
             return self._str_ident
         else:
-            return self.name
+            return self.u_int
 
     def reset_uid(self):
         self._u_idx = defaultdict(lambda: 0)
@@ -62,7 +50,15 @@ class _Object:
             print(f'Following kwargs were passed, but ignored: {kwargs}')
 
     def __repr__(self):
-        return f'{self.name}'
+            name = self.name
+            if self.bound_entity:
+                name = h.add_bound_name(name, self.bound_entity)
+            try:
+                if self.var_has_position:
+                    name = h.add_pos_name(name, self)
+            except (AttributeError):
+                pass
+            return name
 
     def __eq__(self, other) -> bool:
         return other == self.identifier
@@ -88,7 +84,7 @@ class _Object:
     def summarize_state(self):
         return dict()
 
-    def bind(self, entity):
+    def bind_to(self, entity):
         # noinspection PyAttributeOutsideInit
         self._bound_entity = entity
         return c.VALID
@@ -99,9 +95,6 @@ class _Object:
     @property
     def bound_entity(self):
         return self._bound_entity
-
-    def bind_to(self, entity):
-        self._bound_entity = entity
 
     def unbind(self):
         self._bound_entity = None

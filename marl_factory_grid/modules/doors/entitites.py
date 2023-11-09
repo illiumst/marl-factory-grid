@@ -1,4 +1,5 @@
 from marl_factory_grid.environment.entity.entity import Entity
+from marl_factory_grid.utils import Result
 from marl_factory_grid.utils.utility_classes import RenderEntity
 from marl_factory_grid.environment import constants as c
 
@@ -41,21 +42,6 @@ class Door(Entity):
     def str_state(self):
         return 'open' if self.is_open else 'closed'
 
-    def __init__(self, *args, closed_on_init=True, auto_close_interval=10, **kwargs):
-        self._status = d.STATE_CLOSED
-        super(Door, self).__init__(*args, **kwargs)
-        self.auto_close_interval = auto_close_interval
-        self.time_to_close = 0
-        if not closed_on_init:
-            self._open()
-        else:
-            self._close()
-
-    def summarize_state(self):
-        state_dict = super().summarize_state()
-        state_dict.update(state=str(self.str_state), time_to_close=int(self.time_to_close))
-        return state_dict
-
     @property
     def is_closed(self):
         return self._status == d.STATE_CLOSED
@@ -67,6 +53,25 @@ class Door(Entity):
     @property
     def status(self):
         return self._status
+
+    @property
+    def time_to_close(self):
+        return self._time_to_close
+
+    def __init__(self, *args, closed_on_init=True, auto_close_interval=10, **kwargs):
+        self._status = d.STATE_CLOSED
+        super(Door, self).__init__(*args, **kwargs)
+        self._auto_close_interval = auto_close_interval
+        self._time_to_close = 0
+        if not closed_on_init:
+            self._open()
+        else:
+            self._close()
+
+    def summarize_state(self):
+        state_dict = super().summarize_state()
+        state_dict.update(state=str(self.str_state), time_to_close=self.time_to_close)
+        return state_dict
 
     def render(self):
         name, state = 'door_open' if self.is_open else 'door_closed', 'blank'
@@ -80,18 +85,35 @@ class Door(Entity):
         return c.VALID
 
     def tick(self, state):
-        if self.is_open and len(state.entities.pos_dict[self.pos]) == 2 and self.time_to_close:
-            self.time_to_close -= 1
-            return c.NOT_VALID
-        elif self.is_open and not self.time_to_close and len(state.entities.pos_dict[self.pos]) == 2:
-            self.use()
-            return c.VALID
+        # Check if no entity is standing in the door
+        if len(state.entities.pos_dict[self.pos]) <= 2:
+            if self.is_open and self.time_to_close:
+                self._decrement_timer()
+                return Result(f"{d.DOOR}_tick", c.VALID, entity=self)
+            elif self.is_open and not self.time_to_close:
+                self.use()
+                return Result(f"{d.DOOR}_closed", c.VALID, entity=self)
+            else:
+                # No one is in door, but it is closed... Nothing to do....
+                return None
         else:
-            return c.NOT_VALID
+            # Entity is standing in the door, reset timer
+            self._reset_timer()
+            return Result(f"{d.DOOR}_reset", c.VALID, entity=self)
 
     def _open(self):
         self._status = d.STATE_OPEN
-        self.time_to_close = self.auto_close_interval
+        self._reset_timer()
+        return True
 
     def _close(self):
         self._status = d.STATE_CLOSED
+        return True
+
+    def _decrement_timer(self):
+        self._time_to_close -= 1
+        return True
+
+    def _reset_timer(self):
+        self._time_to_close = self._auto_close_interval
+        return True

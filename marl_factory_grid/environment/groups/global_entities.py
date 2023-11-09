@@ -1,6 +1,6 @@
 from collections import defaultdict
 from operator import itemgetter
-from random import shuffle, random
+from random import shuffle
 from typing import Dict
 
 from marl_factory_grid.environment.groups.objects import _Objects
@@ -12,10 +12,10 @@ class Entities(_Objects):
 
     @staticmethod
     def neighboring_positions(pos):
-        return (POS_MASK + pos).reshape(-1, 2)
+        return [tuple(x) for x in (POS_MASK + pos).reshape(-1, 2)]
 
     def get_entities_near_pos(self, pos):
-        return [y for x in itemgetter(*(tuple(x) for x in self.neighboring_positions(pos)))(self.pos_dict) for y in x]
+        return [y for x in itemgetter(*self.neighboring_positions(pos))(self.pos_dict) for y in x]
 
     def render(self):
         return [y for x in self for y in x.render() if x is not None]
@@ -35,8 +35,9 @@ class Entities(_Objects):
         super().__init__()
 
     def guests_that_can_collide(self, pos):
-        return[x for val in self.pos_dict[pos] for x in val if x.var_can_collide]
+        return [x for val in self.pos_dict[pos] for x in val if x.var_can_collide]
 
+    @property
     def empty_positions(self):
         empty_positions = [key for key in self.floorlist if not self.pos_dict[key]]
         shuffle(empty_positions)
@@ -48,11 +49,23 @@ class Entities(_Objects):
         shuffle(empty_positions)
         return empty_positions
 
-    def is_blocked(self):
-        return[key for key, val in self.pos_dict.items() if any([x.var_is_blocking_pos for x in val])]
+    @property
+    def blocked_positions(self):
+        blocked_positions = [key for key, val in self.pos_dict.items() if any([x.var_is_blocking_pos for x in val])]
+        shuffle(blocked_positions)
+        return blocked_positions
 
-    def is_not_blocked(self):
-        return[key for key, val in self.pos_dict.items() if not all([x.var_is_blocking_pos for x in val])]
+    @property
+    def free_positions_generator(self):
+        generator = (
+            key for key in self.floorlist if all(not x.var_can_collide and not x.var_is_blocking_pos
+                                                 for x in self.pos_dict[key])
+                     )
+        return generator
+
+    @property
+    def free_positions_list(self):
+        return [x for x in self.free_positions_generator]
 
     def iter_entities(self):
         return iter((x for sublist in self.values() for x in sublist))
@@ -92,3 +105,6 @@ class Entities(_Objects):
     @property
     def positions(self):
         return [k for k, v in self.pos_dict.items() for _ in v]
+
+    def is_occupied(self, pos):
+        return len([x for x in self.pos_dict[pos] if x.var_can_collide or x.var_is_blocking_pos]) >= 1

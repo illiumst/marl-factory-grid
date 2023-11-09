@@ -28,7 +28,10 @@ class Result:
 
     def __repr__(self):
         valid = "not " if not self.validity else ""
-        return f'{self.__class__.__name__}({self.identifier.capitalize()} {valid}valid: {self.reward})'
+        reward = f" | Reward: {self.reward}" if self.reward is not None else ""
+        value = f" | Value: {self.value}" if self.value is not None else ""
+        entity = f" | by: {self.entity.name}" if self.entity is not None else ""
+        return f'{self.__class__.__name__}({self.identifier.capitalize()} {valid}valid{reward}{value})'
 
 
 @dataclass

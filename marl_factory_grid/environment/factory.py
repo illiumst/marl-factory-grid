@@ -87,11 +87,14 @@ class Factory(gym.Env):
         entities = self.map.do_init()
 
         # Init rules
-        rules = self.conf.load_rules()
+        env_rules = self.conf.load_env_rules()
+        entity_rules = self.conf.load_entity_spawn_rules(entities)
+        env_rules.extend(entity_rules)
 
         # Parse the agent conf
         parsed_agents_conf = self.conf.parse_agents_conf()
-        self.state = Gamestate(entities, parsed_agents_conf, rules, self.conf.env_seed, self.conf.verbose)
+        self.state = Gamestate(entities, parsed_agents_conf, env_rules, self.map.level_shape,
+                               self.conf.env_seed, self.conf.verbose)
 
         # All is set up, trigger entity init with variable pos
         # All is set up, trigger additional init (after agent entity spawn etc)

@@ -18,8 +18,10 @@ class Doors(Collection):
         super(Doors, self).__init__(*args, can_collide=True, **kwargs)
 
     def tick_doors(self, state):
-        result_dict = dict()
+        results = list()
         for door in self:
-            did_tick = door.tick(state)
-            result_dict.update({door.name: did_tick})
-        return result_dict
+            tick_result = door.tick(state)
+            if tick_result is not None:
+                results.append(tick_result)
+        # TODO: Should return a Result object, not a random dict.
+        return results

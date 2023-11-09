@@ -14,7 +14,7 @@ class Entity(_Object, abc.ABC):
 
     @property
     def state(self):
-        return self._status or ActionResult(entity=self, identifier=c.NOOP, validity=c.VALID, reward=0)
+        return self._status or ActionResult(entity=self, identifier=c.NOOP, validity=c.VALID)
 
     @property
     def var_has_position(self):
@@ -60,6 +60,10 @@ class Entity(_Object, abc.ABC):
     def pos(self):
         return self._pos
 
+    def set_pos(self, pos):
+        assert isinstance(pos, tuple) and len(pos) == 2
+        self._pos = pos
+
     @property
     def last_pos(self):
         try:
@@ -84,7 +88,7 @@ class Entity(_Object, abc.ABC):
                 for observer in self.observers:
                     observer.notify_del_entity(self)
                 self._view_directory = curr_pos[0] - next_pos[0], curr_pos[1] - next_pos[1]
-                self._pos = next_pos
+                self.set_pos(next_pos)
                 for observer in self.observers:
                     observer.notify_add_entity(self)
             return valid
@@ -93,7 +97,7 @@ class Entity(_Object, abc.ABC):
     def __init__(self, pos, bind_to=None, **kwargs):
         super().__init__(**kwargs)
         self._status = None
-        self._pos = pos
+        self.set_pos(pos)
         self._last_pos = pos
         if bind_to:
             try:
@@ -109,8 +113,9 @@ class Entity(_Object, abc.ABC):
     def render(self):
         return RenderEntity(self.__class__.__name__.lower(), self.pos)
 
-    def __repr__(self):
-        return super(Entity, self).__repr__() + f'(@{self.pos})'
+    @abc.abstractmethod
+    def render(self):
+        return RenderEntity(self.__class__.__name__.lower(), self.pos)
 
     @property
     def obs_tag(self):
@@ -149,4 +154,4 @@ class Entity(_Object, abc.ABC):
         except StopIteration:
             pass
         except ValueError:
-            print()
+            pass

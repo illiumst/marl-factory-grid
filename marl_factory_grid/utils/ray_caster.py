@@ -39,8 +39,9 @@ class RayCaster:
         if reset_cache:
             self._cache_dict = dict()
 
-        for ray in self.get_rays():
+        for ray in self.get_rays():  # Do not check, just trust.
             rx, ry = ray[0]
+            # self.ray_block_cache(ray[0], lambda: False) We do not do that, because of doors etc...
             for x, y in ray:
                 cx, cy = x - rx, y - ry
 
@@ -52,7 +53,8 @@ class RayCaster:
                 diag_hits = all([
                     self.ray_block_cache(
                         key,
-                        lambda: all(False for e in pos_dict[key] if not e.var_is_blocking_light))
+                        lambda:  any(True for e in pos_dict[key] if e.var_is_blocking_light))
+                        # lambda: all(False for e in pos_dict[key] if not e.var_is_blocking_light))
                     for key in ((x, y-cy), (x-cx, y))
                 ]) if (cx != 0 and cy != 0) else False
 

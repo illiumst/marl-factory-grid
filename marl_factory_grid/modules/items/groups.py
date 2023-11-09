@@ -8,6 +8,7 @@ from marl_factory_grid.environment.groups.objects import _Objects
 from marl_factory_grid.environment.groups.mixins import IsBoundMixin
 from marl_factory_grid.environment.entity.agent import Agent
 from marl_factory_grid.modules.items.entitites import Item, DropOffLocation
+from marl_factory_grid.utils.results import Result
 
 
 class Items(Collection):
@@ -15,7 +16,7 @@ class Items(Collection):
 
     @property
     def var_has_position(self):
-        return False
+        return True
 
     @property
     def is_blocking_light(self):
@@ -28,18 +29,18 @@ class Items(Collection):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    @staticmethod
-    def trigger_item_spawn(state, n_items, spawn_frequency):
-        if item_to_spawns := max(0, (n_items - len(state[i.ITEM]))):
-            position_list = [x for x in state.entities.floorlist]
-            shuffle(position_list)
-            position_list = state.entities.floorlist[:item_to_spawns]
-            state[i.ITEM].spawn(position_list)
-            state.print(f'{item_to_spawns} new items have been spawned; next spawn in {spawn_frequency}')
-            return len(position_list)
+    def trigger_spawn(self, state, *entity_args, coords_or_quantity=None, **entity_kwargs) -> [Result]:
+        coords_or_quantity = coords_or_quantity if coords_or_quantity else self._coords_or_quantity
+        assert coords_or_quantity
+
+        if item_to_spawns := max(0, (coords_or_quantity - len(self))):
+            return super().trigger_spawn(state,
+                                         *entity_args,
+                                         coords_or_quantity=item_to_spawns,
+                                         **entity_kwargs)
         else:
             state.print('No Items are spawning, limit is reached.')
-            return 0
+            return Result(identifier=f'{self.name}_spawn', validity=c.NOT_VALID, value=coords_or_quantity)
 
 
 class Inventory(IsBoundMixin, Collection):
@@ -76,9 +77,15 @@ class Inventory(IsBoundMixin, Collection):
 class Inventories(_Objects):
     _entity = Inventory
 
+    var_can_move = False
+    var_has_position = False
+
+
+    symbol = None
+
     @property
-    def var_can_move(self):
-        return False
+    def spawn_rule(self):
+        return {c.SPAWN_ENTITY_RULE: dict(collection=self, coords_or_quantity=None)}
 
     def __init__(self, size: int, *args, **kwargs):
         super(Inventories, self).__init__(*args, **kwargs)
@@ -86,10 +93,12 @@ class Inventories(_Objects):
         self._obs = None
         self._lazy_eval_transforms = []
 
-    def spawn(self, agents):
-        inventories = [self._entity(agent, self.size, )
-                       for _, agent in enumerate(agents)]
-        self.add_items(inventories)
+    def spawn(self, agents, *args, **kwargs):
+        self.add_items([self._entity(agent, self.size, *args, **kwargs) for _, agent in enumerate(agents)])
+        return [Result(identifier=f'{self.name}_spawn', validity=c.VALID, value=len(self))]
+
+    def trigger_spawn(self, state, *args, **kwargs) -> [Result]:
+        return self.spawn(state[c.AGENT], *args, **kwargs)
 
     def idx_by_entity(self, entity):
         try:
@@ -106,9 +115,6 @@ class Inventories(_Objects):
     def summarize_states(self, **kwargs):
         return [val.summarize_states(**kwargs) for key, val in self.items()]
 
-    @staticmethod
-    def trigger_inventory_spawn(state):
-        state[i.INVENTORY].spawn(state[c.AGENT])
 
 
 class DropOffLocations(Collection):
@@ -135,7 +141,7 @@ class DropOffLocations(Collection):
 
     @staticmethod
     def trigger_drop_off_location_spawn(state, n_locations):
-        empty_positions = state.entities.empty_positions()[:n_locations]
+        empty_positions = state.entities.empty_positions[:n_locations]
         do_entites = state[i.DROP_OFF]
         drop_offs = [DropOffLocation(pos) for pos in empty_positions]
         do_entites.add_items(drop_offs)

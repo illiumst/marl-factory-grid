@@ -50,7 +50,7 @@ class Battery(_Object):
         return summary
 
 
-class Pod(Entity):
+class ChargePod(Entity):
 
     @property
     def encoding(self):
@@ -58,7 +58,7 @@ class Pod(Entity):
 
     def __init__(self, *args, charge_rate: float = 0.4,
                  multi_charge: bool = False, **kwargs):
-        super(Pod, self).__init__(*args, **kwargs)
+        super(ChargePod, self).__init__(*args, **kwargs)
         self.charge_rate = charge_rate
         self.multi_charge = multi_charge
 

@@ -7,37 +7,14 @@ from marl_factory_grid.modules.destinations import constants as d
 class Destinations(Collection):
     _entity = Destination
 
-    @property
-    def var_is_blocking_light(self):
-        return False
-
-    @property
-    def var_can_collide(self):
-        return False
-
-    @property
-    def var_can_move(self):
-        return False
-
-    @property
-    def var_has_position(self):
-        return True
+    var_is_blocking_light = False
+    var_can_collide = False
+    var_can_move = False
+    var_has_position = True
+    var_can_be_bound = True
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
     def __repr__(self):
         return super(Destinations, self).__repr__()
-
-    @staticmethod
-    def trigger_destination_spawn(n_dests, state):
-        coordinates = state.entities.floorlist[:n_dests]
-        if destinations := [Destination(pos) for pos in coordinates]:
-            state[d.DESTINATION].add_items(destinations)
-            state.print(f'{n_dests} new destinations have been spawned')
-            return c.VALID
-        else:
-            state.print('No Destiantions are spawning, limit is reached.')
-            return c.NOT_VALID
-
-

@@ -1,16 +1,23 @@
-from typing import List, Tuple, Union
+from typing import List, Tuple, Union, Dict
 
 from marl_factory_grid.environment.entity.entity import Entity
 from marl_factory_grid.environment.groups.objects import _Objects
+# noinspection PyProtectedMember
 from marl_factory_grid.environment.entity.object import _Object
 import marl_factory_grid.environment.constants as c
+from marl_factory_grid.utils.results import Result
 
 
 class Collection(_Objects):
     _entity = _Object  # entity?
+    symbol = None
 
     @property
     def var_is_blocking_light(self):
+        return False
+
+    @property
+    def var_is_blocking_pos(self):
         return False
 
     @property
@@ -23,29 +30,61 @@ class Collection(_Objects):
 
     @property
     def var_has_position(self):
-        return False
-
-    # @property
-    # def var_has_bound(self):
-    #     return False  # batteries, globalpos, inventories true
-
-    @property
-    def var_can_be_bound(self):
-        return False
+        return True
 
     @property
     def encodings(self):
         return [x.encoding for x in self]
 
-    def __init__(self, size, *args, **kwargs):
-        super(Collection, self).__init__(*args, **kwargs)
-        self.size = size
-
-    def spawn(self, coords_or_quantity: Union[int, List[Tuple[(int, int)]]], *entity_args):  # woihn mit den args
-        if isinstance(coords_or_quantity, int):
-            self.add_items([self._entity() for _ in range(coords_or_quantity)])
+    @property
+    def spawn_rule(self):
+        """Prevent SpawnRule creation if Objects are spawned by map, Doors e.g."""
+        if self.symbol:
+            return None
+        elif self._spawnrule:
+            return self._spawnrule
         else:
-            self.add_items([self._entity(pos) for pos in coords_or_quantity])
+            return {c.SPAWN_ENTITY_RULE: dict(collection=self, coords_or_quantity=self._coords_or_quantity)}
+
+    def __init__(self, size, *args, coords_or_quantity: int = None, ignore_blocking=False,
+                 spawnrule: Union[None, Dict[str, dict]] = None,
+                 **kwargs):
+        super(Collection, self).__init__(*args, **kwargs)
+        self._coords_or_quantity = coords_or_quantity
+        self.size = size
+        self._spawnrule = spawnrule
+        self._ignore_blocking = ignore_blocking
+
+    def trigger_spawn(self, state, *entity_args, coords_or_quantity=None, ignore_blocking=False,  **entity_kwargs):
+        coords_or_quantity = coords_or_quantity if coords_or_quantity else self._coords_or_quantity
+        if self.var_has_position:
+            if isinstance(coords_or_quantity, int):
+                if ignore_blocking or self._ignore_blocking:
+                    coords_or_quantity = state.entities.floorlist[:coords_or_quantity]
+                else:
+                    coords_or_quantity = state.get_n_random_free_positions(coords_or_quantity)
+            self.spawn(coords_or_quantity, *entity_args,  **entity_kwargs)
+            state.print(f'{len(coords_or_quantity)} new {self.name} have been spawned at {coords_or_quantity}')
+            return Result(identifier=f'{self.name}_spawn', validity=c.VALID, value=len(coords_or_quantity))
+        else:
+            if isinstance(coords_or_quantity, int):
+                self.spawn(coords_or_quantity, *entity_args,  **entity_kwargs)
+                state.print(f'{coords_or_quantity} new {self.name} have been spawned randomly.')
+                return Result(identifier=f'{self.name}_spawn', validity=c.VALID, value=coords_or_quantity)
+            else:
+                raise ValueError(f'{self._entity.__name__} has no position!')
+
+    def spawn(self, coords_or_quantity: Union[int, List[Tuple[(int, int)]]], *entity_args, **entity_kwargs):
+        if self.var_has_position:
+            if isinstance(coords_or_quantity, int):
+                raise ValueError(f'{self._entity.__name__} should have a position!')
+            else:
+                self.add_items([self._entity(pos, *entity_args, **entity_kwargs) for pos in coords_or_quantity])
+        else:
+            if isinstance(coords_or_quantity, int):
+                self.add_items([self._entity(*entity_args, **entity_kwargs) for _ in range(coords_or_quantity)])
+            else:
+                raise ValueError(f'{self._entity.__name__} has no  position!')
         return c.VALID
 
     def despawn(self, items: List[_Object]):
@@ -115,7 +154,7 @@ class Collection(_Objects):
         except StopIteration:
             pass
         except ValueError:
-            print()
+            pass
 
     @property
     def positions(self):
