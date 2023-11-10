@@ -87,15 +87,18 @@ class Factory(gym.Env):
         entities = self.map.do_init()
 
         # Init rules
-        rules = self.conf.load_rules()
+        rules = self.conf.load_env_rules()
+        env_tests = self.conf.load_env_tests() if self.conf.tests else []
 
         # Parse the agent conf
         parsed_agents_conf = self.conf.parse_agents_conf()
-        self.state = Gamestate(entities, parsed_agents_conf, rules, self.conf.env_seed, self.conf.verbose)
+        self.state = Gamestate(entities, parsed_agents_conf, rules, env_tests, self.conf.env_seed, self.conf.verbose)
 
         # All is set up, trigger entity init with variable pos
         # All is set up, trigger additional init (after agent entity spawn etc)
         self.state.rules.do_all_init(self.state, self.map)
+
+        self.state.tests.do_all_init(self.state, self.map)
 
         # Build initial observations for all agents
         # noinspection PyAttributeOutsideInit
