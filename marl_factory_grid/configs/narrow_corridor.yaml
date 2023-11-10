@@ -1,23 +1,41 @@
-General:
+eneral:
+  # Your Seed
   env_seed: 69
+  # Individual or global rewards?
   individual_rewards: true
+  # The level.txt file to load
   level_name: narrow_corridor
+  # View Radius; 0 = full observatbility
   pomdp_r: 0
+  # print all messages and events
   verbose: true
 
 Agents:
+  # Agents are identified by their name 
   Wolfgang:
+    # The available actions for this particular agent
     Actions:
+    # Able to do nothing
     - Noop
+    # Able to move in all 8 directions
     - Move8
+    # Stuff the agent can observe (per 2d slice)
+    #   use "Combined" if you want to merge multiple slices into one
     Observations:
+    # He sees walls
     - Walls
+    # he sees other agent, "karl-Heinz" in this setting would be fine, too
     - Other
+    # He can see Destinations, that are assigned to him (hence the singular) 
     - Destination
+    # Avaiable Spawn Positions as list
     Positions:
       - (2, 1)
       - (2, 5)
+    # It is okay to collide with other agents, so that 
+    #   they end up on the same position
     is_blocking_pos: true
+  # See Above....
   Karl-Heinz:
     Actions:
       - Noop
@@ -31,12 +49,19 @@ Agents:
       - (2, 5)
     is_blocking_pos: true
 
+# Other noteworthy Entitites
 Entities:
+  # The destiantions or positional targets to reach
   Destinations:
+    # Let them spawn on closed doors and agent positions
     ignore_blocking: true
+    # We need a special spawn rule...
     spawnrule:
+      # ...which assigns the destinations per agent
       SpawnDestinationsPerAgent:
+        # we use this parameter
         coords_or_quantity:
+          # to enable and assign special positions per agent
           Wolfgang:
               - (2, 1)
               - (2, 5)
@@ -47,12 +72,18 @@ Entities:
     # GlobalPositions:
     #   normalized: false
 
+# Define the env. dynamics
 Rules:
   # Utilities
+  #  This rule Checks for Collision, also it assigns the (negative) reward
   WatchCollisions:
+    reward: -0.1
+    reward_at_done: -1
     done_at_collisions: false
   # Done Conditions
+  #   Load any of the rules, to check for done conditions. 
   # DoneAtDestinationReachAny:
   DoneAtDestinationReachAll:
+  #  reward_at_done: 1
   DoneAtMaxStepsReached:
     max_steps: 500
