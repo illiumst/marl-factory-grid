@@ -34,7 +34,12 @@ class DirtPiles(Collection):
         self.coords_or_quantity = coords_or_quantity
         self.initial_amount = initial_amount
 
-    def trigger_spawn(self, state, coords_or_quantity=0, amount=0) -> [Result]:
+    def trigger_spawn(self, state, coords_or_quantity=0, amount=0, ignore_blocking=False) -> [Result]:
+        if ignore_blocking:
+            print("##########################################")
+            print("Blocking should not be ignored for this Entity")
+            print("Exiting....")
+            exit()
         coords_or_quantity = coords_or_quantity if coords_or_quantity else self.coords_or_quantity
         n_new = int(abs(coords_or_quantity + (state.rng.uniform(-self.n_var, self.n_var))))
         n_new = state.get_n_random_free_positions(n_new)

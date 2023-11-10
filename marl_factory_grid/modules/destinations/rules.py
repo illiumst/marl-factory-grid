@@ -106,7 +106,7 @@ class SpawnDestinationsPerAgent(Rule):
         super(Rule, self).__init__()
         self.per_agent_positions = {key: [ast.literal_eval(x) for x in val] for key, val in coords_or_quantity.items()}
 
-    def on_init(self, state, lvl_map):
+    def on_reset(self, state, lvl_map):
         for (agent_name, position_list) in self.per_agent_positions.items():
             agent = h.get_first(state[c.AGENT], lambda x: agent_name in x.name)
             assert agent

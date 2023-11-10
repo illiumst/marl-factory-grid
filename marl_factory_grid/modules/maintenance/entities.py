@@ -3,8 +3,6 @@ from random import shuffle
 import networkx as nx
 import numpy as np
 
-
-from ...algorithms.static.utils import points_to_graph
 from ...environment import constants as c
 from ...environment.actions import Action, ALL_BASEACTIONS
 from ...environment.entity.entity import Entity
@@ -26,7 +24,6 @@ class Maintainer(Entity):
         self._next = []
         self._last = []
         self._last_serviced = 'None'
-        self._floortile_graph = None
 
     def tick(self, state):
         if found_objective := h.get_first(state[self.objective].by_pos(self.pos)):
@@ -41,17 +38,18 @@ class Maintainer(Entity):
             return action.do(self, state)
 
     def get_move_action(self, state) -> Action:
-        if not self._floortile_graph:
-            state.print("Generating Floorgraph....")
-            self._floortile_graph = points_to_graph(state.entities.floorlist)
-        if self._path is None or not self._path:
+        if self._path is None or not len(self._path):
             if not self._next:
                 self._next = list(state[self.objective].values()) + [Floor(*state.random_free_position)]
                 shuffle(self._next)
                 self._last = []
             self._last.append(self._next.pop())
             state.print("Calculating shortest path....")
-            self._path = self.calculate_route(self._last[-1])
+            self._path = self.calculate_route(self._last[-1], state.floortile_graph)
+            if not self._path:
+                self._last.append(self._next.pop())
+                state.print("Calculating shortest path.... Again....")
+                self._path = self.calculate_route(self._last[-1], state.floortile_graph)
 
         if door := self._closed_door_in_path(state):
             state.print(f"{self} found {door} that is closed. Attempt to open.")
@@ -67,8 +65,8 @@ class Maintainer(Entity):
             raise EnvironmentError
         return action_obj
 
-    def calculate_route(self, entity):
-        route = nx.shortest_path(self._floortile_graph, self.pos, entity.pos)
+    def calculate_route(self, entity, floortile_graph):
+        route = nx.shortest_path(floortile_graph, self.pos, entity.pos)
         return route[1:]
 
     def _closed_door_in_path(self, state):

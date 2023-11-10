@@ -11,19 +11,21 @@ class ZoneInit(Rule):
 
     def __init__(self):
         super().__init__()
+        self._zones = list()
 
     def on_init(self, state, lvl_map):
-        zones = []
         z_idx = 1
 
         while z_idx:
             zone_positions = lvl_map.get_coordinates_for_symbol(z_idx)
             if len(zone_positions):
-                zones.append(Zone(zone_positions))
+                self._zones.append(Zone(zone_positions))
                 z_idx += 1
             else:
                 z_idx = 0
-        state[z.ZONES].add_items(zones)
+
+    def on_reset(self, state):
+        state[z.ZONES].add_items(self._zones)
         return []
 
 
@@ -32,7 +34,7 @@ class AgentSingleZonePlacement(Rule):
     def __init__(self):
         super().__init__()
 
-    def on_init(self, state, lvl_map):
+    def on_reset(self, state):
         n_agents = len(state[c.AGENT])
         assert len(state[z.ZONES]) >= n_agents
 
@@ -48,19 +50,16 @@ class AgentSingleZonePlacement(Rule):
 class IndividualDestinationZonePlacement(Rule):
 
     def __init__(self):
+        raise NotImplementedError("This is rpetty new, and needs to be debugged, after the zones")
         super().__init__()
 
-    def on_init(self, state, lvl_map):
+    def on_reset(self, state):
         for agent in state[c.AGENT]:
-            self.trigger_destination_spawn(agent, state)
-            pass
-        return []
-
-    def tick_step(self, state):
+            self.trigger_spawn(agent, state)
         return []
 
     @staticmethod
-    def trigger_destination_spawn(agent, state):
+    def trigger_spawn(agent, state):
         agent_zones = state[z.ZONES].by_pos(agent.pos)
         other_zones = [x for x in state[z.ZONES] if x not in agent_zones]
         already_has_destination = True

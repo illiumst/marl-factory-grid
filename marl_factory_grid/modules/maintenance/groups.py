@@ -14,14 +14,8 @@ class Maintainers(Collection):
     var_is_blocking_light = False
     var_has_position = True
 
-    def __init__(self, size, *args, coords_or_quantity: int = None,
-                 spawnrule: Union[None, Dict[str, dict]] = None,
-                 **kwargs):
-        super(Collection, self).__init__(*args, **kwargs)
-        self._coords_or_quantity = coords_or_quantity
-        self.size = size
-        self._spawnrule = spawnrule
-
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
     def spawn(self, coords_or_quantity: Union[int, List[Tuple[(int, int)]]], *entity_args):
         self.add_items([self._entity(mc.MACHINES, MachineAction(), pos) for pos in coords_or_quantity])

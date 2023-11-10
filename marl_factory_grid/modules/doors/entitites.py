@@ -117,3 +117,7 @@ class Door(Entity):
     def _reset_timer(self):
         self._time_to_close = self._auto_close_interval
         return True
+
+    def reset(self):
+        self._close()
+        self._reset_timer()

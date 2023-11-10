@@ -23,3 +23,7 @@ class Doors(Collection):
                 results.append(tick_result)
         # TODO: Should return a Result object, not a random dict.
         return results
+
+    def reset(self):
+        for door in self:
+            door.reset()

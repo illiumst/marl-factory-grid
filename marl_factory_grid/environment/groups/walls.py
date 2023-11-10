@@ -23,3 +23,7 @@ class Walls(Collection):
             return super().by_pos(pos)[0]
         except IndexError:
             return None
+
+    def reset(self):
+        pass
+

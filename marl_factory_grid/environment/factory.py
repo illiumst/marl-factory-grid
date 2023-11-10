@@ -69,23 +69,6 @@ class Factory(gym.Env):
         # expensive - don't use; unless required !
         self._renderer = None
 
-        # reset env to initial state, preparing env for new episode.
-        # returns tuple where the first dict contains initial observation for each agent in the env
-        self.reset()
-
-    def __getitem__(self, item):
-        return self.state.entities[item]
-
-    def reset(self) -> (dict, dict):
-        if self.state is not None:
-            for entity_group in self.state.entities:
-                try:
-                    entity_group[0].reset_uid()
-                except (AttributeError, TypeError):
-                    pass
-
-        self.state = None
-
         # Init entities
         entities = self.map.do_init()
 
@@ -101,7 +84,6 @@ class Factory(gym.Env):
         self.state = Gamestate(entities, parsed_agents_conf, env_rules, env_tests, self.map.level_shape,
                                self.conf.env_seed, self.conf.verbose)
 
-        # All is set up, trigger entity init with variable pos
         # All is set up, trigger additional init (after agent entity spawn etc)
         self.state.rules.do_all_init(self.state, self.map)
 
@@ -110,6 +92,17 @@ class Factory(gym.Env):
         # Build initial observations for all agents
         # noinspection PyAttributeOutsideInit
         self.obs_builder = OBSBuilder(self.map.level_shape, self.state, self.map.pomdp_r)
+
+    def __getitem__(self, item):
+        return self.state.entities[item]
+
+    def reset(self) -> (dict, dict):
+        self.state.entities.reset()
+
+        # All is set up, trigger entity spawn with variable pos
+        self.state.rules.do_all_reset(self.state)
+
+        # Build initial observations for all agents
         return self.obs_builder.refresh_and_build_for_all(self.state)
 
     def manual_step_init(self) -> List[Result]:

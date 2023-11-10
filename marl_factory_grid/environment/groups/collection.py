@@ -2,7 +2,6 @@ from typing import List, Tuple, Union, Dict
 
 from marl_factory_grid.environment.entity.entity import Entity
 from marl_factory_grid.environment.groups.objects import Objects
-# noinspection PyProtectedMember
 from marl_factory_grid.environment.entity.object import Object
 import marl_factory_grid.environment.constants as c
 from marl_factory_grid.utils.results import Result
