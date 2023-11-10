@@ -31,7 +31,7 @@ class Renderer:
 
     def __init__(self, lvl_shape: Tuple[int, int] = (16, 16),
                  lvl_padded_shape: Union[Tuple[int, int], None] = None,
-                 cell_size: int = 40, fps: int = 7,
+                 cell_size: int = 40, fps: int = 7, factor: float = 0.9,
                  grid_lines: bool = True, view_radius: int = 2):
         # TODO: Customn_assets paths
         self.grid_h, self.grid_w = lvl_shape
@@ -45,7 +45,7 @@ class Renderer:
         self.screen = pygame.display.set_mode(self.screen_size)
         self.clock = pygame.time.Clock()
         assets = list(self.ASSETS.rglob('*.png'))
-        self.assets = {path.stem: self.load_asset(str(path), 1) for path in assets}
+        self.assets = {path.stem: self.load_asset(str(path), factor) for path in assets}
         self.fill_bg()
 
         now = time.time()
@@ -110,22 +110,22 @@ class Renderer:
                 pygame.quit()
                 sys.exit()
         self.fill_bg()
-        blits = deque()
-        for entity in [x for x in entities]:
-            bp = self.blit_params(entity)
-            blits.append(bp)
-            if entity.name.lower() == AGENT:
-                if self.view_radius > 0:
-                    vis_rects = self.visibility_rects(bp, entity.aux)
-                    blits.extendleft(vis_rects)
-                if entity.state != BLANK:
-                    agent_state_blits = self.blit_params(
-                        RenderEntity(entity.state, (entity.pos[0] + 0.12, entity.pos[1]), 0.48, SCALE)
-                    )
-                    textsurface = self.font.render(str(entity.id), False, (0, 0, 0))
-                    text_blit = dict(source=textsurface, dest=(bp['dest'].center[0]-.07*self.cell_size,
-                                                               bp['dest'].center[1]))
-                    blits += [agent_state_blits, text_blit]
+        # First all others
+        blits = deque(self.blit_params(x) for x in entities if not x.name.lower() == AGENT)
+        # Then Agents, so that agents are rendered on top.
+        for agent in (x for x in entities if x.name.lower() == AGENT):
+            agent_blit = self.blit_params(agent)
+            if self.view_radius > 0:
+                vis_rects = self.visibility_rects(agent_blit, agent.aux)
+                blits.extendleft(vis_rects)
+            if agent.state != BLANK:
+                state_blit = self.blit_params(
+                    RenderEntity(agent.state, (agent.pos[0] + 0.12, agent.pos[1]), 0.48, SCALE)
+                )
+                textsurface = self.font.render(str(agent.id), False, (0, 0, 0))
+                text_blit = dict(source=textsurface, dest=(agent_blit['dest'].center[0]-.07*self.cell_size,
+                                                           agent_blit['dest'].center[1]))
+                blits += [agent_blit, state_blit, text_blit]
 
         for blit in blits:
             self.screen.blit(**blit)

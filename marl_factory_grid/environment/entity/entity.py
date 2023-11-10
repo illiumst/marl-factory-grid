@@ -1,20 +1,19 @@
 import abc
-from collections import defaultdict
 
 import numpy as np
 
-from .object import _Object
+from .object import Object
 from .. import constants as c
 from ...utils.results import ActionResult
 from ...utils.utility_classes import RenderEntity
 
 
-class Entity(_Object, abc.ABC):
+class Entity(Object, abc.ABC):
     """Full Env Entity that lives on the environment Grid. Doors, Items, DirtPile etc..."""
 
     @property
     def state(self):
-        return self._status or ActionResult(entity=self, identifier=c.NOOP, validity=c.VALID, reward=0)
+        return self._status or ActionResult(entity=self, identifier=c.NOOP, validity=c.VALID)
 
     @property
     def var_has_position(self):
@@ -60,6 +59,10 @@ class Entity(_Object, abc.ABC):
     def pos(self):
         return self._pos
 
+    def set_pos(self, pos):
+        assert isinstance(pos, tuple) and len(pos) == 2
+        self._pos = pos
+
     @property
     def last_pos(self):
         try:
@@ -84,7 +87,7 @@ class Entity(_Object, abc.ABC):
                 for observer in self.observers:
                     observer.notify_del_entity(self)
                 self._view_directory = curr_pos[0] - next_pos[0], curr_pos[1] - next_pos[1]
-                self._pos = next_pos
+                self.set_pos(next_pos)
                 for observer in self.observers:
                     observer.notify_add_entity(self)
             return valid
@@ -92,6 +95,7 @@ class Entity(_Object, abc.ABC):
 
     def __init__(self, pos, bind_to=None, **kwargs):
         super().__init__(**kwargs)
+        self._view_directory = c.VALUE_NO_POS
         self._status = None
         self._pos = pos
         self._last_pos = pos
@@ -109,9 +113,6 @@ class Entity(_Object, abc.ABC):
     def render(self):
         return RenderEntity(self.__class__.__name__.lower(), self.pos)
 
-    def __repr__(self):
-        return super(Entity, self).__repr__() + f'(@{self.pos})'
-
     @property
     def obs_tag(self):
         try:
@@ -128,25 +129,3 @@ class Entity(_Object, abc.ABC):
         self._collection.delete_env_object(self)
         self._collection = other_collection
         return self._collection == other_collection
-
-    @classmethod
-    def from_coordinates(cls, positions: [(int, int)], *args, entity_kwargs=None, **kwargs, ):
-        collection = cls(*args, **kwargs)
-        collection.add_items(
-            [cls._entity(tuple(pos), **entity_kwargs if entity_kwargs is not None else {}) for pos in positions])
-        return collection
-
-    def notify_del_entity(self, entity):
-        try:
-            self.pos_dict[entity.pos].remove(entity)
-        except (ValueError, AttributeError):
-            pass
-
-    def by_pos(self, pos: (int, int)):
-        pos = tuple(pos)
-        try:
-            return self.state.entities.pos_dict[pos]
-        except StopIteration:
-            pass
-        except ValueError:
-            print()

@@ -14,8 +14,8 @@ class TSPTargetAgent(TSPBaseAgent):
     def _handle_doors(self, state):
 
         try:
-            # return next(y for x in self.state.tile.neighboring_floor for y in x.guests if do.DOOR in y.name)
-            return next(y for x in state.entities.neighboring_positions(self.state.pos) for y in state.entities.pos_dict[x] if do.DOOR in y.name)
+            return next(y for x in state.entities.neighboring_positions(self.state.pos)
+                        for y in state.entities.pos_dict[x] if do.DOOR in y.name)
         except StopIteration:
             return None
 
@@ -30,4 +30,3 @@ class TSPTargetAgent(TSPBaseAgent):
         except (StopIteration, UnboundLocalError):
             print('Will not happen')
         return action_obj
-

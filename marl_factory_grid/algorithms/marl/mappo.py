@@ -36,7 +36,7 @@ class LoopMAPPO(LoopSNAC):
         rewards_ = torch.stack(rewards_, dim=1)
         return rewards_
 
-    def mappo(self, batch, network, gamma, entropy_coef, vf_coef, clip_range, **kwargs):
+    def mappo(self, batch, network, gamma, entropy_coef, vf_coef, clip_range, **__):
         out = network(batch[nms.OBSERVATION], batch[nms.ACTION], batch[nms.HIDDEN_ACTOR], batch[nms.HIDDEN_CRITIC])
         logits = out[nms.LOGITS][:, :-1]  # last one only needed for v_{t+1}
 
@@ -45,7 +45,7 @@ class LoopMAPPO(LoopSNAC):
 
         # monte carlo returns
         mc_returns = self.monte_carlo_returns(batch[nms.REWARD], batch[nms.DONE], gamma)
-        mc_returns = (mc_returns - mc_returns.mean()) / (mc_returns.std() + 1e-8) #todo: norm across agent ok?
+        mc_returns = (mc_returns - mc_returns.mean()) / (mc_returns.std() + 1e-8)  # todo: norm across agent ok?
         advantages =  mc_returns - out[nms.CRITIC][:, :-1]
 
         # policy loss

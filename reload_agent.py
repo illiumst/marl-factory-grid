@@ -6,6 +6,7 @@ import yaml
 from marl_factory_grid.environment.factory import Factory
 from marl_factory_grid.utils.logging.envmonitor import EnvMonitor
 from marl_factory_grid.utils.logging.recorder import EnvRecorder
+from marl_factory_grid.utils import helpers as h
 
 from marl_factory_grid.modules.doors import constants as d
 
@@ -55,13 +56,14 @@ if __name__ == '__main__':
                                for model_idx, model in enumerate(models)]
                 else:
                     actions = models[0].predict(env_state, deterministic=determin)[0]
+                # noinspection PyTupleAssignmentBalance
                 env_state, step_r, done_bool, info_obj = env.step(actions)
 
                 rew += step_r
                 if render:
                     env.render()
                 try:
-                    door = next(x for x in env.unwrapped.unwrapped[d.DOORS] if x.is_open)
+                    door = h.get_first([x for x in env.unwrapped.unwrapped[d.DOORS] if x.is_open])
                     print('openDoor found')
                 except StopIteration:
                     pass

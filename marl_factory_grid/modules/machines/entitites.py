@@ -9,22 +9,6 @@ from . import constants as m
 class Machine(Entity):
 
     @property
-    def var_can_collide(self):
-        return False
-
-    @property
-    def var_can_move(self):
-        return False
-
-    @property
-    def var_is_blocking_light(self):
-        return False
-
-    @property
-    def var_has_position(self):
-        return True
-
-    @property
     def encoding(self):
         return self._encodings[self.status]
 
@@ -46,12 +30,11 @@ class Machine(Entity):
         else:
             return c.NOT_VALID
 
-    def tick(self):
-        # if self.status == m.STATE_MAINTAIN and any([c.AGENT in x.name for x in self.tile.guests]):
-        if self.status == m.STATE_MAINTAIN and any([c.AGENT in x.name for x in self.state.entities.pos_dict[self.pos]]):
-            return TickResult(identifier=self.name, validity=c.VALID, reward=0, entity=self)
-        # elif self.status == m.STATE_MAINTAIN and not any([c.AGENT in x.name for x in self.tile.guests]):
-        elif self.status == m.STATE_MAINTAIN and not any([c.AGENT in x.name for x in self.state.entities.pos_dict[self.pos]]):
+    def tick(self, state):
+        others = state.entities.pos_dict[self.pos]
+        if self.status == m.STATE_MAINTAIN and any([c.AGENT in x.name for x in others]):
+            return TickResult(identifier=self.name, validity=c.VALID, entity=self)
+        elif self.status == m.STATE_MAINTAIN and not any([c.AGENT in x.name for x in others]):
             self.status = m.STATE_WORK
             self.reset_counter()
             return None

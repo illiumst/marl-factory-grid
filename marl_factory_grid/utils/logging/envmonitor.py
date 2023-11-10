@@ -9,7 +9,7 @@ from marl_factory_grid.utils.helpers import IGNORED_DF_COLUMNS
 
 import pandas as pd
 
-from marl_factory_grid.utils.plotting.compare_runs import plot_single_run
+from marl_factory_grid.utils.plotting.plot_single_runs import plot_single_run
 
 
 class EnvMonitor(Wrapper):
@@ -21,7 +21,6 @@ class EnvMonitor(Wrapper):
         self._filepath = filepath
         self._monitor_df = pd.DataFrame()
         self._monitor_dict = dict()
-
 
     def step(self, action):
         obs_type, obs, reward, done, info = self.env.step(action)

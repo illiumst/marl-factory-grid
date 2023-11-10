@@ -56,8 +56,8 @@ class TSPBaseAgent(ABC):
 
     def _door_is_close(self, state):
         try:
-            # return next(y for x in self.state.tile.neighboring_floor for y in x.guests if do.DOOR in y.name)
-            return next(y for x in state.entities.neighboring_positions(self.state.pos) for y in state.entities.pos_dict[x] if do.DOOR in y.name)
+            return next(y for x in state.entities.neighboring_positions(self.state.pos)
+                        for y in state.entities.pos_dict[x] if do.DOOR in y.name)
         except StopIteration:
             return None
 

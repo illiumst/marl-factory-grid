@@ -47,6 +47,7 @@ class LevelParser(object):
         # All other
         for es_name in self.e_p_dict:
             e_class, e_kwargs = self.e_p_dict[es_name]['class'], self.e_p_dict[es_name]['kwargs']
+            e_kwargs = e_kwargs if e_kwargs else {}
 
             if hasattr(e_class, 'symbol') and e_class.symbol is not None:
                 symbols = e_class.symbol

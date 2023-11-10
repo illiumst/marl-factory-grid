@@ -1,7 +1,8 @@
-import torch
-import numpy as np
-import yaml
 from pathlib import Path
+
+import numpy as np
+import torch
+import yaml
 
 
 def load_class(classname):
@@ -42,7 +43,6 @@ def get_class(arguments):
 
 
 def get_arguments(arguments):
-    from importlib import import_module
     d = dict(arguments)
     if "classname" in d:
         del d["classname"]

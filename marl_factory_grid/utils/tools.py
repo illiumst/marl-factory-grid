@@ -28,7 +28,9 @@ class ConfigExplainer:
 
     def explain_module(self, class_to_explain):
         parameters = inspect.signature(class_to_explain).parameters
-        explained = {class_to_explain.__name__: {key: val.default for key, val in parameters.items() if key not in EXCLUDED}}
+        explained = {class_to_explain.__name__:
+                         {key: val.default for key, val in parameters.items() if key not in EXCLUDED}
+                     }
         return explained
 
     def _load_and_compare(self, compare_class, paths):
@@ -135,4 +137,3 @@ if __name__ == '__main__':
     ce.get_observations()
     ce.get_assets()
     all_conf = ce.get_all()
-    print()

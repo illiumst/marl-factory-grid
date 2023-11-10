@@ -2,11 +2,9 @@ from os import PathLike
 from pathlib import Path
 from typing import Union, List
 
-import yaml
-from gymnasium import Wrapper
-
 import numpy as np
 import pandas as pd
+from gymnasium import Wrapper
 
 
 class EnvRecorder(Wrapper):
@@ -106,7 +104,7 @@ class EnvRecorder(Wrapper):
                 out_dict = {'episodes': self._recorder_out_list}
             out_dict.update(
                 {'n_episodes': self._curr_episode,
-                 'metadata':dict(
+                 'metadata': dict(
                      level_name=self.env.params['General']['level_name'],
                      verbose=False,
                      n_agents=len(self.env.params['Agents']),

@@ -6,7 +6,9 @@ from marl_factory_grid.utils.results import TickResult, DoneResult
 class TemplateRule(Rule):
 
     def __init__(self, *args, **kwargs):
-        super(TemplateRule, self).__init__(*args, **kwargs)
+        super(TemplateRule, self).__init__()
+        self.args = args
+        self.kwargs = kwargs
 
     def on_init(self, state, lvl_map):
         pass

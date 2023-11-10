@@ -13,28 +13,12 @@ from marl_factory_grid.environment import constants as c
 class Agent(Entity):
 
     @property
-    def var_is_blocking_light(self):
-        return False
-
-    @property
-    def var_can_move(self):
-        return True
-
-    @property
     def var_is_paralyzed(self):
         return len(self._paralyzed)
 
     @property
     def paralyze_reasons(self):
         return [x for x in self._paralyzed]
-
-    @property
-    def var_is_blocking_pos(self):
-        return False
-
-    @property
-    def var_has_position(self):
-        return True
 
     @property
     def obs_tag(self):
@@ -48,10 +32,6 @@ class Agent(Entity):
     def observations(self):
         return self._observations
 
-    @property
-    def var_can_collide(self):
-        return True
-
     def step_result(self):
         pass
 
@@ -60,16 +40,21 @@ class Agent(Entity):
         return self._collection
 
     @property
-    def state(self):
-        return self._state or ActionResult(entity=self, identifier=c.NOOP, validity=c.VALID, reward=0)
+    def var_is_blocking_pos(self):
+        return self._is_blocking_pos
 
-    def __init__(self, actions: List[Action], observations: List[str], *args, **kwargs):
+    @property
+    def state(self):
+        return self._state or ActionResult(entity=self, identifier=c.NOOP, validity=c.VALID)
+
+    def __init__(self, actions: List[Action], observations: List[str], *args, is_blocking_pos=False, **kwargs):
         super(Agent, self).__init__(*args, **kwargs)
         self._paralyzed = set()
         self.step_result = dict()
         self._actions = actions
         self._observations = observations
         self._state: Union[Result, None] = None
+        self._is_blocking_pos = is_blocking_pos
 
     # noinspection PyAttributeOutsideInit
     def clear_temp_state(self):

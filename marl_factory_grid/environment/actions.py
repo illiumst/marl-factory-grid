@@ -48,9 +48,9 @@ class Move(Action, abc.ABC):
             reward = r.MOVEMENTS_VALID if move_validity else r.MOVEMENTS_FAIL
             return ActionResult(entity=entity, identifier=self._identifier, validity=move_validity, reward=reward)
         else:  # There is no place to go, propably collision
-            # This is currently handeld by the Collision rule, so that it can be switched on and off by conf.yml
+            # This is currently handeld by the WatchCollisions rule, so that it can be switched on and off by conf.yml
             # return ActionResult(entity=entity, identifier=self._identifier, validity=c.NOT_VALID, reward=r.COLLISION)
-            return ActionResult(entity=entity, identifier=self._identifier, validity=c.NOT_VALID, reward=0)
+            return ActionResult(entity=entity, identifier=self._identifier, validity=c.NOT_VALID)
 
     def _calc_new_pos(self, pos):
         x_diff, y_diff = MOVEMAP[self._identifier]

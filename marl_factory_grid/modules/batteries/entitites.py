@@ -1,11 +1,11 @@
 from marl_factory_grid.environment import constants as c
 from marl_factory_grid.environment.entity.entity import Entity
-from marl_factory_grid.environment.entity.object import _Object
+from marl_factory_grid.environment.entity.object import Object
 from marl_factory_grid.modules.batteries import constants as b
 from marl_factory_grid.utils.utility_classes import RenderEntity
 
 
-class Battery(_Object):
+class Battery(Object):
 
     @property
     def var_can_be_bound(self):
@@ -50,7 +50,7 @@ class Battery(_Object):
         return summary
 
 
-class Pod(Entity):
+class ChargePod(Entity):
 
     @property
     def encoding(self):
@@ -58,7 +58,7 @@ class Pod(Entity):
 
     def __init__(self, *args, charge_rate: float = 0.4,
                  multi_charge: bool = False, **kwargs):
-        super(Pod, self).__init__(*args, **kwargs)
+        super(ChargePod, self).__init__(*args, **kwargs)
         self.charge_rate = charge_rate
         self.multi_charge = multi_charge
 

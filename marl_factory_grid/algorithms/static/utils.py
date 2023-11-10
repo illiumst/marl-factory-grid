@@ -26,12 +26,16 @@ def points_to_graph(coordiniates, allow_euclidean_connections=True, allow_manhat
     assert allow_euclidean_connections or allow_manhattan_connections
     possible_connections = itertools.combinations(coordiniates, 2)
     graph = nx.Graph()
-    for a, b in possible_connections:
-        diff = np.linalg.norm(np.asarray(a)-np.asarray(b))
-        if allow_manhattan_connections and allow_euclidean_connections and diff <= np.sqrt(2):
-            graph.add_edge(a, b)
-        elif not allow_manhattan_connections and allow_euclidean_connections and diff == np.sqrt(2):
-            graph.add_edge(a, b)
-        elif allow_manhattan_connections and not allow_euclidean_connections and diff == 1:
-            graph.add_edge(a, b)
+    if allow_manhattan_connections and allow_euclidean_connections:
+        graph.add_edges_from(
+            (a, b) for a, b in possible_connections if np.linalg.norm(np.asarray(a) - np.asarray(b)) <= np.sqrt(2)
+        )
+    elif not allow_manhattan_connections and allow_euclidean_connections:
+        graph.add_edges_from(
+            (a, b) for a, b in possible_connections if np.linalg.norm(np.asarray(a) - np.asarray(b)) == np.sqrt(2)
+        )
+    elif allow_manhattan_connections and not allow_euclidean_connections:
+        graph.add_edges_from(
+            (a, b) for a, b in possible_connections if np.linalg.norm(np.asarray(a) - np.asarray(b)) == 1
+        )
     return graph

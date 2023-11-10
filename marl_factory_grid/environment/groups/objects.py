@@ -1,14 +1,19 @@
 from collections import defaultdict
-from typing import List
+from typing import List, Iterator, Union
 
 import numpy as np
 
-from marl_factory_grid.environment.entity.object import _Object
+from marl_factory_grid.environment.entity.object import Object
 import marl_factory_grid.environment.constants as c
+from marl_factory_grid.utils import helpers as h
 
 
-class _Objects:
-    _entity = _Object
+class Objects:
+    _entity = Object
+
+    @property
+    def var_can_be_bound(self):
+        return False
 
     @property
     def observers(self):
@@ -45,7 +50,7 @@ class _Objects:
     def __len__(self):
         return len(self._data)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Union[Object, None]]:
         return iter(self.values())
 
     def add_item(self, item: _entity):
@@ -125,13 +130,14 @@ class _Objects:
         repr_dict = {key: val for key, val in self._data.items() if key not in [c.WALLS]}
         return f'{self.__class__.__name__}[{repr_dict}]'
 
-    def notify_del_entity(self, entity: _Object):
+    def notify_del_entity(self, entity: Object):
         try:
+            # noinspection PyUnresolvedReferences
             self.pos_dict[entity.pos].remove(entity)
         except (AttributeError, ValueError, IndexError):
             pass
 
-    def notify_add_entity(self, entity: _Object):
+    def notify_add_entity(self, entity: Object):
         try:
             if self not in entity.observers:
                 entity.add_observer(self)
@@ -148,12 +154,12 @@ class _Objects:
 
     def by_entity(self, entity):
         try:
-            return next((x for x in self if x.belongs_to_entity(entity)))
+            return h.get_first(self, filter_by=lambda x: x.belongs_to_entity(entity))
         except (StopIteration, AttributeError):
             return None
 
     def idx_by_entity(self, entity):
         try:
-            return next((idx for idx, x in enumerate(self) if x.belongs_to_entity(entity)))
+            return h.get_first_index(self, filter_by=lambda x: x.belongs_to_entity(entity))
         except (StopIteration, AttributeError):
             return None

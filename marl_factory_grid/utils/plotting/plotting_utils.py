@@ -60,7 +60,7 @@ def prepare_center_double_column_legend(df, hue, style, hue_order):
     print('Struggling to plot Figure using LaTeX - going back to normal.')
     plt.close('all')
     sns.set(rc={'text.usetex': False}, style='whitegrid')
-    fig = plt.figure(figsize=(10, 11))
+    _ = plt.figure(figsize=(10, 11))
     lineplot = sns.lineplot(data=df, x='Episode', y='Score', hue=hue, style=style,
                             ci=95, palette=PALETTE, hue_order=hue_order, legend=False)
     # plt.legend(bbox_to_anchor=(1.02, 1), loc='upper left', borderaxespad=0)

@@ -6,18 +6,21 @@ from marl_factory_grid.environment.factory import Factory
 
 from marl_factory_grid.utils.logging.envmonitor import EnvMonitor
 from marl_factory_grid.utils.logging.recorder import EnvRecorder
+from marl_factory_grid.utils.plotting.plot_single_runs import plot_single_run
 from marl_factory_grid.utils.tools import ConfigExplainer
 
 
 if __name__ == '__main__':
     # Render at each step?
-    render = True
+    render = False
     # Reveal all possible Modules (Entities, Rules, Agents[Actions, Observations], etc.)
     explain_config = False
     # Collect statistics?
-    monitor = False
+    monitor = True
     # Record as Protobuf?
     record = False
+    # Plot Results?
+    plotting = True
 
     run_path = Path('study_out')
 
@@ -38,7 +41,7 @@ if __name__ == '__main__':
         factory = EnvRecorder(factory)
 
     # RL learn Loop
-    for episode in trange(500):
+    for episode in trange(10):
         _ = factory.reset()
         done = False
         if render:
@@ -54,7 +57,10 @@ if __name__ == '__main__':
                 break
 
     if monitor:
-        factory.save_run(run_path / 'test.pkl')
+        factory.save_run(run_path / 'test_monitor.pkl')
     if record:
         factory.save_records(run_path / 'test.pb')
+    if plotting:
+        plot_single_run(run_path)
+
     print('Done!!! Goodbye....')

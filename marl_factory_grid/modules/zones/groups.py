@@ -1,8 +1,8 @@
-from marl_factory_grid.environment.groups.objects import _Objects
+from marl_factory_grid.environment.groups.objects import Objects
 from marl_factory_grid.modules.zones import Zone
 
 
-class Zones(_Objects):
+class Zones(Objects):
     symbol = None
     _entity = Zone
 

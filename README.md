@@ -56,7 +56,7 @@ Just define what your environment needs in a *yaml*-configfile like:
                     - Items
     Rules:
         Defaults: {}
-        Collision:
+        WatchCollisions:
             done_at_collisions: !!bool True
         ItemRespawn:
             spawn_freq: 5
@@ -94,7 +94,7 @@ All [Entites](marl_factory_grid/environment/entity/global_entities.py) are avail
 
 
 #### Rules
-[Rules](marl_factory_grid/environment/entity/object.py) define how the environment behaves on micro-scale.
+[Rules](marl_factory_grid/environment/entity/object.py) define how the environment behaves on microscale.
 Each of the hookes (`on_init`, `pre_step`, `on_step`, '`post_step`', `on_done`) 
 provide env-access to implement customn logic, calculate rewards, or gather information.
 
@@ -107,6 +107,7 @@ Make sure to bring your own assets for each Entity living in the Gridworld as th
 PNG-files (transparent background) of square aspect-ratio should do the job, in general.
 
 <img src="/marl_factory_grid/environment/assets/wall.png"  width="5%"> 
+<!--suppress HtmlUnknownAttribute -->
 <html &nbsp&nbsp&nbsp&nbsp html> 
 <img src="/marl_factory_grid/environment/assets/agent/agent.png"  width="5%">
 

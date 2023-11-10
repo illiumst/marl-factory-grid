@@ -1,17 +1,16 @@
-import math
 import re
 from collections import defaultdict
-from itertools import product
 from typing import Dict, List
 
 import numpy as np
-from numba import njit
 
 from marl_factory_grid.environment import constants as c
+from marl_factory_grid.environment.entity.object import Object
 from marl_factory_grid.environment.groups.utils import Combined
-import marl_factory_grid.utils.helpers as h
-from marl_factory_grid.utils.states import Gamestate
 from marl_factory_grid.utils.utility_classes import Floor
+from marl_factory_grid.utils.ray_caster import RayCaster
+from marl_factory_grid.utils.states import Gamestate
+from marl_factory_grid.utils import helpers as h
 
 
 class OBSBuilder(object):
@@ -77,11 +76,13 @@ class OBSBuilder(object):
 
     def place_entity_in_observation(self, obs_array, agent, e):
         x, y = (e.x - agent.x) + self.pomdp_r, (e.y - agent.y) + self.pomdp_r
-        try:
-            obs_array[x, y] += e.encoding
-        except IndexError:
-            # Seemded to be visible but is out of range
-            pass
+        if not min([y, x]) < 0:
+            try:
+                obs_array[x, y] += e.encoding
+            except IndexError:
+                # Seemded to be visible but is out of range
+                pass
+        pass
 
     def build_for_agent(self, agent, state) -> (List[str], np.ndarray):
         assert self._curr_env_step == state.curr_step, (
@@ -121,18 +122,24 @@ class OBSBuilder(object):
                         e = self.all_obs[l_name]
                     except KeyError:
                         try:
-                            # Look for bound entity names!
-                            pattern = re.compile(f'{re.escape(l_name)}(.*){re.escape(agent.name)}')
-                            name = next((x for x in self.all_obs if pattern.search(x)), None)
+                            # Look for bound entity REPRs!
+                            pattern = re.compile(f'{re.escape(l_name)}'
+                                                 f'{re.escape("[")}(.*){re.escape("]")}'
+                                                 f'{re.escape("(")}{re.escape(agent.name)}{re.escape(")")}')
+                            name = next((key for key, val in self.all_obs.items()
+                                         if pattern.search(str(val)) and isinstance(val, Object)), None)
                             e = self.all_obs[name]
                         except KeyError:
                             try:
                                 e = next(v for k, v in self.all_obs.items() if l_name in k and agent.name in k)
                             except StopIteration:
-                                raise KeyError(
-                                    f'Check for spelling errors! \n '
-                                    f'No combination of "{l_name} and {agent.name}" could not be found in:\n '
-                                    f'{list(dict(self.all_obs).keys())}')
+                                print(f'# Check for spelling errors!')
+                                print(f'# No combination of "{l_name}" and "{agent.name}" could not be found in:')
+                                print(f'# {list(dict(self.all_obs).keys())}')
+                                print('#')
+                                print('# exiting...')
+                                print('#')
+                                exit(-99999)
 
                     try:
                         positional = e.var_has_position
@@ -161,31 +168,30 @@ class OBSBuilder(object):
             try:
                 light_map = np.zeros(self.obs_shape)
                 visible_floor = self.ray_caster[agent.name].visible_entities(self._floortiles, reset_cache=False)
-                if self.pomdp_r:
-                    for f in set(visible_floor):
-                        self.place_entity_in_observation(light_map, agent, f)
-                else:
-                    for f in set(visible_floor):
-                        light_map[f.x, f.y] += f.encoding
+
+                for f in set(visible_floor):
+                    self.place_entity_in_observation(light_map, agent, f)
+                # else:
+                #     for f in set(visible_floor):
+                #         light_map[f.x, f.y] += f.encoding
                 self.curr_lightmaps[agent.name] = light_map
             except (KeyError, ValueError):
-                print()
                 pass
         return obs, self.obs_layers[agent.name]
 
     def _sort_and_name_observation_conf(self, agent):
-        '''
+        """
         Builds the useable observation scheme per agent from conf.yaml.
         :param agent:
         :return:
-        '''
+        """
         # Fixme: no asymetric shapes possible.
         self.ray_caster[agent.name] = RayCaster(agent, min(self.obs_shape))
         obs_layers = []
 
         for obs_str in agent.observations:
             if isinstance(obs_str, dict):
-                obs_str, vals = next(obs_str.items().__iter__())
+                obs_str, vals = h.get_first(obs_str.items())
             else:
                 vals = None
             if obs_str == c.SELF:
@@ -214,129 +220,3 @@ class OBSBuilder(object):
                 obs_layers.append(obs_str)
         self.obs_layers[agent.name] = obs_layers
         self.curr_lightmaps[agent.name] = np.zeros(self.obs_shape)
-
-
-class RayCaster:
-    def __init__(self, agent, pomdp_r, degs=360):
-        self.agent = agent
-        self.pomdp_r = pomdp_r
-        self.n_rays = (self.pomdp_r + 1) * 8
-        self.degs = degs
-        self.ray_targets = self.build_ray_targets()
-        self.obs_shape_cube = np.array([self.pomdp_r, self.pomdp_r])
-        self._cache_dict = {}
-
-    def __repr__(self):
-        return f'{self.__class__.__name__}({self.agent.name})'
-
-    def build_ray_targets(self):
-        north = np.array([0, -1]) * self.pomdp_r
-        thetas = [np.deg2rad(deg) for deg in np.linspace(-self.degs // 2, self.degs // 2, self.n_rays)[::-1]]
-        rot_M = [
-            [[math.cos(theta), -math.sin(theta)],
-             [math.sin(theta), math.cos(theta)]] for theta in thetas
-        ]
-        rot_M = np.stack(rot_M, 0)
-        rot_M = np.unique(np.round(rot_M @ north), axis=0)
-        return rot_M.astype(int)
-
-    def ray_block_cache(self, key, callback):
-        if key not in self._cache_dict:
-            self._cache_dict[key] = callback()
-        return self._cache_dict[key]
-
-    def visible_entities(self, pos_dict, reset_cache=True):
-        visible = list()
-        if reset_cache:
-            self._cache_dict = {}
-
-        for ray in self.get_rays():
-            rx, ry = ray[0]
-            for x, y in ray:
-                cx, cy = x - rx, y - ry
-
-                entities_hit = pos_dict[(x, y)]
-                hits = self.ray_block_cache((x, y),
-                                            lambda: any(True for e in entities_hit if e.var_is_blocking_light)
-                                            )
-
-                diag_hits = all([
-                    self.ray_block_cache(
-                        key,
-                        lambda: all(False for e in pos_dict[key] if not e.var_is_blocking_light) and bool(
-                            pos_dict[key]))
-                    for key in ((x, y - cy), (x - cx, y))
-                ]) if (cx != 0 and cy != 0) else False
-
-                visible += entities_hit if not diag_hits else []
-                if hits or diag_hits:
-                    break
-                rx, ry = x, y
-        return visible
-
-    def get_rays(self):
-        a_pos = self.agent.pos
-        outline = self.ray_targets + a_pos
-        return self.bresenham_loop(a_pos, outline)
-
-    # todo do this once and cache the points!
-    def get_fov_outline(self) -> np.ndarray:
-        return self.ray_targets + self.agent.pos
-
-    def get_square_outline(self):
-        agent = self.agent
-        x_coords = range(agent.x - self.pomdp_r, agent.x + self.pomdp_r + 1)
-        y_coords = range(agent.y - self.pomdp_r, agent.y + self.pomdp_r + 1)
-        outline = list(product(x_coords, [agent.y - self.pomdp_r, agent.y + self.pomdp_r])) \
-                  + list(product([agent.x - self.pomdp_r, agent.x + self.pomdp_r], y_coords))
-        return outline
-
-    @staticmethod
-    @njit
-    def bresenham_loop(a_pos, points):
-        results = []
-        for end in points:
-            x1, y1 = a_pos
-            x2, y2 = end
-            dx = x2 - x1
-            dy = y2 - y1
-
-            # Determine how steep the line is
-            is_steep = abs(dy) > abs(dx)
-
-            # Rotate line
-            if is_steep:
-                x1, y1 = y1, x1
-                x2, y2 = y2, x2
-
-            # Swap start and end points if necessary and store swap state
-            swapped = False
-            if x1 > x2:
-                x1, x2 = x2, x1
-                y1, y2 = y2, y1
-                swapped = True
-
-            # Recalculate differentials
-            dx = x2 - x1
-            dy = y2 - y1
-
-            # Calculate error
-            error = int(dx / 2.0)
-            ystep = 1 if y1 < y2 else -1
-
-            # Iterate over bounding box generating points between start and end
-            y = y1
-            points = []
-            for x in range(int(x1), int(x2) + 1):
-                coord = [y, x] if is_steep else [x, y]
-                points.append(coord)
-                error -= abs(dy)
-                if error < 0:
-                    y += ystep
-                    error += dx
-
-            # Reverse the list if the coordinates were swapped
-            if swapped:
-                points.reverse()
-            results.append(points)
-        return results

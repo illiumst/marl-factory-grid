@@ -1,11 +1,9 @@
 from typing import List, Union
 
-import marl_factory_grid.modules.batteries.constants
-from marl_factory_grid.environment.rules import Rule
-from marl_factory_grid.utils.results import TickResult, DoneResult
-
 from marl_factory_grid.environment import constants as c
+from marl_factory_grid.environment.rules import Rule
 from marl_factory_grid.modules.batteries import constants as b
+from marl_factory_grid.utils.results import TickResult, DoneResult
 
 
 class BatteryDecharge(Rule):
@@ -49,10 +47,6 @@ class BatteryDecharge(Rule):
         self.per_action_costs = per_action_costs
         self.initial_charge = initial_charge
 
-    def on_init(self, state, lvl_map):  # on reset?
-        assert len(state[c.AGENT]), "There are no agents, did you already spawn them?"
-        state[b.BATTERIES].spawn(state[c.AGENT], self.initial_charge)
-
     def tick_step(self, state) -> List[TickResult]:
         # Decharge
         batteries = state[b.BATTERIES]
@@ -66,7 +60,7 @@ class BatteryDecharge(Rule):
 
             batteries.by_entity(agent).decharge(energy_consumption)
 
-            results.append(TickResult(self.name, reward=0, entity=agent, validity=c.VALID))
+            results.append(TickResult(self.name, entity=agent, validity=c.VALID))
 
         return results
 
@@ -82,13 +76,13 @@ class BatteryDecharge(Rule):
                 if self.paralyze_agents_on_discharge:
                     btry.bound_entity.paralyze(self.name)
                     results.append(
-                        TickResult("Paralyzed", entity=btry.bound_entity, reward=0, validity=c.VALID)
+                        TickResult("Paralyzed", entity=btry.bound_entity, validity=c.VALID)
                     )
                     state.print(f'{btry.bound_entity.name} has just been paralyzed!')
             if btry.bound_entity.var_is_paralyzed and not btry.is_discharged:
                 btry.bound_entity.de_paralyze(self.name)
                 results.append(
-                    TickResult("De-Paralyzed", entity=btry.bound_entity, reward=0, validity=c.VALID)
+                    TickResult("De-Paralyzed", entity=btry.bound_entity, validity=c.VALID)
                 )
                 state.print(f'{btry.bound_entity.name} has just been de-paralyzed!')
         return results
@@ -132,7 +126,7 @@ class DoneAtBatteryDischarge(BatteryDecharge):
         if any_discharged or all_discharged:
             return [DoneResult(self.name, validity=c.VALID, reward=self.reward_discharge_done)]
         else:
-            return [DoneResult(self.name, validity=c.NOT_VALID, reward=0)]
+            return [DoneResult(self.name, validity=c.NOT_VALID)]
 
 
 class SpawnChargePods(Rule):
@@ -155,7 +149,7 @@ class SpawnChargePods(Rule):
 
     def on_init(self, state, lvl_map):
         pod_collection = state[b.CHARGE_PODS]
-        empty_positions = state.entities.empty_positions()
+        empty_positions = state.entities.empty_positions
         pods = pod_collection.from_coordinates(empty_positions, entity_kwargs=dict(
             multi_charge=self.multi_charge, charge_rate=self.charge_rate)
                                                )

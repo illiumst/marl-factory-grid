@@ -2,7 +2,7 @@ import importlib
 
 from collections import defaultdict
 from pathlib import PurePath, Path
-from typing import Union, Dict, List
+from typing import Union, Dict, List, Iterable, Callable
 
 import numpy as np
 from numpy.typing import ArrayLike
@@ -61,8 +61,8 @@ class ObservationTranslator:
         :param per_agent_named_obs_spaces: `Named observation space` one for each agent. Overloaded.
         type  per_agent_named_obs_spaces: Dict[str, dict]
 
-        :param placeholder_fill_value: Currently not fully implemented!!!
-        :type  placeholder_fill_value: Union[int, str] = 'N')
+        :param placeholder_fill_value: Currently, not fully implemented!!!
+        :type  placeholder_fill_value: Union[int, str] = 'N'
         """
 
         if isinstance(placeholder_fill_value, str):
@@ -222,7 +222,7 @@ def locate_and_import_class(class_name, folder_path: Union[str, PurePath] = ''):
         mod = importlib.import_module('.'.join(module_parts))
         all_found_modules.extend([x for x in dir(mod) if (not(x.startswith('__') or len(x) <= 2) and x.istitle())
                                   and x not in ['Entity',  'NamedTuple', 'List', 'Rule', 'Union',
-                                                'TickResult', 'ActionResult', 'Action', 'Agent', 'BoundEntityMixin',
+                                                'TickResult', 'ActionResult', 'Action', 'Agent',
                                                 'RenderEntity', 'TemplateRule', 'Objects', 'PositionMixin',
                                                 'IsBoundMixin', 'EnvObject', 'EnvObjects', 'Dict', 'Any'
                                                 ]])
@@ -240,7 +240,13 @@ def add_bound_name(name_str, bound_e):
 
 def add_pos_name(name_str, bound_e):
     if bound_e.var_has_position:
-        return f'{name_str}({bound_e.pos})'
+        return f'{name_str}@{bound_e.pos}'
     return name_str
 
 
+def get_first(iterable: Iterable, filter_by: Callable[[any], bool] = lambda _: True):
+    return next((x for x in iterable if filter_by(x)), None)
+
+
+def get_first_index(iterable: Iterable, filter_by: Callable[[any], bool] = lambda _: True):
+    return next((idx for idx, x in enumerate(iterable) if filter_by(x)), None)

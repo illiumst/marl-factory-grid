@@ -28,6 +28,7 @@ class Names:
     BATCH_SIZE      = 'bnatch_size'
     N_ACTIONS       = 'n_actions'
 
+
 nms = Names
 ListOrTensor = Union[List, torch.Tensor]
 
@@ -112,9 +113,8 @@ class BaseActorCritic:
                 next_obs, reward, done, info = env.step(action)
                 done = [done] * self.n_agents if isinstance(done, bool) else done
 
-                last_hiddens = dict(hidden_actor =out[nms.HIDDEN_ACTOR],
+                last_hiddens = dict(hidden_actor=out[nms.HIDDEN_ACTOR],
                                     hidden_critic=out[nms.HIDDEN_CRITIC])
-
 
                 tm.add(observation=obs, action=action, reward=reward, done=done,
                        logits=out.get(nms.LOGITS, None), values=out.get(nms.CRITIC, None),
@@ -142,7 +142,9 @@ class BaseActorCritic:
             print(f'reward at episode: {episode} = {rew_log}')
             episode += 1
             df_results.append([episode, rew_log, *reward])
-        df_results = pd.DataFrame(df_results, columns=['steps', 'reward', *[f'agent#{i}' for i in range(self.n_agents)]])
+        df_results = pd.DataFrame(df_results,
+                                  columns=['steps', 'reward', *[f'agent#{i}' for i in range(self.n_agents)]]
+                                  )
         if checkpointer is not None:
             df_results.to_csv(checkpointer.path / 'results.csv', index=False)
         return df_results
@@ -157,24 +159,27 @@ class BaseActorCritic:
             last_action, reward    = [-1] * self.n_agents, [0.] * self.n_agents
             done, rew_log, eps_rew = [False] * self.n_agents, 0, torch.zeros(self.n_agents)
             while not all(done):
-                if render: env.render()
+                if render:
+                    env.render()
 
                 out    = self.forward(obs, last_action, **last_hiddens)
                 action = self.get_actions(out)
                 next_obs, reward, done, info = env.step(action)
 
-                if isinstance(done, bool): done = [done] * obs.shape[0]
+                if isinstance(done, bool):
+                    done = [done] * obs.shape[0]
                 obs = next_obs
                 last_action = action
                 last_hiddens = dict(hidden_actor=out.get(nms.HIDDEN_ACTOR,   None),
                                     hidden_critic=out.get(nms.HIDDEN_CRITIC, None)
                                     )
                 eps_rew += torch.tensor(reward)
-            results.append(eps_rew.tolist() + [sum(eps_rew).item()] + [episode])
+            results.append(eps_rew.tolist() + [np.sum(eps_rew).item()] + [episode])
             episode += 1
         agent_columns = [f'agent#{i}' for i in range(self.cfg['environment']['n_agents'])]
         results = pd.DataFrame(results, columns=agent_columns + ['sum', 'episode'])
-        results = pd.melt(results, id_vars=['episode'], value_vars=agent_columns + ['sum'], value_name='reward', var_name='agent')
+        results = pd.melt(results, id_vars=['episode'], value_vars=agent_columns + ['sum'],
+                          value_name='reward', var_name='agent')
         return results
 
     @staticmethod
