@@ -22,26 +22,41 @@ Agents:
     - Inventory
     - DropOffLocations
     - Maintainers
+    # This is special for agents, as each one is different and can act as an adversary e.g.
+    Positions:
+      - (16, 7)
+      - (16, 6)
+      - (16, 3)
+      - (16, 4)
+      - (16, 5)
 Entities:
   Batteries:
     initial_charge: 0.8
     per_action_costs: 0.02
-  ChargePods: {}
-  Destinations: {}
+  ChargePods:
+    coords_or_quantity: 2
+  Destinations:
+    coords_or_quantity: 1
+    spawn_mode: GROUPED
   DirtPiles:
+    coords_or_quantity: 10
+    initial_amount: 2
     clean_amount: 1
     dirt_spawn_r_var: 0.1
-    initial_amount: 2
-    initial_dirt_ratio: 0.05
     max_global_amount: 20
     max_local_amount: 5
-  Doors: {}
-  DropOffLocations: {}
+  Doors:
+  DropOffLocations:
+    coords_or_quantity: 1
+    max_dropoff_storage_size: 0
   GlobalPositions: {}
   Inventories: {}
-  Items: {}
-  Machines: {}
-  Maintainers: {}
+  Items:
+    coords_or_quantity: 5
+  Machines:
+    coords_or_quantity: 2
+  Maintainers:
+    coords_or_quantity: 1
   Zones: {}
 
 General:
@@ -49,33 +64,34 @@ General:
   individual_rewards: true
   level_name: large
   pomdp_r: 3
-  verbose: false
-  tests: true
+  verbose: True
+  tests: false
 
 Rules:
-  SpawnAgents: {}
-  DoneAtBatteryDischarge: {}
-  Collision:
-    done_at_collisions: false
-  AssignGlobalPositions: {}
-  DoneAtDestinationReachAny: {}
-  DestinationReachReward: {}
-  SpawnDestinations:
-    n_dests: 1
-    spawn_mode: GROUPED
-  DoneOnAllDirtCleaned: {}
-  SpawnDirt:
-    spawn_freq: 15
+  # Environment Dynamics
   EntitiesSmearDirtOnMove:
     smear_ratio: 0.2
   DoorAutoClose:
     close_frequency: 10
-  ItemRules:
-    max_dropoff_storage_size: 0
-    n_items: 5
-    n_locations: 5
-    spawn_frequency: 15
-  MaxStepsReached:
-    max_steps: 10
-#  AgentSingleZonePlacement:
-#    n_zones: 4
+  MoveMaintainers:
+
+  # Respawn Stuff
+  RespawnDirt:
+    respawn_freq: 15
+  RespawnItems:
+    respawn_freq: 15
+
+  # Utilities
+  WatchCollisions:
+    done_at_collisions: false
+
+  # Done Conditions
+  DoneAtDestinationReachAny:
+  DoneOnAllDirtCleaned:
+  DoneAtBatteryDischarge:
+  DoneAtMaintainerCollision:
+  DoneAtMaxStepsReached:
+    max_steps: 500
+
+Tests:
+  FirstTest: {}

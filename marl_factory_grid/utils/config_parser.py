@@ -161,8 +161,8 @@ class FactoryConfigParser(object):
 
         return self._load_smth(rules, Rule)
 
-    def load_env_tests(self) -> List[Rule]:
-        return self._load_smth(self.tests, None)  # Test
+    def load_env_tests(self) -> List[Test]:
+        return self._load_smth(self.tests, Test)
 
     def _load_smth(self, config, class_obj):
         rules = list()

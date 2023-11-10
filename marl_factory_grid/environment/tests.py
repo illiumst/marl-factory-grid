@@ -38,5 +38,6 @@ class Test(abc.ABC):
 class FirstTest(Test):
 
     def __init__(self):
+        print("firstTest")
         super().__init__()
         pass
