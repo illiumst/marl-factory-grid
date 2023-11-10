@@ -49,7 +49,7 @@ def prepare_plt(df, hue, style, hue_order):
     plt.close('all')
     sns.set(rc={'text.usetex': False}, style='whitegrid')
     lineplot = sns.lineplot(data=df, x='Episode', y='Score', hue=hue, style=style,
-                            ci=95, palette=PALETTE, hue_order=hue_order, )
+                            errorbar=('ci', 95), palette=PALETTE, hue_order=hue_order, )
     plt.legend(bbox_to_anchor=(1.02, 1), loc='upper left', borderaxespad=0)
     plt.tight_layout()
     # lineplot.set_title(f'{sorted(list(df["Measurement"].unique()))}')

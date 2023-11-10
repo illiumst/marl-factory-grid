@@ -12,7 +12,7 @@ from marl_factory_grid.utils.tools import ConfigExplainer
 
 if __name__ == '__main__':
     # Render at each step?
-    render = False
+    render = True
     # Reveal all possible Modules (Entities, Rules, Agents[Actions, Observations], etc.)
     explain_config = False
     # Collect statistics?

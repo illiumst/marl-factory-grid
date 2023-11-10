@@ -24,11 +24,7 @@ class OBSBuilder(object):
             return 0
 
     def __init__(self, level_shape: np.size, state: Gamestate, pomdp_r: int):
-        self._curr_env_step = None
         self.all_obs = dict()
-        self.light_blockers = defaultdict(lambda: False)
-        self.positional = defaultdict(lambda: False)
-        self.non_positional = defaultdict(lambda: False)
         self.ray_caster = dict()
 
         self.level_shape = level_shape
@@ -37,13 +33,15 @@ class OBSBuilder(object):
         self.size = np.prod(self.obs_shape)
 
         self.obs_layers = dict()
-
-        self.reset_struc_obs_block(state)
         self.curr_lightmaps = dict()
+
         self._floortiles = defaultdict(list, {pos: [Floor(*pos)] for pos in state.entities.floorlist})
 
-    def reset_struc_obs_block(self, state):
-        self._curr_env_step = state.curr_step
+        self.reset(state)
+
+    def reset(self, state):
+        # Reset temporary information
+        self.curr_lightmaps = dict()
         # Construct an empty obs (array) for possible placeholders
         self.all_obs[c.PLACEHOLDER] = np.full(self.obs_shape, 0, dtype=float)
         # Fill the all_obs-dict with all available entities
@@ -52,7 +50,8 @@ class OBSBuilder(object):
 
     def observation_space(self, state):
         from gymnasium.spaces import Tuple, Box
-        obsn = self.refresh_and_build_for_all(state)
+        self.reset(state)
+        obsn = self.build_for_all(state)
         if len(state[c.AGENT]) == 1:
             space = Box(low=0, high=1, shape=next(x for x in obsn.values()).shape, dtype=np.float32)
         else:
@@ -60,14 +59,13 @@ class OBSBuilder(object):
         return space
 
     def named_observation_space(self, state):
-        return self.refresh_and_build_for_all(state)
+        self.reset(state)
+        return self.build_for_all(state)
 
-    def refresh_and_build_for_all(self, state) -> (dict, dict):
-        self.reset_struc_obs_block(state)
+    def build_for_all(self, state) -> (dict, dict):
         return {agent.name: self.build_for_agent(agent, state)[0] for agent in state[c.AGENT]}
 
-    def refresh_and_build_named_for_all(self, state) -> Dict[str, Dict[str, np.ndarray]]:
-        self.reset_struc_obs_block(state)
+    def build_named_for_all(self, state) -> Dict[str, Dict[str, np.ndarray]]:
         named_obs_dict = {}
         for agent in state[c.AGENT]:
             obs, names = self.build_for_agent(agent, state)
@@ -85,9 +83,6 @@ class OBSBuilder(object):
         pass
 
     def build_for_agent(self, agent, state) -> (List[str], np.ndarray):
-        assert self._curr_env_step == state.curr_step, (
-            "The observation objekt has not been reset this state! Call 'reset_struc_obs_block(state)'"
-        )
         try:
             agent_want_obs = self.obs_layers[agent.name]
         except KeyError:
@@ -166,7 +161,8 @@ class OBSBuilder(object):
                             raise ValueError(f'Max(obs.size) for {e.name}:  {obs[idx].size}, but was: {len(v)}.')
         if self.pomdp_r:
             try:
-                light_map = np.zeros(self.obs_shape)
+                light_map = self.curr_lightmaps.get(agent.name, np.zeros(self.obs_shape))
+                light_map[:] = 0.0
                 visible_floor = self.ray_caster[agent.name].visible_entities(self._floortiles, reset_cache=False)
 
                 for f in set(visible_floor):

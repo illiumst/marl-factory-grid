@@ -86,6 +86,10 @@ class Gamestate(object):
         self.rules = StepRules(*rules)
         self._floortile_graph = None
 
+    def reset(self):
+        self.curr_step = 0
+        self.curr_actions = None
+
     def __getitem__(self, item):
         return self.entities[item]
 
