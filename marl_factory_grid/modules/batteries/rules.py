@@ -127,30 +127,3 @@ class DoneAtBatteryDischarge(BatteryDecharge):
             return [DoneResult(self.name, validity=c.VALID, reward=self.reward_discharge_done)]
         else:
             return [DoneResult(self.name, validity=c.NOT_VALID)]
-
-
-class SpawnChargePods(Rule):
-
-    def __init__(self, n_pods: int, charge_rate: float = 0.4, multi_charge: bool = False):
-        """
-        Spawn Chargepods in accordance to the given parameters.
-
-        :type n_pods: int
-        :param n_pods: How many charge pods are there?
-        :type charge_rate: float
-        :param charge_rate: How much juice does each use of the charge action top up?
-        :type multi_charge: bool
-        :param multi_charge: Whether multiple agents are able to charge at the same time.
-        """
-        super().__init__()
-        self.multi_charge = multi_charge
-        self.charge_rate = charge_rate
-        self.n_pods = n_pods
-
-    def on_init(self, state, lvl_map):
-        pod_collection = state[b.CHARGE_PODS]
-        empty_positions = state.entities.empty_positions
-        pods = pod_collection.from_coordinates(empty_positions, entity_kwargs=dict(
-            multi_charge=self.multi_charge, charge_rate=self.charge_rate)
-                                               )
-        pod_collection.add_items(pods)

@@ -40,6 +40,6 @@ class IndicateDoorAreaInObservation(Rule):
         #  Could then be combined with the "Combine"-approach.
         super().__init__()
 
-    def on_init(self, state, lvl_map):
+    def on_reset(self, state, lvl_map):
         for door in state[d.DOORS]:
             state[d.DOORS].add_items([DoorIndicator(x) for x in state.entities.neighboring_positions(door.pos)])

@@ -3,6 +3,7 @@ from typing import List, Tuple
 
 import numpy as np
 
+from marl_factory_grid.algorithms.static.utils import points_to_graph
 from marl_factory_grid.environment import constants as c
 from marl_factory_grid.environment.entity.entity import Entity
 from marl_factory_grid.environment.rules import Rule
@@ -26,6 +27,12 @@ class StepRules:
         assert isinstance(item, Rule)
         self.rules.append(item)
         return True
+
+    def do_all_reset(self, state):
+        for rule in self.rules:
+            if rule_reset_printline := rule.on_reset(state):
+                state.print(rule_reset_printline)
+        return c.VALID
 
     def do_all_init(self, state, lvl_map):
         for rule in self.rules:
@@ -58,6 +65,13 @@ class StepRules:
 class Gamestate(object):
 
     @property
+    def floortile_graph(self):
+        if not self._floortile_graph:
+            self.print("Generating Floorgraph....")
+            self._floortile_graph = points_to_graph(self.entities.floorlist)
+        return self._floortile_graph
+
+    @property
     def moving_entites(self):
         return [y for x in self.entities for y in x if x.var_can_move]
 
@@ -70,6 +84,7 @@ class Gamestate(object):
         self.verbose = verbose
         self.rng = np.random.default_rng(env_seed)
         self.rules = StepRules(*rules)
+        self._floortile_graph = None
 
     def __getitem__(self, item):
         return self.entities[item]

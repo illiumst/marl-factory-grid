@@ -174,7 +174,7 @@ class BaseActorCritic:
                                     hidden_critic=out.get(nms.HIDDEN_CRITIC, None)
                                     )
                 eps_rew += torch.tensor(reward)
-            results.append(eps_rew.tolist() + [np.sum(eps_rew).item()] + [episode])
+            results.append(eps_rew.tolist() + [sum(eps_rew).item()] + [episode])
             episode += 1
         agent_columns = [f'agent#{i}' for i in range(self.cfg['environment']['n_agents'])]
         results = pd.DataFrame(results, columns=agent_columns + ['sum', 'episode'])

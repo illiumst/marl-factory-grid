@@ -18,6 +18,7 @@ class Action(abc.ABC):
 
     @abc.abstractmethod
     def do(self, entity, state) -> Union[None, ActionResult]:
+        print()
         return
 
     def __repr__(self):

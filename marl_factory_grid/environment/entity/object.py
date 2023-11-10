@@ -41,7 +41,7 @@ class Object:
 
     def __init__(self, str_ident: Union[str, None] = None, **kwargs):
         self._bound_entity = None
-        self._observers = []
+        self._observers = set()
         self._str_ident = str_ident
         self.u_int = self._identify_and_count_up()
         self._collection = None
@@ -75,7 +75,7 @@ class Object:
         self._collection = collection
 
     def add_observer(self, observer):
-        self.observers.append(observer)
+        self.observers.add(observer)
         observer.notify_add_entity(self)
 
     def del_observer(self, observer):

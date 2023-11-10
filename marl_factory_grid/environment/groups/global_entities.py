@@ -31,8 +31,11 @@ class Entities(Objects):
 
     def __init__(self, floor_positions):
         self._floor_positions = floor_positions
-        self.pos_dict = defaultdict(list)
+        self.pos_dict = None
         super().__init__()
+
+    def __repr__(self):
+        return f'{self.__class__.__name__}{[x for x in self]}'
 
     def guests_that_can_collide(self, pos):
         return [x for val in self.pos_dict[pos] for x in val if x.var_can_collide]
@@ -108,3 +111,12 @@ class Entities(Objects):
 
     def is_occupied(self, pos):
         return len([x for x in self.pos_dict[pos] if x.var_can_collide or x.var_is_blocking_pos]) >= 1
+
+    def reset(self):
+        self._observers = set(self)
+        self.pos_dict = defaultdict(list)
+        for entity_group in self:
+            entity_group.reset()
+
+            if hasattr(entity_group, "var_has_position") and entity_group.var_has_position:
+                entity_group.add_observer(self)

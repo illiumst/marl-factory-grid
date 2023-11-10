@@ -44,7 +44,7 @@ class Objects:
 
     def __init__(self, *args, **kwargs):
         self._data = defaultdict(lambda: None)
-        self._observers = [self]
+        self._observers = set(self)
         self.pos_dict = defaultdict(list)
 
     def __len__(self):
@@ -59,6 +59,8 @@ class Objects:
         assert self._data[item.name] is None, f'{item.name} allready exists!!!'
         self._data.update({item.name: item})
         item.set_collection(self)
+        if hasattr(self, "var_has_position") and self.var_has_position:
+            item.add_observer(self)
         for observer in self.observers:
             observer.notify_add_entity(item)
         return self
@@ -82,10 +84,9 @@ class Objects:
 
     # noinspection PyUnresolvedReferences
     def add_observer(self, observer):
-        self.observers.append(observer)
+        self.observers.add(observer)
         for entity in self:
-            if observer not in entity.observers:
-                entity.add_observer(observer)
+            entity.add_observer(observer)
 
     def add_items(self, items: List[_entity]):
         for item in items:
@@ -127,8 +128,7 @@ class Objects:
             raise TypeError
 
     def __repr__(self):
-        repr_dict = {key: val for key, val in self._data.items() if key not in [c.WALLS]}
-        return f'{self.__class__.__name__}[{repr_dict}]'
+        return f'{self.__class__.__name__}[{len(self)}]'
 
     def notify_del_entity(self, entity: Object):
         try:
@@ -163,3 +163,9 @@ class Objects:
             return h.get_first_index(self, filter_by=lambda x: x.belongs_to_entity(entity))
         except (StopIteration, AttributeError):
             return None
+
+    def reset(self):
+        self._data = defaultdict(lambda: None)
+        self._observers = set(self)
+        self.pos_dict = defaultdict(list)
+
