@@ -1,6 +1,6 @@
 import numpy as np
 
-from marl_factory_grid.environment.entity.object import _Object
+from marl_factory_grid.environment.entity.object import Object
 
 
 ##########################################################################
@@ -8,7 +8,7 @@ from marl_factory_grid.environment.entity.object import _Object
 ##########################################################################
 
 
-class PlaceHolder(_Object):
+class PlaceHolder(Object):
 
     def __init__(self, *args, fill_value=0, **kwargs):
         super().__init__(*args, **kwargs)
@@ -27,7 +27,7 @@ class PlaceHolder(_Object):
         return self.__class__.__name__
 
 
-class GlobalPosition(_Object):
+class GlobalPosition(Object):
 
     @property
     def encoding(self):

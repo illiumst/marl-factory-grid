@@ -61,8 +61,8 @@ class ObservationTranslator:
         :param per_agent_named_obs_spaces: `Named observation space` one for each agent. Overloaded.
         type  per_agent_named_obs_spaces: Dict[str, dict]
 
-        :param placeholder_fill_value: Currently not fully implemented!!!
-        :type  placeholder_fill_value: Union[int, str] = 'N')
+        :param placeholder_fill_value: Currently, not fully implemented!!!
+        :type  placeholder_fill_value: Union[int, str] = 'N'
         """
 
         if isinstance(placeholder_fill_value, str):

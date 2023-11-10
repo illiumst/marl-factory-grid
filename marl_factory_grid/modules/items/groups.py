@@ -1,12 +1,9 @@
-from random import shuffle
-
-from marl_factory_grid.modules.items import constants as i
 from marl_factory_grid.environment import constants as c
-
-from marl_factory_grid.environment.groups.collection import Collection
-from marl_factory_grid.environment.groups.objects import _Objects
-from marl_factory_grid.environment.groups.mixins import IsBoundMixin
 from marl_factory_grid.environment.entity.agent import Agent
+from marl_factory_grid.environment.groups.collection import Collection
+from marl_factory_grid.environment.groups.mixins import IsBoundMixin
+from marl_factory_grid.environment.groups.objects import Objects
+from marl_factory_grid.modules.items import constants as i
 from marl_factory_grid.modules.items.entitites import Item, DropOffLocation
 from marl_factory_grid.utils.results import Result
 
@@ -74,12 +71,11 @@ class Inventory(IsBoundMixin, Collection):
         self._collection = collection
 
 
-class Inventories(_Objects):
+class Inventories(Objects):
     _entity = Inventory
 
     var_can_move = False
     var_has_position = False
-
 
     symbol = None
 
@@ -114,7 +110,6 @@ class Inventories(_Objects):
 
     def summarize_states(self, **kwargs):
         return [val.summarize_states(**kwargs) for key, val in self.items()]
-
 
 
 class DropOffLocations(Collection):

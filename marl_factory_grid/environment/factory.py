@@ -56,15 +56,18 @@ class Factory(gym.Env):
             self.level_filepath = Path(custom_level_path)
         else:
             self.level_filepath = Path(__file__).parent.parent / h.LEVELS_DIR / f'{self.conf.level_name}.txt'
-        self._renderer = None  # expensive - don't use; unless required !
 
         parsed_entities = self.conf.load_entities()
         self.map = LevelParser(self.level_filepath, parsed_entities, self.conf.pomdp_r)
 
         # Init for later usage:
-        self.state: Gamestate
-        self.map: LevelParser
-        self.obs_builder: OBSBuilder
+        # noinspection PyTypeChecker
+        self.state: Gamestate = None
+        # noinspection PyTypeChecker
+        self.obs_builder: OBSBuilder = None
+
+        # expensive - don't use; unless required !
+        self._renderer = None
 
         # reset env to initial state, preparing env for new episode.
         # returns tuple where the first dict contains initial observation for each agent in the env
@@ -74,7 +77,7 @@ class Factory(gym.Env):
         return self.state.entities[item]
 
     def reset(self) -> (dict, dict):
-        if hasattr(self, 'state'):
+        if self.state is not None:
             for entity_group in self.state.entities:
                 try:
                     entity_group[0].reset_uid()
@@ -160,7 +163,7 @@ class Factory(gym.Env):
         # Finalize
         reward, reward_info, done = self.summarize_step_results(tick_result, done_results)
 
-        info = reward_info
+        info = dict(reward_info)
 
         info.update(step_reward=sum(reward), step=self.state.curr_step)
 

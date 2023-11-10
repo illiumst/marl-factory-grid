@@ -16,7 +16,7 @@ class LoopSEAC(LoopIAC):
         with torch.inference_mode(True):
             true_action_logp = torch.stack([
                 torch.log_softmax(out[nms.LOGITS][ag_i, :-1], -1)
-                    .gather(index=actions[ag_i, 1:, None], dim=-1)
+                .gather(index=actions[ag_i, 1:, None], dim=-1)
                 for ag_i, out in enumerate(outputs)
             ], 0).squeeze()
 
@@ -37,7 +37,6 @@ class LoopSEAC(LoopIAC):
             iw = (log_ap - true_action_logp).exp().detach()  # importance_weights
 
             a2c_loss = (-iw*log_ap * advantages.detach()).mean(-1)
-
 
             value_loss = (iw*advantages.pow(2)).mean(-1)  # n_agent
 

@@ -56,6 +56,7 @@ if __name__ == '__main__':
                                for model_idx, model in enumerate(models)]
                 else:
                     actions = models[0].predict(env_state, deterministic=determin)[0]
+                # noinspection PyTupleAssignmentBalance
                 env_state, step_r, done_bool, info_obj = env.step(actions)
 
                 rew += step_r

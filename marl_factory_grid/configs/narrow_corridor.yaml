@@ -1,4 +1,4 @@
-eneral:
+General:
   # Your Seed
   env_seed: 69
   # Individual or global rewards?
@@ -86,4 +86,4 @@ Rules:
   DoneAtDestinationReachAll:
   #  reward_at_done: 1
   DoneAtMaxStepsReached:
-    max_steps: 500
+    max_steps: 200

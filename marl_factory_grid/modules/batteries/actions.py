@@ -1,6 +1,5 @@
 from typing import Union
 
-import marl_factory_grid.modules.batteries.constants
 from marl_factory_grid.environment.actions import Action
 from marl_factory_grid.utils.results import ActionResult
 
@@ -24,5 +23,6 @@ class BtryCharge(Action):
         else:
             valid = c.NOT_VALID
             state.print(f'{entity.name} failed to charged batteries at {entity.pos}.')
+
         return ActionResult(entity=entity, identifier=self._identifier, validity=valid,
-                            reward=marl_factory_grid.modules.batteries.constants.REWARD_CHARGE_VALID if valid else marl_factory_grid.modules.batteries.constants.Reward_CHARGE_FAIL)
+                            reward=b.REWARD_CHARGE_VALID if valid else b.Reward_CHARGE_FAIL)

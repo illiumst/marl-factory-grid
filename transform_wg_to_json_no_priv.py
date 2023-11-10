@@ -5,7 +5,6 @@ from pathlib import Path
 
 if __name__ == '__main__':
 
-
     conf_path = Path('wg0')
     wg0_conf = configparser.ConfigParser()
     wg0_conf.read(conf_path/'wg0.conf')
@@ -16,7 +15,6 @@ if __name__ == '__main__':
             continue
         # Delete any old conf.json for the current peer
         (conf_path / f'{client_name}.json').unlink(missing_ok=True)
-
 
         peer = wg0_conf[client_name]
 

@@ -58,7 +58,10 @@ class FactoryConfigParser(object):
         return str(self.config)
 
     def __getitem__(self, item):
-        return self.config[item]
+        try:
+            return self.config[item]
+        except KeyError:
+            print(f'The mandatory {item} section could not be found in your .config gile. Check Spelling!')
 
     def load_entities(self):
         entity_classes = dict()
@@ -161,7 +164,6 @@ class FactoryConfigParser(object):
 
     def _load_smth(self, config, class_obj):
         rules = list()
-        rules_names = list()
         for rule in config:
             e1 = e2 = e3 = None
             try:

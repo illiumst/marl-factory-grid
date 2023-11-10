@@ -1,15 +1,15 @@
 from typing import List, Tuple, Union, Dict
 
 from marl_factory_grid.environment.entity.entity import Entity
-from marl_factory_grid.environment.groups.objects import _Objects
+from marl_factory_grid.environment.groups.objects import Objects
 # noinspection PyProtectedMember
-from marl_factory_grid.environment.entity.object import _Object
+from marl_factory_grid.environment.entity.object import Object
 import marl_factory_grid.environment.constants as c
 from marl_factory_grid.utils.results import Result
 
 
-class Collection(_Objects):
-    _entity = _Object  # entity?
+class Collection(Objects):
+    _entity = Object  # entity?
     symbol = None
 
     @property
@@ -58,7 +58,7 @@ class Collection(_Objects):
     def trigger_spawn(self, state, *entity_args, coords_or_quantity=None, ignore_blocking=False,  **entity_kwargs):
         coords_or_quantity = coords_or_quantity if coords_or_quantity else self._coords_or_quantity
         if self.var_has_position:
-            if isinstance(coords_or_quantity, int):
+            if self.var_has_position and isinstance(coords_or_quantity, int):
                 if ignore_blocking or self._ignore_blocking:
                     coords_or_quantity = state.entities.floorlist[:coords_or_quantity]
                 else:
@@ -87,8 +87,8 @@ class Collection(_Objects):
                 raise ValueError(f'{self._entity.__name__} has no  position!')
         return c.VALID
 
-    def despawn(self, items: List[_Object]):
-        items = [items] if isinstance(items, _Object) else items
+    def despawn(self, items: List[Object]):
+        items = [items] if isinstance(items, Object) else items
         for item in items:
             del self[item]
 

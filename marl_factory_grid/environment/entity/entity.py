@@ -1,15 +1,14 @@
 import abc
-from collections import defaultdict
 
 import numpy as np
 
-from .object import _Object
+from .object import Object
 from .. import constants as c
 from ...utils.results import ActionResult
 from ...utils.utility_classes import RenderEntity
 
 
-class Entity(_Object, abc.ABC):
+class Entity(Object, abc.ABC):
     """Full Env Entity that lives on the environment Grid. Doors, Items, DirtPile etc..."""
 
     @property
@@ -96,8 +95,9 @@ class Entity(_Object, abc.ABC):
 
     def __init__(self, pos, bind_to=None, **kwargs):
         super().__init__(**kwargs)
+        self._view_directory = c.VALUE_NO_POS
         self._status = None
-        self.set_pos(pos)
+        self._pos = pos
         self._last_pos = pos
         if bind_to:
             try:
@@ -108,10 +108,6 @@ class Entity(_Object, abc.ABC):
 
     def summarize_state(self) -> dict:
         return dict(name=str(self.name), x=int(self.x), y=int(self.y), can_collide=bool(self.var_can_collide))
-
-    @abc.abstractmethod
-    def render(self):
-        return RenderEntity(self.__class__.__name__.lower(), self.pos)
 
     @abc.abstractmethod
     def render(self):
@@ -133,25 +129,3 @@ class Entity(_Object, abc.ABC):
         self._collection.delete_env_object(self)
         self._collection = other_collection
         return self._collection == other_collection
-
-    @classmethod
-    def from_coordinates(cls, positions: [(int, int)], *args, entity_kwargs=None, **kwargs, ):
-        collection = cls(*args, **kwargs)
-        collection.add_items(
-            [cls._entity(tuple(pos), **entity_kwargs if entity_kwargs is not None else {}) for pos in positions])
-        return collection
-
-    def notify_del_entity(self, entity):
-        try:
-            self.pos_dict[entity.pos].remove(entity)
-        except (ValueError, AttributeError):
-            pass
-
-    def by_pos(self, pos: (int, int)):
-        pos = tuple(pos)
-        try:
-            return self.state.entities.pos_dict[pos]
-        except StopIteration:
-            pass
-        except ValueError:
-            pass

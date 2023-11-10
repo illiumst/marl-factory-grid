@@ -1,7 +1,5 @@
 from marl_factory_grid.environment.groups.collection import Collection
 from marl_factory_grid.modules.destinations.entitites import Destination
-from marl_factory_grid.environment import constants as c
-from marl_factory_grid.modules.destinations import constants as d
 
 
 class Destinations(Collection):

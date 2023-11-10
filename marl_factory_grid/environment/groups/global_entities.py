@@ -3,12 +3,12 @@ from operator import itemgetter
 from random import shuffle
 from typing import Dict
 
-from marl_factory_grid.environment.groups.objects import _Objects
+from marl_factory_grid.environment.groups.objects import Objects
 from marl_factory_grid.utils.helpers import POS_MASK
 
 
-class Entities(_Objects):
-    _entity = _Objects
+class Entities(Objects):
+    _entity = Objects
 
     @staticmethod
     def neighboring_positions(pos):
@@ -87,7 +87,7 @@ class Entities(_Objects):
     def __delitem__(self, name):
         assert_str = 'This group of entity does not exist in this collection!'
         assert any([key for key in name.keys() if key in self.keys()]), assert_str
-        self[name]._observers.delete(self)
+        self[name].del_observer(self)
         for entity in self[name]:
             entity.del_observer(self)
         return super(Entities, self).__delitem__(name)

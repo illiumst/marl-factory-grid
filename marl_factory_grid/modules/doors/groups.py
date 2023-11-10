@@ -1,5 +1,3 @@
-from typing import Union
-
 from marl_factory_grid.environment.groups.collection import Collection
 from marl_factory_grid.modules.doors import constants as d
 from marl_factory_grid.modules.doors.entitites import Door

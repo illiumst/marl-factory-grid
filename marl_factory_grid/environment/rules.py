@@ -1,11 +1,11 @@
 import abc
 from random import shuffle
-from typing import List, Collection, Union
+from typing import List, Collection
 
+from marl_factory_grid.environment import rewards as r, constants as c
 from marl_factory_grid.environment.entity.agent import Agent
 from marl_factory_grid.utils import helpers as h
 from marl_factory_grid.utils.results import TickResult, DoneResult
-from marl_factory_grid.environment import rewards as r, constants as c
 
 
 class Rule(abc.ABC):
@@ -118,8 +118,7 @@ class AssignGlobalPositions(Rule):
     def on_init(self, state, lvl_map):
         from marl_factory_grid.environment.entity.util import GlobalPosition
         for agent in state[c.AGENT]:
-            gp = GlobalPosition(lvl_map.level_shape)
-            gp.bind_to(agent)
+            gp = GlobalPosition(agent, lvl_map.level_shape)
             state[c.GLOBALPOSITIONS].add_item(gp)
         return []
 

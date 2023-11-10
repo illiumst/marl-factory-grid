@@ -1,11 +1,9 @@
 from typing import List, Union
 
-import marl_factory_grid.modules.batteries.constants
-from marl_factory_grid.environment.rules import Rule
-from marl_factory_grid.utils.results import TickResult, DoneResult
-
 from marl_factory_grid.environment import constants as c
+from marl_factory_grid.environment.rules import Rule
 from marl_factory_grid.modules.batteries import constants as b
+from marl_factory_grid.utils.results import TickResult, DoneResult
 
 
 class BatteryDecharge(Rule):

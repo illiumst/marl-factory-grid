@@ -1,11 +1,12 @@
 from itertools import islice
-from typing import List, Dict, Tuple
+from typing import List, Tuple
 
 import numpy as np
 
 from marl_factory_grid.environment import constants as c
+from marl_factory_grid.environment.entity.entity import Entity
 from marl_factory_grid.environment.rules import Rule
-from marl_factory_grid.utils.results import Result
+from marl_factory_grid.utils.results import Result, DoneResult
 
 
 class StepRules:
@@ -83,13 +84,51 @@ class Gamestate(object):
         return f'{self.__class__.__name__}({len(self.entities)} Entitites @ Step {self.curr_step})'
 
     @property
-    def random_free_position(self):
+    def random_free_position(self) -> (int, int):
+        """
+        Returns a single **free** position (x, y), which is **free** for spawning or walking.
+        No Entity at this position posses *var_is_blocking_pos* or *var_can_collide*.
+
+        :return:    Single **free** position.
+        """
         return self.get_n_random_free_positions(1)[0]
 
-    def get_n_random_free_positions(self, n):
+    def get_n_random_free_positions(self, n) -> list[tuple[int, int]]:
+        """
+        Returns a list of *n* **free** positions [(x, y), ... ], which are **free** for spawning or walking.
+        No Entity at this position posses *var_is_blocking_pos* or *var_can_collide*.
+
+        :return:    List of n **free** position.
+        """
         return list(islice(self.entities.free_positions_generator, n))
 
-    def tick(self, actions) -> List[Result]:
+    @property
+    def random_position(self) -> (int, int):
+        """
+        Returns a single available position (x, y), ignores all entity attributes.
+
+        :return:    Single random position.
+        """
+        return self.get_n_random_positions(1)[0]
+
+    def get_n_random_positions(self, n) -> list[tuple[int, int]]:
+        """
+        Returns a list of *n* available positions [(x, y), ... ], ignores all entity attributes.
+
+        :return:    List of n random positions.
+        """
+        return list(islice(self.entities.floorlist, n))
+
+    def tick(self, actions) -> list[Result]:
+        """
+        Performs a single **Gamestate Tick**by calling the inner rule hooks in sequential order.
+        - tick_pre_step_all:    Things to do before the agents do their actions. Statechange, Moving, Spawning etc...
+        - agent tick:           Agents do their actions.
+        - tick_step_all:        Things to do after the agents did their actions. Statechange, Moving, Spawning etc...
+        - tick_post_step_all:   Things to do at the very end of each step. Counting, Reward calculations etc...
+
+        :return:    List of *Result*-objects.
+        """
         results = list()
         self.curr_step += 1
 
@@ -112,11 +151,23 @@ class Gamestate(object):
 
         return results
 
-    def print(self, string):
+    def print(self, string) -> None:
+        """
+        When *verbose* is active, print stuff.
+
+        :param string:      *String* to print.
+        :type string:       str
+        :return: Nothing
+        """
         if self.verbose:
             print(string)
 
-    def check_done(self):
+    def check_done(self) -> List[DoneResult]:
+        """
+        Iterate all **Rules** that override tehe *on_ckeck_done* hook.
+
+        :return:    List of Results
+        """
         results = list()
         for rule in self.rules:
             if on_check_done_result := rule.on_check_done(self):
@@ -124,20 +175,44 @@ class Gamestate(object):
         return results
 
     def get_all_pos_with_collisions(self) -> List[Tuple[(int, int)]]:
-        positions = [pos for pos, entities in self.entities.pos_dict.items() if len(entities) >= 2 and (len([e for e in entities if e.var_can_collide]) >= 2)]
+        """
+        Returns a list positions [(x, y), ... ] on which collisions occur. This does not include agents,
+        that were unable to move because their target direction was blocked, also a form of collision.
+
+        :return:    List of positions.
+        """
+        positions = [pos for pos, entities in self.entities.pos_dict.items() if
+                     len(entities) >= 2 and (len([e for e in entities if e.var_can_collide]) >= 2)
+                     ]
         return positions
 
-    def check_move_validity(self, moving_entity, position):
-        if moving_entity.pos != position and not any(
-                entity.var_is_blocking_pos for entity in self.entities.pos_dict[position]) and not (
-                moving_entity.var_is_blocking_pos and self.entities.is_occupied(position)):
-            return True
-        else:
-            return False
+    def check_move_validity(self, moving_entity: Entity, target_position: (int, int)) -> bool:
+        """
+        Whether it is safe to move to the target positions and moving entity does not introduce a blocking attribute,
+        when position is allready occupied.
 
-    def check_pos_validity(self, position):
-        if not any(entity.var_is_blocking_pos for entity in self.entities.pos_dict[position]):
-            return True
-        else:
-            return False
+        :param moving_entity: Entity
+        :param target_position: pos
+        :return:    Safe to move to
+        """
 
+        is_not_blocked = self.check_pos_validity(target_position)
+        will_not_block_others = moving_entity.var_is_blocking_pos and self.entities.is_occupied(target_position)
+
+        if moving_entity.pos != target_position and is_not_blocked and not will_not_block_others:
+            return c.VALID
+        else:
+            return c.NOT_VALID
+
+    def check_pos_validity(self, pos: (int, int)) -> bool:
+        """
+        Check if *pos* is a valid position to move or spawn to.
+
+        :param pos: position to check
+        :return: Wheter pos is a valid target.
+        """
+
+        if not any(e.var_is_blocking_pos for e in self.entities.pos_dict[pos]) and pos in self.entities.floorlist:
+            return c.VALID
+        else:
+            return c.NOT_VALID

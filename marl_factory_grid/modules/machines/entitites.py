@@ -31,11 +31,10 @@ class Machine(Entity):
             return c.NOT_VALID
 
     def tick(self, state):
-        # if self.status == m.STATE_MAINTAIN and any([c.AGENT in x.name for x in self.tile.guests]):
-        if self.status == m.STATE_MAINTAIN and any([c.AGENT in x.name for x in state.entities.pos_dict[self.pos]]):
+        others = state.entities.pos_dict[self.pos]
+        if self.status == m.STATE_MAINTAIN and any([c.AGENT in x.name for x in others]):
             return TickResult(identifier=self.name, validity=c.VALID, entity=self)
-        # elif self.status == m.STATE_MAINTAIN and not any([c.AGENT in x.name for x in self.tile.guests]):
-        elif self.status == m.STATE_MAINTAIN and not any([c.AGENT in x.name for x in state.entities.pos_dict[self.pos]]):
+        elif self.status == m.STATE_MAINTAIN and not any([c.AGENT in x.name for x in others]):
             self.status = m.STATE_WORK
             self.reset_counter()
             return None

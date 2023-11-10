@@ -1,5 +1,3 @@
-from typing import Union, List, Tuple
-
 from marl_factory_grid.environment.groups.collection import Collection
 
 from .entitites import Machine

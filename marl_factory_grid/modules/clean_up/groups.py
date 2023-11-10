@@ -1,9 +1,7 @@
-from typing import Union, List, Tuple
-
 from marl_factory_grid.environment import constants as c
-from marl_factory_grid.utils.results import Result
 from marl_factory_grid.environment.groups.collection import Collection
 from marl_factory_grid.modules.clean_up.entitites import DirtPile
+from marl_factory_grid.utils.results import Result
 
 
 class DirtPiles(Collection):

@@ -1,10 +1,10 @@
 import random
 from typing import List, Tuple
 
-from marl_factory_grid.environment.entity.object import _Object
+from marl_factory_grid.environment.entity.object import Object
 
 
-class Zone(_Object):
+class Zone(Object):
 
     @property
     def positions(self):

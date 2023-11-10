@@ -49,7 +49,7 @@ class RespawnDirt(Rule):
     def tick_step(self, state):
         collection = state[d.DIRT]
         if self._next_dirt_spawn < 0:
-            pass  # No DirtPile Spawn
+            result = []  # No DirtPile Spawn
         elif not self._next_dirt_spawn:
             result = [collection.trigger_spawn(state, coords_or_quantity=self.respawn_n, amount=self.respawn_amount)]
             self._next_dirt_spawn = self.respawn_freq

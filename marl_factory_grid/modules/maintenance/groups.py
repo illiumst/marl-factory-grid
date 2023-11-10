@@ -4,7 +4,6 @@ from marl_factory_grid.environment.groups.collection import Collection
 from .entities import Maintainer
 from ..machines import constants as mc
 from ..machines.actions import MachineAction
-from ...utils.states import Gamestate
 
 
 class Maintainers(Collection):
@@ -23,8 +22,6 @@ class Maintainers(Collection):
         self.size = size
         self._spawnrule = spawnrule
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
 
     def spawn(self, coords_or_quantity: Union[int, List[Tuple[(int, int)]]], *entity_args):
         self.add_items([self._entity(mc.MACHINES, MachineAction(), pos) for pos in coords_or_quantity])

@@ -5,13 +5,12 @@ from typing import Dict, List
 import numpy as np
 
 from marl_factory_grid.environment import constants as c
-from marl_factory_grid.environment.entity.object import _Object
+from marl_factory_grid.environment.entity.object import Object
 from marl_factory_grid.environment.groups.utils import Combined
 from marl_factory_grid.utils.utility_classes import Floor
 from marl_factory_grid.utils.ray_caster import RayCaster
 from marl_factory_grid.utils.states import Gamestate
 from marl_factory_grid.utils import helpers as h
-
 
 
 class OBSBuilder(object):
@@ -128,7 +127,7 @@ class OBSBuilder(object):
                                                  f'{re.escape("[")}(.*){re.escape("]")}'
                                                  f'{re.escape("(")}{re.escape(agent.name)}{re.escape(")")}')
                             name = next((key for key, val in self.all_obs.items()
-                                         if pattern.search(str(val)) and isinstance(val, _Object)), None)
+                                         if pattern.search(str(val)) and isinstance(val, Object)), None)
                             e = self.all_obs[name]
                         except KeyError:
                             try:
@@ -181,11 +180,11 @@ class OBSBuilder(object):
         return obs, self.obs_layers[agent.name]
 
     def _sort_and_name_observation_conf(self, agent):
-        '''
+        """
         Builds the useable observation scheme per agent from conf.yaml.
         :param agent:
         :return:
-        '''
+        """
         # Fixme: no asymetric shapes possible.
         self.ray_caster[agent.name] = RayCaster(agent, min(self.obs_shape))
         obs_layers = []

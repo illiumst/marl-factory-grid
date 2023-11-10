@@ -1,8 +1,7 @@
+import numpy as np
 import torch
 import torch.nn as nn
-import numpy as np
 import torch.nn.functional as F
-from torch.nn.utils import spectral_norm
 
 
 class RecurrentAC(nn.Module):
@@ -88,8 +87,8 @@ class NormalizedLinear(nn.Linear):
         self.trainable_magnitude = trainable_magnitude
         self.scale = nn.Parameter(torch.tensor([1.]), requires_grad=trainable_magnitude)
 
-    def forward(self, input):
-        normalized_input = F.normalize(input, dim=-1, p=2, eps=1e-5)
+    def forward(self, in_array):
+        normalized_input = F.normalize(in_array, dim=-1, p=2, eps=1e-5)
         normalized_weight = F.normalize(self.weight, dim=-1, p=2, eps=1e-5)
         return F.linear(normalized_input, normalized_weight) * self.d_sqrt * self.scale
 
