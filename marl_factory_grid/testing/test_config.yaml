@@ -1,0 +1,81 @@
+Agents:
+  Wolfgang:
+    Actions:
+    - Noop
+    - BtryCharge
+    - CleanUp
+    - DestAction
+    - DoorUse
+    - ItemAction
+    - Move8
+    Observations:
+    - Combined:
+      - Other
+      - Walls
+    - GlobalPosition
+    - Battery
+    - ChargePods
+    - DirtPiles
+    - Destinations
+    - Doors
+    - Items
+    - Inventory
+    - DropOffLocations
+    - Maintainers
+Entities:
+  Batteries:
+    initial_charge: 0.8
+    per_action_costs: 0.02
+  ChargePods: {}
+  Destinations: {}
+  DirtPiles:
+    clean_amount: 1
+    dirt_spawn_r_var: 0.1
+    initial_amount: 2
+    initial_dirt_ratio: 0.05
+    max_global_amount: 20
+    max_local_amount: 5
+  Doors: {}
+  DropOffLocations: {}
+  GlobalPositions: {}
+  Inventories: {}
+  Items: {}
+  Machines: {}
+  Maintainers: {}
+  Zones: {}
+
+General:
+  env_seed: 69
+  individual_rewards: true
+  level_name: large
+  pomdp_r: 3
+  verbose: false
+  tests: true
+
+Rules:
+  SpawnAgents: {}
+  DoneAtBatteryDischarge: {}
+  Collision:
+    done_at_collisions: false
+  AssignGlobalPositions: {}
+  DoneAtDestinationReachAny: {}
+  DestinationReachReward: {}
+  SpawnDestinations:
+    n_dests: 1
+    spawn_mode: GROUPED
+  DoneOnAllDirtCleaned: {}
+  SpawnDirt:
+    spawn_freq: 15
+  EntitiesSmearDirtOnMove:
+    smear_ratio: 0.2
+  DoorAutoClose:
+    close_frequency: 10
+  ItemRules:
+    max_dropoff_storage_size: 0
+    n_items: 5
+    n_locations: 5
+    spawn_frequency: 15
+  MaxStepsReached:
+    max_steps: 10
+#  AgentSingleZonePlacement:
+#    n_zones: 4
