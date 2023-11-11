@@ -85,7 +85,7 @@ class SpawnAgents(Rule):
                                  f'\n{agent_conf["positions"].copy()}')
             else:
                 agents.add_item(Agent(actions, observations, empty_positions.pop(), str_ident=agent_name, **other))
-        pass
+        return []
 
 
 class DoneAtMaxStepsReached(Rule):
@@ -97,7 +97,7 @@ class DoneAtMaxStepsReached(Rule):
     def on_check_done(self, state):
         if self.max_steps <= state.curr_step:
             return [DoneResult(validity=c.VALID, identifier=self.name)]
-        return [DoneResult(validity=c.NOT_VALID, identifier=self.name)]
+        return []
 
 
 class AssignGlobalPositions(Rule):

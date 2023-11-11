@@ -90,6 +90,8 @@ class DoneAtDestinationReach(DestinationReachReward):
                                     pass
                                 else:
                                     dest.unmark_as_reached()
+                                    return [DoneResult(f'{dest}_unmarked_as_reached',
+                                                       validity=c.NOT_VALID, entity=dest)]
                             else:
                                 pass
         else:
