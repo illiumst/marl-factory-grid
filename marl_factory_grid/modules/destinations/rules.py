@@ -9,6 +9,13 @@ from marl_factory_grid.environment import constants as c
 
 from marl_factory_grid.modules.destinations import constants as d
 from marl_factory_grid.modules.destinations.entitites import Destination
+from marl_factory_grid.utils.states import Gamestate
+
+
+ANY             = 'any'
+ALL             = 'all'
+SIMULTANOIUS    = 'simultanious'
+CONDITIONS =[ALL, ANY, SIMULTANOIUS]
 
 
 class DestinationReachReward(Rule):
@@ -48,9 +55,9 @@ class DestinationReachReward(Rule):
         return results
 
 
-class DoneAtDestinationReachAll(DestinationReachReward):
+class DoneAtDestinationReach(DestinationReachReward):
 
-    def __init__(self, reward_at_done=d.REWARD_DEST_DONE, **kwargs):
+    def __init__(self, condition='any', reward_at_done=d.REWARD_DEST_DONE, **kwargs):
         """
         This rule triggers and sets the done flag if ALL Destinations have been reached.
 
@@ -59,68 +66,77 @@ class DoneAtDestinationReachAll(DestinationReachReward):
         :type dest_reach_reward: float
         :param dest_reach_reward: Specify the reward, agents get when reaching a single destination.
         """
-        super(DoneAtDestinationReachAll, self).__init__(**kwargs)
+        super().__init__(**kwargs)
+        self.condition = condition
         self.reward = reward_at_done
+        assert condition in CONDITIONS
 
     def on_check_done(self, state) -> List[DoneResult]:
-        if all(x.was_reached() for x in state[d.DESTINATION]):
-            return [DoneResult(self.name, validity=c.VALID, reward=self.reward)]
-        return [DoneResult(self.name, validity=c.NOT_VALID)]
-
-
-class DoneAtDestinationReachAny(DestinationReachReward):
-
-    def __init__(self, reward_at_done=d.REWARD_DEST_DONE, **kwargs):
-        f"""
-        This rule triggers and sets the done flag if ANY Destinations has been reached.
-        !!! IMPORTANT: 'reward_at_done' is shared between the agents; 'dest_reach_reward' is bound to a specific one.
-                
-        :type reward_at_done: float
-        :param reward_at_done: Specifies the reward, all agent get, when any destinations has been reached. 
-                                Default {d.REWARD_DEST_DONE}
-        :type dest_reach_reward: float
-        :param dest_reach_reward: Specify a single agents reward forreaching a single destination. 
-                                   Default {d.REWARD_DEST_REACHED}
-        """
-        super(DoneAtDestinationReachAny, self).__init__(**kwargs)
-        self.reward = reward_at_done
-
-    def on_check_done(self, state) -> List[DoneResult]:
-        if any(x.was_reached() for x in state[d.DESTINATION]):
-            return [DoneResult(self.name, validity=c.VALID, reward=d.REWARD_DEST_REACHED)]
-        return []
+        if self.condition == ANY:
+            if any(x.was_reached() for x in state[d.DESTINATION]):
+                return [DoneResult(self.name, validity=c.VALID, reward=self.reward)]
+        elif self.condition == ALL:
+            if all(x.was_reached() for x in state[d.DESTINATION]):
+                return [DoneResult(self.name, validity=c.VALID, reward=self.reward)]
+        elif self.condition == SIMULTANOIUS:
+            if all(x.was_reached() for x in state[d.DESTINATION]):
+                return [DoneResult(self.name, validity=c.VALID, reward=self.reward)]
+            else:
+                for dest in state[d.DESTINATION]:
+                    if dest.was_reached():
+                        for agent in state[c.AGENT].by_pos(dest.pos):
+                            if dest.bound_entity:
+                                if dest.bound_entity == agent:
+                                    pass
+                                else:
+                                    dest.unmark_as_reached()
+                            else:
+                                pass
+        else:
+            raise ValueError('Check spelling of Parameter "condition".')
 
 
 class SpawnDestinationsPerAgent(Rule):
-    def __init__(self, coords_or_quantity: Dict[str, List[Tuple[int, int]]]):
+    def __init__(self, coords_or_quantity: Dict[str, List[Tuple[int, int] | int]]):
         """
         Special rule, that spawn distinations, that are bound to a single agent a fixed set of positions.
         Usefull for introducing specialists, etc. ..
 
         !!! This rule does not introduce any reward or done condition.
 
-        :type coords_or_quantity:  Dict[str, List[Tuple[int, int]]
         :param coords_or_quantity: Please provide a dictionary with agent names as keys; and a list of possible
                                      destiantion coords as value. Example: {Wolfgang: [(0, 0), (1, 1), ...]}
         """
         super(Rule, self).__init__()
-        self.per_agent_positions = {key: [ast.literal_eval(x) for x in val] for key, val in coords_or_quantity.items()}
+        self.per_agent_positions = dict()
+        for agent_name, value in coords_or_quantity.items():
+            if isinstance(value, int):
+                per_agent_d = {agent_name: value}
+            else:
+                per_agent_d = {agent_name: [ast.literal_eval(x) for x in value]}
+            self.per_agent_positions.update(**per_agent_d)
 
-    def on_reset(self, state):
-        for (agent_name, position_list) in self.per_agent_positions.items():
+    def on_reset(self, state: Gamestate):
+        for (agent_name, coords_or_quantity) in self.per_agent_positions.items():
             agent = h.get_first(state[c.AGENT], lambda x: agent_name in x.name)
             assert agent
-            position_list = position_list.copy()
+            if isinstance(coords_or_quantity, int):
+                position_list = state.entities.floorlist
+                pos_left_counter = coords_or_quantity
+            else:
+                position_list = coords_or_quantity.copy()
+                pos_left_counter = 1  # Find a better way to resolve this.
             shuffle(position_list)
-            while True:
+            while pos_left_counter:
                 try:
                     pos = position_list.pop()
                 except IndexError:
                     print(f"Could not spawn Destinations at: {self.per_agent_positions[agent_name]}")
                     print(f'Check your agent placement: {state[c.AGENT]} ... Exit ...')
-                    exit(9999)
+                    exit(-9999)
                 if (not pos == agent.pos) and (not state[d.DESTINATION].by_pos(pos)):
                     destination = Destination(pos, bind_to=agent)
+                    pos_left_counter -= 1
                     break
                 else:
                     continue

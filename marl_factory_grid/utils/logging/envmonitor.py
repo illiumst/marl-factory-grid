@@ -58,3 +58,6 @@ class EnvMonitor(Wrapper):
             pickle.dump(self._monitor_df.reset_index(), f, protocol=pickle.HIGHEST_PROTOCOL)
         if auto_plotting_keys:
             plot_single_run(filepath, column_keys=auto_plotting_keys)
+
+    def report_possible_colum_keys(self):
+        print(self._monitor_df.columns)

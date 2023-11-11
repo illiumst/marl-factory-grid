@@ -1,4 +1,5 @@
 import ast
+from collections import defaultdict
 
 from os import PathLike
 from pathlib import Path
@@ -22,13 +23,21 @@ class FactoryConfigParser(object):
         self.config_path = Path(config_path)
         self.custom_modules_path = Path(custom_modules_path) if custom_modules_path is not None else custom_modules_path
         self.config = yaml.safe_load(self.config_path.open())
+        self._n_abbr_dict = None
 
     def __getattr__(self, item):
         return self['General'][item]
 
     def _get_sub_list(self, primary_key: str, sub_key: str):
         return [{key: [s for k, v in val.items() if k == sub_key for s in v] for key, val in x.items()
-                 } for x in self.config[primary_key]]
+                 } for x in self.config.get(primary_key, [])]
+
+    def _n_abbr(self, n):
+        assert isinstance(n, int)
+        if self._n_abbr_dict is None:
+            self._n_abbr_dict = defaultdict(lambda: 'th', {1: 'st', 2: 'nd', 3: 'rd'})
+        return self._n_abbr_dict[n]
+
 
     @property
     def agent_actions(self):
@@ -143,10 +152,17 @@ class FactoryConfigParser(object):
             observations.extend(x for x in self.agents[name]['Observations'] if x != c.DEFAULTS)
             positions = [ast.literal_eval(x) for x in self.agents[name].get('Positions', [])]
             other_kwargs = {k: v for k, v in self.agents[name].items() if k not in
-                            ['Actions', 'Observations', 'Positions']}
+                            ['Actions', 'Observations', 'Positions', 'Clones']}
             parsed_agents_conf[name] = dict(
                 actions=parsed_actions, observations=observations, positions=positions, other=other_kwargs
                                             )
+
+            clones = self.agents[name].get('Clones', 0)
+            if clones:
+                if isinstance(clones, int):
+                    clones = [f'{name}_the_{n}{self._n_abbr(n)}' for n in range(clones)]
+                for clone in clones:
+                    parsed_agents_conf[clone] = parsed_agents_conf[name].copy()
 
         return parsed_agents_conf
 

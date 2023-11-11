@@ -1,6 +1,5 @@
 from marl_factory_grid.environment.entity.agent import Agent
 from marl_factory_grid.environment.groups.collection import Collection
-from marl_factory_grid.environment.rules import SpawnAgents
 
 
 class Agents(Collection):
@@ -8,7 +7,7 @@ class Agents(Collection):
 
     @property
     def spawn_rule(self):
-        return {SpawnAgents.__name__: {}}
+        return {}
 
     @property
     def var_is_blocking_light(self):

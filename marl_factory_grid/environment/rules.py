@@ -70,25 +70,19 @@ class SpawnAgents(Rule):
 
     def on_reset(self, state):
         agents = state[c.AGENT]
-        empty_positions = state.entities.empty_positions[:len(state.agents_conf)]
         for agent_name, agent_conf in state.agents_conf.items():
+            empty_positions = state.entities.empty_positions
             actions = agent_conf['actions'].copy()
             observations = agent_conf['observations'].copy()
             positions = agent_conf['positions'].copy()
             other = agent_conf['other'].copy()
-            if positions:
-                shuffle(positions)
-                while True:
-                    try:
-                        pos = positions.pop()
-                    except IndexError:
-                        raise ValueError(f'It was not possible to spawn an Agent on the available position: '
-                                         f'\n{agent_conf["positions"].copy()}')
-                    if bool(agents.by_pos(pos)) or not state.check_pos_validity(pos):
-                        continue
-                    else:
-                        agents.add_item(Agent(actions, observations, pos, str_ident=agent_name, **other))
-                    break
+
+            if position := h.get_first(x for x in positions if x in empty_positions):
+                assert state.check_pos_validity(position), 'smth went wrong....'
+                agents.add_item(Agent(actions, observations, position, str_ident=agent_name, **other))
+            elif positions:
+                raise ValueError(f'It was not possible to spawn an Agent on the available position: '
+                                 f'\n{agent_conf["positions"].copy()}')
             else:
                 agents.add_item(Agent(actions, observations, empty_positions.pop(), str_ident=agent_name, **other))
         pass
@@ -130,7 +124,7 @@ class WatchCollisions(Rule):
 
     def tick_post_step(self, state) -> List[TickResult]:
         self.curr_done = False
-        pos_with_collisions = state.get_all_pos_with_collisions()
+        pos_with_collisions = state.get_collision_positions()
         results = list()
         for pos in pos_with_collisions:
             guests = [x for x in state.entities.pos_dict[pos] if x.var_can_collide]
