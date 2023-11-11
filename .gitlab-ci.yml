@@ -17,5 +17,5 @@ build-job:       # This job runs in the build stage, which runs first.
     - pip install -U twine
     - python setup.py sdist
     - echo "Compile complete."
-    - twine upload dist/*
+    - twine upload dist/* --username $USER_NAME --password $API_KEY $artifact
     - echo "Upload complete."
