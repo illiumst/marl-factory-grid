@@ -22,13 +22,6 @@ Agents:
     - Inventory
     - DropOffLocations
     - Maintainers
-    # This is special for agents, as each one is differten and can act as an adversary e.g.
-    Positions:
-      - (16, 7)
-      - (16, 6)
-      - (16, 3)
-      - (16, 4)
-      - (16, 5)
 Entities:
   Batteries:
     initial_charge: 0.8

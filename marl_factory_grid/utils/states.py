@@ -8,7 +8,7 @@ import numpy as np
 from marl_factory_grid.algorithms.static.utils import points_to_graph
 from marl_factory_grid.environment import constants as c
 from marl_factory_grid.environment.entity.entity import Entity
-from marl_factory_grid.environment.rules import Rule
+from marl_factory_grid.environment.rules import Rule, SpawnAgents
 from marl_factory_grid.utils.results import Result, DoneResult
 from marl_factory_grid.environment.tests import Test
 from marl_factory_grid.utils.results import Result
@@ -32,16 +32,17 @@ class StepRules:
         self.rules.append(item)
         return True
 
-    def do_all_reset(self, state):
-        for rule in self.rules:
-            if rule_reset_printline := rule.on_reset(state):
-                state.print(rule_reset_printline)
-        return c.VALID
-
     def do_all_init(self, state, lvl_map):
         for rule in self.rules:
             if rule_init_printline := rule.on_init(state, lvl_map):
                 state.print(rule_init_printline)
+        return c.VALID
+
+    def do_all_reset(self, state):
+        SpawnAgents().on_reset(state)
+        for rule in self.rules:
+            if rule_reset_printline := rule.on_reset(state):
+                state.print(rule_reset_printline)
         return c.VALID
 
     def tick_step_all(self, state):
@@ -90,6 +91,10 @@ class Gamestate(object):
         self.rules = StepRules(*rules)
         self._floortile_graph = None
         self.tests = StepTests(*tests)
+
+    def reset(self):
+        self.curr_step = 0
+        self.curr_actions = None
 
     def __getitem__(self, item):
         return self.entities[item]
@@ -201,7 +206,7 @@ class Gamestate(object):
                 results.extend(on_check_done_result)
         return results
 
-    def get_all_pos_with_collisions(self) -> List[Tuple[(int, int)]]:
+    def get_collision_positions(self) -> List[Tuple[(int, int)]]:
         """
         Returns a list positions [(x, y), ... ] on which collisions occur. This does not include agents,
         that were unable to move because their target direction was blocked, also a form of collision.

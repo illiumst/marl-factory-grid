@@ -43,9 +43,6 @@ class AgentSingleZonePlacement(Rule):
             agent.move(state[z.ZONES][z_idxs.pop()].random_pos, state)
         return []
 
-    def tick_step(self, state):
-        return []
-
 
 class IndividualDestinationZonePlacement(Rule):
 

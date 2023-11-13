@@ -60,7 +60,7 @@ class BatteryDecharge(Rule):
 
             batteries.by_entity(agent).decharge(energy_consumption)
 
-            results.append(TickResult(self.name, entity=agent, validity=c.VALID))
+            results.append(TickResult(self.name, entity=agent, validity=c.VALID, value=energy_consumption))
 
         return results
 

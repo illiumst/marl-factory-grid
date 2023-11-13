@@ -27,7 +27,7 @@ class Entities(Objects):
     @property
     def floorlist(self):
         shuffle(self._floor_positions)
-        return self._floor_positions
+        return [x for x in self._floor_positions]
 
     def __init__(self, floor_positions):
         self._floor_positions = floor_positions

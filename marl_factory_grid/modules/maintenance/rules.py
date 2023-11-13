@@ -1,6 +1,5 @@
 from typing import List
 
-import marl_factory_grid.modules.maintenance.constants
 from marl_factory_grid.environment.rules import Rule
 from marl_factory_grid.utils.results import TickResult, DoneResult
 from marl_factory_grid.environment import constants as c
@@ -31,5 +30,5 @@ class DoneAtMaintainerCollision(Rule):
         for agent in agents:
             if agent.pos in m_pos:
                 done_results.append(DoneResult(entity=agent, validity=c.VALID, identifier=self.name,
-                                               reward=marl_factory_grid.modules.maintenance.constants.MAINTAINER_COLLISION_REWARD))
+                                               reward=M.MAINTAINER_COLLISION_REWARD))
         return done_results

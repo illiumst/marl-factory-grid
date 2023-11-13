@@ -1,0 +1,55 @@
+Agents:
+  Wolfgang:
+    Actions:
+      - Noop
+      - Move4
+    Observations:
+      - Other
+      - Walls
+      - Destination
+    Clones:
+      - Juergen
+      - Soeren
+      - Walter
+      - Siggi
+      - Dennis
+      - Karl-Heinz
+      - Kevin
+    is_blocking_pos: true
+Entities:
+  Destinations:
+    # Let them spawn on closed doors and agent positions
+    ignore_blocking: true
+    # We need a special spawn rule...
+    spawnrule:
+      # ...which assigns the destinations per agent
+      SpawnDestinationsPerAgent:
+        # we use this parameter
+        coords_or_quantity:
+          # to enable and assign special positions per agent
+          Wolfgang: 1
+          Karl-Heinz: 1
+          Kevin: 1
+          Juergen: 1
+          Soeren: 1
+          Walter: 1
+          Siggi: 1
+          Dennis: 1
+General:
+  env_seed: 69
+  individual_rewards: true
+  level_name: eight_puzzle
+  pomdp_r: 3
+  verbose: True
+  tests: false
+
+Rules:
+  # Utilities
+  WatchCollisions:
+    done_at_collisions: false
+
+  # Done Conditions
+  DoneAtDestinationReach:
+    condition: simultanious
+  DoneAtMaxStepsReached:
+    max_steps: 500

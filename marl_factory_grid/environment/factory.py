@@ -97,20 +97,26 @@ class Factory(gym.Env):
         return self.state.entities[item]
 
     def reset(self) -> (dict, dict):
+
+        # Reset information the state holds
+        self.state.reset()
+
+        # Reset Information the GlobalEntity collection holds.
         self.state.entities.reset()
 
         # All is set up, trigger entity spawn with variable pos
         self.state.rules.do_all_reset(self.state)
 
         # Build initial observations for all agents
-        return self.obs_builder.refresh_and_build_for_all(self.state)
+        self.obs_builder.reset(self.state)
+        return self.obs_builder.build_for_all(self.state)
 
     def manual_step_init(self) -> List[Result]:
         self.state.curr_step += 1
 
         # Main Agent Step
         pre_step_result = self.state.rules.tick_pre_step_all(self)
-        self.obs_builder.reset_struc_obs_block(self.state)
+        self.obs_builder.reset(self.state)
         return pre_step_result
 
     def manual_get_named_agent_obs(self, agent_name: str) -> (List[str], np.ndarray):
@@ -164,7 +170,7 @@ class Factory(gym.Env):
 
         info.update(step_reward=sum(reward), step=self.state.curr_step)
 
-        obs = self.obs_builder.refresh_and_build_for_all(self.state)
+        obs = self.obs_builder.build_for_all(self.state)
         return None, [x for x in obs.values()], reward, done, info
 
     def summarize_step_results(self, tick_results: list, done_check_results: list) -> (int, dict, bool):

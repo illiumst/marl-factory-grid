@@ -22,7 +22,7 @@ class DoneOnAllDirtCleaned(Rule):
     def on_check_done(self, state) -> [DoneResult]:
         if len(state[d.DIRT]) == 0 and state.curr_step:
             return [DoneResult(validity=c.VALID, identifier=self.name, reward=self.reward)]
-        return [DoneResult(validity=c.NOT_VALID, identifier=self.name)]
+        return []
 
 
 class RespawnDirt(Rule):
@@ -81,5 +81,6 @@ class EntitiesSmearDirtOnMove(Rule):
                     old_pos_dirt = next(iter(old_pos_dirt))
                     if smeared_dirt := round(old_pos_dirt.amount * self.smear_ratio, 2):
                         if state[d.DIRT].spawn(entity.pos, amount=smeared_dirt):
-                            results.append(TickResult(identifier=self.name, entity=entity, validity=c.VALID))
+                            results.append(TickResult(identifier=self.name, entity=entity,
+                                                      validity=c.VALID, value=smeared_dirt))
         return results

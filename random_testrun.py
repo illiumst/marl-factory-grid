@@ -12,7 +12,7 @@ from marl_factory_grid.utils.tools import ConfigExplainer
 
 if __name__ == '__main__':
     # Render at each step?
-    render = False
+    render = True
     # Reveal all possible Modules (Entities, Rules, Agents[Actions, Observations], etc.)
     explain_config = False
     # Collect statistics?
@@ -29,7 +29,7 @@ if __name__ == '__main__':
         ce.save_all(run_path / 'all_out.yaml')
 
     # Path to config File
-    path = Path('marl_factory_grid/configs/narrow_corridor.yaml')
+    path = Path('marl_factory_grid/configs/eight_puzzle.yaml')
 
     # Env Init
     factory = Factory(path)
@@ -61,6 +61,10 @@ if __name__ == '__main__':
     if record:
         factory.save_records(run_path / 'test.pb')
     if plotting:
-        plot_single_run(run_path)
+        factory.report_possible_colum_keys()
+        plot_single_run(run_path, column_keys=['Global_DoneAtDestinationReachAll', 'step_reward',
+                                               'Agent[Karl-Heinz]_DoneAtDestinationReachAll',
+                                               'Agent[Wolfgang]_DoneAtDestinationReachAll',
+                                               'Global_DoneAtDestinationReachAll'])
 
     print('Done!!! Goodbye....')

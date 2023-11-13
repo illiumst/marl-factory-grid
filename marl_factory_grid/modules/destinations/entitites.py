@@ -54,3 +54,6 @@ class Destination(Entity):
 
     def mark_as_reached(self):
         self._was_reached = True
+
+    def unmark_as_reached(self):
+        self._was_reached = False
