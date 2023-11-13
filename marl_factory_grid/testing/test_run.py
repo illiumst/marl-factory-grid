@@ -7,7 +7,7 @@ from marl_factory_grid.environment.factory import Factory
 
 if __name__ == '__main__':
     # Render at each step?
-    render = False
+    render = True
 
     # Path to config File
     path = Path('test_config.yaml')

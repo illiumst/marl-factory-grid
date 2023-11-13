@@ -1,3 +1,5 @@
+import json
+import os
 from itertools import islice
 from typing import List, Tuple
 
@@ -241,6 +243,44 @@ class Gamestate(object):
             return c.VALID
         else:
             return c.NOT_VALID
+
+    # def save_gamestate_to_json(self, file_path):
+    #     entity_dicts = {}
+    #
+    #     for entity_class in self.entities:
+    #         entity_dicts[str(entity_class)] = []
+    #         for e in entity_class:
+    #             entity_dict = {
+    #                 'name': e.name,
+    #                 'position': getattr(e, 'position', None) if e.var_has_position else None,
+    #                 'var_has_position': e.var_has_position,
+    #                 'var_is_blocking_light': e.var_is_blocking_light,
+    #                 'var_can_move': e.var_can_move,
+    #                 'var_is_blocking_pos': e.var_is_blocking_pos,
+    #                 'var_can_collide': e.var_can_collide
+    #             }
+    #             entity_dicts[str(entity_class)].append(entity_dict)
+    #
+    #     gamestate_dict = {
+    #         'entities': entity_dicts,
+    #         # 'parsed_agents_conf': gamestate.agents_conf,
+    #         # 'env_rules': gamestate.rules,
+    #         # 'env_tests': gamestate.tests,
+    #         # 'lvl_shape': gamestate.lvl_shape
+    #     }
+    #
+    #     if not os.path.exists(file_path):
+    #         open(file_path, 'w').close()
+    #
+    #     with open(file_path, 'w') as json_file:
+    #         json.dump(gamestate_dict, json_file, indent=4)
+    #
+    #     with open(file_path, 'r+') as json_file:
+    #         existing_content = json.load(json_file) if os.stat(file_path).st_size > 0 else {}
+    #         existing_content.update(gamestate_dict)
+    #         json_file.seek(0)
+    #         json.dump(existing_content, json_file, indent=4)
+
 
 class StepTests:
     def __init__(self, *args):
