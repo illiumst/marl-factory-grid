@@ -81,9 +81,10 @@ Rules:
     reward_at_done: -1
     done_at_collisions: false
   # Done Conditions
-  #   Load any of the rules, to check for done conditions. 
-  # DoneAtDestinationReachAny:
-  DoneAtDestinationReachAll:
-  #  reward_at_done: 1
+  #   Load any of the rules, to check for done conditions.
+  DoneAtDestinationReach:
+    reward_at_done: 1
+    # We want to give rewards only, when all targets have been reached.
+    condition: "all"
   DoneAtMaxStepsReached:
     max_steps: 200

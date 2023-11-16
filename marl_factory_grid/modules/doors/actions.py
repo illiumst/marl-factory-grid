@@ -1,6 +1,7 @@
 from typing import Union
 
 from marl_factory_grid.environment.actions import Action
+from marl_factory_grid.modules.doors.entitites import Door
 from marl_factory_grid.modules.doors import constants as d, rewards as r
 from marl_factory_grid.environment import constants as c
 from marl_factory_grid.utils.results import ActionResult
@@ -8,21 +9,23 @@ from marl_factory_grid.utils.results import ActionResult
 
 class DoorUse(Action):
 
-    def __init__(self):
-        super().__init__(d.ACTION_DOOR_USE)
+    def __init__(self, **kwargs):
+        super().__init__(d.ACTION_DOOR_USE, r.USE_DOOR_VALID, r.USE_DOOR_FAIL, **kwargs)
 
     def do(self, entity, state) -> Union[None, ActionResult]:
         # Check if agent really is standing on a door:
-        e = state.entities.get_entities_near_pos(entity.pos)
-        try:
-            # Only one door opens TODO introduce loop
-            door = next(x for x in e if x.name.startswith(d.DOOR))
-            valid = door.use()
-            state.print(f'{entity.name} just used a {door.name} at {door.pos}')
-            return ActionResult(entity=entity, identifier=self._identifier, validity=valid, reward=r.USE_DOOR_VALID)
+        entities_close = state.entities.get_entities_near_pos(entity.pos)
 
-        except StopIteration:
-            # When he doesn't...
+        valid = False
+        for door in [e for e in entities_close if isinstance(e, Door)]:
+            try:
+                # Will always be true, when there is at least a single door.
+                valid = door.use()
+                state.print(f'{entity.name} just used a {door.name} at {door.pos}')
+
+            except AttributeError:
+                pass
+        if not valid:
+            # When he doesn't stand necxxt to a door tell me.
             state.print(f'{entity.name} just tried to use a door at {entity.pos}, but there is none.')
-            return ActionResult(entity=entity, identifier=self._identifier,
-                                validity=c.NOT_VALID, reward=r.USE_DOOR_FAIL)
+        return self.get_result(valid, entity)

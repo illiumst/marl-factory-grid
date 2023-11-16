@@ -2,7 +2,7 @@ Agents:
   Wolfgang:
     Actions:
     - Noop
-    - BtryCharge
+    - Charge
     - CleanUp
     - DestAction
     - DoorUse

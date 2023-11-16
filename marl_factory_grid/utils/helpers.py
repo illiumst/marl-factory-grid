@@ -224,8 +224,8 @@ def locate_and_import_class(class_name, folder_path: Union[str, PurePath] = ''):
                                   and x not in ['Entity',  'NamedTuple', 'List', 'Rule', 'Union',
                                                 'TickResult', 'ActionResult', 'Action', 'Agent',
                                                 'RenderEntity', 'TemplateRule', 'Objects', 'PositionMixin',
-                                                'IsBoundMixin', 'EnvObject', 'EnvObjects', 'Dict', 'Any'
-                                                ]])
+                                                'IsBoundMixin', 'EnvObject', 'EnvObjects', 'Dict', 'Any', 'Factory',
+                                                'Move8']])
         try:
             model_class = mod.__getattribute__(class_name)
             return model_class

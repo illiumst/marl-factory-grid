@@ -1,0 +1,66 @@
+General:
+  env_seed: 69
+  individual_rewards: true
+  level_name: obs_test_map
+  pomdp_r: 0
+  verbose: True
+  tests: false
+
+Agents:
+  Wolfgang:
+    Actions:
+      - Noop
+    Observations:
+      - Walls
+      - Doors
+      - Other
+      - DirtPiles
+    Positions:
+      - (1, 3)
+
+  Soeren:
+    Actions:
+      - Noop
+    Observations:
+      - Walls
+      - Doors
+      - Other
+      - DirtPiles
+    Positions:
+      - (1, 1)
+
+  Juergen:
+    Actions:
+      - Noop
+    Observations:
+      - Walls
+      - Doors
+      - Other
+      - DirtPiles
+    Positions:
+      - (1, 2)
+
+  Walter:
+    Actions:
+      - Noop
+    Observations:
+      - Walls
+      - Doors
+      - Other
+      - DirtPiles
+    Positions:
+      - (1, 4)
+
+
+Entities:
+  DirtPiles:
+  Doors:
+
+Rules:
+  # Utilities
+  WatchCollisions:
+    done_at_collisions: false
+
+  # Done Conditions
+  DoneAtMaxStepsReached:
+    max_steps: 500
