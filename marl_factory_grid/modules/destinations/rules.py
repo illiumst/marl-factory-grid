@@ -9,7 +9,6 @@ from marl_factory_grid.environment import constants as c
 
 from marl_factory_grid.modules.destinations import constants as d
 from marl_factory_grid.modules.destinations.entitites import Destination
-from marl_factory_grid.utils.states import Gamestate
 
 
 ANY             = 'any'
@@ -118,7 +117,7 @@ class SpawnDestinationsPerAgent(Rule):
                 per_agent_d = {agent_name: [ast.literal_eval(x) for x in value]}
             self.per_agent_positions.update(**per_agent_d)
 
-    def on_reset(self, state: Gamestate):
+    def on_reset(self, state):
         for (agent_name, coords_or_quantity) in self.per_agent_positions.items():
             agent = h.get_first(state[c.AGENT], lambda x: agent_name in x.name)
             assert agent

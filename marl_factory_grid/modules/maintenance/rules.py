@@ -12,10 +12,11 @@ class MoveMaintainers(Rule):
         super().__init__()
 
     def tick_step(self, state) -> List[TickResult]:
+        move_results = []
         for maintainer in state[M.MAINTAINERS]:
-            maintainer.tick(state)
-        # Todo: Return a Result Object.
-        return []
+            result = maintainer.tick(state)
+            move_results.append(result)
+        return move_results
 
 
 class DoneAtMaintainerCollision(Rule):
