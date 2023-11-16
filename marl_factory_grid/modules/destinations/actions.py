@@ -11,7 +11,7 @@ from marl_factory_grid.environment import constants as c
 class DestAction(Action):
 
     def __init__(self):
-        super().__init__(d.DESTINATION)
+        super().__init__(d.DESTINATION, d.REWARD_WAIT_VALID, d.REWARD_WAIT_FAIL)
 
     def do(self, entity, state) -> Union[None, ActionResult]:
         if destination := state[d.DESTINATION].by_pos(entity.pos):
@@ -20,5 +20,4 @@ class DestAction(Action):
         else:
             valid = c.NOT_VALID
             state.print(f'{entity.name} just tried to do_wait_action do_wait_action at {entity.pos} but failed')
-        return ActionResult(entity=entity, identifier=self._identifier, validity=valid,
-                            reward=d.REWARD_WAIT_VALID if valid else d.REWARD_WAIT_FAIL)
+        return self.get_result(valid, entity)
