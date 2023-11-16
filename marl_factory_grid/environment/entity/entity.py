@@ -91,7 +91,7 @@ class Entity(Object, abc.ABC):
                 for observer in self.observers:
                     observer.notify_add_entity(self)
                 # Aftermath Collision Check
-                if len([x for x in state.entities.by_pos(next_pos) if x.var_can_collide]):
+                if len([x for x in state.entities.by_pos(next_pos) if x.var_can_collide]) > 1:
                     # The entity did move, but there was something to collide with...
                     #  Is then reported as a non-valid move, which did work.
                     valid = False
