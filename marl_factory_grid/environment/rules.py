@@ -132,7 +132,8 @@ class WatchCollisions(Rule):
                 for i, guest in enumerate(guests):
                     try:
                         guest.set_state(TickResult(identifier=c.COLLISION, reward=self.reward,
-                                                   validity=c.NOT_VALID, entity=self))
+                                                   validity=c.NOT_VALID, entity=guest)
+                                        )
                     except AttributeError:
                         pass
                     results.append(TickResult(entity=guest, identifier=c.COLLISION,

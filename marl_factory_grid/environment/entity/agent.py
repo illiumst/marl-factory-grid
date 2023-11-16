@@ -43,9 +43,6 @@ class Agent(Entity):
     def var_is_blocking_pos(self):
         return self._is_blocking_pos
 
-    @property
-    def state(self):
-        return self._state or ActionResult(entity=self, identifier=c.NOOP, validity=c.VALID)
 
     def __init__(self, actions: List[Action], observations: List[str], *args, is_blocking_pos=False, **kwargs):
         super(Agent, self).__init__(*args, **kwargs)
@@ -53,13 +50,8 @@ class Agent(Entity):
         self.step_result = dict()
         self._actions = actions
         self._observations = observations
-        self._state: Union[Result, None] = None
+        self._status: Union[Result, None] = None
         self._is_blocking_pos = is_blocking_pos
-
-    # noinspection PyAttributeOutsideInit
-    def clear_temp_state(self):
-        self._state = None
-        return self
 
     def summarize_state(self):
         state_dict = super().summarize_state()
@@ -67,7 +59,7 @@ class Agent(Entity):
         return state_dict
 
     def set_state(self, action_result):
-        self._state = action_result
+        self._status = action_result
 
     def paralyze(self, reason):
         self._paralyzed.add(reason)

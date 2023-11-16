@@ -44,22 +44,19 @@ class Door(Entity):
 
     @property
     def is_closed(self):
-        return self._status == d.STATE_CLOSED
+        return self._state == d.STATE_CLOSED
 
     @property
     def is_open(self):
-        return self._status == d.STATE_OPEN
+        return self._state == d.STATE_OPEN
 
-    @property
-    def status(self):
-        return self._status
 
     @property
     def time_to_close(self):
         return self._time_to_close
 
     def __init__(self, *args, closed_on_init=True, auto_close_interval=10, **kwargs):
-        self._status = d.STATE_CLOSED
+        self._state = d.STATE_CLOSED
         super(Door, self).__init__(*args, **kwargs)
         self._auto_close_interval = auto_close_interval
         self._time_to_close = 0
@@ -78,7 +75,7 @@ class Door(Entity):
         return RenderEntity(name, self.pos, 1, 'none', state, self.u_int + 1)
 
     def use(self):
-        if self._status == d.STATE_OPEN:
+        if self._state == d.STATE_OPEN:
             self._close()
         else:
             self._open()
@@ -102,12 +99,12 @@ class Door(Entity):
             return Result(f"{d.DOOR}_reset", c.VALID, entity=self)
 
     def _open(self):
-        self._status = d.STATE_OPEN
+        self._state = d.STATE_OPEN
         self._reset_timer()
         return True
 
     def _close(self):
-        self._status = d.STATE_CLOSED
+        self._state = d.STATE_CLOSED
         return True
 
     def _decrement_timer(self):

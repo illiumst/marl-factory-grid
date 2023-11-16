@@ -158,6 +158,9 @@ class Gamestate(object):
         test_results = list()
         self.curr_step += 1
 
+        for entity in self.entities.iter_entities():
+            entity.clear_temp_state()
+
         # Main Agent Step
         results.extend(self.rules.tick_pre_step_all(self))
         if self.tests:
@@ -222,6 +225,7 @@ class Gamestate(object):
         """
         Whether it is safe to move to the target positions and moving entity does not introduce a blocking attribute,
         when position is allready occupied.
+        !!! Will still report true even though, there could be an enity, which var_can_collide == true !!!
 
         :param moving_entity: Entity
         :param target_position: pos

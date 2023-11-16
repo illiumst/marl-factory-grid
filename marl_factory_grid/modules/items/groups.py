@@ -70,6 +70,10 @@ class Inventory(IsBoundMixin, Collection):
     def set_collection(self, collection):
         self._collection = collection
 
+    def clear_temp_state(self):
+        # Entites need this, but inventories have no state....
+        pass
+
 
 class Inventories(Objects):
     _entity = Inventory

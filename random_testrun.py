@@ -29,7 +29,7 @@ if __name__ == '__main__':
         ce.save_all(run_path / 'all_out.yaml')
 
     # Path to config File
-    path = Path('marl_factory_grid/configs/eight_puzzle.yaml')
+    path = Path('marl_factory_grid/configs/default_config.yaml')
 
     # Env Init
     factory = Factory(path)

@@ -11,7 +11,7 @@ from marl_factory_grid.environment import constants as c
 class CleanUp(Action):
 
     def __init__(self):
-        super().__init__(d.CLEAN_UP)
+        super().__init__(d.CLEAN_UP, r.CLEAN_UP_VALID, r.CLEAN_UP_FAIL)
 
     def do(self, entity, state) -> Union[None, ActionResult]:
         if dirt := next((x for x in state.entities.pos_dict[entity.pos] if "dirt" in x.name.lower()), None):
@@ -24,13 +24,10 @@ class CleanUp(Action):
             valid = c.VALID
             print_str = f'{entity.name} did just clean up some dirt at {entity.pos}.'
             state.print(print_str)
-            reward = r.CLEAN_UP_VALID
-            identifier = d.CLEAN_UP
+
         else:
             valid = c.NOT_VALID
             print_str = f'{entity.name} just tried to clean up some dirt at {entity.pos}, but failed.'
             state.print(print_str)
-            reward = r.CLEAN_UP_FAIL
-            identifier = d.CLEAN_UP_FAIL
 
-        return ActionResult(identifier=identifier, validity=valid, reward=reward, entity=entity)
+        return self.get_result(valid, entity)

@@ -2,7 +2,7 @@ Agents:
   Wolfgang:
     Actions:
     - Noop
-    - BtryCharge
+    - Charge
     - CleanUp
     - DestAction
     - DoorUse
@@ -79,7 +79,7 @@ Rules:
     done_at_collisions: false
 
   # Done Conditions
-  DoneAtDestinationReachAny:
+  DoneAtDestinationReach:
   DoneOnAllDirtCleaned:
   DoneAtBatteryDischarge:
   DoneAtMaintainerCollision:

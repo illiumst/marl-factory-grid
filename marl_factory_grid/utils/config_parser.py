@@ -124,16 +124,28 @@ class FactoryConfigParser(object):
 
     def parse_agents_conf(self):
         parsed_agents_conf = dict()
-        base_env_actions  = self.default_actions.copy() + [c.MOVE4]
+
         for name in self.agents:
             # Actions
+            conf_actions = self.agents[name]['Actions']
             actions = list()
-            if c.DEFAULTS in self.agents[name]['Actions']:
-                actions.extend(self.default_actions)
-            actions.extend(x for x in self.agents[name]['Actions'] if x != c.DEFAULTS)
+
+            if isinstance(conf_actions, dict):
+                conf_kwargs = conf_actions.copy()
+                conf_actions = list(conf_actions.keys())
+            elif isinstance(conf_actions, list):
+                conf_kwargs = {}
+                if isinstance(conf_actions, dict):
+                    raise ValueError
+                pass
+            for action in conf_actions:
+                if action == c.DEFAULTS:
+                    actions.extend(self.default_actions)
+                else:
+                    actions.append(action)
             parsed_actions = list()
             for action in actions:
-                folder_path = MODULE_PATH if action not in base_env_actions else DEFAULT_PATH
+                folder_path = MODULE_PATH if action not in [c.MOVE8, c.NOOP, c.MOVE4] else DEFAULT_PATH
                 folder_path = Path(__file__).parent.parent / folder_path
                 try:
                     class_or_classes = locate_and_import_class(action, folder_path)
@@ -144,7 +156,7 @@ class FactoryConfigParser(object):
                 except TypeError:
                     parsed_actions.append(class_or_classes)
 
-            parsed_actions = [x() for x in parsed_actions]
+            parsed_actions = [x(**conf_kwargs.get(x, {})) for x in parsed_actions]
 
             # Observation
             observations = list()

@@ -40,6 +40,7 @@ class Object:
         return True
 
     def __init__(self, str_ident: Union[str, None] = None, **kwargs):
+        self._status = None
         self._bound_entity = None
         self._observers = set()
         self._str_ident = str_ident
@@ -83,6 +84,10 @@ class Object:
 
     def summarize_state(self):
         return dict()
+
+    def clear_temp_state(self):
+        self._status = None
+        return self
 
     def bind_to(self, entity):
         # noinspection PyAttributeOutsideInit

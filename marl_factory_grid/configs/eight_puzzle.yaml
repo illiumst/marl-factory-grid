@@ -1,8 +1,20 @@
+General:
+  env_seed: 69
+  individual_rewards: true
+  level_name: eight_puzzle
+  pomdp_r: 0
+  verbose: True
+  tests: false
+
 Agents:
   Wolfgang:
     Actions:
-      - Noop
-      - Move4
+      Noop:
+        fail_reward: -0
+        valid_reward: 0
+      Move4:
+        fail_reward: -0.1
+        valid_reward: -.01
     Observations:
       - Other
       - Walls
@@ -35,13 +47,6 @@ Entities:
           Walter: 1
           Siggi: 1
           Dennis: 1
-General:
-  env_seed: 69
-  individual_rewards: true
-  level_name: eight_puzzle
-  pomdp_r: 3
-  verbose: True
-  tests: false
 
 Rules:
   # Utilities
