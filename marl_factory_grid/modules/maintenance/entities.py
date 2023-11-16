@@ -26,16 +26,22 @@ class Maintainer(Entity):
         self._last_serviced = 'None'
 
     def tick(self, state):
+        self.clear_temp_state
         if found_objective := h.get_first(state[self.objective].by_pos(self.pos)):
             if found_objective.name != self._last_serviced:
                 self.action.do(self, state)
                 self._last_serviced = found_objective.name
             else:
                 action = self.get_move_action(state)
-                return action.do(self, state)
+                result = action.do(self, state)
         else:
             action = self.get_move_action(state)
-            return action.do(self, state)
+            result = action.do(self, state)
+        self.set_state(result)
+        return result
+
+    def set_state(self, action_result):
+        self._status = action_result
 
     def get_move_action(self, state) -> Action:
         if self._path is None or not len(self._path):

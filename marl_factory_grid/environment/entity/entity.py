@@ -90,7 +90,14 @@ class Entity(Object, abc.ABC):
                 self.set_pos(next_pos)
                 for observer in self.observers:
                     observer.notify_add_entity(self)
+                # Aftermath Collision Check
+                if len([x for x in state.entities.by_pos(next_pos) if x.var_can_collide]):
+                    # The entity did move, but there was something to collide with...
+                    #  Is then reported as a non-valid move, which did work.
+                    valid = False
+
             return valid
+        # Bad naming... Was the same was the same pos, not moving....
         return not_same_pos
 
     def __init__(self, pos, bind_to=None, **kwargs):

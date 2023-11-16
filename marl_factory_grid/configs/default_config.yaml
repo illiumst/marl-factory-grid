@@ -79,7 +79,7 @@ Rules:
     done_at_collisions: false
 
   # Done Conditions
-  DoneAtDestinationReachAny:
+  DoneAtDestinationReach:
   DoneOnAllDirtCleaned:
   DoneAtBatteryDischarge:
   DoneAtMaintainerCollision:

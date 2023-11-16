@@ -51,13 +51,18 @@ class Move(Action, abc.ABC):
     def do(self, entity, state):
         new_pos = self._calc_new_pos(entity.pos)
         if state.check_move_validity(entity, new_pos):
-            # noinspection PyUnresolvedReferences
-            move_really_was_valid = entity.move(new_pos, state)
-            return self.get_result(move_really_was_valid, entity)
-        else:  # There is no place to go, propably collision
+            valid = entity.move(new_pos, state)
+
+        else:
+            # There is no place to go, propably collision
             # This is currently handeld by the WatchCollisions rule, so that it can be switched on and off by conf.yml
             # return ActionResult(entity=entity, identifier=self._identifier, validity=c.NOT_VALID, reward=r.COLLISION)
-            return self.get_result(c.NOT_VALID, entity)
+            valid = c.NOT_VALID
+        if valid:
+            state.print(f'{entity.name} just moved to {entity.pos}.')
+        else:
+            state.print(f'{entity.name} just tried to move to {new_pos} but either failed or hat a Collision.')
+        return self.get_result(valid, entity)
 
     def _calc_new_pos(self, pos):
         x_diff, y_diff = MOVEMAP[self._identifier]

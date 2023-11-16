@@ -19,5 +19,5 @@ class DestAction(Action):
             state.print(f'{entity.name} just waited at {entity.pos}')
         else:
             valid = c.NOT_VALID
-            state.print(f'{entity.name} just tried to do_wait_action do_wait_action at {entity.pos} but failed')
+            state.print(f'{entity.name} just tried to "do_wait_action" at {entity.pos} but failed')
         return self.get_result(valid, entity)
