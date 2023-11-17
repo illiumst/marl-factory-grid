@@ -52,6 +52,11 @@ class Move(Action, abc.ABC):
         new_pos = self._calc_new_pos(entity.pos)
         if state.check_move_validity(entity, new_pos):
             valid = entity.move(new_pos, state)
+            # Aftermath Collision Check
+            if len([x for x in state.entities.by_pos(entity.pos) if x.var_can_collide]) > 1:
+                # The entity did move, but there was something to collide with...
+                #  Is then reported as a non-valid move, which did work.
+                valid = False
 
         else:
             # There is no place to go, propably collision
