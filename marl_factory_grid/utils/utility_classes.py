@@ -18,6 +18,12 @@ class MarlFrameStack(gym.ObservationWrapper):
 
 @dataclass
 class RenderEntity:
+    """
+    TODO
+
+
+    :return:
+    """
     name: str
     pos: np.array
     value: float = 1
@@ -30,6 +36,12 @@ class RenderEntity:
 
 @dataclass
 class Floor:
+    """
+    TODO
+
+
+    :return:
+    """
 
     @property
     def encoding(self):

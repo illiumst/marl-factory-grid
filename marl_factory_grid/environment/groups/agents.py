@@ -26,12 +26,24 @@ class Agents(Collection):
 
     @property
     def action_space(self):
+        """
+        TODO
+
+
+        :return:
+        """
         from gymnasium import spaces
         space = spaces.Tuple([spaces.Discrete(len(x.actions)) for x in self])
         return space
 
     @property
-    def named_action_space(self):
+    def named_action_space(self) -> dict[str, dict[str, list[int]]]:
+        """
+        TODO
+
+
+        :return:
+        """
         named_space = dict()
         for agent in self:
             named_space[agent.name] = {action.name: idx for idx, action in enumerate(agent.actions)}

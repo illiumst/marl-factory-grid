@@ -18,12 +18,24 @@ class OBSBuilder(object):
 
     @property
     def pomdp_d(self):
+        """
+        TODO
+
+
+        :return:
+        """
         if self.pomdp_r:
             return (self.pomdp_r * 2) + 1
         else:
             return 0
 
     def __init__(self, level_shape: np.size, state: Gamestate, pomdp_r: int):
+        """
+        TODO
+
+
+        :return:
+        """
         self.all_obs = dict()
         self.ray_caster = dict()
 

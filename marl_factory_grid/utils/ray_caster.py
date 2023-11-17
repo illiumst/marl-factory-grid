@@ -7,6 +7,12 @@ from numba import njit
 
 class RayCaster:
     def __init__(self, agent, pomdp_r, degs=360):
+        """
+        TODO
+
+
+        :return:
+        """
         self.agent = agent
         self.pomdp_r = pomdp_r
         self.n_rays = 100  # (self.pomdp_r + 1) * 8

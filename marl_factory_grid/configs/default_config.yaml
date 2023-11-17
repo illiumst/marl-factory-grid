@@ -23,6 +23,7 @@ Agents:
     - DropOffLocations
     - Maintainers
 Entities:
+
   Batteries:
     initial_charge: 0.8
     per_action_costs: 0.02

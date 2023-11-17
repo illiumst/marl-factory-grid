@@ -24,6 +24,7 @@ SYMBOL_FLOOR            = '-'
 
 VALID                   = True            # Identifier to rename boolean values in the context of actions.
 NOT_VALID               = False           # Identifier to rename boolean values in the context of actions.
+
 VALUE_FREE_CELL         = 0               # Free-Cell value used in observation
 VALUE_OCCUPIED_CELL     = 1               # Occupied-Cell value used in observation
 VALUE_NO_POS            = (-9999, -9999)  # Invalid Position value used in the environment (smth. is off-grid)

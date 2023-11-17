@@ -249,4 +249,11 @@ def get_first(iterable: Iterable, filter_by: Callable[[any], bool] = lambda _: T
 
 
 def get_first_index(iterable: Iterable, filter_by: Callable[[any], bool] = lambda _: True):
+    """
+    todo
+
+    :param iterable:
+    :param filter_by:
+    :return:
+    """
     return next((idx for idx, x in enumerate(iterable) if filter_by(x)), None)

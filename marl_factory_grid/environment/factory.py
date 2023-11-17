@@ -23,22 +23,52 @@ class Factory(gym.Env):
 
     @property
     def action_space(self):
+        """
+        TODO
+
+
+        :return:
+        """
         return self.state[c.AGENT].action_space
 
     @property
     def named_action_space(self):
+        """
+        TODO
+
+
+        :return:
+        """
         return self.state[c.AGENT].named_action_space
 
     @property
     def observation_space(self):
+        """
+        TODO
+
+
+        :return:
+        """
         return self.obs_builder.observation_space(self.state)
 
     @property
     def named_observation_space(self):
+        """
+        TODO
+
+
+        :return:
+        """
         return self.obs_builder.named_observation_space(self.state)
 
     @property
     def params(self) -> dict:
+        """
+        FIXME LAGEGY
+
+
+        :return:
+        """
         import yaml
         config_path = Path(self._config_file)
         config_dict = yaml.safe_load(config_path.open())
@@ -49,6 +79,12 @@ class Factory(gym.Env):
 
     def __init__(self, config_file: Union[str, PathLike], custom_modules_path: Union[None, PathLike] = None,
                  custom_level_path: Union[None, PathLike] = None):
+        """
+        TODO
+
+
+        :return:
+        """
         self._config_file = config_file
         self.conf = FactoryConfigParser(self._config_file, custom_modules_path)
         # Attribute Assignment

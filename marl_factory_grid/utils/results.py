@@ -10,6 +10,12 @@ TYPES = [TYPE_VALUE, TYPE_REWARD]
 
 @dataclass
 class InfoObject:
+    """
+    TODO
+
+
+    :return:
+    """
     identifier: str
     val_type: str
     value: Union[float, int]
@@ -17,6 +23,12 @@ class InfoObject:
 
 @dataclass
 class Result:
+    """
+    TODO
+
+
+    :return:
+    """
     identifier: str
     validity: bool
     reward: Union[float, None] = None
@@ -40,11 +52,27 @@ class Result:
 
 @dataclass
 class TickResult(Result):
+    """
+    TODO
+    """
     pass
 
 
 @dataclass
 class ActionResult(Result):
+    """
+    TODO
+    """
+    pass
+
+
+@dataclass
+class ActionResult(Result):
+    pass
+
+@dataclass
+class State(Result):
+    # TODO: change identifiert to action/last_action
     pass
 
 

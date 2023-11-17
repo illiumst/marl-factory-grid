@@ -50,7 +50,6 @@ class Door(Entity):
     def is_open(self):
         return self._state == d.STATE_OPEN
 
-
     @property
     def time_to_close(self):
         return self._time_to_close

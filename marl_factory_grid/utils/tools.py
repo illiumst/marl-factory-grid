@@ -22,6 +22,12 @@ EXCLUDED     = ['identifier', 'args', 'kwargs', 'Move', 'Agent', 'GlobalPosition
 class ConfigExplainer:
 
     def __init__(self, custom_path: Union[None, PathLike] = None):
+        """
+        TODO
+
+
+        :return:
+        """
         self.base_path = Path(__file__).parent.parent.resolve()
         self.custom_path = custom_path
         self.searchspace = [ACTION, GENERAL, ENTITIES, OBSERVATIONS, RULES, ASSETS]

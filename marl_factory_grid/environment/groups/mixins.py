@@ -28,9 +28,3 @@ class HasBoundMixin:
             return next((x for x in self if x.belongs_to_entity(entity)))
         except (StopIteration, AttributeError):
             return None
-
-    def idx_by_entity(self, entity):
-        try:
-            return next((idx for idx, x in enumerate(self) if x.belongs_to_entity(entity)))
-        except (StopIteration, AttributeError):
-            return None

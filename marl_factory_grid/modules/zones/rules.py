@@ -47,7 +47,7 @@ class AgentSingleZonePlacement(Rule):
 class IndividualDestinationZonePlacement(Rule):
 
     def __init__(self):
-        raise NotImplementedError("This is rpetty new, and needs to be debugged, after the zones")
+        raise NotImplementedError("This is pretty new, and needs to be debugged, after the zones")
         super().__init__()
 
     def on_reset(self, state):

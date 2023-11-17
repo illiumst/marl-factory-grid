@@ -12,44 +12,94 @@ class Rule(abc.ABC):
 
     @property
     def name(self):
+        """
+        TODO
+
+
+        :return:
+        """
         return self.__class__.__name__
 
     def __init__(self):
+        """
+        TODO
+
+
+        :return:
+        """
         pass
 
     def __repr__(self):
         return f'{self.name}'
 
     def on_init(self, state, lvl_map):
+        """
+        TODO
+
+
+        :return:
+        """
         return []
 
     def on_reset(self, state) -> List[TickResult]:
+        """
+        TODO
+
+
+        :return:
+        """
         return []
 
     def tick_pre_step(self, state) -> List[TickResult]:
+        """
+        TODO
+
+
+        :return:
+        """
         return []
 
     def tick_step(self, state) -> List[TickResult]:
+        """
+        TODO
+
+
+        :return:
+        """
         return []
 
     def tick_post_step(self, state) -> List[TickResult]:
+        """
+        TODO
+
+
+        :return:
+        """
         return []
 
     def on_check_done(self, state) -> List[DoneResult]:
+        """
+        TODO
+
+
+        :return:
+        """
         return []
 
 
 class SpawnEntity(Rule):
 
     @property
-    def _collection(self) -> Collection:
-        return Collection()
-
-    @property
     def name(self):
         return f'{self.__class__.__name__}({self.collection.name})'
 
     def __init__(self, collection, coords_or_quantity, ignore_blocking=False):
+        """
+        TODO
+
+
+        :return:
+        """
         super().__init__()
         self.coords_or_quantity = coords_or_quantity
         self.collection = collection
@@ -65,6 +115,12 @@ class SpawnEntity(Rule):
 class SpawnAgents(Rule):
 
     def __init__(self):
+        """
+        TODO
+
+
+        :return:
+        """
         super().__init__()
         pass
 
@@ -91,6 +147,12 @@ class SpawnAgents(Rule):
 class DoneAtMaxStepsReached(Rule):
 
     def __init__(self, max_steps: int = 500):
+        """
+        TODO
+
+
+        :return:
+        """
         super().__init__()
         self.max_steps = max_steps
 
@@ -103,6 +165,12 @@ class DoneAtMaxStepsReached(Rule):
 class AssignGlobalPositions(Rule):
 
     def __init__(self):
+        """
+        TODO
+
+
+        :return:
+        """
         super().__init__()
 
     def on_reset(self, state, lvl_map):
@@ -116,6 +184,12 @@ class AssignGlobalPositions(Rule):
 class WatchCollisions(Rule):
 
     def __init__(self, reward=r.COLLISION, done_at_collisions: bool = False, reward_at_done=r.COLLISION_DONE):
+        """
+        TODO
+
+
+        :return:
+        """
         super().__init__()
         self.reward_at_done = reward_at_done
         self.reward = reward

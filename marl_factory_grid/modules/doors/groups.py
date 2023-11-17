@@ -18,6 +18,7 @@ class Doors(Collection):
     def tick_doors(self, state):
         results = list()
         for door in self:
+            assert isinstance(door, Door)
             tick_result = door.tick(state)
             if tick_result is not None:
                 results.append(tick_result)
@@ -26,4 +27,5 @@ class Doors(Collection):
 
     def reset(self):
         for door in self:
+            assert isinstance(door, Door)
             door.reset()

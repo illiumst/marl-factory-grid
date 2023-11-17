@@ -56,6 +56,9 @@ class Inventory(IsBoundMixin, Collection):
         self._collection = None
         self.bind(agent)
 
+    def __repr__(self):
+        return f'{self.__class__.__name__}#{self._bound_entity.name}({dict(self._data)})'
+
     def summarize_states(self, **kwargs):
         attr_dict = {key: val for key, val in self.__dict__.items() if not key.startswith('_') and key != 'data'}
         attr_dict.update(dict(items=[val.summarize_state(**kwargs) for key, val in self.items()]))
@@ -99,12 +102,6 @@ class Inventories(Objects):
 
     def trigger_spawn(self, state, *args, **kwargs) -> [Result]:
         return self.spawn(state[c.AGENT], *args, **kwargs)
-
-    def idx_by_entity(self, entity):
-        try:
-            return next((idx for idx, inv in enumerate(self) if inv.belongs_to_entity(entity)))
-        except StopIteration:
-            return None
 
     def by_entity(self, entity):
         try:

@@ -12,10 +12,6 @@ class Batteries(Collection):
     var_has_position = False
     var_can_be_bound = True
 
-    @property
-    def obs_tag(self):
-        return self.__class__.__name__
-
     def __init__(self, size, initial_charge_level: float=1.0, *args, **kwargs):
         super(Batteries, self).__init__(size, *args, **kwargs)
         self.initial_charge_level = initial_charge_level
