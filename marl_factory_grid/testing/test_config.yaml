@@ -2,7 +2,7 @@ Agents:
   Wolfgang:
     Actions:
     - Noop
-    - BtryCharge
+    - Charge
     - CleanUp
     - DestAction
     - DoorUse
@@ -58,7 +58,7 @@ General:
   level_name: large
   pomdp_r: 3
   verbose: false
-  tests: false
+  tests: true
 
 Rules:
   # Environment Dynamics

@@ -55,17 +55,16 @@ class MaintainerTest(Test):
             if maintainer._closed_door_in_path(state):
                 self.assertEqual(maintainer.get_move_action(state).name, 'use_door')
 
-            if maintainer._path:
+            elif maintainer._path:
                 # can move
-                print(maintainer.move(maintainer._path[1], state))  # 0 immer false ausser schritt 1, 1 meistens true nicht immer
-                # self.assertTrue(maintainer.move(maintainer._path[1], state))
+                # print(maintainer.move(maintainer._path[1], state))
+                self.assertTrue(maintainer.move(maintainer._path[1], state))
 
-            else:
-                # finds valid targets oder hier?
-                route = maintainer.calculate_route(maintainer._last[-1], state.flootile_graph)
+            if not maintainer._path:
+                # finds valid targets when at target location
+                route = maintainer.calculate_route(maintainer._last[-1], state.floortile_graph)
                 if entities_at_target_location := [entity for entity in state.entities.by_pos(route[-1])]:
                     self.assertTrue(any(isinstance(e, Machine) for e in entities_at_target_location))
-
         return []
 
     def tick_post_step(self, state) -> List[TickResult]:
@@ -73,12 +72,11 @@ class MaintainerTest(Test):
             if maintainer._path:
                 # if action was door use: was door opened successfully?
                 if maintainer._closed_door_in_path(state):
-                    # print(maintainer.get_move_action(state))
                     door = next(
                         (entity for entity in state.entities.by_pos(maintainer._path[0]) if isinstance(entity, Door)),
                         None)
                     self.assertEqual(door.is_open, True)
-
+                # when stepping off machine, did maintain action work?
         return []
 
 
