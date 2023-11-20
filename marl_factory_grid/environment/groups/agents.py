@@ -6,6 +6,12 @@ class Agents(Collection):
     _entity = Agent
 
     @property
+    def obs_pairs(self):
+        pair_list = [(self.name, self)]
+        pair_list.extend([(a.name, a) for a in self])
+        return pair_list
+
+    @property
     def spawn_rule(self):
         return {}
 

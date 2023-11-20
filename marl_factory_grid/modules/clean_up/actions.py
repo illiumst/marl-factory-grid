@@ -8,7 +8,7 @@ from marl_factory_grid.modules.clean_up import constants as d, rewards as r
 from marl_factory_grid.environment import constants as c
 
 
-class CleanUp(Action):
+class Clean(Action):
 
     def __init__(self):
         super().__init__(d.CLEAN_UP, r.CLEAN_UP_VALID, r.CLEAN_UP_FAIL)

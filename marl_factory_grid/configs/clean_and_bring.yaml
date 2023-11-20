@@ -1,37 +1,31 @@
 Agents:
   Wolfgang:
     Actions:
-    - Noop
-    - Charge
-    - Clean
-    - DestAction
-    - DoorUse
-    - ItemAction
     - Move8
+    - DoorUse
+    - Clean
+    - Noop
     Observations:
-    - Combined:
-      - Other
-      - Walls
-    - GlobalPosition
-    - Battery
-    - ChargePods
-    - DirtPiles
-    - Destinations
+    - Walls
     - Doors
-    - Items
-    - Inventory
-    - DropOffLocations
-    - Maintainers
-Entities:
+    - Other
+    - DirtPiles
 
-  Batteries:
-    initial_charge: 0.8
-    per_action_costs: 0.02
-  ChargePods:
-    coords_or_quantity: 2
-  Destinations:
-    coords_or_quantity: 1
-    spawn_mode: GROUPED
+  Juergen:
+    Actions:
+      - Move8
+      - DoorUse
+      - ItemAction
+      - Noop
+    Observations:
+      - Walls
+      - Doors
+      - Other
+      - Items
+      - DropOffLocations
+      - Inventory
+
+Entities:
   DirtPiles:
     coords_or_quantity: 10
     initial_amount: 2
@@ -43,20 +37,15 @@ Entities:
   DropOffLocations:
     coords_or_quantity: 1
     max_dropoff_storage_size: 0
-  GlobalPositions: {}
   Inventories: {}
   Items:
     coords_or_quantity: 5
-  Machines:
-    coords_or_quantity: 2
-  Maintainers:
-    coords_or_quantity: 1
-  Zones: {}
+
 
 General:
   env_seed: 69
   individual_rewards: true
-  level_name: large
+  level_name: rooms
   pomdp_r: 3
   verbose: True
   tests: false
@@ -66,23 +55,19 @@ Rules:
   EntitiesSmearDirtOnMove:
     smear_ratio: 0.2
   DoorAutoClose:
-    close_frequency: 10
-  MoveMaintainers:
+    close_frequency: 7
 
   # Respawn Stuff
   RespawnDirt:
-    respawn_freq: 15
+    respawn_freq: 30
   RespawnItems:
-    respawn_freq: 15
+    respawn_freq: 50
 
   # Utilities
   WatchCollisions:
     done_at_collisions: false
 
   # Done Conditions
-  DoneAtDestinationReach:
   DoneOnAllDirtCleaned:
-  DoneAtBatteryDischarge:
-  DoneAtMaintainerCollision:
   DoneAtMaxStepsReached:
     max_steps: 500

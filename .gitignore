@@ -81,7 +81,7 @@ acs-*.bib
 # endnotes
 *.ent
 
-# fixme
+# f i x m e
 *.lox
 
 # feynmf/feynmp
@@ -143,7 +143,6 @@ acs-*.bib
 
 # knitr
 *-concordance.tex
-# TODO Comment the next line if you want to keep your tikz graphics files
 *.tikz
 *-tikzDictionary
 
@@ -225,7 +224,7 @@ pythontex-files-*/
 *.hst
 *.ver
 
-# easy-todo
+# easy-t o d o
 *.lod
 
 # xcolor

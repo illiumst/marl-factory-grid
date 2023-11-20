@@ -51,6 +51,10 @@ class Inventory(IsBoundMixin, Collection):
     def obs_tag(self):
         return self.name
 
+    @property
+    def name(self):
+        return f'{self.__class__.__name__}[{self._bound_entity.name}]'
+
     def __init__(self, agent: Agent, *args, **kwargs):
         super(Inventory, self).__init__(*args, **kwargs)
         self._collection = None
