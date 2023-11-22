@@ -18,5 +18,5 @@ build-job:       # This job runs in the build stage, which runs first.
     - pip install twine --upgrade
     - python setup.py sdist
     - echo "Compile complete."
-    - twine upload dist/* --username $USER_NAME --password $API_KEY --repository marl-factory-grid
+    - twine upload --username $USER_NAME --password $API_KEY --repository marl-factory-grid --repository-url https://upload.pypi.org/legacy/ dist/*
     - echo "Upload complete."
