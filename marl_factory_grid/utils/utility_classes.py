@@ -19,10 +19,8 @@ class MarlFrameStack(gym.ObservationWrapper):
 @dataclass
 class RenderEntity:
     """
-    TODO
-
-
-    :return:
+    This class defines the interface to communicate with the Renderer. Name and pos are used to load an asset file
+    named name.png and place it at the given pos.
     """
     name: str
     pos: np.array
@@ -37,10 +35,8 @@ class RenderEntity:
 @dataclass
 class Floor:
     """
-    TODO
-
-
-    :return:
+    This class defines Entity like Floor-Objects, which do not come with the overhead.
+    Solely used for field-of-view calculation.
     """
 
     @property
