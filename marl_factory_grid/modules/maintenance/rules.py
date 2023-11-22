@@ -9,6 +9,9 @@ from . import constants as M
 class MoveMaintainers(Rule):
 
     def __init__(self):
+        """
+        This rule is responsible for moving the maintainers at every step of the environment.
+        """
         super().__init__()
 
     def tick_step(self, state) -> List[TickResult]:
@@ -21,6 +24,9 @@ class MoveMaintainers(Rule):
 class DoneAtMaintainerCollision(Rule):
 
     def __init__(self):
+        """
+        When active, this rule stops the environment after a maintainer reports a collision with another entity.
+        """
         super().__init__()
 
     def on_check_done(self, state) -> List[DoneResult]:

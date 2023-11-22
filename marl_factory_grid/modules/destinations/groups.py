@@ -5,13 +5,30 @@ from marl_factory_grid.modules.destinations.entitites import Destination
 class Destinations(Collection):
     _entity = Destination
 
-    var_is_blocking_light = False
-    var_can_collide = False
-    var_can_move = False
-    var_has_position = True
-    var_can_be_bound = True
+    @property
+    def var_is_blocking_light(self):
+        return False
+
+    @property
+    def var_can_collide(self):
+        return False
+
+    @property
+    def var_can_move(self):
+        return False
+
+    @property
+    def var_has_position(self):
+        return True
+
+    @property
+    def var_can_be_bound(self):
+        return True
 
     def __init__(self, *args, **kwargs):
+        """
+        A collection of destinations.
+        """
         super().__init__(*args, **kwargs)
 
     def __repr__(self):

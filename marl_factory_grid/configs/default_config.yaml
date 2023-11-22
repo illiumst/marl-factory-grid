@@ -58,7 +58,7 @@ General:
   individual_rewards: true
   level_name: large
   pomdp_r: 3
-  verbose: True
+  verbose: false
   tests: false
 
 Rules:

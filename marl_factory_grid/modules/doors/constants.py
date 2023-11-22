@@ -16,3 +16,7 @@ STATE_OPEN              = 'open'                # Identifier to compare door-is-
 
 # Actions
 ACTION_DOOR_USE         = 'use_door'            # Identifier for door-action
+
+# Rewards
+REWARD_USE_DOOR_VALID: float = -0.00            # Reward for successful door use
+REWARD_USE_DOOR_FAIL: float = -0.01             # Reward for unsuccessful door use

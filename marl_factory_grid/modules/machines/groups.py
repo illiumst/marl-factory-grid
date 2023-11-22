@@ -20,5 +20,8 @@ class Machines(Collection):
         return True
 
     def __init__(self, *args, **kwargs):
+        """
+        A Collection of Machines.
+        """
         super(Machines, self).__init__(*args, **kwargs)
 
