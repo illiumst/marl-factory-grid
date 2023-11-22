@@ -9,6 +9,16 @@ from marl_factory_grid.modules.items import constants as i
 class RespawnItems(Rule):
 
     def __init__(self, n_items: int = 5, respawn_freq: int = 15, n_locations: int = 5):
+        """
+        Defines the respawning behaviour of items.
+
+        :param n_items: Specifies how many items should respawn.
+        :type n_items: int
+        :param respawn_freq: Specifies how often items should respawn.
+        :type respawn_freq: int
+        :param n_locations: Specifies at how many locations items should be able to respawn.
+        :type: int
+        """
         super().__init__()
         self.spawn_frequency = respawn_freq
         self._next_item_spawn = respawn_freq

@@ -7,19 +7,33 @@ class DirtPile(Entity):
 
     @property
     def amount(self):
+        """
+        Internal Usage
+        """
         return self._amount
 
     @property
     def encoding(self):
-        # Edit this if you want items to be drawn in the ops differntly
         return self._amount
 
     def __init__(self, *args, amount=2, max_local_amount=5, **kwargs):
+        """
+        Represents a pile of dirt at a specific position in the environment.
+
+        :param amount: The amount of dirt in the pile.
+        :type amount: float
+
+        :param max_local_amount: The maximum amount of dirt allowed in a single pile at one position.
+        :type max_local_amount: float
+        """
         super(DirtPile, self).__init__(*args, **kwargs)
         self._amount = amount
         self.max_local_amount = max_local_amount
 
     def set_new_amount(self, amount):
+        """
+        Internal Usage
+        """
         self._amount = min(amount, self.max_local_amount)
 
     def summarize_state(self):

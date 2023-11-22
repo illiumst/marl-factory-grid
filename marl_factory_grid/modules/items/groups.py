@@ -1,3 +1,5 @@
+from typing import Dict, Any
+
 from marl_factory_grid.environment import constants as c
 from marl_factory_grid.environment.entity.agent import Agent
 from marl_factory_grid.environment.groups.collection import Collection
@@ -16,14 +18,17 @@ class Items(Collection):
         return True
 
     @property
-    def is_blocking_light(self):
+    def var_is_blocking_light(self):
         return False
 
     @property
-    def can_collide(self):
+    def var_can_collide(self):
         return False
 
     def __init__(self, *args, **kwargs):
+        """
+        A collection of items that triggers their spawn.
+        """
         super().__init__(*args, **kwargs)
 
     def trigger_spawn(self, state, *entity_args, coords_or_quantity=None, **entity_kwargs) -> [Result]:
@@ -55,7 +60,13 @@ class Inventory(IsBoundMixin, Collection):
     def name(self):
         return f'{self.__class__.__name__}[{self._bound_entity.name}]'
 
-    def __init__(self, agent: Agent, *args, **kwargs):
+    def __init__(self, agent, *args, **kwargs):
+        """
+        An inventory that can hold items picked up by the agent this is bound to.
+
+        :param agent: The agent this inventory is bound to and belongs to.
+        :type agent: Agent
+        """
         super(Inventory, self).__init__(*args, **kwargs)
         self._collection = None
         self.bind(agent)
@@ -69,38 +80,57 @@ class Inventory(IsBoundMixin, Collection):
         attr_dict.update(dict(name=self.name, belongs_to=self._bound_entity.name))
         return attr_dict
 
-    def pop(self):
+    def pop(self) -> Item:
+        """
+        Removes and returns the first item in the inventory.
+        """
         item_to_pop = self[0]
         self.delete_env_object(item_to_pop)
         return item_to_pop
 
     def set_collection(self, collection):
+        """
+        No usage
+        """
         self._collection = collection
 
     def clear_temp_state(self):
-        # Entites need this, but inventories have no state....
+        """
+        Entites need this, but inventories have no state.
+        """
         pass
 
 
 class Inventories(Objects):
     _entity = Inventory
-
-    var_can_move = False
-    var_has_position = False
-
     symbol = None
 
     @property
-    def spawn_rule(self):
+    def var_can_move(self):
+        return False
+
+    @property
+    def var_has_position(self):
+        return False
+
+    @property
+    def spawn_rule(self) -> dict[Any, dict[str, Any]]:
+        """
+        :returns: a dict containing the specified spawn rule and its arguments.
+        :rtype: dict(dict(collection=self, coords_or_quantity=None))
+        """
         return {c.SPAWN_ENTITY_RULE: dict(collection=self, coords_or_quantity=None)}
 
     def __init__(self, size: int, *args, **kwargs):
+        """
+        TODO
+        """
         super(Inventories, self).__init__(*args, **kwargs)
         self.size = size
         self._obs = None
         self._lazy_eval_transforms = []
 
-    def spawn(self, agents, *args, **kwargs):
+    def spawn(self, agents, *args, **kwargs) -> [Result]:
         self.add_items([self._entity(agent, self.size, *args, **kwargs) for _, agent in enumerate(agents)])
         return [Result(identifier=f'{self.name}_spawn', validity=c.VALID, value=len(self))]
 
@@ -137,6 +167,9 @@ class DropOffLocations(Collection):
         return True
 
     def __init__(self, *args, **kwargs):
+        """
+        A Collection of Drop-off locations that can trigger their spawn.
+        """
         super(DropOffLocations, self).__init__(*args, **kwargs)
 
     @staticmethod

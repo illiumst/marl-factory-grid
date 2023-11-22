@@ -3,18 +3,38 @@ from typing import Union
 from marl_factory_grid.environment.actions import Action
 from marl_factory_grid.utils.results import ActionResult
 
-from marl_factory_grid.modules.items import constants as i, rewards as r
+from marl_factory_grid.modules.items import constants as i
 from marl_factory_grid.environment import constants as c
 
 
 class ItemAction(Action):
 
     def __init__(self, failed_dropoff_reward: float | None = None, valid_dropoff_reward: float | None = None, **kwargs):
-        super().__init__(i.ITEM_ACTION, r.PICK_UP_FAIL, r.PICK_UP_VALID, **kwargs)
-        self.failed_drop_off_reward = failed_dropoff_reward if failed_dropoff_reward is not None else r.DROP_OFF_FAIL
-        self.valid_drop_off_reward = valid_dropoff_reward if valid_dropoff_reward is not None else r.DROP_OFF_FAIL
+        """
+        Allows an entity to pick up or drop off items in the environment.
 
-    def get_dropoff_result(self, validity, entity):
+        :param failed_drop_off_reward: The reward assigned when a drop-off action fails. Default is None.
+        :type failed_dropoff_reward: float | None
+        :param valid_drop_off_reward: The reward assigned when a drop-off action is successful. Default is None.
+        :type valid_dropoff_reward: float | None
+        """
+        super().__init__(i.ITEM_ACTION, i.REWARD_PICK_UP_FAIL, i.REWARD_PICK_UP_VALID, **kwargs)
+        self.failed_drop_off_reward = failed_dropoff_reward if failed_dropoff_reward is not None else i.REWARD_DROP_OFF_FAIL
+        self.valid_drop_off_reward = valid_dropoff_reward if valid_dropoff_reward is not None else i.REWARD_DROP_OFF_VALID
+
+    def get_dropoff_result(self, validity, entity) -> ActionResult:
+        """
+        Generates an ActionResult for a drop-off action based on its validity.
+
+        :param validity: Whether the drop-off action is valid.
+        :type validity: bool
+
+        :param entity: The entity performing the action.
+        :type entity: Entity
+
+        :return: ActionResult for the drop-off action.
+        :rtype: ActionResult
+        """
         reward = self.valid_drop_off_reward if validity else self.failed_drop_off_reward
         return ActionResult(self.__name__, validity, reward=reward, entity=entity)
 

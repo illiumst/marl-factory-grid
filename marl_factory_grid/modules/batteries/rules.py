@@ -24,16 +24,16 @@ class BatteryDecharge(Rule):
                                  2. float: each action "costs" the same.
         ----                         
          !!! Does not introduce any Env.-Done condition. 
-         !!! Batterys can only be charged if agent posses the "Charge(Action.                 
-         !!! Batterys can only be charged if there are "Charpods" and they are spawned!                      
+         !!! Batteries can only be charged if agent posses the "Charge" Action.                 
+         !!! Batteries can only be charged if there are "Charge Pods" and they are spawned!                      
         ----                         
         :type initial_charge: float
         :param initial_charge: How much juice they have.
         :type battery_discharge_reward: float
-        :param battery_discharge_reward: Negativ reward, when agents let their batters discharge. 
+        :param battery_discharge_reward: Negative reward, when agents let their batters discharge. 
                                          Default: {b.REWARD_BATTERY_DISCHARGED}
         :type battery_failed_reward: float
-        :param battery_failed_reward: Negativ reward, when agent cannot charge, but do (overcharge, not on station).
+        :param battery_failed_reward: Negative reward, when agent cannot charge, but do (overcharge, not on station).
                                        Default: {b.Reward_CHARGE_FAIL}
         :type battery_charge_reward: float
         :param battery_charge_reward: Positive reward, when agent actually charge their battery.
@@ -48,7 +48,6 @@ class BatteryDecharge(Rule):
         self.initial_charge = initial_charge
 
     def tick_step(self, state) -> List[TickResult]:
-        # Decharge
         batteries = state[b.BATTERIES]
         results = []
 
@@ -104,13 +103,13 @@ class DoneAtBatteryDischarge(BatteryDecharge):
         :type initial_charge: float
         :param initial_charge: How much juice they have.
         :type reward_discharge_done: float
-        :param reward_discharge_done: Global negativ reward, when agents let their batters discharge. 
+        :param reward_discharge_done: Global negative reward, when agents let their batters discharge. 
                                          Default: {b.REWARD_BATTERY_DISCHARGED}
         :type battery_discharge_reward: float
-        :param battery_discharge_reward: Negativ reward, when agents let their batters discharge. 
+        :param battery_discharge_reward: Negative reward, when agents let their batters discharge. 
                                          Default: {b.REWARD_BATTERY_DISCHARGED}
         :type battery_failed_reward: float
-        :param battery_failed_reward: Negativ reward, when agent cannot charge, but do (overcharge, not on station).
+        :param battery_failed_reward: Negative reward, when agent cannot charge, but do (overcharge, not on station).
                                        Default: {b.Reward_CHARGE_FAIL}
         :type battery_charge_reward: float
         :param battery_charge_reward: Positive reward, when agent actually charge their battery.

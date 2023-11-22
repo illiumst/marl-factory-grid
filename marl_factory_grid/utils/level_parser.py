@@ -15,9 +15,24 @@ class LevelParser(object):
 
     @property
     def pomdp_d(self):
+        """
+        Internal Usage
+        """
         return self.pomdp_r * 2 + 1
 
     def __init__(self, level_file_path: PathLike, entity_parse_dict: Dict[Entities, dict], pomdp_r=0):
+        """
+        Parses a level file and creates the initial state of the environment.
+
+        :param level_file_path: Path to the level file.
+        :type level_file_path: PathLike
+
+        :param entity_parse_dict: Dictionary specifying how to parse different entities.
+        :type entity_parse_dict: Dict[Entities, dict]
+
+        :param pomdp_r: The POMDP radius. Defaults to 0.
+        :type pomdp_r: int
+        """
         self.pomdp_r = pomdp_r
         self.e_p_dict = entity_parse_dict
         self._parsed_level = h.parse_level(Path(level_file_path))
@@ -25,14 +40,30 @@ class LevelParser(object):
         self.level_shape = level_array.shape
         self.size = self.pomdp_r ** 2 if self.pomdp_r else np.prod(self.level_shape)
 
-    def get_coordinates_for_symbol(self, symbol, negate=False):
+    def get_coordinates_for_symbol(self, symbol, negate=False) -> np.ndarray:
+        """
+        Get the coordinates for a given symbol in the parsed level.
+
+        :param symbol: The symbol to search for.
+        :param negate: If True, get coordinates not matching the symbol. Defaults to False.
+
+        :return: Array of coordinates.
+        :rtype: np.ndarray
+        """
         level_array = h.one_hot_level(self._parsed_level, symbol)
         if negate:
             return np.argwhere(level_array != c.VALUE_OCCUPIED_CELL)
         else:
             return np.argwhere(level_array == c.VALUE_OCCUPIED_CELL)
 
-    def do_init(self):
+    def do_init(self) -> Entities:
+        """
+        Initialize the environment map state by creating entities such as Walls, Agents or Machines according to the
+        entity parse dict.
+
+        :return: A dict of all parsed entities with their positions.
+        :rtype: Entities
+        """
         # Global Entities
         list_of_all_positions = ([tuple(f) for f in self.get_coordinates_for_symbol(c.SYMBOL_WALL, negate=True)])
         entities = Entities(list_of_all_positions)
