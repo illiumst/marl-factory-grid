@@ -1,16 +1,18 @@
 from typing import Union
 
 from marl_factory_grid.environment.actions import Action
+from marl_factory_grid.modules.doors import constants as d
 from marl_factory_grid.modules.doors.entitites import Door
-from marl_factory_grid.modules.doors import constants as d, rewards as r
-from marl_factory_grid.environment import constants as c
 from marl_factory_grid.utils.results import ActionResult
 
 
 class DoorUse(Action):
 
     def __init__(self, **kwargs):
-        super().__init__(d.ACTION_DOOR_USE, r.USE_DOOR_VALID, r.USE_DOOR_FAIL, **kwargs)
+        """
+        Attempts to interact with door (open/close it) and returns an action result if successful.
+        """
+        super().__init__(d.ACTION_DOOR_USE, d.REWARD_USE_DOOR_VALID, d.REWARD_USE_DOOR_FAIL, **kwargs)
 
     def do(self, entity, state) -> Union[None, ActionResult]:
         # Check if agent really is standing on a door:
@@ -26,6 +28,6 @@ class DoorUse(Action):
             except AttributeError:
                 pass
         if not valid:
-            # When he doesn't stand necxxt to a door tell me.
+            # When he doesn't stand next to a door tell me.
             state.print(f'{entity.name} just tried to use a door at {entity.pos}, but there is none.')
         return self.get_result(valid, entity)

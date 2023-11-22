@@ -7,24 +7,56 @@ from marl_factory_grid.utils.results import Result
 class DirtPiles(Collection):
     _entity = DirtPile
 
-    var_is_blocking_light = False
-    var_can_collide = False
-    var_can_move = False
-    var_has_position = True
+    @property
+    def var_is_blocking_light(self):
+        return False
 
     @property
-    def global_amount(self):
+    def var_can_collide(self):
+        return False
+
+    @property
+    def var_can_move(self):
+        return False
+
+    @property
+    def var_has_position(self):
+        return True
+
+    @property
+    def global_amount(self) -> float:
+        """
+        Internal Usage
+        """
         return sum([dirt.amount for dirt in self])
 
-    def __init__(self, *args,
-                 max_local_amount=5,
-                 clean_amount=1,
-                 max_global_amount: int = 20,
-                 coords_or_quantity=10,
-                 initial_amount=2,
-                 amount_var=0.2,
-                 n_var=0.2,
-                 **kwargs):
+    def __init__(self, *args, max_local_amount=5, clean_amount=1, max_global_amount: int = 20, coords_or_quantity=10,
+                 initial_amount=2, amount_var=0.2, n_var=0.2, **kwargs):
+        """
+        A Collection of dirt piles that triggers their spawn.
+
+        :param max_local_amount: The maximum amount of dirt allowed in a single pile at one position.
+        :type max_local_amount: int
+
+        :param clean_amount: The amount of dirt removed by a single cleaning action.
+        :type clean_amount: int
+
+        :param max_global_amount: The maximum total amount of dirt allowed in the environment.
+        :type max_global_amount: int
+
+        :param coords_or_quantity: Determines whether to use coordinates or quantity when triggering dirt pile spawn.
+        :type coords_or_quantity:  Union[Tuple[int, int], int]
+
+        :param initial_amount: The initial amount of dirt in each newly spawned pile.
+        :type initial_amount: int
+
+        :param amount_var: The variability in the initial amount of dirt in each pile.
+        :type amount_var: float
+
+        :param n_var: The variability in the number of new dirt piles spawned.
+        :type n_var: float
+
+        """
         super(DirtPiles, self).__init__(*args, **kwargs)
         self.amount_var = amount_var
         self.n_var = n_var

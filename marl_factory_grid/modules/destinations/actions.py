@@ -1,16 +1,17 @@
 from typing import Union
 
-import marl_factory_grid.modules.destinations.constants
-from marl_factory_grid.environment.actions import Action
-from marl_factory_grid.utils.results import ActionResult
-
-from marl_factory_grid.modules.destinations import constants as d
 from marl_factory_grid.environment import constants as c
+from marl_factory_grid.environment.actions import Action
+from marl_factory_grid.modules.destinations import constants as d
+from marl_factory_grid.utils.results import ActionResult
 
 
 class DestAction(Action):
 
     def __init__(self):
+        """
+        Attempts to wait at destination.
+        """
         super().__init__(d.DESTINATION, d.REWARD_WAIT_VALID, d.REWARD_WAIT_FAIL)
 
     def do(self, entity, state) -> Union[None, ActionResult]:

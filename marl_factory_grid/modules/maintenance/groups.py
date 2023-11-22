@@ -9,12 +9,26 @@ from ..machines.actions import MachineAction
 class Maintainers(Collection):
     _entity = Maintainer
 
-    var_can_collide = True
-    var_can_move = True
-    var_is_blocking_light = False
-    var_has_position = True
+    @property
+    def var_can_collide(self):
+        return True
+
+    @property
+    def var_can_move(self):
+        return True
+
+    @property
+    def var_is_blocking_light(self):
+        return False
+
+    @property
+    def var_has_position(self):
+        return True
 
     def __init__(self, *args, **kwargs):
+        """
+        A collection of maintainers
+        """
         super().__init__(*args, **kwargs)
 
     def spawn(self, coords_or_quantity: Union[int, List[Tuple[(int, int)]]], *entity_args):
