@@ -58,9 +58,16 @@ class Result:
 
 @dataclass
 class ActionResult(Result):
-    """
-    A specific Result class representing outcomes of actions.
-    """
+    def __init__(self, *args, action_introduced_collision: bool = False, **kwargs):
+        """
+        A specific Result class representing outcomes of actions.
+
+        :param action_introduced_collision: Wether the action did introduce a colision between agents or other entities.
+                                            These need to be able to collide.
+        """
+        super().__init__(*args, **kwargs)
+        self.action_introduced_collision = action_introduced_collision
+
     pass
 
 

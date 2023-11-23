@@ -28,9 +28,10 @@ class Action(abc.ABC):
     def __repr__(self):
         return f'Action[{self._identifier}]'
 
-    def get_result(self, validity, entity):
+    def get_result(self, validity, entity, action_introduced_collision=False):
         reward = self.valid_reward if validity else self.fail_reward
-        return ActionResult(self.__class__.__name__, validity, reward=reward, entity=entity)
+        return ActionResult(self.__class__.__name__, validity, reward=reward, entity=entity,
+                            action_introduced_collision=action_introduced_collision)
 
 
 class Noop(Action):
@@ -50,24 +51,24 @@ class Move(Action, abc.ABC):
 
     def do(self, entity, state):
         new_pos = self._calc_new_pos(entity.pos)
+        collision = False
         if state.check_move_validity(entity, new_pos):
             valid = entity.move(new_pos, state)
             # Aftermath Collision Check
             if len([x for x in state.entities.by_pos(entity.pos) if x.var_can_collide]) > 1:
                 # The entity did move, but there was something to collide with...
-                #  Is then reported as a non-valid move, which did work.
-                valid = False
+                collision = True
 
         else:
             # There is no place to go, propably collision
             # This is currently handeld by the WatchCollisions rule, so that it can be switched on and off by conf.yml
-            # return ActionResult(entity=entity, identifier=self._identifier, validity=c.NOT_VALID, reward=r.COLLISION)
             valid = c.NOT_VALID
+            collision = True
         if valid:
             state.print(f'{entity.name} just moved to {entity.pos}.')
         else:
             state.print(f'{entity.name} just tried to move to {new_pos} but either failed or hat a Collision.')
-        return self.get_result(valid, entity)
+        return self.get_result(valid, entity, action_introduced_collision=collision)
 
     def _calc_new_pos(self, pos):
         x_diff, y_diff = MOVEMAP[self._identifier]
