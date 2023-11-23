@@ -1,4 +1,4 @@
-from marl_factory_grid.modules.clean_up import constants as d, rewards as r
+from marl_factory_grid.modules.clean_up import constants as d
 from marl_factory_grid.environment import constants as c
 
 from marl_factory_grid.environment.rules import Rule
@@ -9,9 +9,9 @@ from marl_factory_grid.utils.results import DoneResult
 
 class DoneOnAllDirtCleaned(Rule):
 
-    def __init__(self, reward: float = r.CLEAN_UP_ALL):
+    def __init__(self, reward: float = d.REWARD_CLEAN_UP_ALL):
         """
-        Defines a 'Done'-condition which tirggers, when there is no more 'Dirt' in the environment.
+        Defines a 'Done'-condition which triggers, when there is no more 'Dirt' in the environment.
 
         :type reward: float
         :parameter reward: Given reward when condition triggers.
@@ -29,9 +29,9 @@ class RespawnDirt(Rule):
 
     def __init__(self, respawn_freq: int = 15, respawn_n: int = 5, respawn_amount: float = 1.0):
         """
-        Defines the spawn pattern of intial and additional 'Dirt'-entitites.
-        First chooses positions, then trys to spawn dirt until 'respawn_n' or the maximal global amount is reached.
-        If there is allready some, it is topped up to min(max_local_amount, amount).
+        Defines the spawn pattern of initial and additional 'Dirt'-entities.
+        First chooses positions, then tries to spawn dirt until 'respawn_n' or the maximal global amount is reached.
+        If there is already some, it is topped up to min(max_local_amount, amount).
 
         :type respawn_freq: int
         :parameter respawn_freq: In which frequency should this Rule try to spawn new 'Dirt'?

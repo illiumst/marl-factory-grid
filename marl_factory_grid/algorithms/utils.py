@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import numpy as np
-import torch
 import yaml
 
 
@@ -74,6 +73,7 @@ class Checkpointer(object):
     def save_experiment(self, name: str, model):
         cpt_path = self.path / f'checkpoint_{self.__current_checkpoint}'
         cpt_path.mkdir(exist_ok=True, parents=True)
+        import torch
         torch.save(model.state_dict(), cpt_path / f'{name}.pt')
 
     def step(self, to_save):

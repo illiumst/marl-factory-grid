@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import List, Union, Iterable
 
 from marl_factory_grid.environment import constants as c
 from marl_factory_grid.environment.entity.util import GlobalPosition
@@ -39,17 +39,36 @@ class GlobalPositions(Collection):
 
     _entity = GlobalPosition
 
-    var_is_blocking_light = False
-    var_can_be_bound = True
-    var_can_collide = False
-    var_has_position = False
+    @property
+    def var_is_blocking_light(self):
+        return False
+
+    @property
+    def var_has_position(self):
+        return False
+
+    @property
+    def var_can_collide(self):
+        return False
+
+    @property
+    def var_can_be_bound(self):
+        return True
 
     def __init__(self, *args, **kwargs):
+        """
+        TODO
+
+
+        :return:
+        """
         super(GlobalPositions, self).__init__(*args, **kwargs)
 
-    def spawn(self, agents, level_shape, *args, **kwargs):
+    def spawn(self, agents, level_shape, *args, **kwargs) -> list[Result]:
         self.add_items([self._entity(agent, level_shape, *args, **kwargs) for agent in agents])
         return [Result(identifier=f'{self.name}_spawn', validity=c.VALID, value=len(self))]
 
-    def trigger_spawn(self, state: Gamestate, *args, **kwargs) -> [Result]:
-        return self.spawn(state[c.AGENT], state.lvl_shape, *args, **kwargs)
+    def trigger_spawn(self, state: Gamestate, *args, **kwargs) -> list[Result]:
+        result = self.spawn(state[c.AGENT], state.lvl_shape, *args, **kwargs)
+        state.print(f'{len(self)} new {self.__class__.__name__} have been spawned for {[x for x in state[c.AGENT]]}')
+        return result

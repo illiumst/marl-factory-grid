@@ -10,18 +10,17 @@ from marl_factory_grid.environment import constants as c
 from marl_factory_grid.modules.destinations import constants as d
 from marl_factory_grid.modules.destinations.entitites import Destination
 
-
-ANY             = 'any'
-ALL             = 'all'
-SIMULTANOIUS    = 'simultanious'
-CONDITIONS =[ALL, ANY, SIMULTANOIUS]
+ANY = 'any'
+ALL = 'all'
+SIMULTANEOUS = 'simultanious'
+CONDITIONS = [ALL, ANY, SIMULTANEOUS]
 
 
 class DestinationReachReward(Rule):
 
     def __init__(self, dest_reach_reward=d.REWARD_DEST_REACHED):
         """
-        This rule introduces the basic functionality, so that targts (Destinations) can be reached and marked as such.
+        This rule introduces the basic functionality, so that targets (Destinations) can be reached and marked as such.
         Additionally, rewards are reported.
 
         :type dest_reach_reward: float
@@ -61,7 +60,7 @@ class DoneAtDestinationReach(DestinationReachReward):
         This rule triggers and sets the done flag if ALL Destinations have been reached.
 
         :type reward_at_done: float
-        :param reward_at_done: Specifies the reward, agent get, whenn all destinations are reached.
+        :param reward_at_done: Specifies the reward, agent get, when all destinations are reached.
         :type dest_reach_reward: float
         :param dest_reach_reward: Specify the reward, agents get when reaching a single destination.
         """
@@ -77,7 +76,7 @@ class DoneAtDestinationReach(DestinationReachReward):
         elif self.condition == ALL:
             if all(x.was_reached() for x in state[d.DESTINATION]):
                 return [DoneResult(self.name, validity=c.VALID, reward=self.reward)]
-        elif self.condition == SIMULTANOIUS:
+        elif self.condition == SIMULTANEOUS:
             if all(x.was_reached() for x in state[d.DESTINATION]):
                 return [DoneResult(self.name, validity=c.VALID, reward=self.reward)]
             else:
@@ -100,13 +99,13 @@ class DoneAtDestinationReach(DestinationReachReward):
 class SpawnDestinationsPerAgent(Rule):
     def __init__(self, coords_or_quantity: Dict[str, List[Tuple[int, int] | int]]):
         """
-        Special rule, that spawn distinations, that are bound to a single agent a fixed set of positions.
-        Usefull for introducing specialists, etc. ..
+        Special rule, that spawn destinations, that are bound to a single agent a fixed set of positions.
+        Useful for introducing specialists, etc. ..
 
         !!! This rule does not introduce any reward or done condition.
 
         :param coords_or_quantity: Please provide a dictionary with agent names as keys; and a list of possible
-                                     destiantion coords as value. Example: {Wolfgang: [(0, 0), (1, 1), ...]}
+                                     destination coords as value. Example: {Wolfgang: [(0, 0), (1, 1), ...]}
         """
         super(Rule, self).__init__()
         self.per_agent_positions = dict()

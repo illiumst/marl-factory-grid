@@ -1,0 +1,74 @@
+Agents:
+  Wolfgang:
+    Actions:
+    - Move8
+    - DoorUse
+    - Clean
+    - Noop
+    Observations:
+    - Walls
+    - Doors
+    - Other
+    - DirtPiles
+    Clones: 8
+
+  Juergen:
+    Actions:
+      - Move8
+      - DoorUse
+      - ItemAction
+      - Noop
+    Observations:
+      - Walls
+      - Doors
+      - Other
+      - Items
+      - DropOffLocations
+      - Inventory
+
+Entities:
+  DirtPiles:
+    coords_or_quantity: 10
+    initial_amount: 2
+    clean_amount: 1
+    dirt_spawn_r_var: 0.1
+    max_global_amount: 20
+    max_local_amount: 5
+  Doors:
+  DropOffLocations:
+    coords_or_quantity: 1
+    max_dropoff_storage_size: 0
+  Inventories: {}
+  Items:
+    coords_or_quantity: 5
+
+
+General:
+  env_seed: 69
+  individual_rewards: true
+  level_name: rooms
+  pomdp_r: 3
+  verbose: True
+  tests: false
+
+Rules:
+  # Environment Dynamics
+  EntitiesSmearDirtOnMove:
+    smear_ratio: 0.2
+  DoorAutoClose:
+    close_frequency: 7
+
+  # Respawn Stuff
+  RespawnDirt:
+    respawn_freq: 30
+  RespawnItems:
+    respawn_freq: 50
+
+  # Utilities
+  WatchCollisions:
+    done_at_collisions: false
+
+  # Done Conditions
+  DoneOnAllDirtCleaned:
+  DoneAtMaxStepsReached:
+    max_steps: 500

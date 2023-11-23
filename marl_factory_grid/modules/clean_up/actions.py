@@ -3,15 +3,18 @@ from typing import Union
 from marl_factory_grid.environment.actions import Action
 from marl_factory_grid.utils.results import ActionResult
 
-from marl_factory_grid.modules.clean_up import constants as d, rewards as r
+from marl_factory_grid.modules.clean_up import constants as d
 
 from marl_factory_grid.environment import constants as c
 
 
-class CleanUp(Action):
+class Clean(Action):
 
     def __init__(self):
-        super().__init__(d.CLEAN_UP, r.CLEAN_UP_VALID, r.CLEAN_UP_FAIL)
+        """
+        Attempts to reduce dirt amount on entity's position.
+        """
+        super().__init__(d.CLEAN_UP, d.REWARD_CLEAN_UP_VALID, d.REWARD_CLEAN_UP_FAIL)
 
     def do(self, entity, state) -> Union[None, ActionResult]:
         if dirt := next((x for x in state.entities.pos_dict[entity.pos] if "dirt" in x.name.lower()), None):

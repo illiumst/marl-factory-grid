@@ -33,6 +33,12 @@ class Renderer:
                  lvl_padded_shape: Union[Tuple[int, int], None] = None,
                  cell_size: int = 40, fps: int = 7, factor: float = 0.9,
                  grid_lines: bool = True, view_radius: int = 2):
+        """
+        TODO
+
+
+        :return:
+        """
         # TODO: Customn_assets paths
         self.grid_h, self.grid_w = lvl_shape
         self.lvl_padded_shape = lvl_padded_shape if lvl_padded_shape is not None else lvl_shape

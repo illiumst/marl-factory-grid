@@ -1,5 +1,4 @@
 from itertools import islice
-from itertools import islice
 from typing import List, Tuple
 
 import numpy as np
@@ -15,6 +14,12 @@ from marl_factory_grid.utils.results import Result
 
 class StepRules:
     def __init__(self, *args):
+        """
+        TODO
+
+
+        :return:
+        """
         if args:
             self.rules = list(args)
         else:
@@ -80,6 +85,12 @@ class Gamestate(object):
         return [y for x in self.entities for y in x if x.var_can_move]
 
     def __init__(self, entities, agents_conf, rules: List[Rule], tests: [Test], lvl_shape, env_seed=69, verbose=False):
+        """
+        TODO
+
+
+        :return:
+        """
         self.lvl_shape = lvl_shape
         self.entities = entities
         self.curr_step = 0

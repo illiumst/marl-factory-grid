@@ -3,13 +3,16 @@ from dataclasses import dataclass
 
 from marl_factory_grid.environment.entity.object import Object
 
-TYPE_VALUE  = 'value'
+TYPE_VALUE = 'value'
 TYPE_REWARD = 'reward'
 TYPES = [TYPE_VALUE, TYPE_REWARD]
 
 
 @dataclass
 class InfoObject:
+    """
+    Data class representing information about an entity or the global environment.
+    """
     identifier: str
     val_type: str
     value: Union[float, int]
@@ -17,6 +20,16 @@ class InfoObject:
 
 @dataclass
 class Result:
+    """
+    A generic result class representing outcomes of operations or actions.
+
+    Attributes:
+        - identifier: A unique identifier for the result.
+        - validity: A boolean indicating whether the operation or action was successful.
+        - reward: The reward associated with the result, if applicable.
+        - value: The value associated with the result, if applicable.
+        - entity: The entity associated with the result, if applicable.
+    """
     identifier: str
     validity: bool
     reward: Union[float, None] = None
@@ -24,6 +37,11 @@ class Result:
     entity: Object = None
 
     def get_infos(self):
+        """
+        Get information about the result.
+
+        :return: A list of InfoObject representing different types of information.
+        """
         n = self.entity.name if self.entity is not None else "Global"
         # Return multiple Info Dicts
         return [InfoObject(identifier=f'{n}_{self.identifier}',
@@ -39,15 +57,36 @@ class Result:
 
 
 @dataclass
-class TickResult(Result):
-    pass
-
-
-@dataclass
 class ActionResult(Result):
+    def __init__(self, *args, action_introduced_collision: bool = False, **kwargs):
+        """
+        A specific Result class representing outcomes of actions.
+
+        :param action_introduced_collision: Wether the action did introduce a colision between agents or other entities.
+                                            These need to be able to collide.
+        """
+        super().__init__(*args, **kwargs)
+        self.action_introduced_collision = action_introduced_collision
+
     pass
 
 
 @dataclass
 class DoneResult(Result):
+    """
+    A specific Result class representing the completion of an action or operation.
+    """
+    pass
+
+
+@dataclass
+class State(Result):
+    # TODO: change identifier to action/last_action
+    pass
+
+@dataclass
+class TickResult(Result):
+    """
+    A specific Result class representing outcomes of tick operations.
+    """
     pass

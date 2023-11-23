@@ -160,7 +160,7 @@ class Objects:
 
     def idx_by_entity(self, entity):
         try:
-            return h.get_first_index(self, filter_by=lambda x: x.belongs_to_entity(entity))
+            return h.get_first_index(self, filter_by=lambda x: x == entity)
         except (StopIteration, AttributeError):
             return None
 

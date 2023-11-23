@@ -9,24 +9,37 @@ from marl_factory_grid.utils.utility_classes import RenderEntity
 
 class Destination(Entity):
 
-    def was_reached(self):
-        return self._was_reached
-
     @property
     def encoding(self):
         return d.DEST_SYMBOL
 
     def __init__(self, *args, action_counts=0, **kwargs):
+        """
+        Represents a destination in the environment that agents aim to reach.
+
+        """
         super(Destination, self).__init__(*args, **kwargs)
         self._was_reached = False
         self.action_counts = action_counts
         self._per_agent_actions = defaultdict(lambda: 0)
 
-    def do_wait_action(self, agent: Agent):
+    def do_wait_action(self, agent) -> bool:
+        """
+        Performs a wait action for the given agent at the destination.
+
+        :param agent: The agent performing the wait action.
+        :type agent: Agent
+
+        :return: Whether the action was valid or not.
+        :rtype: bool
+        """
         self._per_agent_actions[agent.name] += 1
         return c.VALID
 
     def has_just_been_reached(self, state):
+        """
+        Checks if the destination has just been reached based on the current state.
+        """
         if self.was_reached():
             return False
         agent_at_position = any(state[c.AGENT].by_pos(self.pos))
@@ -38,6 +51,9 @@ class Destination(Entity):
             return agent_at_position or any(x >= self.action_counts for x in self._per_agent_actions.values())
 
     def agent_did_action(self, agent: Agent):
+        """
+        Internal usage, currently no usage.
+        """
         return self._per_agent_actions[agent.name] >= self.action_counts
 
     def summarize_state(self) -> dict:
@@ -57,3 +73,6 @@ class Destination(Entity):
 
     def unmark_as_reached(self):
         self._was_reached = False
+
+    def was_reached(self) -> bool:
+        return self._was_reached

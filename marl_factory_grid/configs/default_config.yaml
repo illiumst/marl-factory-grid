@@ -3,7 +3,7 @@ Agents:
     Actions:
     - Noop
     - Charge
-    - CleanUp
+    - Clean
     - DestAction
     - DoorUse
     - ItemAction
@@ -23,6 +23,7 @@ Agents:
     - DropOffLocations
     - Maintainers
 Entities:
+
   Batteries:
     initial_charge: 0.8
     per_action_costs: 0.02
@@ -57,7 +58,7 @@ General:
   individual_rewards: true
   level_name: large
   pomdp_r: 3
-  verbose: True
+  verbose: false
   tests: false
 
 Rules:
