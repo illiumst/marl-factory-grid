@@ -21,7 +21,7 @@ class TSPBaseAgent(ABC):
         self.local_optimization = True
         self._env = state
         self.state = self._env.state[c.AGENT][agent_i]
-        self._position_graph = points_to_graph(self._env.entities.floorlist)
+        self._position_graph = points_to_graph(self._env.state.entities.floorlist)
         self._static_route = None
 
     @abstractmethod

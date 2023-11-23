@@ -162,6 +162,7 @@ class Factory(gym.Env):
 
         # Check Done Conditions
         done_results = self.state.check_done()
+        done_tests = self.state.tests.check_done_all(self.state)
 
         # Finalize
         reward, reward_info, done = self.summarize_step_results(tick_result, done_results)

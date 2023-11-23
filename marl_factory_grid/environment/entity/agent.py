@@ -43,7 +43,6 @@ class Agent(Entity):
     def var_is_blocking_pos(self):
         return self._is_blocking_pos
 
-
     def __init__(self, actions: List[Action], observations: List[str], *args, is_blocking_pos=False, **kwargs):
         super(Agent, self).__init__(*args, **kwargs)
         self._paralyzed = set()

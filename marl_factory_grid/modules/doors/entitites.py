@@ -83,7 +83,8 @@ class Door(Entity):
 
     def tick(self, state):
         # Check if no entity is standing in the door
-        if len(state.entities.pos_dict[self.pos]) <= 2:
+        if not any(e for e in state.entities.by_pos(self.pos) if e.var_can_collide or e.var_is_blocking_pos):
+            # if len(state.entities.pos_dict[self.pos]) <= 2: #can collide can block
             if self.is_open and self.time_to_close:
                 self._decrement_timer()
                 return Result(f"{d.DOOR}_tick", c.VALID, entity=self)
