@@ -10,6 +10,7 @@ Agents:
     - Doors
     - Other
     - DirtPiles
+    Clones: 8
 
   Juergen:
     Actions:

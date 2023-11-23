@@ -36,7 +36,7 @@ class ItemAction(Action):
         :rtype: ActionResult
         """
         reward = self.valid_drop_off_reward if validity else self.failed_drop_off_reward
-        return ActionResult(self.__name__, validity, reward=reward, entity=entity)
+        return ActionResult(self.__class__.__name__, validity, reward=reward, entity=entity)
 
     def do(self, entity, state) -> Union[None, ActionResult]:
         inventory = state[i.INVENTORY].by_entity(entity)

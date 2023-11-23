@@ -2,6 +2,7 @@ from marl_factory_grid.environment import constants as c
 from marl_factory_grid.environment.groups.collection import Collection
 from marl_factory_grid.modules.clean_up.entitites import DirtPile
 from marl_factory_grid.utils.results import Result
+from marl_factory_grid.utils import helpers as h
 
 
 class DirtPiles(Collection):
@@ -82,7 +83,7 @@ class DirtPiles(Collection):
         for idx, (pos, a) in enumerate(zip(n_new, amounts)):
             if not self.global_amount > self.max_global_amount:
                 if dirt := self.by_pos(pos):
-                    dirt = next(dirt.iter())
+                    dirt = h.get_first(dirt)
                     new_value = dirt.amount + a
                     dirt.set_new_amount(new_value)
                 else:

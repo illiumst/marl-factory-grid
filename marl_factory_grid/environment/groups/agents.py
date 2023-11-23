@@ -27,6 +27,10 @@ class Agents(Collection):
     def var_has_position(self):
         return True
 
+    @property
+    def var_can_collide(self):
+        return True
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 

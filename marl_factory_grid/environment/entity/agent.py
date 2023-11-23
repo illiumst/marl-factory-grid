@@ -135,8 +135,10 @@ class Agent(Entity):
         i = self.collection.idx_by_entity(self)
         assert i is not None
         curr_state = self.state
+        name = c.AGENT
         if curr_state.identifier == c.COLLISION:
-            render_state = renderer.STATE_COLLISION
+            name = renderer.STATE_COLLISION
+            render_state=None
         elif curr_state.validity:
             if curr_state.identifier == c.NOOP:
                 render_state = renderer.STATE_IDLE
@@ -147,4 +149,4 @@ class Agent(Entity):
         else:
             render_state = renderer.STATE_INVALID
 
-        return RenderEntity(c.AGENT, self.pos, 1, 'none', render_state, i + 1, real_name=self.name)
+        return RenderEntity(name, self.pos, 1, 'none', render_state, i + 1, real_name=self.name)
