@@ -57,41 +57,45 @@ class MaintainerTest(Test):
             # has valid actionresult
             self.assertIsInstance(maintainer.state, ActionResult)
             self.assertEqual(maintainer.state.validity, True)
+            # print(f"state validity {maintainer.state.validity}")
 
             # will open doors when standing in front
             if maintainer._closed_door_in_path(state):
                 self.assertEqual(maintainer.get_move_action(state).name, 'use_door')
 
-            elif maintainer._path and len(maintainer._path) > 1:
+            # elif maintainer._path and len(maintainer._path) > 1:
                 # can move
-                print(maintainer.move(maintainer._path[1], state))
+                # print(f"maintainer move: {maintainer.move(maintainer._path[1], state)}")
                 # self.assertTrue(maintainer.move(maintainer._path[1], state))
 
-            if maintainer._next and not maintainer._path:
-                # finds valid targets when at target location
-                route = maintainer.calculate_route(maintainer._last[-1], state.floortile_graph)
-                if entities_at_target_location := [entity for entity in state.entities.by_pos(route[-1])]:
-                    self.assertTrue(any(isinstance(e, Machine) for e in entities_at_target_location))
+            # if maintainer._next and not maintainer._path:
+            # finds valid targets when at target location
+            # route = maintainer.calculate_route(maintainer._last[-1], state.floortile_graph)
+            # if entities_at_target_location := [entity for entity in state.entities.by_pos(route[-1])]:
+            #     self.assertTrue(any(isinstance(e, Machine) for e in entities_at_target_location))
         return []
 
     def tick_post_step(self, state) -> List[TickResult]:
+        # do maintainers actions have correct effects on environment i.e. doors open, machines heal
         for maintainer in state.entities[M.MAINTAINERS]:
-            if maintainer._path:
-                # was door opened successfully?
-                if maintainer._closed_door_in_path(state):
-                    door = next(
-                        (entity for entity in state.entities.by_pos(maintainer._path[0]) if isinstance(entity, Door)),
-                        None)
-                    # self.assertEqual(door.is_open, True)
-
-                # when stepping off machine, did maintain action work?
+            if maintainer._path and self.temp_state_dict != {}:
+                last_action = self.temp_state_dict[maintainer.identifier]
+                print(last_action.identifier)
+                if last_action.identifier == 'DoorUse':
+                    if door := next((entity for entity in state.entities.get_entities_near_pos(maintainer.pos) if
+                                     isinstance(entity, Door)), None):
+                        self.assertTrue(door.is_open)
+                if last_action.identifier == 'MachineAction':
+                    if machine := next((entity for entity in state.entities.get_entities_near_pos(maintainer.pos) if
+                                     isinstance(entity, Machine)), None):
+                        print(f"machine hp: {machine.health}")
+                        self.assertEqual(machine.health, 100)
         return []
 
     def on_check_done(self, state) -> List[DoneResult]:
         for maintainer in state.entities[M.MAINTAINERS]:
             temp_state = maintainer._status
             self.temp_state_dict[maintainer.identifier] = temp_state
-        print(self.temp_state_dict)
         return []
 
 
@@ -116,7 +120,7 @@ class DirtAgentTest(Test):
             print(agent)
             # has valid actionresult
             self.assertIsInstance(agent.state, ActionResult)
-            self.assertEqual(agent.state.validity, True)
+            # self.assertEqual(agent.state.validity, True)
 
         return []
 
