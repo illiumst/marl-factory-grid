@@ -26,10 +26,10 @@ if __name__ == '__main__':
 
     if explain_config:
         ce = ConfigExplainer()
-        ce.save_all(run_path / 'all_out.yaml')
+        ce.save_all(run_path / 'all_available_configs.yaml')
 
     # Path to config File
-    path = Path('marl_factory_grid/configs/clean_and_bring.yaml')
+    path = Path('marl_factory_grid/configs/eight_puzzle.yaml')
 
     # Env Init
     factory = Factory(path)

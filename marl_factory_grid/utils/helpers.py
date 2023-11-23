@@ -27,9 +27,11 @@ IGNORED_DF_COLUMNS = ['Episode', 'Run',  # For plotting, which values are ignore
                       'train_step', 'step', 'index', 'dirt_amount', 'dirty_pos_count', 'terminal_observation',
                       'episode']
 
-POS_MASK = np.asarray([[[-1, -1], [0, -1], [1, -1]],
-                       [[-1, 0], [0, 0], [1, 0]],
-                       [[-1, 1], [0, 1], [1, 1]]])
+POS_MASK_8 = np.asarray([[[-1, -1], [0, -1], [1, -1]],
+                         [[-1, 0],  [0, 0],  [1, 0]],
+                         [[-1, 1],  [0, 1],  [1, 1]]])
+
+POS_MASK_4 = np.asarray([[0, -1], [-1, 0], [1, 0], [-1, 1], [0, 1], [1, 1]])
 
 MOVEMAP = defaultdict(lambda: (0, 0),
                       {c.NORTH: (-1, 0), c.NORTHEAST: (-1, 1),

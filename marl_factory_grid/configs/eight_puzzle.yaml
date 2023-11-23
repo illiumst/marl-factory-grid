@@ -35,23 +35,16 @@ Entities:
     # We need a special spawn rule...
     spawnrule:
       # ...which assigns the destinations per agent
-      SpawnDestinationsPerAgent:
-        # we use this parameter
-        coords_or_quantity:
-          # to enable and assign special positions per agent
-          Wolfgang: 1
-          Karl-Heinz: 1
-          Kevin: 1
-          Juergen: 1
-          Soeren: 1
-          Walter: 1
-          Siggi: 1
-          Dennis: 1
+      SpawnDestinationOnAgent: {}
 
 Rules:
   # Utilities
   WatchCollisions:
     done_at_collisions: false
+
+  # Initial random walk
+  DoRandomInitialSteps:
+    random_steps: 10
 
   # Done Conditions
   DoneAtDestinationReach:

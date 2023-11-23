@@ -4,15 +4,17 @@ from random import shuffle
 from typing import Dict
 
 from marl_factory_grid.environment.groups.objects import Objects
-from marl_factory_grid.utils.helpers import POS_MASK
+from marl_factory_grid.utils.helpers import POS_MASK_8, POS_MASK_4
 
 
 class Entities(Objects):
     _entity = Objects
 
-    @staticmethod
-    def neighboring_positions(pos):
-        return [tuple(x) for x in (POS_MASK + pos).reshape(-1, 2)]
+    def neighboring_positions(self, pos):
+        return [tuple(x) for x in (POS_MASK_8 + pos).reshape(-1, 2) if tuple(x) in self._floor_positions]
+
+    def neighboring_4_positions(self, pos):
+        return [tuple(x) for x in (POS_MASK_4 + pos) if tuple(x) in self._floor_positions]
 
     def get_entities_near_pos(self, pos):
         return [y for x in itemgetter(*self.neighboring_positions(pos))(self.pos_dict) for y in x]

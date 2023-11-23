@@ -105,10 +105,10 @@ class SpawnDestinationsPerAgent(Rule):
 
         !!! This rule does not introduce any reward or done condition.
 
-        :param coords_or_quantity: Please provide a dictionary with agent names as keys; and a list of possible
-                                     destination coords as value. Example: {Wolfgang: [(0, 0), (1, 1), ...]}
+        :param coords_or_quantity:  Please provide a dictionary with agent names as keys; and a list of possible
+                                        destination coords as value. Example: {Wolfgang: [(0, 0), (1, 1), ...]}
         """
-        super(Rule, self).__init__()
+        super().__init__()
         self.per_agent_positions = dict()
         for agent_name, value in coords_or_quantity.items():
             if isinstance(value, int):
@@ -142,4 +142,26 @@ class SpawnDestinationsPerAgent(Rule):
                 else:
                     continue
             state[d.DESTINATION].add_item(destination)
+        pass
+
+
+class SpawnDestinationOnAgent(Rule):
+    def __init__(self):
+        """
+        Special rule which spawns a single destination bound to a single agent just `below` him. Usefull for
+        the `N-Puzzle` configurations.
+
+        !!! This rule does not introduce any reward or done condition.
+
+        :param coords_or_quantity:  Please provide a dictionary with agent names as keys; and a list of possible
+                                        destination coords as value. Example: {Wolfgang: [(0, 0), (1, 1), ...]}
+        """
+        super().__init__()
+
+    def on_reset(self, state: Gamestate):
+        state.print("Spawn Desitnations")
+        for agent in state[c.AGENT]:
+            destination = Destination(agent.pos, bind_to=agent)
+            state[d.DESTINATION].add_item(destination)
+            assert len(state[d.DESTINATION].by_pos(agent.pos)) == 1
         pass

@@ -136,6 +136,7 @@ class Factory(gym.Env):
 
         # All is set up, trigger entity spawn with variable pos
         self.state.rules.do_all_reset(self.state)
+        self.state.rules.do_all_post_spawn_reset(self.state)
 
         # Build initial observations for all agents
         self.obs_builder.reset(self.state)
