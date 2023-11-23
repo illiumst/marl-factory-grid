@@ -1,37 +1,60 @@
+# Default Configuration File
+
+# Agents section defines the characteristics of different agents in the environment.
+
+# An Agent requires a list of actions and observations.
+# Possible actions: Noop, Charge, Clean, DestAction, DoorUse, ItemAction, MachineAction, Move8, Move4, North, NorthEast, ...
+# Possible observations: All, Combined, GlobalPosition, Battery, ChargePods, DirtPiles, Destinations, Doors, Items, Inventory, DropOffLocations, Maintainers, ...
+# You can use 'clone' as the agent name to have multiple instances with either a list of names or an int specifying the number of clones.
 Agents:
   Wolfgang:
     Actions:
-    - Noop
-    - Charge
-    - Clean
-    - DestAction
-    - DoorUse
-    - ItemAction
-    - Move8
+      - Noop
+      - Charge
+      - Clean
+      - DestAction
+      - DoorUse
+      - ItemAction
+      - Move8
     Observations:
-    - Combined:
-      - Other
-      - Walls
-    - GlobalPosition
-    - Battery
-    - ChargePods
-    - DirtPiles
-    - Destinations
-    - Doors
-    - Items
-    - Inventory
-    - DropOffLocations
-    - Maintainers
-Entities:
+      - Combined:
+          - Other
+          - Walls
+      - GlobalPosition
+      - Battery
+      - ChargePods
+      - DirtPiles
+      - Destinations
+      - Doors
+      - Items
+      - Inventory
+      - DropOffLocations
+      - Maintainers
 
+# Entities section defines the initial parameters and behaviors of different entities in the environment.
+# Entities all spawn using coords_or_quantity, a number of entities or coordinates to place them.
+Entities:
+  # Batteries: Entities representing power sources for agents.
   Batteries:
     initial_charge: 0.8
     per_action_costs: 0.02
+
+  # ChargePods: Entities representing charging stations for Batteries.
   ChargePods:
     coords_or_quantity: 2
+
+  # Destinations: Entities representing target locations for agents.
+  # - spawn_mode: GROUPED or SINGLE. Determines how destinations are spawned.
   Destinations:
     coords_or_quantity: 1
     spawn_mode: GROUPED
+
+  # DirtPiles: Entities representing piles of dirt.
+  # - initial_amount: Initial amount of dirt in each pile.
+  # - clean_amount: Amount of dirt cleaned in each cleaning action.
+  # - dirt_spawn_r_var: Random variation in dirt spawn amounts.
+  # - max_global_amount: Maximum total amount of dirt allowed in the environment.
+  # - max_local_amount: Maximum amount of dirt allowed in one position.
   DirtPiles:
     coords_or_quantity: 10
     initial_amount: 2
@@ -39,20 +62,38 @@ Entities:
     dirt_spawn_r_var: 0.1
     max_global_amount: 20
     max_local_amount: 5
+
+  # Doors are spawned using the level map.
   Doors:
+
+  # DropOffLocations: Entities representing locations where agents can drop off items.
+  # - max_dropoff_storage_size: Maximum storage capacity at each drop-off location.
   DropOffLocations:
     coords_or_quantity: 1
     max_dropoff_storage_size: 0
-  GlobalPositions: {}
-  Inventories: {}
+
+  # GlobalPositions.
+  GlobalPositions: { }
+
+  # Inventories: Entities representing inventories for agents.
+  Inventories: { }
+
+  # Items: Entities representing items in the environment.
   Items:
     coords_or_quantity: 5
+
+  # Machines: Entities representing machines in the environment.
   Machines:
     coords_or_quantity: 2
+
+  # Maintainers: Entities representing maintainers that aim to maintain machines.
   Maintainers:
     coords_or_quantity: 1
-  Zones: {}
 
+  # Zones: Entities representing zones in the environment.
+  Zones: { }
+
+# General section includes general settings for the environment.
 General:
   env_seed: 69
   individual_rewards: true
@@ -61,6 +102,7 @@ General:
   verbose: false
   tests: false
 
+# Rules section specifies the rules governing the dynamics of the environment.
 Rules:
   # Environment Dynamics
   EntitiesSmearDirtOnMove:
