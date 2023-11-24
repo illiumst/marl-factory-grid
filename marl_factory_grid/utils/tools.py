@@ -14,8 +14,9 @@ ENTITIES = 'Objects'
 OBSERVATIONS = 'Observations'
 RULES = 'Rule'
 TESTS = 'Tests'
-EXCLUDED = ['identifier', 'args', 'kwargs', 'Move', 'Agent', 'GlobalPositions', 'Walls',
-            'TemplateRule', 'Entities', 'EnvObjects', 'Zones', ]
+EXCLUDED = ['identifier', 'args', 'kwargs', 'Move', 'Agent', 'GlobalPositions', 'Walls', 'Gamestate', 'Path',
+            'Iterable', 'Move', 'Result', 'TemplateRule', 'Entities', 'EnvObjects', 'Zones', 'Collection',
+            'State', 'Object', 'default_valid_reward', 'default_fail_reward', 'size']
 
 
 class ConfigExplainer:
@@ -32,7 +33,9 @@ class ConfigExplainer:
 
         :param custom_path: Path to your custom module folder.
         """
-        self.base_path = Path(__file__).parent.parent.resolve()
+
+        self.base_path = Path(__file__).parent.parent.resolve() /'environment'
+        self.modules_path = Path(__file__).parent.parent.resolve() / 'modules'
         self.custom_path = Path(custom_path) if custom_path is not None else custom_path
         self.searchspace = [ACTION, GENERAL, ENTITIES, OBSERVATIONS, RULES, TESTS]
 
@@ -41,7 +44,13 @@ class ConfigExplainer:
         """
         INTERNAL USE ONLY
         """
-        parameters = inspect.signature(class_to_explain).parameters
+        this_search = class_to_explain
+        parameters = dict(inspect.signature(class_to_explain).parameters)
+        while this_search.__bases__:
+            base_class = this_search.__bases__[0]
+            parameters.update(dict(inspect.signature(base_class).parameters))
+            this_search = base_class
+
         explained = {class_to_explain.__name__:
                          {key: val.default for key, val in parameters.items() if key not in EXCLUDED}
                      }
@@ -52,8 +61,10 @@ class ConfigExplainer:
         INTERNAL USE ONLY
         """
         entities_base_cls = locate_and_import_class(identifier, self.base_path)
-        module_paths = [x.resolve() for x in self.base_path.rglob('*.py') if x.is_file() and '__init__' not in x.name]
-        found_entities = self._load_and_compare(entities_base_cls, module_paths)
+        module_paths = [x.resolve() for x in self.modules_path.rglob('*.py') if x.is_file() and '__init__' not in x.name]
+        base_paths = [x.resolve() for x in self.base_path.rglob('*.py') if x.is_file() and '__init__' not in x.name]
+        found_entities = self._load_and_compare(entities_base_cls, base_paths)
+        found_entities.update(self._load_and_compare(entities_base_cls, module_paths))
         if self.custom_path is not None:
             module_paths = [x.resolve() for x in self.custom_path.rglob('*.py') if x.is_file()
                             and '__init__' not in x.name]
@@ -91,16 +102,14 @@ class ConfigExplainer:
         print(f'Example config {"for " + tag + " " if tag else " "}dumped')
         print(f'See file: {filepath}')
 
-    def get_actions(self) -> list[str]:
+    def get_actions(self) -> dict[str]:
         """
         Retrieve all actions from module folders.
 
         :returns: A list of all available actions.
         """
         actions = self._get_by_identifier(ACTION)
-        assert all(not x for x in actions.values()), 'Please only provide Names, no Mappings.'
-        actions = list(actions.keys())
-        actions.extend([c.MOVE8, c.MOVE4])
+        actions.update({c.MOVE8: {}, c.MOVE4: {}})
         return actions
 
     def get_all(self) -> dict[str]:
@@ -172,13 +181,20 @@ class ConfigExplainer:
             except TypeError:
                 e = [key]
             except AttributeError as err:
-                if self.custom_path is not None:
-                    try:
-                        e = locate_and_import_class(key, self.base_path)(level_shape=(0, 0), pomdp_r=0).obs_pairs
-                    except TypeError:
-                        e = [key]
+                try:
+                    e = locate_and_import_class(key, self.modules_path)(level_shape=(0, 0), pomdp_r=0).obs_pairs
+                except TypeError:
+                    e = [key]
+                except AttributeError as err2:
+                    if self.custom_path is not None:
+                        try:
+                            e = locate_and_import_class(key, self.base_path)(level_shape=(0, 0), pomdp_r=0).obs_pairs
+                        except TypeError:
+                            e = [key]
                 else:
-                    raise err
+                    print(err.args)
+                    print(err2.args)
+                    exit(-9999)
             names.extend(e)
         return names
 

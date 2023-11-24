@@ -19,7 +19,7 @@ class Charge(Action):
 
     def do(self, entity, state) -> Union[None, ActionResult]:
         if charge_pod := h.get_first(state[b.CHARGE_PODS].by_pos(entity.pos)):
-            valid = h.get_first(charge_pod.charge_battery(entity, state))
+            valid = charge_pod.charge_battery(entity, state)
             if valid:
                 state.print(f'{entity.name} just charged batteries at {charge_pod.name}.')
             else:
