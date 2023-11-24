@@ -212,8 +212,7 @@ class Factory(gym.Env):
         # Combine Info dicts into a global one
         combined_info_dict = defaultdict(lambda: 0.0)
         for result in chain(tick_results, done_check_results):
-            if not result:
-                raise ValueError()
+            assert result, 'Something returned None...'
             if result.reward is not None:
                 try:
                     rewards[result.entity.name] += result.reward
