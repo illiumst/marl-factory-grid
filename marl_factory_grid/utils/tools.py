@@ -52,7 +52,8 @@ class ConfigExplainer:
             this_search = base_class
 
         explained = {class_to_explain.__name__:
-                         {key: val.default for key, val in parameters.items() if key not in EXCLUDED}
+                         {key: val.default if val.default != inspect._empty else '!' for key, val in parameters.items()
+                          if key not in EXCLUDED}
                      }
         return explained
 
@@ -134,6 +135,8 @@ class ConfigExplainer:
         :returns: A list of all available entities.
         """
         entities = self._get_by_identifier(ENTITIES)
+        for key in ['Combined', 'Agents', 'Inventory']:
+            del entities[key]
         return entities
 
     @staticmethod
