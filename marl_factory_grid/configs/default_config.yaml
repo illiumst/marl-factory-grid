@@ -1,5 +1,19 @@
 # Default Configuration File
 
+General:
+  # RNG-seed to sample the same "random" numbers every time, to make the different runs comparable.
+  env_seed: 69
+  # Individual vs global rewards
+  individual_rewards: true
+  # The level.txt file to load from marl_factory_grid/levels
+  level_name: large
+  # View Radius; 0 = full observatbility
+  pomdp_r: 3
+  # Print all messages and events
+  verbose: false
+  # Run tests
+  tests: false
+
 # Agents section defines the characteristics of different agents in the environment.
 
 # An Agent requires a list of actions and observations.
@@ -93,38 +107,42 @@ Entities:
   # Zones: Entities representing zones in the environment.
   Zones: { }
 
-# General section includes general settings for the environment.
-General:
-  env_seed: 69
-  individual_rewards: true
-  level_name: large
-  pomdp_r: 3
-  verbose: false
-  tests: false
 
 # Rules section specifies the rules governing the dynamics of the environment.
 Rules:
   # Environment Dynamics
+  # When stepping over a dirt pile, entities carry a ratio of the dirt to their next position
   EntitiesSmearDirtOnMove:
     smear_ratio: 0.2
+  # Doors automatically close after a certain number of time steps
   DoorAutoClose:
     close_frequency: 10
+  # Maintainers move at every time step
   MoveMaintainers:
 
   # Respawn Stuff
+  # Define how dirt should respawn after the initial spawn
   RespawnDirt:
     respawn_freq: 15
+  # Define how items should respawn after the initial spawn
   RespawnItems:
     respawn_freq: 15
 
   # Utilities
+  # Define what happens on entity collisions
   WatchCollisions:
     done_at_collisions: false
 
   # Done Conditions
+  # Define the conditions for the environment to stop. Either success or a fail conditions.
+  # The environment stops when an agent reaches a destination
   DoneAtDestinationReach:
+  # The environment stops when all dirt is cleaned
   DoneOnAllDirtCleaned:
+  # The environment stops when a battery is discharged
   DoneAtBatteryDischarge:
+  # The environment stops when a maintainer reports a collision
   DoneAtMaintainerCollision:
+  # The environment stops after max steps
   DoneAtMaxStepsReached:
     max_steps: 500

@@ -1,11 +1,17 @@
 General:
   env_seed: 69
+  # Individual vs global rewards
   individual_rewards: true
+  # The level.txt file to load from marl_factory_grid/levels
   level_name: eight_puzzle
+  # View Radius; 0 = full observatbility
   pomdp_r: 0
+  # Print all messages and events
   verbose: True
+  # Run tests
   tests: false
 
+# In the "eight puzzle" there are 8 agents standing on a 3x3 map, each with a specific destination to reach.
 Agents:
   Wolfgang:
     Actions:
@@ -27,7 +33,9 @@ Agents:
       - Dennis
       - Karl-Heinz
       - Kevin
+    # multiple agents can not stand on the same location
     is_blocking_pos: true
+
 Entities:
   Destinations:
     # Let them spawn on closed doors and agent positions
@@ -54,7 +62,8 @@ Rules:
     done_at_collisions: false
 
   # Done Conditions
+  # Done when all agents are standing on the correct destination at the same time
   DoneAtDestinationReach:
-    condition: simultanious
+    condition: simultaneous
   DoneAtMaxStepsReached:
     max_steps: 500

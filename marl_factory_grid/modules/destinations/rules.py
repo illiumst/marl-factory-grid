@@ -13,7 +13,7 @@ from marl_factory_grid.utils.states import Gamestate
 
 ANY = 'any'
 ALL = 'all'
-SIMULTANEOUS = 'simultanious'
+SIMULTANEOUS = 'simultaneous'
 CONDITIONS = [ALL, ANY, SIMULTANEOUS]
 
 

@@ -1,17 +1,35 @@
+General:
+  # RNG-seed to sample the same "random" numbers every time, to make the different runs comparable.
+  env_seed: 69
+  # Individual vs global rewards
+  individual_rewards: true
+  # The level.txt file to load from marl_factory_grid/levels
+  level_name: rooms
+  # Radius of Partially observable Markov decision process
+  pomdp_r: 3
+  # Print all messages and events
+  verbose: True
+  # Run tests
+  tests: false
+
+# In the "clean and bring" Scenario one agent aims to pick up all items and drop them at drop-off locations while all
+# other agents aim to clean dirt piles.
 Agents:
+  # The clean agents
   Wolfgang:
     Actions:
-    - Move8
-    - DoorUse
-    - Clean
-    - Noop
+      - Move8
+      - DoorUse
+      - Clean
+      - Noop
     Observations:
-    - Walls
-    - Doors
-    - Other
-    - DirtPiles
+      - Walls
+      - Doors
+      - Other
+      - DirtPiles
     Clones: 8
 
+  # The item agent
   Juergen:
     Actions:
       - Move8
@@ -38,37 +56,36 @@ Entities:
   DropOffLocations:
     coords_or_quantity: 1
     max_dropoff_storage_size: 0
-  Inventories: {}
+  Inventories: { }
   Items:
     coords_or_quantity: 5
 
-
-General:
-  env_seed: 69
-  individual_rewards: true
-  level_name: rooms
-  pomdp_r: 3
-  verbose: True
-  tests: false
-
+# Rules section specifies the rules governing the dynamics of the environment.
 Rules:
   # Environment Dynamics
+  # When stepping over a dirt pile, entities carry a ratio of the dirt to their next position
   EntitiesSmearDirtOnMove:
     smear_ratio: 0.2
+  # Doors automatically close after a certain number of time steps
   DoorAutoClose:
     close_frequency: 7
 
   # Respawn Stuff
+  # Define how dirt should respawn after the initial spawn
   RespawnDirt:
     respawn_freq: 30
+  # Define how items should respawn after the initial spawn
   RespawnItems:
     respawn_freq: 50
 
   # Utilities
+  # Define what happens on entity collisions
   WatchCollisions:
     done_at_collisions: false
 
   # Done Conditions
+  # Define the conditions for the environment to stop. Either success or a fail conditions.
+  # The environment stops when all dirt is cleaned
   DoneOnAllDirtCleaned:
   DoneAtMaxStepsReached:
     max_steps: 500
