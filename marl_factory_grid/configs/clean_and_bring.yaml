@@ -8,7 +8,7 @@ General:
   # Radius of Partially observable Markov decision process
   pomdp_r: 3
   # Print all messages and events
-  verbose: True
+  verbose: true
   # Run tests
   tests: false
 
@@ -79,7 +79,8 @@ Rules:
     respawn_freq: 50
 
   # Utilities
-  # Define what happens on entity collisions
+  # This rule defines the collision mechanic, introduces a related DoneCondition and lets you specify rewards.
+  # Can be omitted/ignored if you do not want to take care of collisions at all.
   WatchCollisions:
     done_at_collisions: false
 

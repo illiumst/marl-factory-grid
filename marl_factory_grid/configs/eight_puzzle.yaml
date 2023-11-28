@@ -84,6 +84,6 @@ Rules:
     # On every step, should there be a reward for agets that reach their associated destination? No!
     dest_reach_reward: 0  # Do not touch. This is usefull in other settings!
     # Reward should only be given when all destiantions are reached in parallel!
-    condition: "simultanious"
+    condition: "simultaneous"
     # Reward if this is the case. Granted to each agent when all agents are at their target position simultaniously.
     reward_at_done: 1

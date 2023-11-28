@@ -50,7 +50,7 @@ Rules:
     close_frequency: 10
 
   # Utilities
-  # Define what happens on entity collisions
+  # This rule defines the collision mechanic, introduces a related DoneCondition and lets you specify rewards.
   WatchCollisions:
     done_at_collisions: false
 

@@ -129,7 +129,8 @@ Rules:
     respawn_freq: 15
 
   # Utilities
-  # Define what happens on entity collisions
+  # This rule defines the collision mechanic, introduces a related DoneCondition and lets you specify rewards.
+  # Can be omitted/ignored if you do not want to take care of collisions at all.
   WatchCollisions:
     done_at_collisions: false
 
