@@ -1,6 +1,9 @@
 import abc
+import random
 from random import shuffle
 from typing import List, Collection
+
+import numpy as np
 
 from marl_factory_grid.environment import rewards as r, constants as c
 from marl_factory_grid.environment.entity.agent import Agent
@@ -33,6 +36,15 @@ class Rule(abc.ABC):
         return f'{self.name}'
 
     def on_init(self, state, lvl_map):
+        """
+        TODO
+
+
+        :return:
+        """
+        return []
+
+    def on_reset_post_spawn(self, state) -> List[TickResult]:
         """
         TODO
 
@@ -230,3 +242,33 @@ class WatchCollisions(Rule):
             if inter_entity_collision_detected or collision_in_step:
                 return [DoneResult(validity=c.VALID, identifier=c.COLLISION, reward=self.reward_at_done)]
         return []
+
+
+class DoRandomInitialSteps(Rule):
+    def __init__(self, random_steps: 10):
+        """
+        Special rule which spawns destinations, that are bound to a single agent a fixed set of positions.
+        Useful for introducing specialists, etc. ..
+
+        !!! This rule does not introduce any reward or done condition.
+
+        :param random_steps:  Number of random steps agents perform in an environment.
+                                Useful in the `N-Puzzle` configuration.
+        """
+        super().__init__()
+        self.random_steps = random_steps
+
+    def on_reset_post_spawn(self, state):
+        state.print("Random Initial Steps initiated....")
+        for _ in range(self.random_steps):
+            # Find free positions
+            free_pos = state.random_free_position
+            neighbor_positions = state.entities.neighboring_4_positions(free_pos)
+            random.shuffle(neighbor_positions)
+            chosen_agent = h.get_first(state[c.AGENT].by_pos(neighbor_positions.pop()))
+            assert isinstance(chosen_agent, Agent)
+            valid = chosen_agent.move(free_pos, state)
+            valid_str = " not" if not valid else ""
+            state.print(f"Move {chosen_agent.name} from {chosen_agent.last_pos} "
+                        f"to {chosen_agent.pos} was{valid_str} valid.")
+        pass

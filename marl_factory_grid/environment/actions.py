@@ -7,6 +7,8 @@ from marl_factory_grid.utils.helpers import MOVEMAP
 from marl_factory_grid.utils.results import ActionResult
 
 
+TYPE_COLLISION = 'collision'
+
 class Action(abc.ABC):
 
     @property

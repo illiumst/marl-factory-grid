@@ -53,7 +53,7 @@ class BatteryDecharge(Rule):
 
         for agent in state[c.AGENT]:
             if isinstance(self.per_action_costs, dict):
-                energy_consumption = self.per_action_costs[agent.step_result()['action']]
+                energy_consumption = self.per_action_costs[agent.state.identifier]
             else:
                 energy_consumption = self.per_action_costs
 

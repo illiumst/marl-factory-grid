@@ -27,9 +27,11 @@ IGNORED_DF_COLUMNS = ['Episode', 'Run',  # For plotting, which values are ignore
                       'train_step', 'step', 'index', 'dirt_amount', 'dirty_pos_count', 'terminal_observation',
                       'episode']
 
-POS_MASK = np.asarray([[[-1, -1], [0, -1], [1, -1]],
-                       [[-1, 0], [0, 0], [1, 0]],
-                       [[-1, 1], [0, 1], [1, 1]]])
+POS_MASK_8 = np.asarray([[[-1, -1], [0, -1], [1, -1]],
+                         [[-1, 0],  [0, 0],  [1, 0]],
+                         [[-1, 1],  [0, 1],  [1, 1]]])
+
+POS_MASK_4 = np.asarray([[0, -1], [-1, 0], [1, 0], [-1, 1], [0, 1], [1, 1]])
 
 MOVEMAP = defaultdict(lambda: (0, 0),
                       {c.NORTH: (-1, 0), c.NORTHEAST: (-1, 1),
@@ -215,32 +217,6 @@ def is_move(action_name: str):
     :return: True if the action is a movement action, False otherwise.
     """
     return action_name in MOVEMAP.keys()
-
-
-def asset_str(agent):
-    """
-        FIXME @ romue
-    """
-    # What does this abonimation do?
-    # if any([x is None for x in [cls._slices[j] for j in agent.collisions]]):
-    #     print('error')
-    if step_result := agent.step_result:
-        action = step_result['action_name']
-        valid = step_result['action_valid']
-        col_names = [x.name for x in step_result['collisions']]
-        if any(c.AGENT in name for name in col_names):
-            return 'agent_collision', 'blank'
-        elif not valid or c.LEVEL in col_names or c.AGENT in col_names:
-            return c.AGENT, 'invalid'
-        elif valid and not is_move(action):
-            return c.AGENT, 'valid'
-        elif valid and is_move(action):
-            return c.AGENT, 'move'
-        else:
-            return c.AGENT, 'idle'
-    else:
-        return c.AGENT, 'idle'
-
 
 def locate_and_import_class(class_name, folder_path: Union[str, PurePath] = ''):
     """

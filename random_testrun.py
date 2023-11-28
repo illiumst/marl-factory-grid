@@ -12,9 +12,9 @@ from marl_factory_grid.utils.tools import ConfigExplainer
 
 if __name__ == '__main__':
     # Render at each step?
-    render = True
+    render = False
     # Reveal all possible Modules (Entities, Rules, Agents[Actions, Observations], etc.)
-    explain_config = False
+    explain_config = True
     # Collect statistics?
     monitor = True
     # Record as Protobuf?
@@ -26,10 +26,10 @@ if __name__ == '__main__':
 
     if explain_config:
         ce = ConfigExplainer()
-        ce.save_all(run_path / 'all_out.yaml')
+        ce.save_all(run_path / 'all_available_configs.yaml')
 
     # Path to config File
-    path = Path('marl_factory_grid/configs/default_config.yaml')
+    path = Path('marl_factory_grid/configs/eight_puzzle.yaml')
 
     # Env Init
     factory = Factory(path)
@@ -49,7 +49,7 @@ if __name__ == '__main__':
         action_spaces = factory.action_space
         while not done:
             a = [randint(0, x.n - 1) for x in action_spaces]
-            obs_type, _, _, done, info = factory.step(a)
+            obs_type, _, reward, done, info = factory.step(a)
             if render:
                 factory.render()
             if done:
@@ -57,14 +57,11 @@ if __name__ == '__main__':
                 break
 
     if monitor:
-        factory.save_run(run_path / 'test_monitor.pkl')
+        factory.save_monitor(run_path / 'test_monitor.pkl')
     if record:
         factory.save_records(run_path / 'test.pb')
     if plotting:
         factory.report_possible_colum_keys()
-        plot_single_run(run_path, column_keys=['Global_DoneAtDestinationReachAll', 'step_reward',
-                                               'Agent[Karl-Heinz]_DoneAtDestinationReachAll',
-                                               'Agent[Wolfgang]_DoneAtDestinationReachAll',
-                                               'Global_DoneAtDestinationReachAll'])
+        plot_single_run(run_path, column_keys=['step_reward'])
 
     print('Done!!! Goodbye....')
