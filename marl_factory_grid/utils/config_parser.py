@@ -153,10 +153,12 @@ class FactoryConfigParser(object):
                     class_or_classes = locate_and_import_class(action, self.custom_modules_path)
                 try:
                     parsed_actions.extend(class_or_classes)
+                    for actions_class in class_or_classes:
+                        conf_kwargs[actions_class.__name__] = conf_kwargs[action]
                 except TypeError:
                     parsed_actions.append(class_or_classes)
 
-            parsed_actions = [x(**conf_kwargs.get(x, {})) for x in parsed_actions]
+            parsed_actions = [x(**conf_kwargs.get(x.__name__, {})) for x in parsed_actions]
 
             # Observation
             observations = list()

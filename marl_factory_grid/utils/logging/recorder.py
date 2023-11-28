@@ -25,6 +25,12 @@ class EnvRecorder(Wrapper):
         return self.env.reset()
 
     def step(self, actions):
+        """
+        Todo
+
+        :param actions:
+        :return:
+        """
         obs_type, obs, reward, done, info = self.env.step(actions)
         if not self.episodes or self._curr_episode in self.episodes:
             summary: dict = self.env.summarize_state()

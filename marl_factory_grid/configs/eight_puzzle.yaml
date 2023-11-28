@@ -1,60 +1,89 @@
+# Gneral env. settings.
 General:
+  # Just the best seed.
   env_seed: 69
+  # Each agent receives an inividual Reward.
   individual_rewards: true
+  # level file to load from .\levels\.
   level_name: eight_puzzle
+  # Partial Observability. 0 = Full Observation.
   pomdp_r: 0
-  verbose: True
+  # Please do not spam me.
+  verbose: false
+  # Do not touch, WIP
   tests: false
 
+# RL Surrogates
 Agents:
+  # This defines the name of the agent. UTF-8
   Wolfgang:
+    # Section which defines the availabll Actions per Agent
     Actions:
-      Noop:
-        fail_reward: -0
-        valid_reward: 0
+      # Move4 adds 4 actions [`North`, `East`, `South`, `West`]
       Move4:
-        fail_reward: -0.1
-        valid_reward: -.01
+        # Reward specification which differ from the default.
+        # Agent does a valid move in the environment. He actually moves.
+        valid_reward: -0.1
+        # Agent wants to move, but fails.
+        fail_reward:  0
+      # NOOP aka agent does not do a thing.
+      Noop:
+        # The Agent decides to not do anything. Which is always valid.
+        valid_reward: 0
+        # Does not do anything, just using the same interface.
+        fail_reward: 0
+    # What the agent wants to see.
     Observations:
+      # The agent...
+      # sees other agents, but himself.
       - Other
+      # wants to see walls
       - Walls
+      # sees his associated Destination (singular). Use the Plural for `see all destinations`.
       - Destination
-    Clones:
-      - Juergen
-      - Soeren
-      - Walter
-      - Siggi
-      - Dennis
-      - Karl-Heinz
-      - Kevin
+    # You want to have 7 clones, also possible to name them by giving names as list.
+    Clones: 7
+    # Agents are blocking their grid position from beeing entered by others.
     is_blocking_pos: true
+# Apart from agents, which additional endities do you want to load?
 Entities:
+  # Observable destinations, which can be reached by stepping on the same position. Has additional parameters...
   Destinations:
     # Let them spawn on closed doors and agent positions
     ignore_blocking: true
-    # We need a special spawn rule...
+    # For 8-Puzzle, we need a special spawn rule...
     spawnrule:
-      # ...which assigns the destinations per agent
-      SpawnDestinationsPerAgent:
-        # we use this parameter
-        coords_or_quantity:
-          # to enable and assign special positions per agent
-          Wolfgang: 1
-          Karl-Heinz: 1
-          Kevin: 1
-          Juergen: 1
-          Soeren: 1
-          Walter: 1
-          Siggi: 1
-          Dennis: 1
+      # ...which spawn a single position just underneath an associated agent.
+      SpawnDestinationOnAgent: {}  # There are no parameters, so we state empty kwargs.
 
+# This section defines which operations are performed beside agent action.
+# Without this section nothing happens, not even Done-condition checks.
+# Also, situation based rewards are specidief this way.
 Rules:
-  # Utilities
+  ## Utilities
+  # This rule defines the collision mechanic, introduces a related DoneCondition and lets you specify rewards.
+  # Can be omited/ignored if you do not want to take care of collisions at all.
+  #   This does not mean, that agents can not collide, its just ignored.
   WatchCollisions:
+    reward: 0
     done_at_collisions: false
 
-  # Done Conditions
-  DoneAtDestinationReach:
-    condition: simultanious
+  # In 8 Puzzle, do not randomize the start positions, rather move a random agent onto the single free position n-times.
+  DoRandomInitialSteps:
+    # How many times?
+    random_steps: 2
+
+  ## Done Conditions
+  # Maximum steps per episode. There is no reward for failing.
   DoneAtMaxStepsReached:
-    max_steps: 500
+    # After how many steps should the episode end?
+    max_steps: 200
+
+  # For 8 Puzzle we need a done condition that checks whether destinations have been reached, so...
+  DoneAtDestinationReach:
+    # On every step, should there be a reward for agets that reach their associated destination? No!
+    dest_reach_reward: 0  # Do not touch. This is usefull in other settings!
+    # Reward should only be given when all destiantions are reached in parallel!
+    condition: "simultanious"
+    # Reward if this is the case. Granted to each agent when all agents are at their target position simultaniously.
+    reward_at_done: 1

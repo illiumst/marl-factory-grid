@@ -11,7 +11,7 @@ class Destination(Entity):
 
     @property
     def encoding(self):
-        return d.DEST_SYMBOL
+        return d.DEST_SYMBOL if not self.was_reached() else 0
 
     def __init__(self, *args, action_counts=0, **kwargs):
         """

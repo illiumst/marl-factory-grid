@@ -13,22 +13,20 @@ from marl_factory_grid.environment import constants as c
 class Agent(Entity):
 
     @property
-    def var_is_paralyzed(self):
+    def var_is_paralyzed(self) -> bool:
         """
-        TODO
+        Check if the Agent is able to move and perform actions. Can be paralized by eg. damage or empty battery.
 
-
-        :return:
+        :return:  Wether the Agent is paralyzed.
         """
-        return len(self._paralyzed)
+        return bool(len(self._paralyzed))
 
     @property
-    def paralyze_reasons(self):
+    def paralyze_reasons(self) -> list[str]:
         """
-        TODO
+        Reveals the reasons for the recent paralyzation.
 
-
-        :return:
+        :return: A list of strings.
         """
         return [x for x in self._paralyzed]
 
@@ -40,32 +38,20 @@ class Agent(Entity):
     @property
     def actions(self):
         """
-        TODO
+        Reveals the actions this agent is capable of.
 
-
-        :return:
+        :return: List of actions.
         """
         return self._actions
 
     @property
     def observations(self):
         """
-        TODO
+        Reveals the observations which this agent wants to see.
 
-
-        :return:
+        :return: List of observations.
         """
         return self._observations
-
-    def step_result(self):
-        """
-        TODO
-        FIXME THINK ITS LEGACY... Not Used any more
-
-
-        :return:
-        """
-        pass
 
     @property
     def var_is_blocking_pos(self):
@@ -73,10 +59,15 @@ class Agent(Entity):
 
     def __init__(self, actions: List[Action], observations: List[str], *args, is_blocking_pos=False, **kwargs):
         """
-        TODO
+        This is the main agent surrogate.
+        Actions given to env.step() are associated with this entity and performed at `on_step`.
 
 
-        :return:
+        :param kwargs: object
+        :param args: object
+        :param is_blocking_pos: object
+        :param observations: object
+        :param actions: object
         """
         super(Agent, self).__init__(*args, **kwargs)
         self._paralyzed = set()
@@ -86,42 +77,38 @@ class Agent(Entity):
         self._status: Union[Result, None] = None
         self._is_blocking_pos = is_blocking_pos
 
-    def summarize_state(self):
+    def summarize_state(self) -> dict[str]:
         """
-        TODO
+        More or less the result of the last action. Usefull for debugging and used in renderer.
 
-
-        :return:
+        :return: Last action result
         """
         state_dict = super().summarize_state()
         state_dict.update(valid=bool(self.state.validity), action=str(self.state.identifier))
         return state_dict
 
-    def set_state(self, state):
+    def set_state(self, state: Result) -> bool:
         """
-        TODO
+        Place result in temp agent state.
 
-
-        :return:
+        :return: Always true
         """
         self._status = state
         return c.VALID
 
-
     def paralyze(self, reason):
         """
-        TODO
+        Paralyze an agent. Paralyzed agents are not able to do actions.
+        This is usefull, when battery is empty or agent is damaged.
 
-
-        :return:
+        :return: Always true
         """
         self._paralyzed.add(reason)
         return c.VALID
 
     def de_paralyze(self, reason) -> bool:
         """
-        TODO
-
+        De-paralyze an agent, so that he is able to perform actions again.
 
         :return:
         """

@@ -71,8 +71,8 @@ if __name__ == '__main__':
                 if done_bool:
                     break
             print(f'Factory run {episode} done, steps taken {env.unwrapped.unwrapped._steps}, reward is:\n    {rew}')
-        env.save_run(out_path / 'reload_monitor.pick',
-                     auto_plotting_keys=['step_reward', 'cleanup_valid', 'cleanup_fail'])
+        env.save_monitor(out_path / 'reload_monitor.pick',
+                         auto_plotting_keys=['step_reward', 'cleanup_valid', 'cleanup_fail'])
         if record:
             env.save_records(out_path / 'reload_recorder.pick', save_occupation_map=True)
     print('all done')

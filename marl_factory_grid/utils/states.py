@@ -49,6 +49,12 @@ class StepRules:
                 state.print(rule_reset_printline)
         return c.VALID
 
+    def do_all_post_spawn_reset(self, state):
+        for rule in self.rules:
+            if rule_reset_printline := rule.on_reset_post_spawn(state):
+                state.print(rule_reset_printline)
+        return c.VALID
+
     def tick_step_all(self, state):
         results = list()
         for rule in self.rules:
