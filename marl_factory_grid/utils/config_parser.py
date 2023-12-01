@@ -127,13 +127,25 @@ class FactoryConfigParser(object):
             # Actions
             conf_actions = self.agents[name]['Actions']
             actions = list()
+            # Actions:
+            # Allowed
+            # - Noop
+            # - Move8
+            # ----
+            #  Noop:
+            #  South:
+            #     reward_fail: 0.5
+            # ----
+            # Forbidden
+            # - South:
+            #     reward_fail: 0.5
 
             if isinstance(conf_actions, dict):
                 conf_kwargs = conf_actions.copy()
                 conf_actions = list(conf_actions.keys())
             elif isinstance(conf_actions, list):
                 conf_kwargs = {}
-                if isinstance(conf_actions, dict):
+                if any(isinstance(x, dict) for x in conf_actions):
                     raise ValueError
                 pass
             for action in conf_actions:
@@ -150,9 +162,10 @@ class FactoryConfigParser(object):
                 except AttributeError:
                     class_or_classes = locate_and_import_class(action, self.custom_modules_path)
                 try:
+                    # Handle Lists of Actions (e.g., Move8, Move4, Default)
                     parsed_actions.extend(class_or_classes)
                     for actions_class in class_or_classes:
-                        conf_kwargs[actions_class.__name__] = conf_kwargs[action]
+                        conf_kwargs[actions_class.__name__] = conf_kwargs.get(action, {})
                 except TypeError:
                     parsed_actions.append(class_or_classes)
 
