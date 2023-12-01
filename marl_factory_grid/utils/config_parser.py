@@ -152,9 +152,12 @@ class FactoryConfigParser(object):
                 except AttributeError:
                     class_or_classes = locate_and_import_class(action, self.custom_modules_path)
                 try:
+                    # print(action)
                     parsed_actions.extend(class_or_classes)
+                    # print(parsed_actions)
                     for actions_class in class_or_classes:
-                        conf_kwargs[actions_class.__name__] = conf_kwargs[action]
+                        # break
+                        conf_kwargs[actions_class.__name__] = conf_kwargs.get(action, {})
                 except TypeError:
                     parsed_actions.append(class_or_classes)
 

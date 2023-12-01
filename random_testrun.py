@@ -14,7 +14,7 @@ if __name__ == '__main__':
     # Render at each step?
     render = False
     # Reveal all possible Modules (Entities, Rules, Agents[Actions, Observations], etc.)
-    explain_config = True
+    explain_config = False
     # Collect statistics?
     monitor = True
     # Record as Protobuf?
@@ -29,7 +29,7 @@ if __name__ == '__main__':
         ce.save_all(run_path / 'all_available_configs.yaml')
 
     # Path to config File
-    path = Path('marl_factory_grid/configs/eight_puzzle.yaml')
+    path = Path('marl_factory_grid/configs/default_config.yaml')
 
     # Env Init
     factory = Factory(path)

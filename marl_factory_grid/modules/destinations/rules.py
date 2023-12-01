@@ -152,7 +152,7 @@ class SpawnDestinationOnAgent(Rule):
         """
         super().__init__()
 
-    def on_reset(self, state: Gamestate):
+    def on_reset(self, state):
         state.print("Spawn Desitnations")
         for agent in state[c.AGENT]:
             destination = Destination(agent.pos, bind_to=agent)

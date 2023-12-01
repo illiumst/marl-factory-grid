@@ -11,7 +11,7 @@ if __name__ == '__main__':
     render = True
 
     # Path to config File
-    path = Path('test_config.yaml')
+    path = Path('marl_factory_grid/configs/test_config.yaml')
 
     # Env Init
     factory = Factory(path)
