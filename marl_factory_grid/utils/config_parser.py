@@ -152,7 +152,7 @@ class FactoryConfigParser(object):
                 try:
                     parsed_actions.extend(class_or_classes)
                     for actions_class in class_or_classes:
-                        conf_kwargs[actions_class.__name__] = conf_kwargs[action]
+                        conf_kwargs[actions_class.__name__] = conf_kwargs.get(action, {})
                 except TypeError:
                     parsed_actions.append(class_or_classes)
 
