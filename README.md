@@ -7,7 +7,6 @@ Install this environment using `pip install marl-factory-grid`.
 
 ## First Steps
 
-
 ### Quickstart
 Most of the env. objects (entites, rules and assets) can be loaded automatically. 
 Just define what your environment needs in a *yaml*-configfile like:

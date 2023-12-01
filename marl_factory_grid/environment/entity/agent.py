@@ -74,7 +74,6 @@ class Agent(Entity):
         self.step_result = dict()
         self._actions = actions
         self._observations = observations
-        self._status: Union[Result, None] = None
         self._is_blocking_pos = is_blocking_pos
 
     def summarize_state(self) -> dict[str]:
