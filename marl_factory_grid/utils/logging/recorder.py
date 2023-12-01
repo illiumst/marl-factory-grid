@@ -73,7 +73,6 @@ class EnvRecorder(Wrapper):
                     n_dests=0,
                     dwell_time=0,
                     spawn_frequency=0,
-                    spawn_in_other_zone=False,
                     spawn_mode=''
                 )
                 rewards_dest = dict(

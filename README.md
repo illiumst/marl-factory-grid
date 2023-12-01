@@ -120,9 +120,6 @@ Just define what your environment needs in a *yaml*-configfile like:
       Maintainers:
         coords_or_quantity: 1
     
-      # Zones: Entities representing zones in the environment.
-      Zones: { }
-    
     
     # Rules section specifies the rules governing the dynamics of the environment.
     Rules:

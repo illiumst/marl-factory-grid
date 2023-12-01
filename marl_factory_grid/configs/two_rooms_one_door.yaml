@@ -42,7 +42,6 @@ Entities:
   Destinations: { }
   Doors: { }
   GlobalPositions: { }
-  Zones: { }
 
 Rules:
   # Environment Dynamics
@@ -56,9 +55,6 @@ Rules:
 
   # Init
   AssignGlobalPositions: { }
-  ZoneInit: { }
-  AgentSingleZonePlacement: { }
-  IndividualDestinationZonePlacement: { }
 
   # Done Conditions
   MaxStepsReached:
