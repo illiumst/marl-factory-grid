@@ -1,27 +1,44 @@
 Agents:
-  Wolfgang:
+  Clean test agent:
     Actions:
-    - Noop
-    - Charge
-    - Clean
-    - DestAction
-    - DoorUse
-    - ItemAction
-    - Move8
+      - Noop
+      - Charge
+      - Clean
+      - DoorUse
+      - Move8
     Observations:
-    - Combined:
-      - Other
-      - Walls
-    - GlobalPosition
-    - Battery
-    - ChargePods
-    - DirtPiles
-    - Destinations
-    - Doors
-    - Items
-    - Inventory
-    - DropOffLocations
-    - Maintainers
+      - Combined:
+          - Other
+          - Walls
+      - GlobalPosition
+      - Battery
+      - ChargePods
+      - DirtPiles
+      - Destinations
+      - Doors
+      - Maintainers
+  Item test agent:
+    Actions:
+      - Noop
+      - Charge
+      - DestAction
+      - DoorUse
+      - ItemAction
+      - Move8
+    Observations:
+      - Combined:
+          - Other
+          - Walls
+      - GlobalPosition
+      - Battery
+      - ChargePods
+      - Destinations
+      - Doors
+      - Items
+      - Inventory
+      - DropOffLocations
+      - Maintainers
+
 Entities:
 
   Batteries:
@@ -89,4 +106,5 @@ Rules:
 
 Tests:
   MaintainerTest: {}
-#  DirtAgentTest: {}
+  DirtAgentTest: {}
+  ItemAgentTest: {}
