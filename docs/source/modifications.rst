@@ -3,14 +3,16 @@ How to modify the environment or write modules
 
 Modifying levels
 ----------------
-Varying levels are created by defining Walls, Floor or Doors in *.txt*-files (see [levels](marl_factory_grid/levels) for examples).
+Varying levels are created by defining Walls, Floor or Doors in *.txt*-files (see `levels`_ for examples).
 Define which *level* to use in your *config file* as:
 
->>> General:
-    level_name: rooms  # 'double', 'large', 'simple', ...
+.. _levels: marl_factory_grid/levels
 
-... or create your own , maybe with the help of `asciiflow.com <https://asciiflow.com/#/>`_.
-Make sure to use `#` as `Walls`_ , `-` as free (walkable) floor, `D` for `Doors`_.
+>>> General:
+    level_name: rooms  # 'simple', 'narrow_corridor', 'eight_puzzle',...
+
+... or create your own. Maybe with the help of `asciiflow.com <https://asciiflow.com/#/>`_.
+Make sure to use `#` as `Walls`_ , `-` as free (walkable) floor and `D` for `Doors`_.
 Other Entities (define your own) may bring their own `Symbols`.
 
 .. _Walls: marl_factory_grid/environment/entity/wall.py
@@ -19,26 +21,32 @@ Other Entities (define your own) may bring their own `Symbols`.
 
 Modifying Entites
 ----------------
-Entites are `Objects`_ that can additionally be assigned a position.
+Entities are `Objects`_ that can additionally be assigned a position.
 Abstract Entities are provided.
-If you wish to introduce new entities to the enviroment just create a new module, ...
+
+If you wish to introduce new entities to the environment just create a new module that implements the entity class. If
+necessary, provide additional classe such as custom actions or rewards and load the entity into the environment using
+the config file.
 
 .. _Objects: marl_factory_grid/environment/entity/object.py
 
 Modifying Groups
 ----------------
 `Groups`_ are entity Sets that provide administrative access to all group members.
-All `Entities`_ are available at runtime as EnvState property.
+All `Entity Collections`_ are available at runtime as a property of the env state.
+If you add an entity, you probably also want a collection of that entity.
 
 .. _Groups: marl_factory_grid/environment/groups/objects.py
-.. _Entities: marl_factory_grid/environment/entity/global_entities.py
+.. _Entity Collections: marl_factory_grid/environment/entity/global_entities.py
 
 Modifying Rules
 ----------------
-`Rules`_ define how the environment behaves on microscale.
-Each of the hookes (`on_init`, `pre_step`, `on_step`, '`post_step`', `on_done`)
-provide env-access to implement customn logic, calculate rewards, or gather information.
-If you wish to introduce new rules to the environment....
+`Rules`_ define how the environment behaves on micro scale.
+Each of the hooks (`on_init`, `pre_step`, `on_step`, '`post_step`', `on_done`) provide env-access to implement custom
+logic, calculate rewards, or gather information.
+
+If you wish to introduce new rules to the environment make sure it implements the Rule class and override its' hooks
+to implement your own rule logic.
 
 .. _Rules: marl_factory_grid/environment/entity/object.py
 
@@ -47,8 +55,7 @@ If you wish to introduce new rules to the environment....
 
 Modifying Results
 ----------------
-`Results`_ provide a way to return `rule` evaluations such as rewards and state reports
-back to the environment.
+`Results`_ provide a way to return `rule` evaluations such as rewards and state reports back to the environment.
 
 .. _Results: marl_factory_grid/utils/results.py
 
