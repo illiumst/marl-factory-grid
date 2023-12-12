@@ -1,5 +1,5 @@
 Using the environment with your agents
-===========================================
+======================================
 
 Environment objects, including agents, entities and rules, that are specified in a *yaml*-configfile will be loaded automatically.
 Using ``quickstart_use`` creates a default config-file and another one that lists all possible options of the environment.
@@ -58,7 +58,7 @@ Here's a breakdown of the key components in the provided script. Feel free to cu
 
 
 Evaluating the run
-----
+------------------
 
 If monitoring and recording are enabled, the environment states will be traced and recorded automatically.
 

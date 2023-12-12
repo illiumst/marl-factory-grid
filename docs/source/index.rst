@@ -6,8 +6,12 @@
 Welcome to marl-factory-grid's documentation!
 =============================================
 
+.. mdinclude:: ../../README.md
+
+Test
+
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Contents:
 
    installation

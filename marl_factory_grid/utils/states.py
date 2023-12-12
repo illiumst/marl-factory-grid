@@ -159,7 +159,7 @@ class Gamestate(object):
 
     def tick(self, actions) -> list[Result]:
         """
-        Performs a single **Gamestate Tick**by calling the inner rule hooks in sequential order.
+        Performs a single **Gamestate Tick** by calling the inner rule hooks in sequential order.
         - tick_pre_step_all:    Things to do before the agents do their actions. Statechange, Moving, Spawning etc...
         - agent tick:           Agents do their actions.
         - tick_step_all:        Things to do after the agents did their actions. Statechange, Moving, Spawning etc...

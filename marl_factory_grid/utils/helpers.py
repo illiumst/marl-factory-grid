@@ -10,14 +10,14 @@ from marl_factory_grid.environment import constants as c
 
 """
 This file is used for:
-    1. string based definition
-        Use a class like `Constants`, to define attributes, which then reveal strings.
-        These can be used for naming convention along the environments as well as keys for mappings such as dicts etc.
-        When defining new envs, use class inheritance. 
-    
-    2. utility function definition
-        There are static utility functions which are not bound to a specific environment.
-        In this file they are defined to be used across the entire package.
+1. string based definition
+    Use a class like `Constants`, to define attributes, which then reveal strings.
+    These can be used for naming convention along the environments as well as keys for mappings such as dicts etc.
+    When defining new envs, use class inheritance. 
+
+2. utility function definition
+    There are static utility functions which are not bound to a specific environment.
+    In this file they are defined to be used across the entire package.
 """
 
 LEVELS_DIR = 'levels'  # for use in studies and experiments

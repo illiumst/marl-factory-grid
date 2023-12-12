@@ -182,6 +182,16 @@ class Factory(gym.Env):
         return reward, done, info
 
     def step(self, actions):
+        """
+        Run one timestep of the environment's dynamics using the agent actions.
+
+        When the end of an episode is reached (``terminated or truncated``), it is necessary to call :meth:`reset` to
+        reset this environment's state for the next episode.
+
+        :param actions: An action or list of actions provided by the agent(s) to update the environment state.
+        :return: observation, reward, terminated, truncated, info, done
+        :rtype: tuple(list(np.ndarray), float, bool, bool, dict, bool)
+        """
 
         if not isinstance(actions, list):
             actions = [int(actions)]

@@ -14,12 +14,11 @@ release = '2.5.0'
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-extensions = ['myst_parser',
-              'sphinx.ext.duration',
-              'sphinx.ext.doctest',
+extensions = [#'myst_parser',
               'sphinx.ext.autodoc',
               'sphinx.ext.autosummary',
               'sphinx.ext.linkcode',
+              'sphinx_mdinclude',
               ]
 
 templates_path = ['_templates']
@@ -30,6 +29,7 @@ exclude_patterns = ['marl_factory_grid.utils.proto', 'marl_factory_grid.utils.pr
 from pathlib import Path
 import sys
 sys.path.insert(0, (Path(__file__).parents[2]).resolve().as_posix())
+sys.path.insert(0, (Path(__file__).parents[2] / 'marl_factory_grid').resolve().as_posix())
 import sphinx_pdj_theme
 
 # -- Options for HTML output -------------------------------------------------
@@ -52,3 +52,6 @@ def linkcode_resolve(domain, info):
     return "https://github.com/illiumst/marl-factory-grid/%s.py" % filename
 
 autoclass_content = 'both'
+autosummary_generate = True
+
+print(sys.executable)
