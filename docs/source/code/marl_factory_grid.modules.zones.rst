@@ -4,14 +4,6 @@ marl\_factory\_grid.modules.zones package
 Submodules
 ----------
 
-marl\_factory\_grid.modules.zones.constants module
---------------------------------------------------
-
-.. automodule:: marl_factory_grid.modules.zones.constants
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 marl\_factory\_grid.modules.zones.entitites module
 --------------------------------------------------
 
