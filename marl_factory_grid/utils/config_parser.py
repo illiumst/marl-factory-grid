@@ -20,6 +20,13 @@ class FactoryConfigParser(object):
     default_observations = [c.WALLS, c.AGENT]
 
     def __init__(self, config_path, custom_modules_path: Union[PathLike] = None):
+        """
+        This class parses the factory env config file.
+
+
+        :param config_path: Test
+        :param custom_modules_path: Test
+        """
         self.config_path = Path(config_path)
         self.custom_modules_path = Path(custom_modules_path) if custom_modules_path is not None else custom_modules_path
         self.config = yaml.safe_load(self.config_path.open())
