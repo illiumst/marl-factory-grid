@@ -23,13 +23,16 @@ extensions = ['myst_parser',
               ]
 
 templates_path = ['_templates']
-exclude_patterns = ['marl_factory_grid.utils.proto']
+exclude_patterns = ['marl_factory_grid.utils.proto', 'marl_factory_grid.utils.proto.fiksProto_pb2*']
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here.
 from pathlib import Path
 import sys
 sys.path.insert(0, (Path(__file__).parents[2]).resolve().as_posix())
+import sphinx_pdj_theme
+html_theme = 'sphinx_pdj_theme'
+html_theme_path = [sphinx_pdj_theme.get_html_theme_path()]
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output

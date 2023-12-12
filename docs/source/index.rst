@@ -15,8 +15,6 @@ Welcome to marl-factory-grid's documentation!
    modifications
    code
 
-.. autosummary::
-   :toctree: generated
 
 .. note::
    This project is under active development.
