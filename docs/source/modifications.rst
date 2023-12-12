@@ -1,5 +1,7 @@
-How to modify the environment or write modules
-==============================================
+Custom Modifications
+====================
+
+This section covers main aspects of working with the environment.
 
 Modifying levels
 ----------------
@@ -68,3 +70,10 @@ PNG-files (transparent background) of square aspect-ratio should do the job, in 
    :alt: Wall Image
 .. image:: ../../marl_factory_grid/environment/assets/agent/agent.png
    :alt: Agent Image
+
+Indices and tables
+------------------
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`

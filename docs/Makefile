@@ -14,6 +14,11 @@ help:
 
 .PHONY: help Makefile
 
+buildapi:
+  sphinx-apidoc.exe -fEM -T -t _templates -o source/source ../marl_factory_grid "../**/marl", "../**/proto"
+  @echo "Auto-generation of 'SOURCEAPI' documentation finished. " \
+          "The generated files were placed in 'source/'"
+
 # Catch-all target: route all unknown targets to Sphinx using the new
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
 %: Makefile

@@ -11,6 +11,14 @@ from marl_factory_grid.utils.plotting.plotting_utils import prepare_plot
 
 def plot_single_run(run_path: Union[str, PathLike], use_tex: bool = False, column_keys=None,
                     file_key: str ='monitor', file_ext: str ='pkl'):
+    """
+
+    Todo
+
+    :param filepath:
+    :param ext:
+    :return:
+    """
     run_path = Path(run_path)
     df_list = list()
     if run_path.is_dir():

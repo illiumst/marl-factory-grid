@@ -1,7 +1,6 @@
 import seaborn as sns
 import matplotlib as mpl
 from matplotlib import pyplot as plt
-
 PALETTE = 10 * (
     "#377eb8",
     "#4daf4a",
@@ -20,6 +19,14 @@ PALETTE = 10 * (
 
 
 def plot(filepath, ext='png'):
+    """
+
+    Todo
+
+    :param filepath:
+    :param ext:
+    :return:
+    """
     plt.tight_layout()
     figure = plt.gcf()
     ax = plt.gca()
@@ -35,6 +42,13 @@ def plot(filepath, ext='png'):
 
 
 def prepare_tex(df, hue, style, hue_order):
+    """
+    Todo
+
+    :param filepath:
+    :param ext:
+    :return:
+    """
     sns.set(rc={'text.usetex': True}, style='whitegrid')
     lineplot = sns.lineplot(data=df, x='Episode', y='Score', ci=95, palette=PALETTE,
                             hue_order=hue_order, hue=hue, style=style)
@@ -45,6 +59,13 @@ def prepare_tex(df, hue, style, hue_order):
 
 
 def prepare_plt(df, hue, style, hue_order):
+    """
+    Todo
+
+    :param filepath:
+    :param ext:
+    :return:
+    """
     print('Struggling to plot Figure using LaTeX - going back to normal.')
     plt.close('all')
     sns.set(rc={'text.usetex': False}, style='whitegrid')
@@ -57,6 +78,13 @@ def prepare_plt(df, hue, style, hue_order):
 
 
 def prepare_center_double_column_legend(df, hue, style, hue_order):
+    """
+    Todo
+
+    :param filepath:
+    :param ext:
+    :return:
+    """
     print('Struggling to plot Figure using LaTeX - going back to normal.')
     plt.close('all')
     sns.set(rc={'text.usetex': False}, style='whitegrid')
@@ -70,6 +98,13 @@ def prepare_center_double_column_legend(df, hue, style, hue_order):
 
 
 def prepare_plot(filepath, results_df, ext='png', hue='Measurement', style=None, use_tex=False):
+    """
+    Todo
+
+    :param filepath:
+    :param ext:
+    :return:
+    """
     df = results_df.copy()
     df[hue] = df[hue].str.replace('_', '-')
     hue_order = sorted(list(df[hue].unique()))

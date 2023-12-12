@@ -1,3 +1,4 @@
 myst_parser
 sphinx-pdj-theme
 sphinx-mdinclude
+sphinx-book-theme

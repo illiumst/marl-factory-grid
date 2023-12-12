@@ -13,6 +13,14 @@ MODEL_MAP = None
 
 
 def compare_seed_runs(run_path: Union[str, PathLike], use_tex: bool = False):
+    """
+
+    Todo
+
+    :param filepath:
+    :param ext:
+    :return:
+    """
     run_path = Path(run_path)
     df_list = list()
     for run, monitor_file in enumerate(run_path.rglob('monitor*.pick')):
@@ -49,6 +57,14 @@ def compare_seed_runs(run_path: Union[str, PathLike], use_tex: bool = False):
 
 def compare_model_runs(run_path: Path, run_identifier: Union[str, int], parameter: Union[str, List[str]],
                        use_tex: bool = False):
+    """
+
+    Todo
+
+    :param filepath:
+    :param ext:
+    :return:
+    """
     run_path = Path(run_path)
     df_list = list()
     parameter = [parameter] if isinstance(parameter, str) else parameter
@@ -89,6 +105,14 @@ def compare_model_runs(run_path: Path, run_identifier: Union[str, int], paramete
 
 def compare_all_parameter_runs(run_root_path: Path, parameter: Union[str, List[str]],
                                param_names: Union[List[str], None] = None, str_to_ignore='', use_tex: bool = False):
+    """
+
+    Todo
+
+    :param filepath:
+    :param ext:
+    :return:
+    """
     run_root_path = Path(run_root_path)
     df_list = list()
     parameter = [parameter] if isinstance(parameter, str) else parameter

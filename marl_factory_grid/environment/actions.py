@@ -10,7 +10,6 @@ from marl_factory_grid.utils.results import ActionResult
 TYPE_COLLISION = 'collision'
 
 class Action(abc.ABC):
-
     @property
     def name(self):
         return self._identifier
@@ -18,12 +17,28 @@ class Action(abc.ABC):
     @abc.abstractmethod
     def __init__(self, identifier: str, default_valid_reward: float,  default_fail_reward: float,
                  valid_reward: float | None = None, fail_reward: float | None = None):
+        """
+        Todo
+
+        :param identifier:
+        :param default_valid_reward:
+        :param default_fail_reward:
+        :param valid_reward:
+        :param fail_reward:
+        """
         self.fail_reward = fail_reward if fail_reward is not None else default_fail_reward
         self.valid_reward = valid_reward if valid_reward is not None else default_valid_reward
         self._identifier = identifier
 
     @abc.abstractmethod
     def do(self, entity, state) -> Union[None, ActionResult]:
+        """
+        Let the :class:`marl_factory_grid.environment.entity.entity.Entity` perform the given.
+
+        :param entity: The entity to perform the action; mostly `marl_factory_grid.environment.entity.agent.Agent`
+        :param state: The current :class:'marl_factory_grid.utils.states.Gamestate'
+        :return:
+        """
         validity = bool(random.choice([0, 1]))
         return self.get_result(validity, entity)
 

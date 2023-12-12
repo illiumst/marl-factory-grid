@@ -11,6 +11,13 @@ class EnvRecorder(Wrapper):
 
     def __init__(self, env, filepath: Union[str, PathLike] = None,
                  episodes: Union[List[int], None] = None):
+        """
+
+        Todo
+
+        :param env:
+        :param filepath:
+        """
         super(EnvRecorder, self).__init__(env)
         self.filepath = filepath
         self.episodes = episodes

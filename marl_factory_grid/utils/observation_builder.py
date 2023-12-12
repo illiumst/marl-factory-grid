@@ -31,6 +31,9 @@ class OBSBuilder(object):
 
     def __init__(self, level_shape: np.size, state: Gamestate, pomdp_r: int):
         """
+        OBSBuilder
+        ==========
+
         TODO
 
 

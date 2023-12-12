@@ -1,6 +1,11 @@
 marl\_factory\_grid.modules package
 ===================================
 
+.. automodule:: marl_factory_grid.modules
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Subpackages
 -----------
 
@@ -15,11 +20,3 @@ Subpackages
    marl_factory_grid.modules.machines
    marl_factory_grid.modules.maintenance
    marl_factory_grid.modules.zones
-
-Module contents
----------------
-
-.. automodule:: marl_factory_grid.modules
-   :members:
-   :undoc-members:
-   :show-inheritance:

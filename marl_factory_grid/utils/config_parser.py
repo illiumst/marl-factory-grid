@@ -21,11 +21,11 @@ class FactoryConfigParser(object):
 
     def __init__(self, config_path, custom_modules_path: Union[PathLike] = None):
         """
-        This class parses the factory env config file.
+         This class parses the factory env config file.
 
 
-        :param config_path: Test
-        :param custom_modules_path: Test
+        :param config_path: Path to where the 'config.yml' is.
+        :param custom_modules_path: Additional search path for custom modules, levels, entities, etc..
         """
         self.config_path = Path(config_path)
         self.custom_modules_path = Path(custom_modules_path) if custom_modules_path is not None else custom_modules_path
