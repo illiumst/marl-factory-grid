@@ -12,14 +12,6 @@ marl\_factory\_grid.modules.doors.actions module
    :undoc-members:
    :show-inheritance:
 
-marl\_factory\_grid.modules.doors.constants module
---------------------------------------------------
-
-.. automodule:: marl_factory_grid.modules.doors.constants
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 marl\_factory\_grid.modules.doors.entitites module
 --------------------------------------------------
 

@@ -4,14 +4,6 @@ marl\_factory\_grid.modules.maintenance package
 Submodules
 ----------
 
-marl\_factory\_grid.modules.maintenance.constants module
---------------------------------------------------------
-
-.. automodule:: marl_factory_grid.modules.maintenance.constants
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 marl\_factory\_grid.modules.maintenance.entities module
 -------------------------------------------------------
 

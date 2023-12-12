@@ -12,14 +12,6 @@ marl\_factory\_grid.modules.clean\_up.actions module
    :undoc-members:
    :show-inheritance:
 
-marl\_factory\_grid.modules.clean\_up.constants module
-------------------------------------------------------
-
-.. automodule:: marl_factory_grid.modules.clean_up.constants
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 marl\_factory\_grid.modules.clean\_up.entitites module
 ------------------------------------------------------
 

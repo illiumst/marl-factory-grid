@@ -12,14 +12,6 @@ marl\_factory\_grid.modules.destinations.actions module
    :undoc-members:
    :show-inheritance:
 
-marl\_factory\_grid.modules.destinations.constants module
----------------------------------------------------------
-
-.. automodule:: marl_factory_grid.modules.destinations.constants
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 marl\_factory\_grid.modules.destinations.entitites module
 ---------------------------------------------------------
 

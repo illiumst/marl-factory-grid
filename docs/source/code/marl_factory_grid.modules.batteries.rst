@@ -12,14 +12,6 @@ marl\_factory\_grid.modules.batteries.actions module
    :undoc-members:
    :show-inheritance:
 
-marl\_factory\_grid.modules.batteries.constants module
-------------------------------------------------------
-
-.. automodule:: marl_factory_grid.modules.batteries.constants
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 marl\_factory\_grid.modules.batteries.entitites module
 ------------------------------------------------------
 
