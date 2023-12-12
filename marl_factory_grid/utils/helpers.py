@@ -54,15 +54,9 @@ class ObservationTranslator:
         A string _identifier based approach is used.
         Currently, it is not possible to mix different obs shapes.
 
-
         :param this_named_observation_space: `Named observation space` of the joined environment.
-        :type  this_named_observation_space: Dict[str, dict]
-
         :param per_agent_named_obs_spaces: `Named observation space` one for each agent. Overloaded.
-        type  per_agent_named_obs_spaces: Dict[str, dict]
-
         :param placeholder_fill_value: Currently, not fully implemented!!!
-        :type  placeholder_fill_value: Union[int, str] = 'N'
         """
 
         if isinstance(placeholder_fill_value, str):

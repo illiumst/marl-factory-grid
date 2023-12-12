@@ -43,6 +43,7 @@ html_static_path = ['_static']
 # In your configuration, you need to specify a linkcode_resolve function that returns an URL based on the object.
 # https://www.sphinx-doc.org/en/master/usage/extensions/linkcode.html
 
+
 def linkcode_resolve(domain, info):
     if domain in ['py', '__init__.py']:
         return None
@@ -51,7 +52,9 @@ def linkcode_resolve(domain, info):
     filename = info['module'].replace('.', '/')
     return "https://github.com/illiumst/marl-factory-grid/%s.py" % filename
 
+
 autoclass_content = 'both'
 autosummary_generate = True
+add_module_names = False
 
 print(sys.executable)
