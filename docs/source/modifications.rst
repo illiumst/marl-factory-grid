@@ -43,23 +43,36 @@ If you add an entity, you probably also want a collection of that entity.
 
 Modifying Rules
 ---------------
-`Rules`_ define how the environment behaves on micro scale.
-Each of the hooks (`on_init`, `pre_step`, `on_step`, '`post_step`', `on_done`) provide env-access to implement custom
-logic, calculate rewards, or gather information.
+`Rules <https://marl-factory-grid.readthedocs.io/en/latest/code/marl_factory_grid.environment.rules.html>`_ define how
+the environment behaves on micro scale. Each of the hooks (`on_init`, `pre_step`, `on_step`, '`post_step`', `on_done`)
+provide env-access to implement custom logic, calculate rewards, or gather information.
 
 If you wish to introduce new rules to the environment make sure it implements the Rule class and override its' hooks
 to implement your own rule logic.
 
-.. _Rules: marl_factory_grid/environment/entity/object.py
 
 .. image:: ../../images/Hooks_FIKS.png
    :alt: Hooks Image
 
+
+Modifying Constants and Rewards
+-------------------------------
+
+Customizing rewards and constants allows you to tailor the environment to specific requirements.
+You can set custom rewards in the configuration file. If no specific rewards are defined, the environment
+will utilize default rewards, which are provided in the constants file of each module.
+
+In addition to rewards, you can also customize other constants used in the environment's rules or actions. Each module has
+its dedicated constants file, while global constants are centrally located in the environment's constants file.
+Be careful when making changes to constants, as they can radically impact the behavior of the environment. Only modify
+constants if you have a solid understanding of their implications and are confident in the adjustments you're making.
+
+
 Modifying Results
 -----------------
-`Results`_ provide a way to return `rule` evaluations such as rewards and state reports back to the environment.
+`Results <https://marl-factory-grid.readthedocs.io/en/latest/code/marl_factory_grid.utils.results.html>`_
+provide a way to return `rule` evaluations such as rewards and state reports back to the environment.
 
-.. _Results: marl_factory_grid/utils/results.py
 
 Modifying Assets
 ----------------
