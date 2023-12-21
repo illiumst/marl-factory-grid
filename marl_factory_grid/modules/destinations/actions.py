@@ -10,7 +10,7 @@ class DestAction(Action):
 
     def __init__(self):
         """
-        Attempts to wait at destination.
+        The agent performing this action attempts to wait at the destination in order to receive a reward.
         """
         super().__init__(d.DESTINATION, d.REWARD_WAIT_VALID, d.REWARD_WAIT_FAIL)
 

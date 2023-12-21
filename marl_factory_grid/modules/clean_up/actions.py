@@ -12,7 +12,7 @@ class Clean(Action):
 
     def __init__(self):
         """
-        Attempts to reduce dirt amount on entity's position.
+        Attempts to reduce dirt amount on entity's position. Fails if no dirt is found at the at agents' position.
         """
         super().__init__(d.CLEAN_UP, d.REWARD_CLEAN_UP_VALID, d.REWARD_CLEAN_UP_FAIL)
 
