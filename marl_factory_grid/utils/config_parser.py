@@ -23,7 +23,6 @@ class FactoryConfigParser(object):
         """
          This class parses the factory env config file.
 
-
         :param config_path: Path to where the 'config.yml' is.
         :param custom_modules_path: Additional search path for custom modules, levels, entities, etc..
         """
@@ -44,7 +43,6 @@ class FactoryConfigParser(object):
         if self._n_abbr_dict is None:
             self._n_abbr_dict = defaultdict(lambda: 'th', {1: 'st', 2: 'nd', 3: 'rd'})
         return self._n_abbr_dict[n]
-
 
     @property
     def agent_actions(self):
@@ -176,7 +174,7 @@ class FactoryConfigParser(object):
                             ['Actions', 'Observations', 'Positions', 'Clones']}
             parsed_agents_conf[name] = dict(
                 actions=parsed_actions, observations=observations, positions=positions, other=other_kwargs
-                                            )
+            )
 
             clones = self.agents[name].get('Clones', 0)
             if clones:
