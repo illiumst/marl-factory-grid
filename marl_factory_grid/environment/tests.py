@@ -17,7 +17,8 @@ class Test(unittest.TestCase):
 
     def __init__(self):
         """
-        Base test class for unit tests.
+        Base test class for unit tests that provides base functions to be overwritten that are automatically called by
+        the StepTests class.
         """
         super().__init__()
 
@@ -56,7 +57,7 @@ class MaintainerTest(Test):
     def tick_step(self, state) -> List[TickResult]:
         for maintainer in state.entities[M.MAINTAINERS]:
 
-            # has valid actionresult
+            # has valid action result
             self.assertIsInstance(maintainer.state, ActionResult)
             # self.assertEqual(maintainer.state.validity, True)
             # print(f"state validity {maintainer.state.validity}")

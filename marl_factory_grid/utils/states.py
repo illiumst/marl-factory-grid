@@ -309,6 +309,9 @@ class Gamestate(object):
 
 class StepTests:
     def __init__(self, *args):
+        """
+        The StepTests class is responsible for calling all tests and their respective hooks at the right time.
+        """
         if args:
             self.tests = list(args)
         else:
@@ -326,6 +329,12 @@ class StepTests:
         return True
 
     def do_all_init(self, state, lvl_map) -> bool:
+        """
+        Iterate all **Tests** that override the *on_check_done* hook.
+
+        :return: valid
+        :rtype: bool
+        """
         for test in self.tests:
             if test_init_printline := test.on_init(state, lvl_map):
                 state.print(test_init_printline)
@@ -335,11 +344,7 @@ class StepTests:
         """
         Iterate all **Tests** that override the *tick_step* hook.
 
-        :return:    List of Results
-        """        """
-        Iterate all **Tests** that override the *on_check_done* hook.
-
-        :return:    List of Results
+        :return: List of Results
         """
         test_results = list()
         for test in self.tests:
@@ -351,7 +356,7 @@ class StepTests:
         """
         Iterate all **Tests** that override the *pre_step* hook.
 
-        :return:    List of Results
+        :return: List of Results
         """
         test_results = list()
         for test in self.tests:
@@ -363,7 +368,7 @@ class StepTests:
         """
         Iterate all **Tests** that override the *post_step* hook.
 
-        :return:    List of Results
+        :return: List of Results
         """
         test_results = list()
         for test in self.tests:
@@ -375,7 +380,7 @@ class StepTests:
         """
         Iterate all **Tests** that override the *on_check_done* hook.
 
-        :return:    List of Results
+        :return: List of Results
         """
         test_results = list()
         for test in self.tests:
