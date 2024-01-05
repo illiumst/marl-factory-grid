@@ -13,30 +13,28 @@ class Entity(Object, abc.ABC):
     @property
     def state(self):
         """
-        TODO
-
-
-        :return:
+        Get the current status of the entity. Not to be confused with the Gamestate.
+        :return: status
         """
         return self._status or State(entity=self, identifier=c.NOOP, validity=c.VALID)
 
     @property
     def var_has_position(self):
         """
-        TODO
+        Check if the entity has a position.
 
-
-        :return:
+        :return: True if the entity has a position, False otherwise.
+        :rtype: bool
         """
         return self.pos != c.VALUE_NO_POS
 
     @property
     def var_is_blocking_light(self):
         """
-        TODO
+        Check if the entity is blocking light.
 
-
-        :return:
+        :return: True if the entity is blocking light, False otherwise.
+        :rtype: bool
         """
         try:
             return self._collection.var_is_blocking_light or False
@@ -46,10 +44,10 @@ class Entity(Object, abc.ABC):
     @property
     def var_can_move(self):
         """
-        TODO
+        Check if the entity can move.
 
-
-        :return:
+        :return: True if the entity can move, False otherwise.
+        :rtype: bool
         """
         try:
             return self._collection.var_can_move or False
@@ -59,10 +57,10 @@ class Entity(Object, abc.ABC):
     @property
     def var_is_blocking_pos(self):
         """
-        TODO
+        Check if the entity is blocking a position when standing on it.
 
-
-        :return:
+        :return: True if the entity is blocking a position, False otherwise.
+        :rtype: bool
         """
         try:
             return self._collection.var_is_blocking_pos or False
@@ -72,10 +70,10 @@ class Entity(Object, abc.ABC):
     @property
     def var_can_collide(self):
         """
-        TODO
+        Check if the entity can collide.
 
-
-        :return:
+        :return: True if the entity can collide, False otherwise.
+        :rtype: bool
         """
         try:
             return self._collection.var_can_collide or False
@@ -85,39 +83,40 @@ class Entity(Object, abc.ABC):
     @property
     def x(self):
         """
-        TODO
+        Get the x-coordinate of the entity's position.
 
-
-        :return:
+        :return: The x-coordinate of the entity's position.
+        :rtype: int
         """
         return self.pos[0]
 
     @property
     def y(self):
         """
-        TODO
+        Get the y-coordinate of the entity's position.
 
-
-        :return:
+        :return: The y-coordinate of the entity's position.
+        :rtype: int
         """
         return self.pos[1]
 
     @property
     def pos(self):
         """
-        TODO
+        Get the current position of the entity.
 
-
-        :return:
+        :return: The current position of the entity.
+        :rtype: tuple
         """
         return self._pos
 
     def set_pos(self, pos) -> bool:
         """
-        TODO
+        Set the position of the entity.
 
-
-        :return:
+        :param pos: The new position.
+        :type pos: tuple
+        :return: True if setting the position is successful, False otherwise.
         """
         assert isinstance(pos, tuple) and len(pos) == 2
         self._pos = pos
@@ -126,10 +125,10 @@ class Entity(Object, abc.ABC):
     @property
     def last_pos(self):
         """
-        TODO
+        Get the last position of the entity.
 
-
-        :return:
+        :return: The last position of the entity.
+        :rtype: tuple
         """
         try:
             return self._last_pos
@@ -141,22 +140,49 @@ class Entity(Object, abc.ABC):
     @property
     def direction_of_view(self):
         """
-        TODO
+        Get the current direction of view of the entity.
 
-
-        :return:
+        :return: The current direction of view of the entity.
+        :rtype: int
         """
         if self._last_pos != c.VALUE_NO_POS:
             return 0, 0
         else:
             return np.subtract(self._last_pos, self.pos)
 
+    def __init__(self, pos, bind_to=None, **kwargs):
+        """
+        Abstract base class representing entities in the environment grid.
+
+        :param pos: The initial position of the entity.
+        :type pos: tuple
+        :param bind_to: Entity to which this entity is bound (Default: None)
+        :type bind_to: Entity or None
+        """
+        super().__init__(**kwargs)
+        self._view_directory = c.VALUE_NO_POS
+        self._status = None
+        self._pos = pos
+        self._last_pos = pos
+        self._collection = None
+        if bind_to:
+            try:
+                self.bind_to(bind_to)
+            except AttributeError:
+                print(f'Objects of class "{self.__class__.__name__}" can not be bound to other entities.')
+                exit()
+
     def move(self, next_pos, state):
         """
-        TODO
+        Move the entity to a new position.
 
+        :param next_pos: The next position to move the entity to.
+        :type next_pos: tuple
+        :param state: The current state of the environment.
+        :type state: marl_factory_grid.environment.state.Gamestate
 
-        :return:
+        :return: True if the move is valid, False otherwise.
+        :rtype: bool
         """
         next_pos = next_pos
         curr_pos = self._pos
@@ -172,43 +198,22 @@ class Entity(Object, abc.ABC):
         # Bad naming... Was the same was the same pos, not moving....
         return not_same_pos
 
-    def __init__(self, pos, bind_to=None, **kwargs):
-        """
-        Full Env Entity that lives on the environment Grid. Doors, Items, DirtPile etc...
-        TODO
-
-
-        :return:
-        """
-        super().__init__(**kwargs)
-        self._view_directory = c.VALUE_NO_POS
-        self._status = None
-        self._pos = pos
-        self._last_pos = pos
-        self._collection = None
-        if bind_to:
-            try:
-                self.bind_to(bind_to)
-            except AttributeError:
-                print(f'Objects of class "{self.__class__.__name__}" can not be bound to other entities.')
-                exit()
-
     def summarize_state(self) -> dict:
         """
-        TODO
+        Summarize the current state of the entity.
 
-
-        :return:
+        :return: A dictionary containing the name, x-coordinate, y-coordinate, and can_collide property of the entity.
+        :rtype: dict
         """
         return dict(name=str(self.name), x=int(self.x), y=int(self.y), can_collide=bool(self.var_can_collide))
 
     @abc.abstractmethod
     def render(self):
         """
-        TODO
+        Abstract method to render the entity.
 
-
-        :return:
+        :return: A rendering entity representing the entity's appearance in the environment.
+        :rtype: marl_factory_grid.utils.utility_classes.RenderEntity
         """
         return RenderEntity(self.__class__.__name__.lower(), self.pos)
 
@@ -223,19 +228,22 @@ class Entity(Object, abc.ABC):
     @property
     def encoding(self):
         """
-        TODO
+        Get the encoded representation of the entity.
 
-
-        :return:
+        :return: The encoded representation.
+        :rtype: int
         """
         return c.VALUE_OCCUPIED_CELL
 
     def change_parent_collection(self, other_collection):
         """
-        TODO
+        Change the parent collection of the entity.
 
+        :param other_collection: The new parent collection.
+        :type other_collection: marl_factory_grid.environment.collections.Collection
 
-        :return:
+        :return: True if the change is successful, False otherwise.
+        :rtype: bool
         """
         other_collection.add_item(self)
         self._collection.delete_env_object(self)
@@ -245,9 +253,9 @@ class Entity(Object, abc.ABC):
     @property
     def collection(self):
         """
-        TODO
+        Get the parent collection of the entity.
 
-
-        :return:
+        :return: The parent collection.
+        :rtype: marl_factory_grid.environment.collections.Collection
         """
         return self._collection
