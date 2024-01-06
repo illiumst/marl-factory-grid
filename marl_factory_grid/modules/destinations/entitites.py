@@ -38,7 +38,11 @@ class Destination(Entity):
 
     def has_just_been_reached(self, state):
         """
-        Checks if the destination has just been reached based on the current state.
+        Checks if the destination has been reached in the last environment step.
+
+        :return: the agent that has just reached the destination or whether any agent in the environment has
+                performed actions equal to or exceeding the specified limit
+        :rtype: Union[Agent, bool]
         """
         if self.was_reached():
             return False

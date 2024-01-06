@@ -10,7 +10,8 @@ class DoorUse(Action):
 
     def __init__(self, **kwargs):
         """
-        Attempts to interact with door (open/close it) and returns an action result if successful.
+        The agent performing this action attempts to interact with door (open/close it), returning an action result if
+        successful.
         """
         super().__init__(d.ACTION_DOOR_USE, d.REWARD_USE_DOOR_VALID, d.REWARD_USE_DOOR_FAIL, **kwargs)
 

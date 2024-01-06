@@ -6,6 +6,7 @@
    installation
    usage
    modifications
+   creating a new scenario
    source
 
 .. note::
