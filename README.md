@@ -1,6 +1,6 @@
 # About EDYS
 
-### Tackling emergent dysfunctions (EDYs) in cooperation with Fraunhofer-IKS. 
+## Tackling emergent dysfunctions (EDYs) in cooperation with Fraunhofer-IKS. 
 
 Collaborating with Fraunhofer-IKS, this project is dedicated to investigating Emergent Dysfunctions (EDYs)
 within multi-agent environments.
@@ -40,7 +40,7 @@ Refer to [quickstart](_quickstart) for specific scenarios.
 ## Usage
 
 The majority of environment objects, including entities, rules, and assets, can be loaded automatically. 
-Simply specify the requirements of your environment in a [*yaml*-configfile](marl_factory_grid/configs/default_config.yaml).
+Simply specify the requirements of your environment in a [*yaml*-config file](marl_factory_grid/configs/default_config.yaml).
 
 If you only plan on using the environment without making any modifications, use ``quickstart_use``.
 This creates a default config-file and another one that lists all possible options of the environment.
