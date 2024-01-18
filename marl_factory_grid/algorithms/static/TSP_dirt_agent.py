@@ -11,10 +11,11 @@ class TSPDirtAgent(TSPBaseAgent):
         super(TSPDirtAgent, self).__init__(*args, **kwargs)
 
     def predict(self, *_, **__):
-        if self._env.state[di.DIRT].by_pos(self.state.pos) is not None:
+        dirt_at_position = self._env.state[di.DIRT].by_pos(self.state.pos)
+        if dirt_at_position:
             # Translate the action_object to an integer to have the same output as any other model
             action = di.CLEAN_UP
-        elif door := self._door_is_close(self._env):
+        elif door := self._door_is_close(self._env.state):
             action = self._use_door_or_move(door, di.DIRT)
         else:
             action = self._predict_move(di.DIRT)

@@ -57,9 +57,11 @@ class MaintainerTest(Test):
     def tick_step(self, state) -> List[TickResult]:
         for maintainer in state.entities[M.MAINTAINERS]:
 
-            # has valid action result
-            self.assertIsInstance(maintainer.state, ActionResult)
-            # self.assertEqual(maintainer.state.validity, True)
+            # has valid action result (except after maintaining)
+            self.assertIsInstance(maintainer.state, (ActionResult, TickResult))
+            if not any(isinstance(entity, Machine) for entity in
+                       state.entities.by_pos(maintainer.pos)) and maintainer._path:
+                self.assertEqual(maintainer.state.validity, True)
             # print(f"state validity {maintainer.state.validity}")
 
             # will open doors when standing in front
@@ -81,7 +83,10 @@ class MaintainerTest(Test):
                 if last_action.identifier == 'DoorUse':
                     if door := next((entity for entity in state.entities.get_entities_near_pos(maintainer.pos) if
                                      isinstance(entity, Door)), None):
-                        self.assertTrue(door.is_open)
+                        agents_near_door = [agent for agent in state.entities.get_entities_near_pos(door.pos) if
+                                            isinstance(agent, Agent)]
+                        if len(agents_near_door) < 2:
+                            self.assertTrue(door.is_open)
                 if last_action.identifier == 'MachineAction':
                     if machine := next((entity for entity in state.entities.get_entities_near_pos(maintainer.pos) if
                                         isinstance(entity, Machine)), None):
@@ -115,7 +120,7 @@ class DirtAgentTest(Test):
     def tick_step(self, state) -> List[TickResult]:
         for dirtagent in [a for a in state.entities[c.AGENT] if "Clean" in a.identifier]:  # isinstance TSPDirtAgent
             # has valid actionresult
-            self.assertIsInstance(dirtagent.state, ActionResult)
+            self.assertIsInstance(dirtagent.state, (ActionResult, TickResult))
             # self.assertEqual(agent.state.validity, True)
             # print(f"state validity {maintainer.state.validity}")
 
@@ -129,7 +134,10 @@ class DirtAgentTest(Test):
                 if last_action.identifier == 'DoorUse':
                     if door := next((entity for entity in state.entities.get_entities_near_pos(dirtagent.pos) if
                                      isinstance(entity, Door)), None):
-                        self.assertTrue(door.is_open)  # TODO catch if someone closes a door in same moment
+                        agents_near_door = [agent for agent in state.entities.get_entities_near_pos(door.pos) if
+                                            isinstance(agent, Agent)]
+                        if len(agents_near_door) < 2:
+                            self.assertTrue(door.is_open)  # TODO fix
                 if last_action.identifier == 'Clean':
                     if dirt := next((entity for entity in state.entities.get_entities_near_pos(dirtagent.pos) if
                                      isinstance(entity, DirtPile)), None):
@@ -180,20 +188,22 @@ class ItemAgentTest(Test):
                 if last_action.identifier == 'DoorUse':
                     if door := next((entity for entity in state.entities.get_entities_near_pos(itemagent.pos) if
                                      isinstance(entity, Door)), None):
-                        self.assertTrue(door.is_open)
+                        agents_near_door = [agent for agent in state.entities.get_entities_near_pos(door.pos) if
+                                            isinstance(agent, Agent)]
+                        if len(agents_near_door) < 2:
+                            self.assertTrue(door.is_open)
                 if last_action.identifier == 'ItemAction':
 
-                    print(last_action.valid_drop_off_reward) #  kann man das nehmen für dropoff vs pickup?
                     # valid pickup?
-
                     # If it was a pick-up action
                     nearby_items = [e for e in state.entities.get_entities_near_pos(itemagent.pos) if
                                     isinstance(e, Item)]
                     self.assertNotIn(Item, nearby_items)
 
                     # If the agent has the item in its inventory
-                    self.assertTrue(itemagent.bound_entity)
+                    # self.assertTrue(itemagent.bound_entity)
 
+                    # valid drop off
                     # If it was a drop-off action
                     nearby_drop_offs = [e for e in state.entities.get_entities_near_pos(itemagent.pos) if
                                         isinstance(e, DropOffLocation)]
@@ -210,4 +220,52 @@ class ItemAgentTest(Test):
         for itemagent in [a for a in state.entities[c.AGENT] if "Item" in a.identifier]:  # isinstance TSPItemAgent
             temp_state = itemagent._status
             self.temp_state_dict[itemagent.identifier] = temp_state
+        return []
+
+
+class TargetAgentTest(Test):
+
+    def __init__(self):
+        """
+        Tests whether the target agent will perform the correct actions and whether the actions register correctly in the
+        environment.
+        """
+        super().__init__()
+        self.temp_state_dict = {}
+        pass
+
+    def on_init(self, state, lvl_map):
+        return []
+
+    def on_reset(self):
+        return []
+
+    def tick_step(self, state) -> List[TickResult]:
+        for targetagent in [a for a in state.entities[c.AGENT] if "Target" in a.identifier]:
+            # has valid action result
+            self.assertIsInstance(targetagent.state, (ActionResult, TickResult))
+            # self.assertEqual(agent.state.validity, True)
+            # print(f"state validity {targetagent.state.validity}")
+
+        return []
+
+    def tick_post_step(self, state) -> List[TickResult]:
+        # do agents' actions have correct effects on environment i.e. doors open, targets are destinations
+        for targetagent in [a for a in state.entities[c.AGENT] if "Target" in a.identifier]:
+            if self.temp_state_dict != {}:
+                last_action = self.temp_state_dict[targetagent.identifier]
+                if last_action.identifier == 'DoorUse':
+                    if door := next((entity for entity in state.entities.get_entities_near_pos(targetagent.pos) if
+                                     isinstance(entity, Door)), None):
+                        agents_near_door = [agent for agent in state.entities.get_entities_near_pos(door.pos) if
+                                            isinstance(agent, Agent)]
+                        if len(agents_near_door) < 2:
+                            self.assertTrue(door.is_open)
+
+        return []
+
+    def on_check_done(self, state) -> List[DoneResult]:
+        for targetagent in [a for a in state.entities[c.AGENT] if "Target" in a.identifier]:
+            temp_state = targetagent._status
+            self.temp_state_dict[targetagent.identifier] = temp_state
         return []

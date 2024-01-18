@@ -18,13 +18,15 @@ class TSPItemAgent(TSPBaseAgent):
         self.mode = mode
 
     def predict(self, *_, **__):
-        if self._env.state[i.ITEM].by_pos(self.state.pos) is not None:
+        item_at_position = self._env.state[i.ITEM].by_pos(self.state.pos)
+        dropoff_at_position = self._env.state[i.DROP_OFF].by_pos(self.state.pos)
+        if item_at_position:
             # Translate the action_object to an integer to have the same output as any other model
             action = i.ITEM_ACTION
-        elif self._env.state[i.DROP_OFF].by_pos(self.state.pos) is not None:
+        elif dropoff_at_position:
             # Translate the action_object to an integer to have the same output as any other model
             action = i.ITEM_ACTION
-        elif door := self._door_is_close(self._env):
+        elif door := self._door_is_close(self._env.state):
             action = self._use_door_or_move(door, i.DROP_OFF if self.mode == MODE_BRING else i.ITEM)
         else:
             action = self._choose()

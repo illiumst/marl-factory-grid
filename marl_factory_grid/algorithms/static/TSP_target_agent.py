@@ -20,7 +20,7 @@ class TSPTargetAgent(TSPBaseAgent):
             return None
 
     def predict(self, *_, **__):
-        if door := self._door_is_close(self._env):
+        if door := self._door_is_close(self._env.state):
             action = self._use_door_or_move(door, d.DESTINATION)
         else:
             action = self._predict_move(d.DESTINATION)

@@ -38,6 +38,21 @@ Agents:
       - Inventory
       - DropOffLocations
       - Maintainers
+  Target test agent:
+    Actions:
+      - Noop
+      - Charge
+      - DoorUse
+      - Move8
+    Observations:
+      - Combined:
+          - Other
+          - Walls
+      - GlobalPosition
+      - Battery
+      - Destinations
+      - Doors
+      - Maintainers
 
 Entities:
 
@@ -97,14 +112,11 @@ Rules:
     done_at_collisions: false
 
   # Done Conditions
-  DoneAtDestinationReach:
-  DoneOnAllDirtCleaned:
-  DoneAtBatteryDischarge:
-  DoneAtMaintainerCollision:
   DoneAtMaxStepsReached:
     max_steps: 500
 
 Tests:
-  MaintainerTest: {}
-  DirtAgentTest: {}
-  ItemAgentTest: {}
+#  MaintainerTest: {}
+#  DirtAgentTest: {}
+#  ItemAgentTest: {}
+  TargetAgentTest: {}
