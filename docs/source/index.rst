@@ -7,6 +7,7 @@
    usage
    modifications
    creating a new scenario
+   testing
    source
 
 .. note::
