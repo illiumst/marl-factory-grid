@@ -1,0 +1,3 @@
+In EDYS, tests are seamlessly integrated through environment hooks, mirroring the organization of rules, as explained in the README.md file.
+To include specific tests in your run, simply append them to the "tests" section within the configuration file.
+If you want to write new tests, refer to the tests.py file for examples.  There are no additional steps required, except for the straightforward inclusion of your custom tests in the configuration.
