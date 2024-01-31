@@ -17,6 +17,9 @@ class EnvMonitor(Wrapper):
     ext = 'png'
 
     def __init__(self, env, filepath: Union[str, PathLike] = None):
+        """
+        EnvMonitor is a wrapper for Gymnasium environments that monitors and logs key information during interactions.
+        """
         super(EnvMonitor, self).__init__(env)
         self._filepath = filepath
         self._monitor_df = pd.DataFrame()
@@ -52,6 +55,14 @@ class EnvMonitor(Wrapper):
         return
 
     def save_monitor(self, filepath: Union[Path, str, None] = None, auto_plotting_keys=None):
+        """
+        Saves the monitoring data to a file and optionally generates plots.
+
+        :param filepath: The path to save the monitoring data file.
+        :type filepath: Union[Path, str, None]
+        :param auto_plotting_keys: Keys to use for automatic plot generation.
+        :type auto_plotting_keys: Any
+        """
         filepath = Path(filepath or self._filepath)
         filepath.parent.mkdir(exist_ok=True, parents=True)
         with filepath.open('wb') as f:
