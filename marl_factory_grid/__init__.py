@@ -1,5 +1,5 @@
 from .quickstart import init
-from environment.factory import Factory
+from marl_factory_grid.environment.factory import Factory
 """
 Main module of the 'marl-factory-grid'-environment.
 Configure the :class:.Factory with any 'conf.yaml' file.
