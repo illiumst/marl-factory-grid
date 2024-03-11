@@ -15,7 +15,7 @@ OBSERVATIONS = 'Observations'
 RULES = 'Rule'
 TESTS = 'Tests'
 EXCLUDED = ['identifier', 'args', 'kwargs', 'Move', 'Agent', 'GlobalPositions', 'Walls', 'Gamestate', 'Path',
-            'Iterable', 'Move', 'Result', 'TemplateRule', 'Entities', 'EnvObjects', 'Zones', 'Collection',
+            'Iterable', 'Move', 'Result', 'TemplateRule', 'Entities', 'EnvObjects', 'Collection',
             'State', 'Object', 'default_valid_reward', 'default_fail_reward', 'size']
 
 
