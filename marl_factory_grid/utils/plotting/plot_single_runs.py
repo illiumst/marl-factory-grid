@@ -10,14 +10,20 @@ from marl_factory_grid.utils.plotting.plotting_utils import prepare_plot
 
 
 def plot_single_run(run_path: Union[str, PathLike], use_tex: bool = False, column_keys=None,
-                    file_key: str ='monitor', file_ext: str ='pkl'):
+                    file_key: str = 'monitor', file_ext: str = 'pkl'):
     """
+    Plots the Epoch score (step reward)  over a single run based on monitoring data stored in a file.
 
-    Todo
-
-    :param filepath:
-    :param ext:
-    :return:
+    :param run_path: The path to the directory containing monitoring data or directly to the monitoring file.
+    :type run_path: Union[str, PathLike]
+    :param use_tex: Flag indicating whether to use TeX for plotting.
+    :type use_tex: bool, optional
+    :param column_keys: Specific columns to include in the plot. If None, includes all columns except ignored ones.
+    :type column_keys: list or None, optional
+    :param file_key: The keyword to identify the monitoring file.
+    :type file_key: str, optional
+    :param file_ext: The extension of the monitoring file.
+    :type file_ext: str, optional
     """
     run_path = Path(run_path)
     df_list = list()
@@ -34,7 +40,7 @@ def plot_single_run(run_path: Union[str, PathLike], use_tex: bool = False, colum
         monitor_df = monitor_df.fillna(0)
         df_list.append(monitor_df)
 
-    df = pd.concat(df_list,  ignore_index=True)
+    df = pd.concat(df_list, ignore_index=True)
     df = df.fillna(0).rename(columns={'episode': 'Episode'}).sort_values(['Episode'])
     if column_keys is not None:
         columns = [col for col in column_keys if col in df.columns]
