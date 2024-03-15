@@ -20,6 +20,12 @@ class FactoryConfigParser(object):
     default_observations = [c.WALLS, c.AGENT]
 
     def __init__(self, config_path, custom_modules_path: Union[PathLike] = None):
+        """
+         This class parses the factory env config file.
+
+        :param config_path: Path to where the 'config.yml' is.
+        :param custom_modules_path: Additional search path for custom modules, levels, entities, etc..
+        """
         self.config_path = Path(config_path)
         self.custom_modules_path = Path(custom_modules_path) if custom_modules_path is not None else custom_modules_path
         self.config = yaml.safe_load(self.config_path.open())
@@ -37,7 +43,6 @@ class FactoryConfigParser(object):
         if self._n_abbr_dict is None:
             self._n_abbr_dict = defaultdict(lambda: 'th', {1: 'st', 2: 'nd', 3: 'rd'})
         return self._n_abbr_dict[n]
-
 
     @property
     def agent_actions(self):
@@ -182,7 +187,7 @@ class FactoryConfigParser(object):
                             ['Actions', 'Observations', 'Positions', 'Clones']}
             parsed_agents_conf[name] = dict(
                 actions=parsed_actions, observations=observations, positions=positions, other=other_kwargs
-                                            )
+            )
 
             clones = self.agents[name].get('Clones', 0)
             if clones:

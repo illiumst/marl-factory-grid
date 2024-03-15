@@ -14,6 +14,12 @@ MODE_BRING      = 'Mode_Bring'
 class TSPItemAgent(TSPBaseAgent):
 
     def __init__(self, *args, mode=MODE_GET, **kwargs):
+        """
+        Initializes a TSPItemAgent that colects items in the environment, stores them in his inventory and drops them off
+        at a drop-off location.
+
+        :param mode: Mode of the agent, either MODE_GET or MODE_BRING.
+        """
         super(TSPItemAgent, self).__init__(*args, **kwargs)
         self.mode = mode
 
@@ -46,6 +52,12 @@ class TSPItemAgent(TSPBaseAgent):
         return action_obj
 
     def _choose(self):
+        """
+        Internal Usage. Chooses the action based on the agent's mode and the environment state.
+
+        :return: Chosen action.
+        :rtype: int
+        """
         target = i.DROP_OFF if self.mode == MODE_BRING else i.ITEM
         if len(self._env.state[i.ITEM]) >= 1:
             action = self._predict_move(target)

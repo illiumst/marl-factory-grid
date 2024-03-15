@@ -11,7 +11,8 @@ class MachineAction(Action):
 
     def __init__(self):
         """
-        Attempts to maintain the machine and returns an action result if successful.
+        When performing this action, the maintainer attempts to maintain the machine at his current position, returning
+        an action result if successful.
         """
         super().__init__(m.MACHINE_ACTION, m.MAINTAIN_VALID, m.MAINTAIN_FAIL)
 

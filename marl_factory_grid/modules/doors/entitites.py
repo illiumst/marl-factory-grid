@@ -19,7 +19,7 @@ class DoorIndicator(Entity):
 
     def __init__(self, *args, **kwargs):
         """
-        Is added around a door for agents to see.
+        Is added as a padding around doors so agents can see doors earlier.
         """
         super().__init__(*args, **kwargs)
         self.__delattr__('move')

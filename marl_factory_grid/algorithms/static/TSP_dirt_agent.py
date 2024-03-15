@@ -8,9 +8,18 @@ future_planning = 7
 class TSPDirtAgent(TSPBaseAgent):
 
     def __init__(self, *args, **kwargs):
+        """
+        Initializes a TSPDirtAgent that aims to clean dirt in the environment.
+        """
         super(TSPDirtAgent, self).__init__(*args, **kwargs)
 
     def predict(self, *_, **__):
+        """
+        Predicts the next action based on the presence of dirt in the environment.
+
+        :return: Predicted action.
+        :rtype: int
+        """
         if self._env.state[di.DIRT].by_pos(self.state.pos) is not None:
             # Translate the action_object to an integer to have the same output as any other model
             action = di.CLEAN_UP

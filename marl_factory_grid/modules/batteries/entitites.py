@@ -31,7 +31,7 @@ class Battery(Object):
 
     def __init__(self, initial_charge_level, owner, *args, **kwargs):
         """
-        Represents a battery entity in the environment that can be bound to an agent and charged at chargepods.
+        Represents a battery entity in the environment that can be bound to an agent and charged at charge pods.
 
         :param initial_charge_level: The current charge level of the battery, ranging from 0 to 1.
         :type initial_charge_level: float
@@ -45,7 +45,7 @@ class Battery(Object):
 
     def do_charge_action(self, amount) -> bool:
         """
-        Updates the Battery's charge level accordingly.
+        Updates the Battery's charge level according to the passed value.
 
         :param amount: Amount added to the Battery's charge level.
         :returns: whether the battery could be charged. if not, it was already fully charged.
@@ -59,7 +59,7 @@ class Battery(Object):
 
     def decharge(self, amount) -> bool:
         """
-        Decreases the charge value of a battery. Currently only riggered by the battery-decharge rule.
+        Decreases the charge value of a battery. Currently only triggered by the battery-decharge rule.
         """
         if self.charge_level != 0:
             # noinspection PyTypeChecker
@@ -84,11 +84,11 @@ class ChargePod(Entity):
         """
         Represents a charging pod for batteries in the environment.
 
-        :param charge_rate: The rate at which the charging pod charges batteries. Default is 0.4.
+        :param charge_rate: The rate at which the charging pod charges batteries. Defaults to 0.4.
         :type charge_rate: float
 
         :param multi_charge: Indicates whether the charging pod supports charging multiple batteries simultaneously.
-                        Default is False.
+                        Defaults to False.
         :type multi_charge: bool
         """
         super(ChargePod, self).__init__(*args, **kwargs)
@@ -97,7 +97,8 @@ class ChargePod(Entity):
 
     def charge_battery(self, entity, state) -> bool:
         """
-        Checks whether the battery can be charged. If so, triggers the charge action.
+        Triggers the battery charge action if possible. Impossible if battery at full charge level or more than one
+        agent at charge pods' position.
 
         :returns: whether the action was successful (valid) or not.
         """
