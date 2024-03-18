@@ -86,8 +86,7 @@ class TSPBaseAgent(ABC):
             try:
                 action = next(action for action, pos_diff in MOVEMAP.items() if np.all(diff == pos_diff))
             except StopIteration:
-                print(f'diff: {diff}')
-                print('This Should not happen!')
+                print(f"No valid action found for pos diff: {diff}. Using fallback action.")
                 action = choice(self.state.actions).name
         else:
             action = choice(self.state.actions).name

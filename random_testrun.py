@@ -8,6 +8,9 @@ from marl_factory_grid.utils.logging.envmonitor import EnvMonitor
 from marl_factory_grid.utils.logging.recorder import EnvRecorder
 from marl_factory_grid.utils.plotting.plot_single_runs import plot_single_run
 from marl_factory_grid.utils.tools import ConfigExplainer
+from marl_factory_grid.algorithms.static.TSP_dirt_agent import TSPDirtAgent
+from marl_factory_grid.algorithms.static.TSP_item_agent import TSPItemAgent
+from marl_factory_grid.algorithms.static.TSP_target_agent import TSPTargetAgent
 
 
 if __name__ == '__main__':
@@ -47,6 +50,7 @@ if __name__ == '__main__':
         if render:
             factory.render()
         action_spaces = factory.action_space
+        agents = [TSPDirtAgent(factory, 0), TSPDirtAgent(factory, 1), TSPDirtAgent(factory, 2)]
         while not done:
             a = [randint(0, x.n - 1) for x in action_spaces]
             obs_type, _, reward, done, info = factory.step(a)
