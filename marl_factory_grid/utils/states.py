@@ -15,10 +15,12 @@ from marl_factory_grid.utils.results import Result
 class StepRules:
     def __init__(self, *args):
         """
-        TODO
+        Manages a collection of rules to be applied at each step of the environment.
 
+        The StepRules class allows you to organize and apply custom rules during the simulation, ensuring that the
+        corresponding hooks for all rules are called at the appropriate times.
 
-        :return:
+        :param args: Optional Rule objects to initialize the StepRules with.
         """
         if args:
             self.rules = list(args)
@@ -92,10 +94,18 @@ class Gamestate(object):
 
     def __init__(self, entities, agents_conf, rules: List[Rule], tests: [Test], lvl_shape, env_seed=69, verbose=False):
         """
-        TODO
+        The `Gamestate` class represents the state of the game environment.
 
-
-        :return:
+        :param lvl_shape: The shape of the game level.
+        :type lvl_shape: tuple
+        :param entities: The entities present in the environment.
+        :type entities: Entities
+        :param agents_conf: Agent configurations for the environment.
+        :type agents_conf: Any
+        :param verbose: Controls verbosity in the environment.
+        :type verbose: bool
+        :param rules: Organizes and applies custom rules during the simulation.
+        :type rules: StepRules
         """
         self.lvl_shape = lvl_shape
         self.entities = entities
@@ -162,7 +172,7 @@ class Gamestate(object):
 
     def tick(self, actions) -> list[Result]:
         """
-        Performs a single **Gamestate Tick**by calling the inner rule hooks in sequential order.
+        Performs a single **Gamestate Tick** by calling the inner rule hooks in sequential order.
         - tick_pre_step_all:    Things to do before the agents do their actions. Statechange, Moving, Spawning etc...
         - agent tick:           Agents do their actions.
         - tick_step_all:        Things to do after the agents did their actions. Statechange, Moving, Spawning etc...

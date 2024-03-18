@@ -12,17 +12,15 @@ class Object:
     @property
     def bound_entity(self):
         """
-        TODO
+        Returns the entity to which this object is bound.
 
-
-        :return:
+        :return: The bound entity.
         """
         return self._bound_entity
 
     @property
     def var_can_be_bound(self) -> bool:
         """
-        TODO
         Indicates if it is possible to bind this object to another Entity or Object.
 
         :return: Whether this object can be bound.
@@ -35,30 +33,27 @@ class Object:
     @property
     def observers(self) -> set:
         """
-        TODO
+        Returns the set of observers for this object.
 
-
-        :return:
+        :return: Set of observers.
         """
         return self._observers
 
     @property
     def name(self):
         """
-        TODO
+        Returns a string representation of the object's name.
 
-
-        :return:
+        :return: The name of the object.
         """
         return f'{self.__class__.__name__}[{self.identifier}]'
 
     @property
     def identifier(self):
         """
-        TODO
+        Returns the unique identifier of the object.
 
-
-        :return:
+        :return: The unique identifier.
         """
         if self._str_ident is not None:
             return self._str_ident
@@ -67,23 +62,19 @@ class Object:
 
     def reset_uid(self):
         """
-        TODO
+        Resets the unique identifier counter for this class.
 
-
-        :return:
+        :return: True if the reset was successful.
         """
         self._u_idx = defaultdict(lambda: 0)
         return True
 
     def __init__(self, str_ident: Union[str, None] = None, **kwargs):
         """
-        Generell Objects for Organisation and Maintanance such as Actions etc...
+        General Objects for Organisation and Maintenance such as Actions, etc.
 
-        TODO
-
-        :param str_ident:
-
-        :return:
+        :param str_ident: A string identifier for the object.
+        :return: None
         """
         self._status = None
         self._bound_entity = None
@@ -147,28 +138,28 @@ class Object:
 
     def bind_to(self, entity):
         """
-        TODO
+        Binds the object to a specified entity.
 
-
-        :return:
+        :param entity: The entity to bind to.
+        :return: The validity of the binding.
         """
         self._bound_entity = entity
         return c.VALID
 
     def belongs_to_entity(self, entity):
         """
-        TODO
+        Checks if the object belongs to a specified entity.
 
-
-        :return:
+        :param entity: The entity to check against.
+        :return: True if the object belongs to the entity, False otherwise.
         """
         return self._bound_entity == entity
 
     def unbind(self):
         """
-        TODO
+        Unbinds the object from its current entity.
 
-        :return:
+        :return: The entity that the object was previously bound to.
         """
         previously_bound = self._bound_entity
         self._bound_entity = None

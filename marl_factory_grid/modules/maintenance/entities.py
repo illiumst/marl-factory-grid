@@ -16,8 +16,9 @@ from ..doors import DoorUse
 class Maintainer(Entity):
 
     def __init__(self, objective, action, *args, **kwargs):
-        """
-        Represents the maintainer entity that aims to maintain machines.
+        self.action_ = """
+        Represents the maintainer entity that aims to maintain machines. The maintainer calculates its route using nx 
+        shortest path and restores the health of machines it visits to 100.
         
         :param objective: The maintainer's objective, e.g., "Machines".
         :type objective: str

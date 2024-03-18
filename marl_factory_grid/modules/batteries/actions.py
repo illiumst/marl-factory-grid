@@ -12,7 +12,7 @@ class Charge(Action):
 
     def __init__(self):
         """
-        Checks if a charge pod is present at the entity's position.
+        Checks if a charge pod is present at the agent's position.
         If found, it attempts to charge the battery using the charge pod.
         """
         super().__init__(b.ACTION_CHARGE, b.REWARD_CHARGE_VALID, b.Reward_CHARGE_FAIL)

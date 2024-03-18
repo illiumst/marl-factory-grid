@@ -22,6 +22,12 @@ class FactoryConfigParser(object):
     default_observations = [c.WALLS, c.AGENT]
 
     def __init__(self, config_path, custom_modules_path: Union[PathLike] = None):
+        """
+         This class parses the factory env config file.
+
+        :param config_path: Path to where the 'config.yml' is.
+        :param custom_modules_path: Additional search path for custom modules, levels, entities, etc..
+        """
         self.config_path = Path(config_path)
         self.custom_modules_path = Path(custom_modules_path) if custom_modules_path is not None else custom_modules_path
         self.config = yaml.safe_load(self.config_path.open())
@@ -39,7 +45,6 @@ class FactoryConfigParser(object):
         if self._n_abbr_dict is None:
             self._n_abbr_dict = defaultdict(lambda: 'th', {1: 'st', 2: 'nd', 3: 'rd'})
         return self._n_abbr_dict[n]
-
 
     @property
     def agent_actions(self):
@@ -129,13 +134,25 @@ class FactoryConfigParser(object):
             # Actions
             conf_actions = self.agents[name]['Actions']
             actions = list()
+            # Actions:
+            # Allowed
+            # - Noop
+            # - Move8
+            # ----
+            #  Noop:
+            #  South:
+            #     reward_fail: 0.5
+            # ----
+            # Forbidden
+            # - South:
+            #     reward_fail: 0.5
 
             if isinstance(conf_actions, dict):
                 conf_kwargs = conf_actions.copy()
                 conf_actions = list(conf_actions.keys())
             elif isinstance(conf_actions, list):
                 conf_kwargs = {}
-                if isinstance(conf_actions, dict):
+                if any(isinstance(x, dict) for x in conf_actions):
                     raise ValueError
                 pass
             for action in conf_actions:
@@ -152,11 +169,10 @@ class FactoryConfigParser(object):
                 except AttributeError:
                     class_or_classes = locate_and_import_class(action, self.custom_modules_path)
                 try:
-                    # print(action)
+                    # Handle Lists of Actions (e.g., Move8, Move4, Default)
                     parsed_actions.extend(class_or_classes)
                     # print(parsed_actions)
                     for actions_class in class_or_classes:
-                        # break
                         conf_kwargs[actions_class.__name__] = conf_kwargs.get(action, {})
                 except TypeError:
                     parsed_actions.append(class_or_classes)
@@ -174,7 +190,7 @@ class FactoryConfigParser(object):
                             ['Actions', 'Observations', 'Positions', 'Clones']}
             parsed_agents_conf[name] = dict(
                 actions=parsed_actions, observations=observations, positions=positions, other=other_kwargs
-                                            )
+            )
 
             clones = self.agents[name].get('Clones', 0)
             if clones:

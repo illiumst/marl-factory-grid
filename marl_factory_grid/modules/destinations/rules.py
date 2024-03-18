@@ -12,7 +12,7 @@ from marl_factory_grid.modules.destinations.entitites import Destination
 
 ANY = 'any'
 ALL = 'all'
-SIMULTANEOUS = 'simultanious'
+SIMULTANEOUS = 'simultaneous'
 CONDITIONS = [ALL, ANY, SIMULTANEOUS]
 
 

@@ -62,7 +62,7 @@ class Inventory(IsBoundMixin, Collection):
 
     def __init__(self, agent, *args, **kwargs):
         """
-        An inventory that can hold items picked up by the agent this is bound to.
+        An inventory that can hold items picked up by the agent it is bound to.
 
         :param agent: The agent this inventory is bound to and belongs to.
         :type agent: Agent
@@ -96,7 +96,7 @@ class Inventory(IsBoundMixin, Collection):
 
     def clear_temp_state(self):
         """
-        Entites need this, but inventories have no state.
+        Entities need this, but inventories have no state.
         """
         pass
 
@@ -123,7 +123,7 @@ class Inventories(Objects):
 
     def __init__(self, size: int, *args, **kwargs):
         """
-        TODO
+        A collection of all inventories used to spawn an inventory per agent.
         """
         super(Inventories, self).__init__(*args, **kwargs)
         self.size = size

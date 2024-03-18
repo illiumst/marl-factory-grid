@@ -1,14 +1,16 @@
 General:
   # Your Seed
   env_seed: 69
-  # Individual or global rewards?
+  # Individual vs global rewards
   individual_rewards: true
-  # The level.txt file to load
+  # The level.txt file to load from marl_factory_grid/levels
   level_name: narrow_corridor
   # View Radius; 0 = full observatbility
   pomdp_r: 0
   # print all messages and events
   verbose: true
+  # Run tests
+  tests: false
 
 Agents:
   # Agents are identified by their name 

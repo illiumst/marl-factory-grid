@@ -9,9 +9,20 @@ future_planning = 7
 class TSPTargetAgent(TSPBaseAgent):
 
     def __init__(self, *args, **kwargs):
+        """
+        Initializes a TSPTargetAgent that aims to reach destinations.
+        """
         super(TSPTargetAgent, self).__init__(*args, **kwargs)
 
     def _handle_doors(self, state):
+        """
+        Internal Usage. Handles the doors in the environment.
+
+        :param state: The current environment state.
+        :type state: marl_factory_grid.utils.states.Gamestate
+        :return: Closest door entity or None if no doors are close.
+        :rtype: marl_factory_grid.environment.entity.object.Entity or None
+        """
 
         try:
             return next(y for x in state.entities.neighboring_positions(self.state.pos)

@@ -10,14 +10,14 @@ from marl_factory_grid.environment import constants as c
 
 """
 This file is used for:
-    1. string based definition
-        Use a class like `Constants`, to define attributes, which then reveal strings.
-        These can be used for naming convention along the environments as well as keys for mappings such as dicts etc.
-        When defining new envs, use class inheritance. 
-    
-    2. utility function definition
-        There are static utility functions which are not bound to a specific environment.
-        In this file they are defined to be used across the entire package.
+1. string based definition
+    Use a class like `Constants`, to define attributes, which then reveal strings.
+    These can be used for naming convention along the environments as well as keys for mappings such as dicts etc.
+    When defining new envs, use class inheritance. 
+
+2. utility function definition
+    There are static utility functions which are not bound to a specific environment.
+    In this file they are defined to be used across the entire package.
 """
 
 LEVELS_DIR = 'levels'  # for use in studies and experiments
@@ -54,15 +54,9 @@ class ObservationTranslator:
         A string _identifier based approach is used.
         Currently, it is not possible to mix different obs shapes.
 
-
         :param this_named_observation_space: `Named observation space` of the joined environment.
-        :type  this_named_observation_space: Dict[str, dict]
-
         :param per_agent_named_obs_spaces: `Named observation space` one for each agent. Overloaded.
-        type  per_agent_named_obs_spaces: Dict[str, dict]
-
         :param placeholder_fill_value: Currently, not fully implemented!!!
-        :type  placeholder_fill_value: Union[int, str] = 'N'
         """
 
         if isinstance(placeholder_fill_value, str):

@@ -16,7 +16,10 @@ class LevelParser(object):
     @property
     def pomdp_d(self):
         """
-        Internal Usage
+        Calculates the effective diameter of the POMDP observation space.
+
+        :return: The calculated effective diameter.
+        :rtype: int
         """
         return self.pomdp_r * 2 + 1
 

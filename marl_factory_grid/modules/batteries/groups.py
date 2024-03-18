@@ -19,7 +19,7 @@ class Batteries(Collection):
 
     def __init__(self, size, initial_charge_level=1.0, *args, **kwargs):
         """
-        A collection of batteries that can spawn batteries.
+        A collection of batteries that is in charge of spawning batteries. (spawned batteries are bound to agents)
 
         :param size: The maximum allowed size of the collection. Ensures that the collection does not exceed this size.
         :type size: int

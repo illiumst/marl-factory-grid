@@ -34,12 +34,26 @@ class Renderer:
                  cell_size: int = 40, fps: int = 7, factor: float = 0.9,
                  grid_lines: bool = True, view_radius: int = 2):
         """
-        TODO
+        The Renderer class initializes and manages the rendering environment for the simulation,
+        providing methods for preparing entities for display, loading assets, calculating visibility rectangles and
+        rendering the entities on the screen with specified parameters.
 
-
-        :return:
+        :param lvl_shape: Tuple representing the shape of the level.
+        :type lvl_shape: Tuple[int, int]
+        :param lvl_padded_shape: Optional Tuple representing the padded shape of the level.
+        :type lvl_padded_shape: Union[Tuple[int, int], None]
+        :param cell_size: Size of each cell in pixels.
+        :type cell_size: int
+        :param fps: Frames per second for rendering.
+        :type fps: int
+        :param factor: Factor for resizing assets.
+        :type factor: float
+        :param grid_lines: Boolean indicating whether to display grid lines.
+        :type grid_lines: bool
+        :param view_radius: Radius for agent's field of view.
+        :type view_radius: int
         """
-        # TODO: Customn_assets paths
+        # TODO: Custom_assets paths
         self.grid_h, self.grid_w = lvl_shape
         self.lvl_padded_shape = lvl_padded_shape if lvl_padded_shape is not None else lvl_shape
         self.cell_size = cell_size
@@ -60,6 +74,9 @@ class Renderer:
         print('Loading System font with pygame.font.Font took', time.time() - now)
 
     def fill_bg(self):
+        """
+        Fills the background of the screen with the specified BG color.
+        """
         self.screen.fill(Renderer.BG_COLOR)
         if self.grid_lines:
             w, h = self.screen_size
@@ -69,6 +86,16 @@ class Renderer:
                     pygame.draw.rect(self.screen, Renderer.WHITE, rect, 1)
 
     def blit_params(self, entity):
+        """
+        Prepares parameters for blitting an entity on the screen. Blitting refers to the process of combining or copying
+        rectangular blocks of pixels from one part of a graphical buffer to another and is often used to efficiently
+        update the display by copying pre-drawn or cached images onto the screen.
+
+        :param entity: The entity to be blitted.
+        :type entity: Entity
+        :return: Dictionary containing source and destination information for blitting.
+        :rtype: dict
+        """
         offset_r, offset_c = (self.lvl_padded_shape[0] - self.grid_h) // 2, \
                              (self.lvl_padded_shape[1] - self.grid_w) // 2
 
@@ -90,12 +117,31 @@ class Renderer:
         return dict(source=img, dest=rect)
 
     def load_asset(self, path, factor=1.0):
+        """
+        Loads and resizes an asset from the specified path.
+
+        :param path: Path to the asset.
+        :type path: str
+        :param factor: Resizing factor for the asset.
+        :type factor: float
+        :return: Resized asset.
+        """
         s = int(factor*self.cell_size)
         asset = pygame.image.load(path).convert_alpha()
         asset = pygame.transform.smoothscale(asset, (s, s))
         return asset
 
     def visibility_rects(self, bp, view):
+        """
+        Calculates the visibility rectangles for an agent.
+
+        :param bp: Blit parameters for the agent.
+        :type bp: dict
+        :param view: Agent's field of view.
+        :type view: np.ndarray
+        :return: List of visibility rectangles.
+        :rtype: List[dict]
+        """
         rects = []
         for i, j in product(range(-self.view_radius, self.view_radius+1),
                             range(-self.view_radius, self.view_radius+1)):
@@ -111,6 +157,14 @@ class Renderer:
         return rects
 
     def render(self, entities):
+        """
+        Renders the entities on the screen.
+
+        :param entities: List of entities to be rendered.
+        :type entities: List[Entity]
+        :return: Transposed RGB observation array.
+        :rtype: np.ndarray
+        """
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()

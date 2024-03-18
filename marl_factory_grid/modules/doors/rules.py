@@ -9,7 +9,7 @@ class DoorAutoClose(Rule):
 
     def __init__(self, close_frequency: int = 10):
         """
-        This rule closes doors, that have been opened automatically, when no entity is blocking the position.
+        This rule closes doors that have been opened automatically when no entity is blocking the position.
 
         :type close_frequency: int
         :param close_frequency: How many ticks after opening, should the door close?

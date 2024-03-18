@@ -37,10 +37,10 @@ class Agents(Collection):
     @property
     def action_space(self):
         """
-        TODO
+        The action space defines the set of all possible actions that an agent can take in the environment.
 
-
-        :return:
+        :return: Action space
+        :rtype: gym.Space
         """
         from gymnasium import spaces
         space = spaces.Tuple([spaces.Discrete(len(x.actions)) for x in self])
@@ -49,10 +49,10 @@ class Agents(Collection):
     @property
     def named_action_space(self) -> dict[str, dict[str, list[int]]]:
         """
-        TODO
+        Returns the named action space for agents.
 
-
-        :return:
+        :return: Named action space
+        :rtype: dict[str, dict[str, list[int]]]
         """
         named_space = dict()
         for agent in self:
