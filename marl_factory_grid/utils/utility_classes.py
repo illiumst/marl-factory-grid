@@ -6,7 +6,10 @@ import numpy as np
 
 
 class MarlFrameStack(gym.ObservationWrapper):
-    """todo @romue404"""
+    """
+
+    todo @romue404
+    """
     def __init__(self, env):
         super().__init__(env)
 

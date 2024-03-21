@@ -27,7 +27,7 @@ class Maintainers(Collection):
 
     def __init__(self, *args, **kwargs):
         """
-        A collection of maintainers
+        A collection of maintainers that is used to spawn them.
         """
         super().__init__(*args, **kwargs)
 

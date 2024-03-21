@@ -24,47 +24,48 @@ class Factory(gym.Env):
     @property
     def action_space(self):
         """
-        TODO
+        The action space defines the set of all possible actions that an agent can take in the environment.
 
-
-        :return:
+        :return: Action space
+        :rtype: gym.Space
         """
         return self.state[c.AGENT].action_space
 
     @property
     def named_action_space(self):
         """
-        TODO
+        Returns the named action space for agents.
 
-
-        :return:
+        :return: Named action space
+        :rtype: dict[str, dict[str, list[int]]]
         """
         return self.state[c.AGENT].named_action_space
 
     @property
     def observation_space(self):
         """
-        TODO
+        The observation space represents all the information that an agent can receive from the environment at a given
+        time step.
 
-
-        :return:
+        :return: Observation space.
+        :rtype: gym.Space
         """
         return self.obs_builder.observation_space(self.state)
 
     @property
     def named_observation_space(self):
         """
-        TODO
+        Returns the named observation space for the environment.
 
-
-        :return:
+        :return: Named observation space.
+        :rtype: (dict, dict)
         """
         return self.obs_builder.named_observation_space(self.state)
 
     @property
     def params(self) -> dict:
         """
-        FIXME LAGEGY
+        FIXME LEGACY
 
 
         :return:
@@ -80,10 +81,14 @@ class Factory(gym.Env):
     def __init__(self, config_file: Union[str, PathLike], custom_modules_path: Union[None, PathLike] = None,
                  custom_level_path: Union[None, PathLike] = None):
         """
-        TODO
+        Initializes the marl-factory-grid as Gym environment.
 
-
-        :return:
+        :param config_file: Path to the configuration file.
+        :type config_file: Union[str, PathLike]
+        :param custom_modules_path: Path to custom modules directory. (Default: None)
+        :type custom_modules_path: Union[None, PathLike]
+        :param custom_level_path: Path to custom level file. (Default: None)
+        :type custom_level_path: Union[None, PathLike]
         """
         self._config_file = config_file
         self.conf = FactoryConfigParser(self._config_file, custom_modules_path)
@@ -188,6 +193,16 @@ class Factory(gym.Env):
         return reward, done, info
 
     def step(self, actions):
+        """
+        Run one timestep of the environment's dynamics using the agent actions.
+
+        When the end of an episode is reached (``terminated or truncated``), it is necessary to call :meth:`reset` to
+        reset this environment's state for the next episode.
+
+        :param actions: An action or list of actions provided by the agent(s) to update the environment state.
+        :return: observation, reward, terminated, truncated, info, done
+        :rtype: tuple(list(np.ndarray), float, bool, bool, dict, bool)
+        """
 
         if not isinstance(actions, list):
             actions = [int(actions)]

@@ -7,10 +7,7 @@ class Wall(Entity):
 
     def __init__(self, *args, **kwargs):
         """
-        TODO
-
-
-        :return:
+        A class representing a wall entity in the environment.
         """
         super().__init__(*args, **kwargs)
 

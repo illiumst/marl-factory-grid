@@ -11,6 +11,16 @@ class EnvRecorder(Wrapper):
 
     def __init__(self, env, filepath: Union[str, PathLike] = None,
                  episodes: Union[List[int], None] = None):
+        """
+        EnvRecorder is a wrapper for OpenAI Gym environments that records state summaries during interactions.
+
+        :param env: The environment to record.
+        :type env: gym.Env
+        :param filepath: The path to save the recording data file.
+        :type filepath: Union[str, PathLike]
+        :param episodes: A list of episode numbers to record. If None, records all episodes.
+        :type episodes: Union[List[int], None]
+        """
         super(EnvRecorder, self).__init__(env)
         self.filepath = filepath
         self.episodes = episodes
@@ -19,6 +29,9 @@ class EnvRecorder(Wrapper):
         self._recorder_out_list = list()
 
     def reset(self):
+        """
+        Overrides the reset method to reset the environment and recording lists.
+        """
         self._curr_ep_recorder = list()
         self._recorder_out_list = list()
         self._curr_episode += 1
@@ -26,10 +39,12 @@ class EnvRecorder(Wrapper):
 
     def step(self, actions):
         """
-        Todo
+        Overrides the step method to record state summaries during each step.
 
-        :param actions:
-        :return:
+        :param actions: The actions taken in the environment.
+        :type actions: Any
+        :return: The observation, reward, done flag, and additional information.
+        :rtype: Tuple
         """
         obs_type, obs, reward, done, info = self.env.step(actions)
         if not self.episodes or self._curr_episode in self.episodes:
@@ -55,6 +70,18 @@ class EnvRecorder(Wrapper):
                      save_occupation_map=False,
                      save_trajectory_map=False,
                      ):
+        """
+        Saves the recorded data to a file.
+
+        :param filepath: The path to save the recording data file.
+        :type filepath: Union[Path, str, None]
+        :param only_deltas: If True, saves only the differences between consecutive episodes.
+        :type only_deltas: bool
+        :param save_occupation_map: If True, saves an occupation map as a heatmap.
+        :type save_occupation_map: bool
+        :param save_trajectory_map: If True, saves a trajectory map.
+        :type save_trajectory_map: bool
+        """
         self._finalize()
         filepath = Path(filepath or self.filepath)
         filepath.parent.mkdir(exist_ok=True, parents=True)
@@ -73,7 +100,6 @@ class EnvRecorder(Wrapper):
                     n_dests=0,
                     dwell_time=0,
                     spawn_frequency=0,
-                    spawn_in_other_zone=False,
                     spawn_mode=''
                 )
                 rewards_dest = dict(

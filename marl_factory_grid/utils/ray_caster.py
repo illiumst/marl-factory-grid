@@ -8,10 +8,17 @@ from numba import njit
 class RayCaster:
     def __init__(self, agent, pomdp_r, degs=360):
         """
-        TODO
+        The RayCaster class enables agents in the environment to simulate field-of-view visibility,
+        providing methods for calculating visible entities and outlining the field of view based on
+        Bresenham's algorithm.
 
-
-        :return:
+        :param agent: The agent for which the RayCaster is initialized.
+        :type agent: Agent
+        :param pomdp_r: The range of the partially observable Markov decision process (POMDP).
+        :type pomdp_r: int
+        :param degs: The degrees of the field of view (FOV). Defaults to 360.
+        :type degs: int
+        :return: None
         """
         self.agent = agent
         self.pomdp_r = pomdp_r
@@ -25,6 +32,12 @@ class RayCaster:
         return f'{self.__class__.__name__}({self.agent.name})'
 
     def build_ray_targets(self):
+        """
+        Builds the targets for the rays based on the field of view (FOV).
+
+        :return: The targets for the rays.
+        :rtype: np.ndarray
+        """
         north = np.array([0, -1]) * self.pomdp_r
         thetas = [np.deg2rad(deg) for deg in np.linspace(-self.degs // 2, self.degs // 2, self.n_rays)[::-1]]
         rot_M = [
@@ -36,11 +49,31 @@ class RayCaster:
         return rot_M.astype(int)
 
     def ray_block_cache(self, key, callback):
+        """
+        Retrieves or caches a value in the cache dictionary.
+
+        :param key: The key for the cache dictionary.
+        :type key: any
+        :param callback: The callback function to obtain the value if not present in the cache.
+        :type callback: callable
+        :return: The cached or newly computed value.
+        :rtype: any
+        """
         if key not in self._cache_dict:
             self._cache_dict[key] = callback()
         return self._cache_dict[key]
 
     def visible_entities(self, pos_dict, reset_cache=True):
+        """
+        Returns a list of visible entities based on the agent's field of view.
+
+        :param pos_dict: The dictionary containing positions of entities.
+        :type pos_dict: dict
+        :param reset_cache: Flag to reset the cache. Defaults to True.
+        :type reset_cache: bool
+        :return: A list of visible entities.
+        :rtype: list
+        """
         visible = list()
         if reset_cache:
             self._cache_dict = dict()
@@ -71,15 +104,33 @@ class RayCaster:
         return visible
 
     def get_rays(self):
+        """
+       Gets the rays for the agent.
+
+       :return: The rays for the agent.
+       :rtype: list
+       """
         a_pos = self.agent.pos
         outline = self.ray_targets + a_pos
         return self.bresenham_loop(a_pos, outline)
 
     # todo do this once and cache the points!
     def get_fov_outline(self) -> np.ndarray:
+        """
+        Gets the field of view (FOV) outline.
+
+        :return: The FOV outline.
+        :rtype: np.ndarray
+        """
         return self.ray_targets + self.agent.pos
 
     def get_square_outline(self):
+        """
+        Gets the square outline for the agent.
+
+        :return: The square outline.
+        :rtype: list
+        """
         agent = self.agent
         x_coords = range(agent.x - self.pomdp_r, agent.x + self.pomdp_r + 1)
         y_coords = range(agent.y - self.pomdp_r, agent.y + self.pomdp_r + 1)
@@ -90,6 +141,16 @@ class RayCaster:
     @staticmethod
     @njit
     def bresenham_loop(a_pos, points):
+        """
+        Applies Bresenham's algorithm to calculate the points between two positions.
+
+        :param a_pos: The starting position.
+        :type a_pos: list
+        :param points: The ending positions.
+        :type points: list
+        :return: The list of points between the starting and ending positions.
+        :rtype: list
+        """
         results = []
         for end in points:
             x1, y1 = a_pos

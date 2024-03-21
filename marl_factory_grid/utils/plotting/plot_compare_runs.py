@@ -13,6 +13,16 @@ MODEL_MAP = None
 
 
 def compare_seed_runs(run_path: Union[str, PathLike], use_tex: bool = False):
+    """
+
+    Compare multiple runs with different seeds by generating a line plot that shows the evolution of scores (step rewards)
+    across episodes.
+
+    :param run_path: The path to the directory containing the monitor files for each run.
+    :type run_path: Union[str, PathLike]
+    :param use_tex: A boolean indicating whether to use TeX formatting in the plot.
+    :type use_tex: bool
+    """
     run_path = Path(run_path)
     df_list = list()
     for run, monitor_file in enumerate(run_path.rglob('monitor*.pick')):
@@ -23,7 +33,7 @@ def compare_seed_runs(run_path: Union[str, PathLike], use_tex: bool = False):
         monitor_df = monitor_df.fillna(0)
         df_list.append(monitor_df)
 
-    df = pd.concat(df_list,  ignore_index=True)
+    df = pd.concat(df_list, ignore_index=True)
     df = df.fillna(0).rename(columns={'episode': 'Episode', 'run': 'Run'}).sort_values(['Run', 'Episode'])
     columns = [col for col in df.columns if col not in IGNORED_DF_COLUMNS]
 
@@ -49,6 +59,19 @@ def compare_seed_runs(run_path: Union[str, PathLike], use_tex: bool = False):
 
 def compare_model_runs(run_path: Path, run_identifier: Union[str, int], parameter: Union[str, List[str]],
                        use_tex: bool = False):
+    """
+    Compares multiple model runs based on specified parameters by generating a line plot showing the evolution of scores (step rewards)
+    across episodes.
+
+    :param run_path: The path to the directory containing the monitor files for each model run.
+    :type run_path: Path
+    :param run_identifier: A string or integer identifying the runs to compare.
+    :type run_identifier: Union[str, int]
+    :param parameter: A single parameter or a list of parameters to compare.
+    :type parameter: Union[str, List[str]]
+    :param use_tex: A boolean indicating whether to use TeX formatting in the plot.
+    :type use_tex: bool
+    """
     run_path = Path(run_path)
     df_list = list()
     parameter = [parameter] if isinstance(parameter, str) else parameter
@@ -89,6 +112,20 @@ def compare_model_runs(run_path: Path, run_identifier: Union[str, int], paramete
 
 def compare_all_parameter_runs(run_root_path: Path, parameter: Union[str, List[str]],
                                param_names: Union[List[str], None] = None, str_to_ignore='', use_tex: bool = False):
+    """
+    Compares model runs across different parameter settings by generating a line plot showing the evolution of scores across episodes.
+
+    :param run_root_path: The root path to the directory containing the monitor files for all model runs.
+    :type run_root_path: Path
+    :param parameter: The parameter(s) to compare across different runs.
+    :type parameter: Union[str, List[str]]
+    :param param_names: A list of custom names for the parameters to be used as labels in the plot. If None, default names will be assigned.
+    :type param_names: Union[List[str], None]
+    :param str_to_ignore: A string pattern to ignore in parameter names.
+    :type str_to_ignore: str
+    :param use_tex: A boolean indicating whether to use TeX formatting in the plot.
+    :type use_tex: bool
+    """
     run_root_path = Path(run_root_path)
     df_list = list()
     parameter = [parameter] if isinstance(parameter, str) else parameter

@@ -8,10 +8,10 @@ def points_to_graph(coordiniates, allow_euclidean_connections=True, allow_manhat
     """
     Given a set of coordinates, this function contructs a non-directed graph, by conncting adjected points.
     There are three combinations of settings:
-        Allow all neigbors:     Distance(a, b) <= sqrt(2)
-        Allow only manhattan:   Distance(a, b) == 1
-        Allow only Euclidean:   Distance(a, b) == sqrt(2)
 
+    - Allow all neigbors:     Distance(a, b) <= sqrt(2)
+    - Allow only manhattan:   Distance(a, b) == 1
+    - Allow only Euclidean:   Distance(a, b) == sqrt(2)
 
     :param coordiniates: A set of coordinates.
     :type coordiniates: Tuple[int, int]

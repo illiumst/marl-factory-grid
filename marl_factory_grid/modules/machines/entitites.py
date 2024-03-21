@@ -14,7 +14,8 @@ class Machine(Entity):
 
     def __init__(self, *args, work_interval: int = 10, pause_interval: int = 15, **kwargs):
         """
-        Represents a machine entity that the maintainer will try to maintain.
+        Represents a machine entity that the maintainer will try to maintain by performing the maintenance action.
+        Machines' health depletes over time.
 
         :param work_interval: How long should the machine work before pausing.
         :type work_interval: int
@@ -31,7 +32,8 @@ class Machine(Entity):
 
     def maintain(self) -> bool:
         """
-        Attempts to maintain the machine by increasing its health.
+        Attempts to maintain the machine by increasing its health, which is only possible if the machine is at a maximum
+        of 98/100 HP.
         """
         if self.status == m.STATE_WORK:
             return c.NOT_VALID

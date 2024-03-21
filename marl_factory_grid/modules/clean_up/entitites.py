@@ -18,7 +18,8 @@ class DirtPile(Entity):
 
     def __init__(self, *args, amount=2, max_local_amount=5, **kwargs):
         """
-        Represents a pile of dirt at a specific position in the environment.
+        Represents a pile of dirt at a specific position in the environment that agents can interact with. Agents can
+        clean the dirt pile or, depending on activated rules, interact with it in different ways.
 
         :param amount: The amount of dirt in the pile.
         :type amount: float

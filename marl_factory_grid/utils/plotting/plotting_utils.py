@@ -1,7 +1,6 @@
 import seaborn as sns
 import matplotlib as mpl
 from matplotlib import pyplot as plt
-
 PALETTE = 10 * (
     "#377eb8",
     "#4daf4a",
@@ -20,6 +19,14 @@ PALETTE = 10 * (
 
 
 def plot(filepath, ext='png'):
+    """
+    Saves the current plot to a file and displays it.
+
+    :param filepath: The path to save the plot file.
+    :type filepath: str
+    :param ext: The file extension of the saved plot. Default is 'png'.
+    :type ext: str
+    """
     plt.tight_layout()
     figure = plt.gcf()
     ax = plt.gca()
@@ -35,6 +42,20 @@ def plot(filepath, ext='png'):
 
 
 def prepare_tex(df, hue, style, hue_order):
+    """
+    Prepares a line plot for rendering in LaTeX.
+
+    :param df: The DataFrame containing the data to be plotted.
+    :type df: pandas.DataFrame
+    :param hue: Grouping variable that will produce lines with different colors.
+    :type hue: str
+    :param style: Grouping variable that will produce lines with different styles.
+    :type style: str
+    :param hue_order: Order for the levels of the hue variable in the plot.
+    :type hue_order: list
+    :return: The prepared line plot.
+    :rtype: matplotlib.axes._subplots.AxesSubplot
+    """
     sns.set(rc={'text.usetex': True}, style='whitegrid')
     lineplot = sns.lineplot(data=df, x='Episode', y='Score', ci=95, palette=PALETTE,
                             hue_order=hue_order, hue=hue, style=style)
@@ -45,6 +66,20 @@ def prepare_tex(df, hue, style, hue_order):
 
 
 def prepare_plt(df, hue, style, hue_order):
+    """
+    Prepares a line plot using matplotlib.
+
+    :param df: The DataFrame containing the data to be plotted.
+    :type df: pandas.DataFrame
+    :param hue: Grouping variable that will produce lines with different colors.
+    :type hue: str
+    :param style: Grouping variable that will produce lines with different styles.
+    :type style: str
+    :param hue_order: Order for the levels of the hue variable in the plot.
+    :type hue_order: list
+    :return: The prepared line plot.
+    :rtype: matplotlib.axes._subplots.AxesSubplot
+    """
     print('Struggling to plot Figure using LaTeX - going back to normal.')
     plt.close('all')
     sns.set(rc={'text.usetex': False}, style='whitegrid')
@@ -57,6 +92,20 @@ def prepare_plt(df, hue, style, hue_order):
 
 
 def prepare_center_double_column_legend(df, hue, style, hue_order):
+    """
+    Prepares a line plot with a legend centered at the bottom and spread across two columns.
+
+    :param df: The DataFrame containing the data to be plotted.
+    :type df: pandas.DataFrame
+    :param hue: Grouping variable that will produce lines with different colors.
+    :type hue: str
+    :param style: Grouping variable that will produce lines with different styles.
+    :type style: str
+    :param hue_order: Order for the levels of the hue variable in the plot.
+    :type hue_order: list
+    :return: The prepared line plot.
+    :rtype: matplotlib.axes._subplots.AxesSubplot
+    """
     print('Struggling to plot Figure using LaTeX - going back to normal.')
     plt.close('all')
     sns.set(rc={'text.usetex': False}, style='whitegrid')
@@ -70,6 +119,23 @@ def prepare_center_double_column_legend(df, hue, style, hue_order):
 
 
 def prepare_plot(filepath, results_df, ext='png', hue='Measurement', style=None, use_tex=False):
+    """
+    Prepares a line plot for visualization. Based on the use tex parameter calls the prepare_tex or prepare_plot
+    function accordingly, followed by the plot function to save the plot.
+
+    :param filepath: The file path where the plot will be saved.
+    :type filepath: str
+    :param results_df: The DataFrame containing the data to be plotted.
+    :type results_df: pandas.DataFrame
+    :param ext: The file extension of the saved plot (default is 'png').
+    :type ext: str
+    :param hue: The variable to determine the color of the lines in the plot.
+    :type hue: str
+    :param style: The variable to determine the style of the lines in the plot (default is None).
+    :type style: str or None
+    :param use_tex: Whether to use LaTeX for text rendering (default is False).
+    :type use_tex: bool
+    """
     df = results_df.copy()
     df[hue] = df[hue].str.replace('_', '-')
     hue_order = sorted(list(df[hue].unique()))
