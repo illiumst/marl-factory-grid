@@ -1,5 +1,4 @@
 from pathlib import Path
-from random import randint
 
 from tqdm import trange
 
@@ -10,7 +9,7 @@ from marl_factory_grid.environment.factory import Factory
 
 if __name__ == '__main__':
     # Render at each step?
-    render = True
+    render = False
 
     # Path to config File
     path = Path('marl_factory_grid/configs/test_config.yaml')
@@ -18,7 +17,7 @@ if __name__ == '__main__':
     # Env Init
     factory = Factory(path)
 
-    for episode in trange(1):
+    for episode in trange(10):
         _ = factory.reset()
         done = False
         if render:

@@ -17,6 +17,7 @@ Agents:
       - Destinations
       - Doors
       - Maintainers
+    Clones: 0
   Item test agent:
     Actions:
       - Noop
@@ -38,6 +39,7 @@ Agents:
       - Inventory
       - DropOffLocations
       - Maintainers
+    Clones: 0
   Target test agent:
     Actions:
       - Noop
@@ -53,6 +55,7 @@ Agents:
       - Destinations
       - Doors
       - Maintainers
+    Clones: 0
 
 Entities:
 
@@ -116,7 +119,7 @@ Rules:
     max_steps: 500
 
 Tests:
-#  MaintainerTest: {}
-#  DirtAgentTest: {}
-#  ItemAgentTest: {}
+  MaintainerTest: {}
+  DirtAgentTest: {}
+  ItemAgentTest: {}
   TargetAgentTest: {}
