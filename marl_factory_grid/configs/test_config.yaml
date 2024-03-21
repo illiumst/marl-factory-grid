@@ -86,7 +86,6 @@ Entities:
     coords_or_quantity: 2
   Maintainers:
     coords_or_quantity: 1
-  Zones: {}
 
 General:
   env_seed: 69

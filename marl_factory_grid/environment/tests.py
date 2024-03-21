@@ -74,7 +74,6 @@ class MaintainerTest(Test):
         for maintainer in state.entities[M.MAINTAINERS]:
             if maintainer._path and self.temp_state_dict != {}:
                 if maintainer.identifier in self.temp_state_dict:
-                    print("check")
                     last_action = self.temp_state_dict[maintainer.identifier]
                     if last_action.identifier == 'DoorUse':
                         if door := next((entity for entity in state.entities.get_entities_near_pos(maintainer.pos) if
