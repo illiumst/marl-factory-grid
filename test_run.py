@@ -12,12 +12,12 @@ if __name__ == '__main__':
     render = True
 
     # Path to config File
-    path = Path('marl_factory_grid/configs/two_rooms_one_door.yaml')
+    path = Path('marl_factory_grid/configs/simple_crossing.yaml')
 
     # Env Init
     factory = Factory(path)
 
-    for episode in trange(10):
+    for episode in trange(1):
         _ = factory.reset()
         done = False
         if render:
