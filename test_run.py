@@ -9,10 +9,10 @@ from marl_factory_grid.environment.factory import Factory
 
 if __name__ == '__main__':
     # Render at each step?
-    render = False
+    render = True
 
     # Path to config File
-    path = Path('marl_factory_grid/configs/test_config.yaml')
+    path = Path('marl_factory_grid/configs/two_rooms_one_door.yaml')
 
     # Env Init
     factory = Factory(path)
@@ -23,7 +23,8 @@ if __name__ == '__main__':
         if render:
             factory.render()
         action_spaces = factory.action_space
-        agents = [TSPDirtAgent(factory, 0), TSPItemAgent(factory, 1), TSPTargetAgent(factory, 2)]
+        # agents = [TSPDirtAgent(factory, 0), TSPItemAgent(factory, 1), TSPTargetAgent(factory, 2)]
+        agents = [TSPTargetAgent(factory, 0), TSPTargetAgent(factory, 1)]
         while not done:
             a = [x.predict() for x in agents]
             obs_type, _, _, done, info = factory.step(a)

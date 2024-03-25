@@ -234,8 +234,12 @@ class AssignGlobalPositions(Rule):
         :return: None
         """
         super().__init__()
+        self.level_shape = None
 
-    def on_reset(self, state, lvl_map):
+    def on_init(self, state, lvl_map):
+        self.level_shape = lvl_map.level_shape
+
+    def on_reset(self, state):
         """
        Assign global positions to agents when the environment is reset.
 
@@ -248,7 +252,7 @@ class AssignGlobalPositions(Rule):
        """
         from marl_factory_grid.environment.entity.util import GlobalPosition
         for agent in state[c.AGENT]:
-            gp = GlobalPosition(agent, lvl_map.level_shape)
+            gp = GlobalPosition(agent, self.level_shape)
             state[c.GLOBALPOSITIONS].add_item(gp)
         return []
 

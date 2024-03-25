@@ -39,7 +39,15 @@ Agents:
           - Doors
 
 Entities:
-  Destinations: { }
+  Destinations:
+    spawnrule:
+      SpawnDestinationsPerAgent:
+        coords_or_quantity:
+          Wolfgang:
+            - (6,12)
+          Sigmund:
+            - (6, 2)
+
   Doors: { }
   GlobalPositions: { }
 
@@ -57,5 +65,5 @@ Rules:
   AssignGlobalPositions: { }
 
   # Done Conditions
-  MaxStepsReached:
+  DoneAtMaxStepsReached:
     max_steps: 10
