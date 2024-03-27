@@ -8,7 +8,7 @@ General:
   # Radius of Partially observable Markov decision process
   pomdp_r: 3
   # Print all messages and events
-  verbose: true
+  verbose: false
   # Run tests
   tests: false
 

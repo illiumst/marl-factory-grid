@@ -1,0 +1,72 @@
+General:
+  env_seed: 69
+  # Individual vs global rewards
+  individual_rewards: true
+  # The level.txt file to load from marl_factory_grid/levels
+  level_name: two_rooms_modified
+  # View Radius; 0 = full observatbility
+  pomdp_r: 3
+  # Print all messages and events
+  verbose: false
+  # Run tests
+  tests: false
+
+# In "two rooms one door" scenario 2 agents spawn in 2 different rooms that are connected by a single door. Their aim
+# is to reach the destination in the room they didn't spawn in leading to a conflict at the door.
+Agents:
+  Wolfgang:
+    Actions:
+      - Move8
+      - Noop
+      - DestAction
+      - DoorUse
+    Observations:
+      - Walls
+      - Other
+      - Doors
+      - Destination
+    Positions:
+      - (3,1)
+  Sigmund:
+    Actions:
+      - Move8
+      - Noop
+      - DestAction
+      - DoorUse
+    Observations:
+      - Other
+      - Walls
+      - Destination
+      - Doors
+    Positions:
+      - (3,13)
+
+Entities:
+  Destinations:
+    spawnrule:
+      SpawnDestinationsPerAgent:
+        coords_or_quantity:
+          Wolfgang:
+            - (3,12)
+          Sigmund:
+            - (3,2)
+
+  Doors: { }
+  GlobalPositions: { }
+
+Rules:
+  # Environment Dynamics
+  DoorAutoClose:
+    close_frequency: 10
+
+  # Utilities
+  # This rule defines the collision mechanic, introduces a related DoneCondition and lets you specify rewards.
+  WatchCollisions:
+    done_at_collisions: false
+
+  # Init
+  AssignGlobalPositions: { }
+
+  # Done Conditions
+  DoneAtMaxStepsReached:
+    max_steps: 100

@@ -1,6 +1,6 @@
-from algorithms.utils import Checkpointer
+from marl_factory_grid.algorithms.utils import Checkpointer
 from pathlib import Path
-from algorithms.utils import load_yaml_file, add_env_props, instantiate_class, load_class
+from marl_factory_grid.algorithms.utils import load_yaml_file, add_env_props, instantiate_class, load_class
 
 # from algorithms.marl import LoopSNAC, LoopIAC, LoopSEAC
 
