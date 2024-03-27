@@ -1,5 +1,5 @@
 agent:
-  classname:           algorithms.marl.networks.RecurrentAC
+  classname:           marl_factory_grid.algorithms.marl.networks.RecurrentAC
   n_agents:            2
   obs_emb_size:        96
   action_emb_size:     16
@@ -7,18 +7,20 @@ agent:
   hidden_size_critic:  64
   use_agent_embedding: False
 env:
-  classname:          environments.factory.make
-  env_name:           "DirtyFactory-v0"
+  classname:          marl_factory_grid.configs
+  env_name:           "simple_crossing"
   n_agents:           2
   max_steps:          250
   pomdp_r:            2
   stack_n_frames:     0
   individual_rewards: True
-method:               algorithms.marl.LoopSEAC
+  train_render:       True
+  eval_render:        True
+method:               marl_factory_grid.algorithms.marl.LoopSEAC
 algorithm:
   gamma:              0.99
   entropy_coef:       0.01
   vf_coef:            0.5
   n_steps:            5
-  max_steps:          1000000
+  max_steps:          10000
 

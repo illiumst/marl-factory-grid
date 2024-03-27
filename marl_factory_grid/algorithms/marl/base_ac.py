@@ -18,7 +18,8 @@ class Names:
     HIDDEN_ACTOR    = 'hidden_actor'
     HIDDEN_CRITIC   = 'hidden_critic'
     AGENT           = 'agent'
-    ENV             = 'environment'
+    ENV             = 'env'
+    ENV_NAME        = 'env_name'
     N_AGENTS        = 'n_agents'
     ALGORITHM       = 'algorithm'
     MAX_STEPS       = 'max_steps'
@@ -27,6 +28,8 @@ class Names:
     CRITIC          = 'critic'
     BATCH_SIZE      = 'bnatch_size'
     N_ACTIONS       = 'n_actions'
+    TRAIN_RENDER    = 'train_render'
+    EVAL_RENDER     = 'eval_render'
 
 
 nms = Names
@@ -35,10 +38,10 @@ ListOrTensor = Union[List, torch.Tensor]
 
 class BaseActorCritic:
     def __init__(self, cfg):
-        add_env_props(cfg)
+        self.factory = add_env_props(cfg)
         self.__training = True
         self.cfg = cfg
-        self.n_agents = cfg[nms.ENV][nms.N_AGENTS]
+        self.n_agents = cfg[nms.AGENT][nms.N_AGENTS]
         self.reset_memory_after_epoch = True
         self.setup()
 
@@ -88,7 +91,9 @@ class BaseActorCritic:
 
     @torch.no_grad()
     def train_loop(self, checkpointer=None):
-        env = instantiate_class(self.cfg[nms.ENV])
+        env = self.factory
+        if self.cfg[nms.ENV][nms.TRAIN_RENDER]:
+            env.render()
         n_steps, max_steps = [self.cfg[nms.ALGORITHM][k] for k in [nms.N_STEPS, nms.MAX_STEPS]]
         tm = MARLActorCriticMemory(self.n_agents, self.cfg[nms.ALGORITHM].get(nms.BUFFER_SIZE, n_steps))
         global_steps, episode, df_results = 0, 0, []
@@ -96,6 +101,7 @@ class BaseActorCritic:
 
         while global_steps < max_steps:
             obs = env.reset()
+            obs = list(obs.values())
             last_hiddens        = self.init_hidden()
             last_action, reward = [-1] * self.n_agents, [0.] * self.n_agents
             done, rew_log       = [False] * self.n_agents, 0
@@ -110,14 +116,20 @@ class BaseActorCritic:
             while not all(done):
                 out = self.forward(obs, last_action, **last_hiddens)
                 action = self.get_actions(out)
-                next_obs, reward, done, info = env.step(action)
+                _, next_obs, reward, done, info = env.step(action)
                 done = [done] * self.n_agents if isinstance(done, bool) else done
+
+                if self.cfg[nms.ENV][nms.TRAIN_RENDER]:
+                    env.render()
 
                 last_hiddens = dict(hidden_actor=out[nms.HIDDEN_ACTOR],
                                     hidden_critic=out[nms.HIDDEN_CRITIC])
 
+                logits = torch.stack([tensor.squeeze(0) for tensor in out.get(nms.LOGITS, None)], dim=0)
+                values = torch.stack([tensor.squeeze(0) for tensor in out.get(nms.CRITIC, None)], dim=0)
+
                 tm.add(observation=obs, action=action, reward=reward, done=done,
-                       logits=out.get(nms.LOGITS, None), values=out.get(nms.CRITIC, None),
+                       logits=logits, values=values,
                        **last_hiddens)
 
                 obs = next_obs
@@ -139,7 +151,8 @@ class BaseActorCritic:
 
                 if global_steps >= max_steps:
                     break
-            print(f'reward at episode: {episode} = {rew_log}')
+            if global_steps%100 == 0:
+                print(f'reward at episode: {episode} = {rew_log}')
             episode += 1
             df_results.append([episode, rew_log, *reward])
         df_results = pd.DataFrame(df_results,
@@ -151,23 +164,26 @@ class BaseActorCritic:
 
     @torch.inference_mode(True)
     def eval_loop(self, n_episodes, render=False):
-        env = instantiate_class(self.cfg[nms.ENV])
+        env = self.factory
+        if self.cfg[nms.ENV][nms.EVAL_RENDER]:
+            env.render()
         episode, results = 0, []
         while episode < n_episodes:
             obs = env.reset()
+            obs = list(obs.values())
             last_hiddens           = self.init_hidden()
             last_action, reward    = [-1] * self.n_agents, [0.] * self.n_agents
             done, rew_log, eps_rew = [False] * self.n_agents, 0, torch.zeros(self.n_agents)
             while not all(done):
-                if render:
-                    env.render()
-
                 out    = self.forward(obs, last_action, **last_hiddens)
                 action = self.get_actions(out)
-                next_obs, reward, done, info = env.step(action)
+                _, next_obs, reward, done, info = env.step(action)
+
+                if self.cfg[nms.ENV][nms.EVAL_RENDER]:
+                    env.render()
 
                 if isinstance(done, bool):
-                    done = [done] * obs.shape[0]
+                    done = [done] * obs[0].shape[0]
                 obs = next_obs
                 last_action = action
                 last_hiddens = dict(hidden_actor=out.get(nms.HIDDEN_ACTOR,   None),
@@ -176,7 +192,7 @@ class BaseActorCritic:
                 eps_rew += torch.tensor(reward)
             results.append(eps_rew.tolist() + [sum(eps_rew).item()] + [episode])
             episode += 1
-        agent_columns = [f'agent#{i}' for i in range(self.cfg['environment']['n_agents'])]
+        agent_columns = [f'agent#{i}' for i in range(self.cfg[nms.ENV][nms.N_AGENTS])]
         results = pd.DataFrame(results, columns=agent_columns + ['sum', 'episode'])
         results = pd.melt(results, id_vars=['episode'], value_vars=agent_columns + ['sum'],
                           value_name='reward', var_name='agent')
@@ -200,7 +216,7 @@ class BaseActorCritic:
     def actor_critic(self, tm, network, gamma, entropy_coef, vf_coef, gae_coef=0.0, **kwargs):
         obs, actions, done, reward = tm.observation, tm.action, tm.done[:, 1:], tm.reward[:, 1:]
 
-        out = network(obs, actions, tm.hidden_actor[:, 0], tm.hidden_critic[:, 0])
+        out = network(obs, actions, tm.hidden_actor[:, 0].squeeze(0), tm.hidden_critic[:, 0].squeeze(0))
         logits = out[nms.LOGITS][:, :-1]  # last one only needed for v_{t+1}
         critic = out[nms.CRITIC]
 
