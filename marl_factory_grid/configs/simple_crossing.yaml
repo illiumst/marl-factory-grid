@@ -13,7 +13,7 @@ Agents:
   Agent_horizontal:
     Actions:
       - Noop
-      - Move8
+      - Move4
     Observations:
       - Walls
       - Other
@@ -27,7 +27,7 @@ Agents:
   Agent_vertical:
     Actions:
       - Noop
-      - Move8
+      - Move4
     Observations:
       - Walls
       - Other

@@ -135,18 +135,22 @@ class TSPBaseAgent(ABC):
                     pass
                 next_pos = self._static_route.pop(0)
                 while next_pos == self.state.pos:
-                    next_pos = self._static_route.pop(0)
+                    if self._static_route:
+                        next_pos = self._static_route.pop(0)
             else:
                 if not self._static_route:
                     self._static_route = self.calculate_tsp_route(target_identifier)[:7]
                 next_pos = self._static_route.pop(0)
                 while next_pos == self.state.pos:
-                    next_pos = self._static_route.pop(0)
-
+                    if self._static_route:
+                        next_pos = self._static_route.pop(0)
             diff = np.subtract(next_pos, self.state.pos)
             # Retrieve action based on the pos dif (like in: What do I have to do to get there?)
             try:
-                action = next(action for action, pos_diff in MOVEMAP.items() if np.all(diff == pos_diff))
+                allowed_directions = [action.name for action in self.state.actions if
+                                      action.name in ['north', 'east', 'south', 'west', 'north_east', 'south_east',
+                                                      'south_west', 'north_west']]
+                action = next(action for action, pos_diff in MOVEMAP.items() if np.all(diff == pos_diff) and action in allowed_directions)
             except StopIteration:
                 print(f"No valid action found for pos diff: {diff}. Using fallback action.")
                 action = choice(self.state.actions).name
