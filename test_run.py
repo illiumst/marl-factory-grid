@@ -12,7 +12,7 @@ if __name__ == '__main__':
     render = True
 
     # Path to config File
-    path = Path('marl_factory_grid/configs/simple_crossing.yaml')
+    path = Path('marl_factory_grid/configs/test_config.yaml')
 
     # Env Init
     factory = Factory(path)
@@ -23,8 +23,9 @@ if __name__ == '__main__':
         if render:
             factory.render()
         action_spaces = factory.action_space
-        # agents = [TSPDirtAgent(factory, 0), TSPItemAgent(factory, 1), TSPTargetAgent(factory, 2)]
-        agents = [TSPTargetAgent(factory, 0), TSPTargetAgent(factory, 1)]
+        agents = [TSPDirtAgent(factory, 0), TSPItemAgent(factory, 1), TSPTargetAgent(factory, 2)]
+        # agents = [TSPTargetAgent(factory, 0), TSPTargetAgent(factory, 1)]
+        # agents = [TSPTargetAgent(factory, 0)]
         while not done:
             a = [x.predict() for x in agents]
             obs_type, _, _, done, info = factory.step(a)

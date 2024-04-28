@@ -68,10 +68,10 @@ class Renderer:
         self.assets = {path.stem: self.load_asset(str(path), factor) for path in assets}
         self.fill_bg()
 
-        now = time.time()
+        # now = time.time()
         self.font = pygame.font.Font(None, 20)
         self.font.set_bold(True)
-        print('Loading System font with pygame.font.Font took', time.time() - now)
+        # print('Loading System font with pygame.font.Font took', time.time() - now)
 
     def fill_bg(self):
         """
