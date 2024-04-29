@@ -36,6 +36,7 @@ class TSPBaseAgent(ABC):
         self._position_graph = self.generate_pos_graph()
         self._static_route = None
         self.cached_route = None
+        self.fallback_action = None
 
     @abstractmethod
     def predict(self, *_, **__) -> int:
@@ -170,8 +171,11 @@ class TSPBaseAgent(ABC):
                 action = next(action for action, pos_diff in MOVEMAP.items() if
                               np.all(diff == pos_diff) and action in allowed_directions)
             except StopIteration:
-                print(f"No valid action found for pos diff: {diff}. Using fallback action.")
-                action = choice(self.state.actions).name
+                print(f"No valid action found for pos diff: {diff}. Using fallback action: {self.fallback_action}.")
+                if self.fallback_action and any(self.fallback_action == action.name for action in self.state.actions):
+                    action = self.fallback_action
+                else:
+                    action = choice(self.state.actions).name
         else:
             action = choice(self.state.actions).name
         # noinspection PyUnboundLocalVariable

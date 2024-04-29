@@ -2,6 +2,8 @@ from marl_factory_grid.algorithms.static.TSP_base_agent import TSPBaseAgent
 
 from marl_factory_grid.modules.destinations import constants as d
 from marl_factory_grid.modules.doors import constants as do
+from marl_factory_grid.environment import constants as c
+
 
 future_planning = 7
 
@@ -13,6 +15,7 @@ class TSPTargetAgent(TSPBaseAgent):
         Initializes a TSPTargetAgent that aims to reach destinations.
         """
         super(TSPTargetAgent, self).__init__(*args, **kwargs)
+        self.fallback_action = c.NOOP
 
     def _handle_doors(self, state):
         """

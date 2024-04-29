@@ -1,6 +1,7 @@
 from marl_factory_grid.algorithms.static.TSP_base_agent import TSPBaseAgent
 
 from marl_factory_grid.modules.clean_up import constants as di
+from marl_factory_grid.environment import constants as c
 
 future_planning = 7
 
@@ -12,6 +13,7 @@ class TSPDirtAgent(TSPBaseAgent):
         Initializes a TSPDirtAgent that aims to clean dirt in the environment.
         """
         super(TSPDirtAgent, self).__init__(*args, **kwargs)
+        self.fallback_action = c.NOOP
 
     def predict(self, *_, **__):
         """

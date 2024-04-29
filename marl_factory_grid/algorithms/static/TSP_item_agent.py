@@ -3,6 +3,7 @@ import numpy as np
 from marl_factory_grid.algorithms.static.TSP_base_agent import TSPBaseAgent
 
 from marl_factory_grid.modules.items import constants as i
+from marl_factory_grid.environment import constants as c
 
 future_planning = 7
 inventory_size  = 3
@@ -22,6 +23,7 @@ class TSPItemAgent(TSPBaseAgent):
         """
         super(TSPItemAgent, self).__init__(*args, **kwargs)
         self.mode = mode
+        self.fallback_action = c.NOOP
 
     def predict(self, *_, **__):
         item_at_position = self._env.state[i.ITEM].by_pos(self.state.pos)
