@@ -1,3 +1,4 @@
+import ast
 from marl_factory_grid.environment import constants as c
 from marl_factory_grid.environment.groups.collection import Collection
 from marl_factory_grid.modules.clean_up.entitites import DirtPile
@@ -74,11 +75,19 @@ class DirtPiles(Collection):
             print("Exiting....")
             exit()
         coords_or_quantity = coords_or_quantity if coords_or_quantity else self.coords_or_quantity
-        n_new = int(abs(coords_or_quantity + (state.rng.uniform(-self.n_var, self.n_var))))
-        n_new = state.get_n_random_free_positions(n_new)
+        if isinstance(coords_or_quantity, int):
+            n_new = int(abs(coords_or_quantity + (state.rng.uniform(-self.n_var, self.n_var))))
+            n_new = state.get_n_random_free_positions(n_new)
+        else:
+            coords_or_quantity = ast.literal_eval(coords_or_quantity)
+            if isinstance(coords_or_quantity[0], int):
+                n_new = [coords_or_quantity]
+            else:
+                n_new = [pos for pos in coords_or_quantity]
 
-        amounts = [amount if amount else (self.initial_amount + state.rng.uniform(-self.amount_var, self.amount_var))
-                   for _ in range(coords_or_quantity)]
+        amounts = [amount if amount else (self.initial_amount ) # removed rng amount
+                   for _ in range(len(n_new))]
+
         spawn_counter = 0
         for idx, (pos, a) in enumerate(zip(n_new, amounts)):
             if not self.global_amount > self.max_global_amount:

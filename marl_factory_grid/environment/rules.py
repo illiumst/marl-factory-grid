@@ -188,7 +188,9 @@ class SpawnAgents(Rule):
             positions = agent_conf['positions'].copy()
             other = agent_conf['other'].copy()
 
-            if position := h.get_first(x for x in positions if x in empty_positions):
+            # Spawn agent on random position if multiple spawn points are provided
+            func = random.choice if len(positions) else h.get_first
+            if position := func([x for x in positions if x in empty_positions]):
                 assert state.check_pos_validity(position), 'smth went wrong....'
                 agents.add_item(Agent(actions, observations, position, str_ident=agent_name, **other))
             elif positions:

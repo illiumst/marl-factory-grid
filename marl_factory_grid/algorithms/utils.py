@@ -65,8 +65,12 @@ def add_env_props(cfg):
     _ = factory.reset()
 
     # Agent Init
-    cfg['agent'].update(dict(observation_size=list(factory.observation_space[0].shape),
-                             n_actions=factory.action_space[0].n))
+    if len(factory.state.moving_entites) == 1: # Single agent setting
+        observation_size = list(factory.observation_space.shape)
+    else: # Multi-agent setting
+        observation_size = list(factory.observation_space[0].shape)
+    cfg['agent'].update(dict(observation_size=observation_size, n_actions=factory.action_space[0].n))
+
     return factory
 
 
