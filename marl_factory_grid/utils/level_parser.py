@@ -42,6 +42,7 @@ class LevelParser(object):
         level_array = h.one_hot_level(self._parsed_level, c.SYMBOL_WALL)
         self.level_shape = level_array.shape
         self.size = self.pomdp_r ** 2 if self.pomdp_r else np.prod(self.level_shape)
+        self.walls = None
 
     def get_coordinates_for_symbol(self, symbol, negate=False) -> np.ndarray:
         """
@@ -74,6 +75,7 @@ class LevelParser(object):
         # Walls
         walls = Walls.from_coordinates(self.get_coordinates_for_symbol(c.SYMBOL_WALL), self.size)
         entities.add_items({c.WALLS: walls})
+        self.walls = self.get_coordinates_for_symbol(c.SYMBOL_WALL)
 
         # Agents
         entities.add_items({c.AGENT: Agents(self.size)})

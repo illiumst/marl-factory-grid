@@ -1,4 +1,5 @@
 from pathlib import Path
+from pprint import pprint
 
 from tqdm import trange
 
@@ -7,12 +8,17 @@ from marl_factory_grid.algorithms.static.TSP_item_agent import TSPItemAgent
 from marl_factory_grid.algorithms.static.TSP_target_agent import TSPTargetAgent
 from marl_factory_grid.environment.factory import Factory
 
+from marl_factory_grid.utils.plotting.plot_single_runs import plot_routes
+
 if __name__ == '__main__':
-    # Render at each step?
+
+    run_path = Path('study_out')
     render = True
+    monitor = True
+    record = True
 
     # Path to config File
-    path = Path('marl_factory_grid/configs/simple_crossing.yaml')
+    path = Path('marl_factory_grid/configs/test_config.yaml')
 
     # Env Init
     factory = Factory(path)
@@ -33,3 +39,5 @@ if __name__ == '__main__':
             if done:
                 print(f'Episode {episode} done...')
                 break
+
+        plot_routes(factory, agents, )

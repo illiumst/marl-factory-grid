@@ -33,9 +33,11 @@ class TSPBaseAgent(ABC):
         self.local_optimization = True
         self._env = state
         self.state = self._env.state[c.AGENT][agent_i]
+        self.spawn_position = np.array(self.state.pos)
         self._position_graph = self.generate_pos_graph()
         self._static_route = None
         self.cached_route = None
+        self.action_list = []
 
     @abstractmethod
     def predict(self, *_, **__) -> int:
@@ -78,7 +80,7 @@ class TSPBaseAgent(ABC):
         start_time = time.time()
 
         if self.cached_route is not None:
-            print(f" Used cached route: {self.cached_route}")
+            #print(f" Used cached route: {self.cached_route}")
             return copy.deepcopy(self.cached_route)
 
         else:
@@ -99,11 +101,11 @@ class TSPBaseAgent(ABC):
             route = tsp.traveling_salesman_problem(self._position_graph,
                                                    nodes=nodes, cycle=True, method=tsp.greedy_tsp)
             self.cached_route = copy.deepcopy(route)
-            print(f"Cached route: {self.cached_route}")
+            #print(f"Cached route: {self.cached_route}")
 
         end_time = time.time()
         duration = end_time - start_time
-        print("TSP calculation took {:.2f} seconds to execute".format(duration))
+        #print("TSP calculation took {:.2f} seconds to execute".format(duration))
         return route
 
     def _door_is_close(self, state):
