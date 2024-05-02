@@ -7,20 +7,22 @@ agent:
   hidden_size_critic:  64
   use_agent_embedding: False
 env:
-  classname:          marl_factory_grid.configs
-  env_name:           "simple_crossing"
+  classname:          marl_factory_grid.configs.custom
+  env_name:           "custom/two_rooms_one_door_modified_random_pos"
   n_agents:           2
   max_steps:          250
   pomdp_r:            2
   stack_n_frames:     0
   individual_rewards: True
-  train_render:       True
+  train_render:       False
   eval_render:        True
 method:               marl_factory_grid.algorithms.marl.LoopSEAC
 algorithm:
   gamma:              0.99
   entropy_coef:       0.01
-  vf_coef:            0.5
-  n_steps:            5
-  max_steps:          10000
+  vf_coef:            0.05
+  n_steps:            0 # How much experience should be sampled at most (n-TD) until the next value and policy update is performed. Default 0: MC
+  max_steps:          100000
+  advantage:          "TD-Advantage-AC" # Options: "Advantage-AC", "TD-Advantage-AC", "Reinforce"
+  pile-order:         "agents" # Options: "fixed", "random", "none", "agents"
 

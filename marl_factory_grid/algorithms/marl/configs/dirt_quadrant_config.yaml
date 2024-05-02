@@ -1,0 +1,28 @@
+agent:
+  classname:           marl_factory_grid.algorithms.marl.networks.RecurrentAC
+  n_agents:            1
+  obs_emb_size:        96
+  action_emb_size:     16
+  hidden_size_actor:   64
+  hidden_size_critic:  64
+  use_agent_embedding: False
+env:
+  classname:          marl_factory_grid.configs.custom
+  env_name:           "custom/dirt_quadrant_random_pos"
+  n_agents:           1
+  max_steps:          250
+  pomdp_r:            2
+  stack_n_frames:     0
+  individual_rewards: True
+  train_render:       False
+  eval_render:        True
+method:               marl_factory_grid.algorithms.marl.LoopSEAC
+algorithm:
+  gamma:              0.99
+  entropy_coef:       0.01
+  vf_coef:            0.05
+  n_steps:            0 # How much experience should be sampled at most (n-TD) until the next value and policy update is performed. Default 0: MC
+  max_steps:          80000
+  advantage:          "Advantage-AC" # Options: "Advantage-AC", "TD-Advantage-AC", "Reinforce"
+  pile-order:         "fixed" # Options: "fixed", "random", "none", "agents"
+
