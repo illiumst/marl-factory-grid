@@ -6,7 +6,7 @@ General:
   level_name: simple_crossing
   # View Radius; 0 = full observatbility
   pomdp_r: 0
-  verbose: true
+  verbose: false
   tests: false
 
 Agents:

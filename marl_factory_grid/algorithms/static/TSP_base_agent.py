@@ -33,10 +33,12 @@ class TSPBaseAgent(ABC):
         self.local_optimization = True
         self._env = state
         self.state = self._env.state[c.AGENT][agent_i]
+        self.spawn_position = np.array(self.state.pos)
         self._position_graph = self.generate_pos_graph()
         self._static_route = None
         self.cached_route = None
         self.fallback_action = None
+        self.action_list = []
 
     @abstractmethod
     def predict(self, *_, **__) -> int:

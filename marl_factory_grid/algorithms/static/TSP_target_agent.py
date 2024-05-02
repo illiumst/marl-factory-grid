@@ -38,6 +38,7 @@ class TSPTargetAgent(TSPBaseAgent):
             action = self._use_door_or_move(door, d.DESTINATION)
         else:
             action = self._predict_move(d.DESTINATION)
+        self.action_list.append(action)
         # Translate the action_object to an integer to have the same output as any other model
         try:
             action_obj = next(action_i for action_i, a in enumerate(self.state.actions) if a.name == action)

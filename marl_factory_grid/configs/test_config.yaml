@@ -1,45 +1,45 @@
 Agents:
-  Clean test agent:
-    Actions:
-      - Noop
-      - Charge
-      - Clean
-      - DoorUse
-      - Move8
-    Observations:
-      - Combined:
-          - Other
-          - Walls
-      - GlobalPosition
-      - Battery
-      - ChargePods
-      - DirtPiles
-      - Destinations
-      - Doors
-      - Maintainers
-    Clones: 0
-  Item test agent:
-    Actions:
-      - Noop
-      - Charge
-      - DestAction
-      - DoorUse
-      - ItemAction
-      - Move8
-    Observations:
-      - Combined:
-          - Other
-          - Walls
-      - GlobalPosition
-      - Battery
-      - ChargePods
-      - Destinations
-      - Doors
-      - Items
-      - Inventory
-      - DropOffLocations
-      - Maintainers
-    Clones: 0
+#  Clean test agent:
+#    Actions:
+#      - Noop
+#      - Charge
+#      - Clean
+#      - DoorUse
+#      - Move8
+#    Observations:
+#      - Combined:
+#          - Other
+#          - Walls
+#      - GlobalPosition
+#      - Battery
+#      - ChargePods
+#      - DirtPiles
+#      - Destinations
+#      - Doors
+#      - Maintainers
+#    Clones: 0
+#  Item test agent:
+#    Actions:
+#      - Noop
+#      - Charge
+#      - DestAction
+#      - DoorUse
+#      - ItemAction
+#      - Move8
+#    Observations:
+#      - Combined:
+#          - Other
+#          - Walls
+#      - GlobalPosition
+#      - Battery
+#      - ChargePods
+#      - Destinations
+#      - Doors
+#      - Items
+#      - Inventory
+#      - DropOffLocations
+#      - Maintainers
+#    Clones: 0
   Target test agent:
     Actions:
       - Noop
@@ -55,7 +55,7 @@ Agents:
       - Destinations
       - Doors
       - Maintainers
-    Clones: 0
+    Clones: 1
 
 Entities:
 
@@ -118,7 +118,7 @@ Rules:
     max_steps: 500
 
 Tests:
-  MaintainerTest: {}
-  DirtAgentTest: {}
-  ItemAgentTest: {}
-  TargetAgentTest: {}
+#  MaintainerTest: {}
+#  DirtAgentTest: {}
+#  ItemAgentTest: {}
+#  TargetAgentTest: {}

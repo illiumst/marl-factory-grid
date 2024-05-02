@@ -29,10 +29,9 @@ class Renderer:
     AGENT_VIEW_COLOR = (9, 132, 227)
     ASSETS = Path(__file__).parent.parent
 
-    def __init__(self, lvl_shape: Tuple[int, int] = (16, 16),
-                 lvl_padded_shape: Union[Tuple[int, int], None] = None,
-                 cell_size: int = 40, fps: int = 7, factor: float = 0.9,
-                 grid_lines: bool = True, view_radius: int = 2):
+    def __init__(self, lvl_shape: Tuple[int, int] = (16, 16), lvl_padded_shape: Union[Tuple[int, int], None] = None,
+                 cell_size: int = 40, fps: int = 7, factor: float = 0.9, grid_lines: bool = True, view_radius: int = 2,
+                 custom_assets_path=None):
         """
         The Renderer class initializes and manages the rendering environment for the simulation,
         providing methods for preparing entities for display, loading assets, calculating visibility rectangles and
@@ -53,7 +52,6 @@ class Renderer:
         :param view_radius: Radius for agent's field of view.
         :type view_radius: int
         """
-        # TODO: Custom_assets paths
         self.grid_h, self.grid_w = lvl_shape
         self.lvl_padded_shape = lvl_padded_shape if lvl_padded_shape is not None else lvl_shape
         self.cell_size = cell_size
@@ -64,8 +62,9 @@ class Renderer:
         self.screen_size = (self.grid_w*cell_size, self.grid_h*cell_size)
         self.screen = pygame.display.set_mode(self.screen_size)
         self.clock = pygame.time.Clock()
-        assets = list(self.ASSETS.rglob('*.png'))
-        self.assets = {path.stem: self.load_asset(str(path), factor) for path in assets}
+        self.custom_assets_path = custom_assets_path
+        self.assets = self.load_assets(custom_assets_path)
+        self.save_counter = 1
         self.fill_bg()
 
         # now = time.time()
@@ -116,6 +115,28 @@ class Renderer:
         rect.centerx, rect.centery = c_, r_
         return dict(source=img, dest=rect)
 
+    def load_assets(self, custom_assets_path):
+        """
+        Loads assets from the custom path if provided, otherwise from the default path.
+        """
+        assets_directory = custom_assets_path if custom_assets_path else self.ASSETS
+        assets = {}
+        if isinstance(assets_directory, dict):
+            for key, path in assets_directory.items():
+                asset = self.load_asset(path)
+                if asset is not None:
+                    assets[key] = asset
+                else:
+                    print(f"Warning: Asset for key '{key}' is missing and was not loaded.")
+        else:
+            for path in Path(assets_directory).rglob('*.png'):
+                asset = self.load_asset(str(path))
+                if asset is not None:
+                    assets[path.stem] = asset
+                else:
+                    print(f"Warning: Asset '{path.stem}' is missing and was not loaded.")
+        return assets
+
     def load_asset(self, path, factor=1.0):
         """
         Loads and resizes an asset from the specified path.
@@ -126,10 +147,28 @@ class Renderer:
         :type factor: float
         :return: Resized asset.
         """
-        s = int(factor*self.cell_size)
-        asset = pygame.image.load(path).convert_alpha()
-        asset = pygame.transform.smoothscale(asset, (s, s))
-        return asset
+        try:
+            s = int(factor * self.cell_size)
+            asset = pygame.image.load(path).convert_alpha()
+            asset = pygame.transform.smoothscale(asset, (s, s))
+            return asset
+        except pygame.error as e:
+            print(f"Failed to load asset {path}: {e}")
+            return self.load_default_asset()
+
+    def load_default_asset(self, factor=1.0):
+        """
+        Loads a default asset to be used when specific assets fail to load.
+        """
+        default_path = 'marl_factory_grid/utils/plotting/action_assets/default.png'
+        try:
+            s = int(factor * self.cell_size)
+            default_asset = pygame.image.load(default_path).convert_alpha()
+            default_asset = pygame.transform.smoothscale(default_asset, (s, s))
+            return default_asset
+        except pygame.error as e:
+            print(f"Failed to load default asset: {e}")
+            return None
 
     def visibility_rects(self, bp, view):
         """
@@ -196,9 +235,58 @@ class Renderer:
         return np.transpose(rgb_obs, (2, 0, 1))
         # return torch.from_numpy(rgb_obs).permute(2, 0, 1)
 
+    def render_action_icons(self, action_entities):
+        """
+        Renders action icons based on the entities' specified actions, positions, and probabilities.
+
+        :param action_entities: List of entities representing actions.
+        :type action_entities: List[RenderEntity]
+        """
+
+        self.fill_bg()  # Clear the background
+        font = pygame.font.Font(None, 24)  # Initialize the font once for all text rendering
+
+        for action_entity in action_entities:
+            if not isinstance(action_entity.pos, np.ndarray) or action_entity.pos.ndim != 1:
+                print(f"Invalid position format for entity: {action_entity.pos}")
+                continue
+
+            # Load and potentially rotate the icon based on action name
+            img = self.assets[action_entity.name.lower()]
+            if hasattr(action_entity, 'rotation'):
+                img = pygame.transform.rotate(img, action_entity.rotation)
+                if img is None:
+                    print(f"Error: No asset available for '{action_entity.name}'. Skipping rendering this entity.")
+                    continue
+
+            # Blit the icon image
+            img_rect = img.get_rect(center=(action_entity.pos[0] * self.cell_size + self.cell_size // 2,
+                                            action_entity.pos[1] * self.cell_size + self.cell_size // 2))
+            self.screen.blit(img, img_rect)
+
+            # Render the probability next to the icon if it exists
+            if hasattr(action_entity, 'probability'):
+                prob_text = font.render(f"{action_entity.probability:.2f}", True, (255, 0, 0))
+                prob_text_rect = prob_text.get_rect(top=img_rect.bottom, left=img_rect.left)
+                self.screen.blit(prob_text, prob_text_rect)
+
+        pygame.display.flip()  # Update the display with all new blits
+        self.save_screen("route_graph")
+
+    def save_screen(self, filename):
+        """
+        Saves the current screen to a PNG file, appending a counter to ensure uniqueness.
+        :param filename: The base filename where to save the image.
+        :param agent_id: Unique identifier for the agent.
+        """
+        unique_filename = f"{filename}_agent_{self.save_counter}.png"
+        self.save_counter += 1
+        pygame.image.save(self.screen, unique_filename)
+        print(f"Image saved as {unique_filename}")
+
 
 if __name__ == '__main__':
-    renderer = Renderer(fps=2, cell_size=40)
+    renderer = Renderer(cell_size=40, fps=2)
     for pos_i in range(15):
         entity_1 = RenderEntity('agent_collision', [5, pos_i], 1, 'idle', 'idle')
         renderer.render([entity_1])

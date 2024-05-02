@@ -48,7 +48,7 @@ class EnvRecorder(Wrapper):
         """
         obs_type, obs, reward, done, info = self.env.step(actions)
         if not self.episodes or self._curr_episode in self.episodes:
-            summary: dict = self.env.summarize_state()
+            summary: dict = self.env.unwrapped.summarize_state()
             # summary.update(done=done)
             # summary.update({'episode': self._curr_episode})
             # TODO Protobuff Adjustments                 ######
