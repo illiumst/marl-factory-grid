@@ -41,4 +41,4 @@ if __name__ == '__main__':
                 print(f'Episode {episode} done...')
                 break
 
-        plot_routes(factory, agents, )
+        plot_routes(factory, agents)
