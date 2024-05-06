@@ -242,13 +242,13 @@ class Renderer:
 
     def render_action_icons(self, action_entities):
         """
-        Renders action icons based on the entities' specified actions, positions, and probabilities.
+        Renders action icons based on the entities' specified actions' name, position, rotation and probability.
+        Renders probabilities unequal 0.
 
         :param action_entities: List of entities representing actions.
         :type action_entities: List[RenderEntity]
         """
-
-        self.fill_bg()  # Clear the background
+        self.fill_bg()
         font = pygame.font.Font(None, 24)  # Initialize the font once for all text rendering
 
         for action_entity in action_entities:
@@ -258,11 +258,11 @@ class Renderer:
 
             # Load and potentially rotate the icon based on action name
             img = self.assets[action_entity.name.lower()]
+            if img is None:
+                print(f"Error: No asset available for '{action_entity.name}'. Skipping rendering this entity.")
+                continue
             if hasattr(action_entity, 'rotation'):
                 img = pygame.transform.rotate(img, action_entity.rotation)
-                if img is None:
-                    print(f"Error: No asset available for '{action_entity.name}'. Skipping rendering this entity.")
-                    continue
 
             # Blit the icon image
             img_rect = img.get_rect(center=(action_entity.pos[0] * self.cell_size + self.cell_size // 2,
