@@ -115,7 +115,7 @@ Rules:
 
   # Done Conditions
   DoneAtMaxStepsReached:
-    max_steps: 500
+    max_steps: 20
 
 Tests:
 #  MaintainerTest: {}
