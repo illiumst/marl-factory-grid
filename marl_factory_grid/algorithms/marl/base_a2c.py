@@ -1,6 +1,6 @@
-import numpy as np; import torch as th; import scipy as sp; import gym
-import os; from collections import deque; import matplotlib.pyplot as plt
-from tqdm import tqdm
+import numpy as np; import torch as th; import scipy as sp;
+from collections import deque
+from torch import nn
 
 # RLLab Magic for calculating the discounted return G(t) = R(t) + gamma * R(t-1)
 # cf. https://github.com/rll/rllab/blob/ba78e4c16dc492982e648f117875b22af3965579/rllab/misc/special.py#L107
@@ -14,8 +14,25 @@ class Net(th.nn.Module):
         for layer in [th.nn.Linear(*io), a()]])
     self.optimizer =  th.optim.Adam(self.net.parameters(), lr=lr)
 
+    # Initialize weights uniformly, so that for the policy net all actions have approximately the same probability in the beginning
+    for module in self.modules():
+      if isinstance(module, nn.Linear):
+        nn.init.uniform_(module.weight, a=-0.1, b=0.1)
+        if module.bias is not None:
+          nn.init.uniform_(module.bias, a=-0.1, b=0.1)
+
+  def save_model(self, path, agent_name):
+    th.save(self.net, f"{path}/{agent_name}_{self.__class__.__name__}_model.pth")
+
+  def save_model_parameters(self, path, agent_name):
+    th.save(self.net.state_dict(), f"{path}/{agent_name}_{self.__class__.__name__}_model_parameters.pth")
+
+  def load_model_parameters(self, path):
+    self.net.load_state_dict(th.load(path))
+    self.net.eval()
+
 class ValueNet(Net):
-  def __init__(self, obs_dim, hidden_sizes=[64,64], activation=th.nn.Tanh, lr=1e-3):
+  def __init__(self, obs_dim, hidden_sizes=[64,64], activation=th.nn.ReLU, lr=1e-3):
     super().__init__([obs_dim] + hidden_sizes + [1], activation, lr)
   def forward(self, obs): return self.net(obs)
   def loss(self, states, returns): return ((returns - self(states))**2).mean()

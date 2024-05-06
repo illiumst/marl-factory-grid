@@ -118,6 +118,10 @@ class Gamestate(object):
         self._floortile_graph = None
         self.tests = StepTests(*tests)
 
+        # Pointer that defines current spawn points of agents
+        for agent in self.agents_conf:
+            self.agents_conf[agent]["pos_pointer"] = 0
+
     def reset(self):
         self.curr_step = 0
         self.curr_actions = None
