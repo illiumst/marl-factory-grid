@@ -24,8 +24,8 @@ SCALE: str = 'scale'
 
 
 class Renderer:
-    BG_COLOR = (178, 190, 195)         # (99, 110, 114)
-    WHITE = (223, 230, 233)            # (200, 200, 200)
+    BG_COLOR = (178, 190, 195)  # (99, 110, 114)
+    WHITE = (223, 230, 233)  # (200, 200, 200)
     AGENT_VIEW_COLOR = (9, 132, 227)
     ASSETS = Path(__file__).parent.parent
 
@@ -59,7 +59,7 @@ class Renderer:
         self.grid_lines = grid_lines
         self.view_radius = view_radius
         pygame.init()
-        self.screen_size = (self.grid_w*cell_size, self.grid_h*cell_size)
+        self.screen_size = (self.grid_w * cell_size, self.grid_h * cell_size)
         self.screen = pygame.display.set_mode(self.screen_size)
         self.clock = pygame.time.Clock()
         self.custom_assets_path = custom_assets_path
@@ -99,18 +99,18 @@ class Renderer:
                              (self.lvl_padded_shape[1] - self.grid_w) // 2
 
         r, c = entity.pos
-        r, c = r - offset_r, c-offset_c
+        r, c = r - offset_r, c - offset_c
 
         img = self.assets[entity.name.lower()]
         if entity.value_operation == OPACITY:
-            img.set_alpha(255*entity.value)
+            img.set_alpha(255 * entity.value)
         elif entity.value_operation == SCALE:
             re = img.get_rect()
             img = pygame.transform.smoothscale(
-                img, (int(entity.value*re.width), int(entity.value*re.height))
+                img, (int(entity.value * re.width), int(entity.value * re.height))
             )
-        o = self.cell_size//2
-        r_, c_ = r*self.cell_size + o, c*self.cell_size + o
+        o = self.cell_size // 2
+        r_, c_ = r * self.cell_size + o, c * self.cell_size + o
         rect = img.get_rect()
         rect.centerx, rect.centery = c_, r_
         return dict(source=img, dest=rect)
@@ -182,13 +182,13 @@ class Renderer:
         :rtype: List[dict]
         """
         rects = []
-        for i, j in product(range(-self.view_radius, self.view_radius+1),
-                            range(-self.view_radius, self.view_radius+1)):
+        for i, j in product(range(-self.view_radius, self.view_radius + 1),
+                            range(-self.view_radius, self.view_radius + 1)):
             if view is not None:
-                if bool(view[self.view_radius+j, self.view_radius+i]):
+                if bool(view[self.view_radius + j, self.view_radius + i]):
                     visibility_rect = bp['dest'].copy()
-                    visibility_rect.centerx += i*self.cell_size
-                    visibility_rect.centery += j*self.cell_size
+                    visibility_rect.centerx += i * self.cell_size
+                    visibility_rect.centery += j * self.cell_size
                     shape_surf = pygame.Surface(visibility_rect.size, pygame.SRCALPHA)
                     pygame.draw.rect(shape_surf, self.AGENT_VIEW_COLOR, shape_surf.get_rect())
                     shape_surf.set_alpha(64)
@@ -222,7 +222,7 @@ class Renderer:
                     RenderEntity(agent.state, (agent.pos[0] + 0.12, agent.pos[1]), 0.48, SCALE)
                 )
                 textsurface = self.font.render(str(agent.id), False, (0, 0, 0))
-                text_blit = dict(source=textsurface, dest=(agent_blit['dest'].center[0]-.07*self.cell_size,
+                text_blit = dict(source=textsurface, dest=(agent_blit['dest'].center[0] - .07 * self.cell_size,
                                                            agent_blit['dest'].center[1]))
                 blits += [agent_blit, state_blit, text_blit]
 
@@ -270,7 +270,7 @@ class Renderer:
             self.screen.blit(img, img_rect)
 
             # Render the probability next to the icon if it exists
-            if hasattr(action_entity, 'probability'):
+            if hasattr(action_entity, 'probability') and action_entity.probability != 0:
                 prob_text = font.render(f"{action_entity.probability:.2f}", True, (255, 0, 0))
                 prob_text_rect = prob_text.get_rect(top=img_rect.bottom, left=img_rect.left)
                 self.screen.blit(prob_text, prob_text_rect)

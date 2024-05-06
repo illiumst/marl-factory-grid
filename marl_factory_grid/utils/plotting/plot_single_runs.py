@@ -71,33 +71,50 @@ rotation_mapping = {
     'east': ('cardinal', 270),
     'south': ('cardinal', 180),
     'west': ('cardinal', 90),
-    'northeast': ('diagonal', 0),
-    'southeast': ('diagonal', 270),
-    'southwest': ('diagonal', 180),
-    'northwest': ('diagonal', 90)
+    'north_east': ('diagonal', 0),
+    'south_east': ('diagonal', 270),
+    'south_west': ('diagonal', 180),
+    'north_west': ('diagonal', 90)
 }
+
+
+def swap_coordinates(positions):
+    if isinstance(positions, tuple) or (isinstance(positions, list) and len(positions) == 2):
+        # Single position, directly return swapped
+        return positions[1], positions[0]
+    elif isinstance(positions, np.ndarray) and positions.ndim == 1 and positions.shape[0] == 2:
+        # Single position in NumPy array
+        return positions[1], positions[0]
+    else:
+        # Assume it's an iterable of positions
+        return [(y, x) for x, y in positions]
 
 
 def plot_routes(factory, agents):
     renderer = Renderer(factory.map.level_shape, custom_assets_path={
         'cardinal': 'marl_factory_grid/utils/plotting/action_assets/cardinal.png',
         'diagonal': 'marl_factory_grid/utils/plotting/action_assets/diagonal.png',
-        'door': 'marl_factory_grid/utils/plotting/action_assets/door.png',
-        'wall': 'marl_factory_grid/environment/assets/wall.png'})
+        'use_door': 'marl_factory_grid/utils/plotting/action_assets/door_action.png',
+        'wall': 'marl_factory_grid/environment/assets/wall.png',
+        'machine_action': 'marl_factory_grid/utils/plotting/action_assets/machine_action.png',
+        'clean_action': 'marl_factory_grid/utils/plotting/action_assets/clean_action.png',
+        'destination_action': 'marl_factory_grid/utils/plotting/action_assets/destination_action.png',
+        'noop': 'marl_factory_grid/utils/plotting/action_assets/noop.png',
+        'charge_action': 'marl_factory_grid/utils/plotting/action_assets/charge_action.png'})
 
     wall_positions = factory.map.walls
+    swapped_wall_positions = swap_coordinates(wall_positions)
 
+    action_entities = []
     for index, agent in enumerate(agents):
-        action_entities = []
         # Add walls to the action_entities list
-        for pos in wall_positions:
+        for pos in swapped_wall_positions:
             wall_entity = RenderEntity(
                 name='wall',
-                probability=1.0,
+                probability=0,
                 pos=np.array(pos),
             )
             action_entities.append(wall_entity)
-        current_position = agent.spawn_position
 
         if hasattr(agent, 'action_probabilities'):
             # Handle RL agents with action probabilities
@@ -106,11 +123,18 @@ def plot_routes(factory, agents):
             # Handle deterministic agents by iterating through all actions in the list
             top_actions = [(action, 1.0) for action in agent.action_list]
 
+        current_position = agent.spawn_position
+        current_position = swap_coordinates(current_position)
+
         for action, probability in top_actions:
-            base_icon, rotation = rotation_mapping.get(action.lower(), ('north', 0))
-            icon_name = base_icon
-            new_position = action_to_coords(current_position, action.lower())
-            print(f"current position type and value: {type(current_position)}, {new_position}")
+            if action.lower() in rotation_mapping:
+                base_icon, rotation = rotation_mapping[action.lower()]
+                icon_name = 'cardinal' if 'diagonal' not in base_icon else 'diagonal'
+                new_position = action_to_coords(current_position, action.lower())
+            else:
+                icon_name = action.lower()
+                rotation = 0
+                new_position = current_position
 
             action_entity = RenderEntity(
                 name=icon_name,
@@ -118,10 +142,11 @@ def plot_routes(factory, agents):
                 probability=probability,
                 rotation=rotation
             )
+            # print(f"curr: {current_position}, new: {new_position}, pos: {action_entity.pos}")
             action_entities.append(action_entity)
             current_position = new_position
 
-        renderer.render_action_icons(action_entities)
+        renderer.render_action_icons(action_entities)   # move in/out loop for graph per agent or not
 
 
 def action_to_coords(current_position, action):
@@ -130,15 +155,14 @@ def action_to_coords(current_position, action):
         'south': (0, 1),
         'east': (1, 0),
         'west': (-1, 0),
-        'northeast': (1, -1),
-        'northwest': (-1, -1),
-        'southeast': (1, 1),
-        'southwest': (-1, 1)
+        'north_east': (1, -1),
+        'north_west': (-1, -1),
+        'south_east': (1, 1),
+        'south_west': (-1, 1)
     }
     delta = direction_mapping.get(action)
     if delta is not None:
         new_position = [current_position[0] + delta[0], current_position[1] + delta[1]]
         return new_position
-    print(f"No valid action found for {action}.")
+    print(f"No valid movement action found for {action}.")
     return current_position
-
