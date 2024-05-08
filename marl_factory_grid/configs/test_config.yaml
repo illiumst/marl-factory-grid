@@ -90,7 +90,7 @@ Entities:
 General:
   env_seed: 69
   individual_rewards: true
-  level_name: large
+  level_name: quadrant
   pomdp_r: 3
   verbose: false
   tests: false
