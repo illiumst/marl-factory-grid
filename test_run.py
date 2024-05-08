@@ -8,7 +8,7 @@ from marl_factory_grid.algorithms.static.TSP_item_agent import TSPItemAgent
 from marl_factory_grid.algorithms.static.TSP_target_agent import TSPTargetAgent
 from marl_factory_grid.environment.factory import Factory
 
-from marl_factory_grid.utils.plotting.plot_single_runs import plot_routes
+from marl_factory_grid.utils.plotting.plot_single_runs import plot_routes, plot_action_maps
 
 if __name__ == '__main__':
 
@@ -41,4 +41,4 @@ if __name__ == '__main__':
                 print(f'Episode {episode} done...')
                 break
 
-        plot_routes(factory, agents)
+        plot_action_maps(factory, agents)
