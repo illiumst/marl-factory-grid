@@ -2,6 +2,8 @@ from marl_factory_grid.algorithms.static.TSP_base_agent import TSPBaseAgent
 
 from marl_factory_grid.modules.destinations import constants as d
 from marl_factory_grid.modules.doors import constants as do
+from marl_factory_grid.environment import constants as c
+
 
 future_planning = 7
 
@@ -13,6 +15,7 @@ class TSPTargetAgent(TSPBaseAgent):
         Initializes a TSPTargetAgent that aims to reach destinations.
         """
         super(TSPTargetAgent, self).__init__(*args, **kwargs)
+        self.fallback_action = c.NOOP
 
     def _handle_doors(self, state):
         """
@@ -35,6 +38,7 @@ class TSPTargetAgent(TSPBaseAgent):
             action = self._use_door_or_move(door, d.DESTINATION)
         else:
             action = self._predict_move(d.DESTINATION)
+        self.action_list.append(action)
         # Translate the action_object to an integer to have the same output as any other model
         try:
             action_obj = next(action_i for action_i, a in enumerate(self.state.actions) if a.name == action)

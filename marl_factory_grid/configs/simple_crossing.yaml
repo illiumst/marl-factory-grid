@@ -20,7 +20,7 @@ Agents:
       - Destination
     # Avaiable Spawn Positions as list
     Positions:
-      - (1,2)
+      - (2,1)
     # It is okay to collide with other agents, so that
     #   they end up on the same position
     is_blocking_pos: false
@@ -33,7 +33,7 @@ Agents:
       - Other
       - Destination
     Positions:
-      - (2,1)
+      - (1,2)
     is_blocking_pos: false
 
 # Other noteworthy Entitites
@@ -45,9 +45,9 @@ Entities:
       SpawnDestinationsPerAgent:
         coords_or_quantity:
           Agent_horizontal:
-            - (3,2)
-          Agent_vertical:
             - (2,3)
+          Agent_vertical:
+            - (3,2)
     # Whether you want to provide a numeric Position observation.
     # GlobalPositions:
     #   normalized: false

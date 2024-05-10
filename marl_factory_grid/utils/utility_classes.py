@@ -33,6 +33,8 @@ class RenderEntity:
     id: int = 0
     aux: Any = None
     real_name: str = 'none'
+    probability: float = None  # Default to None if not used
+    rotation: int = 0          # Default rotation if not specified
 
 
 @dataclass
