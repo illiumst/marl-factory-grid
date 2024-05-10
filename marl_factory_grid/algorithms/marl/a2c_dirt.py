@@ -13,9 +13,7 @@ from marl_factory_grid.algorithms.marl.base_a2c import PolicyGradient, cumulate_
 from marl_factory_grid.algorithms.marl.memory import MARLActorCriticMemory
 from marl_factory_grid.algorithms.utils import add_env_props, instantiate_class
 from pathlib import Path
-import pandas as pd
 from collections import deque
-from stable_baselines3 import PPO
 
 from marl_factory_grid.environment.actions import Noop
 from marl_factory_grid.modules import Clean, DoorUse
@@ -53,22 +51,25 @@ class A2C:
         self.factory = add_env_props(train_cfg)
         self.eval_factory = add_env_props(eval_cfg)
         self.__training = True
+        self.train_cfg = train_cfg
+        self.eval_cfg = eval_cfg
         self.cfg = train_cfg
         self.n_agents = train_cfg[nms.AGENT][nms.N_AGENTS]
         self.setup()
         self.reward_development = []
+        self.action_probabilities = {agent_idx:[] for agent_idx in range(self.n_agents)}
 
     def setup(self):
-        # act_dim=6 for dirt_quadrant
         dirt_piles_positions = [self.factory.state.entities['DirtPiles'][pile_idx].pos for pile_idx in
                                 range(len(self.factory.state.entities['DirtPiles']))]
         if self.cfg[nms.ALGORITHM]["pile-observability"] == "all":
             obs_dim = 2 + 2*len(dirt_piles_positions)
         else:
             obs_dim = 4
-        self.agents = [PolicyGradient(self.factory, agent_id=i, obs_dim=obs_dim) for i in range(self.n_agents)]
-        # self.agents[0].pi.load_model_parameters("/Users/julian/Coding/Projects/PyCharmProjects/EDYS/study_out/run5/Wolfgang_PolicyNet_model_parameters.pth")
-        self.doors_exist = "Doors" in self.factory.state.entities.keys()
+        self.obs_dim = obs_dim
+        self.act_dim = 4
+        # act_dim=4, because we want the agent to only learn a routing problem
+        self.agents = [PolicyGradient(self.factory, agent_id=i, obs_dim=obs_dim, act_dim=self.act_dim) for i in range(self.n_agents)]
         if self.cfg[nms.ENV]["save_and_log"]:
             # Create results folder
             runs = os.listdir("../study_out/")
@@ -78,6 +79,12 @@ class A2C:
             os.mkdir(self.results_path)
             # Save settings in results folder
             self.save_configs()
+
+    def set_cfg(self, eval=False):
+        if eval:
+            self.cfg = self.eval_cfg
+        else:
+            self.cfg = self.train_cfg
 
     @classmethod
     def _as_torch(cls, x):
@@ -249,10 +256,50 @@ class A2C:
                 indices.append(list(range(start_index, end_index)))
                 start_index = end_index
 
+            # Static form: auxiliary pile, primary pile, auxiliary pile, ...
+            # -> Starting with index 0 even piles are auxiliary piles, odd piles are primary piles
+            if self.cfg[nms.ALGORITHM]["auxiliary_piles"] and "Doors" in env.state.entities.keys():
+                door_positions = [door.pos for door in env.state.entities["Doors"]]
+                agent_positions = [env.state.moving_entites[agent_idx].pos for agent_idx in range(self.n_agents)]
+                distances = {door_pos:[] for door_pos in door_positions}
+
+                # Calculate distance of every agent to every door
+                for door_pos in door_positions:
+                    for agent_pos in agent_positions:
+                        distances[door_pos].append(np.abs(door_pos[0] - agent_pos[0]) + np.abs(door_pos[1] - agent_pos[1]))
+
+                def duplicate_indices(lst, item):
+                    return [i for i, x in enumerate(lst) if x == item]
+
+                # Get agent indices of agents with same distance to door
+                affected_agents = {door_pos:{} for door_pos in door_positions}
+                for door_pos in distances.keys():
+                    dist = distances[door_pos]
+                    dist_set = set(dist)
+                    for d in dist_set:
+                        affected_agents[door_pos][str(d)] = duplicate_indices(dist, d)
+
+                # TODO: Make generic for multiple doors
+                updated_indices = []
+                if len(affected_agents[door_positions[0]]) == 0:
+                    # Remove auxiliary piles for all agents
+                    updated_indices = [[ele for ele in lst if ele % 2 != 0] for lst in indices]
+                else:
+                    for distance, agent_indices in affected_agents[door_positions[0]].items():
+                        # Pick random agent to keep auxiliary pile and remove it for all others
+                        #selected_agent = np.random.choice(agent_indices)
+                        selected_agent = 0
+                        for agent_idx in agent_indices:
+                            if agent_idx == selected_agent:
+                                updated_indices.append(indices[agent_idx])
+                            else:
+                                updated_indices.append([ele for ele in indices[agent_idx] if ele % 2 != 0])
+
+                indices = updated_indices
+
         return indices
 
-    def update_target_pile(self, env, agent_idx, target_pile):
-        indices = self.distribute_indices(env)
+    def update_target_pile(self, env, agent_idx, target_pile, indices):
         if self.cfg[nms.ALGORITHM]["pile-order"] in ["fixed", "random", "none", "dynamic", "smart"]:
             if target_pile[agent_idx] + 1 < len(self.get_dirt_piles_positions(env)):
                 target_pile[agent_idx] += 1
@@ -282,9 +329,7 @@ class A2C:
                 if door := self.door_is_close(env, agent_idx):
                     if door.is_closed:
                         action.append(next(action_i for action_i, a in enumerate(env.state["Agent"][agent_idx].actions) if a.name == "use_door"))
-                        if not det:
-                            # Include agent experience entry manually
-                            agent._episode.append((None, None, None, agent.vf(agent_obs)))
+                        # Don't include action in agent experience
                     else:
                         if det:
                             action.append(int(agent.pi(agent_obs, det=True)[0]))
@@ -335,7 +380,7 @@ class A2C:
             obs[0][1][x][y] = 1
             print("Missing agent position")
 
-    def handle_dirt(self, env, cleaned_dirt_piles, ordered_dirt_piles, target_pile, reward, done):
+    def handle_dirt(self, env, cleaned_dirt_piles, ordered_dirt_piles, target_pile, indices, reward, done):
         # Check if agent moved on field with dirt. If that is the case collect dirt automatically
         agent_positions = [env.state.moving_entites[agent_idx].pos for agent_idx in range(self.n_agents)]
         dirt_piles_positions = self.get_dirt_piles_positions(env)
@@ -354,7 +399,7 @@ class A2C:
 
             # Only simulate collecting the dirt
             for idx, pos in enumerate(agent_positions):
-                if pos in self.get_dirt_piles_positions(env) and not cleaned_dirt_piles[idx][pos]:
+                if pos in cleaned_dirt_piles[idx].keys() and not cleaned_dirt_piles[idx][pos]:
                     # print(env.state.entities["Agent"][idx], pos, idx, target_pile, ordered_dirt_piles)
                     # If dirt piles should be cleaned in a specific order
                     if ordered_dirt_piles[idx]:
@@ -362,7 +407,7 @@ class A2C:
                             reward[idx] += 50  # 1
                             cleaned_dirt_piles[idx][pos] = True
                             # Set pointer to next dirt pile
-                            self.update_target_pile(env, idx, target_pile)
+                            self.update_target_pile(env, idx, target_pile, indices)
                             self.update_ordered_dirt_piles(idx, cleaned_dirt_piles, ordered_dirt_piles, env, target_pile)
                             if self.cfg[nms.ALGORITHM]["pile_all_done"] == "single":
                                 done = True
@@ -370,13 +415,11 @@ class A2C:
                                     # Reset cleaned_dirt_piles indicator
                                     for pos in dirt_piles_positions:
                                         cleaned_dirt_piles[idx][pos] = False
-                            break
                     else:
                         reward[idx] += 50  # 1
                         cleaned_dirt_piles[idx][pos] = True
-                        break
 
-            if self.cfg[nms.ALGORITHM]["pile_all_done"] == "all":
+            if self.cfg[nms.ALGORITHM]["pile_all_done"] in ["all", "distributed"]:
                 if all([all(cleaned_dirt_piles[i].values()) for i in range(self.n_agents)]):
                     done = True
 
@@ -445,9 +488,10 @@ class A2C:
             env.render()
         n_steps, max_steps = [self.cfg[nms.ALGORITHM][k] for k in [nms.N_STEPS, nms.MAX_STEPS]]
         global_steps, episode = 0, 0
+        indices = self.distribute_indices(env)
         dirt_piles_positions = self.get_dirt_piles_positions(env)
         used_actions = {i:0 for i in range(len(env.state.entities["Agent"][0]._actions))} # Assume both agents have the same actions
-        target_pile = [partition[0] for partition in self.distribute_indices(env)]  # pointer that points to the target pile for each agent. (point to same pile, point to different piles)
+        target_pile = [partition[0] for partition in indices]  # pointer that points to the target pile for each agent. (point to same pile, point to different piles)
         cleaned_dirt_piles = [{pos: False for pos in dirt_piles_positions} for _ in range(self.n_agents)] # Have own dictionary for each agent
 
         while global_steps < max_steps:
@@ -457,7 +501,7 @@ class A2C:
             ordered_dirt_piles = self.get_ordered_dirt_piles(env, cleaned_dirt_piles, target_pile)
             # Reset current target pile at episode begin if all piles have to be cleaned in one episode
             if self.cfg[nms.ALGORITHM]["pile_all_done"] == "all":
-                target_pile = [partition[0] for partition in self.distribute_indices(env)]
+                target_pile = [partition[0] for partition in indices]
                 cleaned_dirt_piles = [{pos: False for pos in dirt_piles_positions} for _ in range(self.n_agents)]
             """passed_fields = [[] for _ in range(self.n_agents)]"""
 
@@ -476,7 +520,8 @@ class A2C:
 
             while not all(done):
                 # 0="North", 1="East", 2="South", 3="West", 4="Clean", 5="Noop"
-                action = self.use_door_or_move(env, obs, cleaned_dirt_piles, target_pile) if self.doors_exist else self.get_actions(obs)
+                action = self.use_door_or_move(env, obs, cleaned_dirt_piles, target_pile) \
+                    if "Doors" in env.state.entities.keys() else self.get_actions(obs)
                 used_actions[int(action[0])] += 1
                 _, next_obs, reward, done, info = env.step(action)
                 if done:
@@ -491,7 +536,7 @@ class A2C:
                 # with the updated observation. The observation that is saved to the rollout buffer, which resulted in reaching
                 # the target pile should not be updated before saving. Thus, the self.transform_observations call must happen
                 # before this method is called.
-                reward, done = self.handle_dirt(env, cleaned_dirt_piles, ordered_dirt_piles, target_pile, reward, done)
+                reward, done = self.handle_dirt(env, cleaned_dirt_piles, ordered_dirt_piles, target_pile, indices, reward, done)
 
                 if n_steps != 0 and (global_steps + 1) % n_steps == 0:
                     print("max_steps reached")
@@ -499,9 +544,11 @@ class A2C:
 
                 done = [done] * self.n_agents if isinstance(done, bool) else done
                 for ag_i, agent in enumerate(self.agents):
-                    # Add agent results into respective rollout buffers
-                    agent._episode[-1] = (next_obs[ag_i], action[ag_i], reward[ag_i], agent._episode[-1][-1])
-
+                    # For forced actions like door opening, we have to call the step function with this action, but
+                    # since we are not allowed to exceed the dimensions range, we can't log the corresponding step info.
+                    if action[ag_i] in range(self.act_dim):
+                        # Add agent results into respective rollout buffers
+                        agent._episode[-1] = (next_obs[ag_i], action[ag_i], reward[ag_i], agent._episode[-1][-1])
 
                 if self.cfg[nms.ENV][nms.TRAIN_RENDER]:
                     env.render()
@@ -522,7 +569,7 @@ class A2C:
 
         self.plot_reward_development()
         if self.cfg[nms.ENV]["save_and_log"]:
-            self.create_info_maps(env, used_actions, target_pile)
+            self.create_info_maps(env, used_actions)
             self.save_agent_models()
 
 
@@ -530,21 +577,29 @@ class A2C:
     @torch.inference_mode(True)
     def eval_loop(self, n_episodes, render=False):
         env = self.eval_factory
+        self.set_cfg(eval=True)
         if self.cfg[nms.ENV][nms.EVAL_RENDER]:
             env.render()
         episode, results = 0, []
         dirt_piles_positions = self.get_dirt_piles_positions(env)
-        target_pile = [partition[0] for partition in self.distribute_indices(env)]  # pointer that points to the target pile for each agent. (point to same pile, point to different piles)
-        cleaned_dirt_piles = [{pos: False for pos in dirt_piles_positions} for _ in range(self.n_agents)]
+        indices = self.distribute_indices(env)
+        target_pile = [partition[0] for partition in indices]  # pointer that points to the target pile for each agent. (point to same pile, point to different piles)
+        if self.cfg[nms.ALGORITHM]["pile_all_done"] == "distributed":
+            cleaned_dirt_piles = [{dirt_piles_positions[idx]: False for idx in indices[i]} for i in range(self.n_agents)]
+        else:
+            cleaned_dirt_piles = [{pos: False for pos in dirt_piles_positions} for _ in range(self.n_agents)]
 
         while episode < n_episodes:
             obs = env.reset()
             self.set_agent_spawnpoint(env)
             """obs = list(obs.values())"""
             # Reset current target pile at episode begin if all piles have to be cleaned in one episode
-            if self.cfg[nms.ALGORITHM]["pile_all_done"] == "all":
-                target_pile = [partition[0] for partition in self.distribute_indices(env)]
-                cleaned_dirt_piles = [{pos: False for pos in dirt_piles_positions} for _ in range(self.n_agents)]
+            if self.cfg[nms.ALGORITHM]["pile_all_done"] in ["all", "distributed"]:
+                target_pile = [partition[0] for partition in indices]
+                if self.cfg[nms.ALGORITHM]["pile_all_done"] == "distributed":
+                    cleaned_dirt_piles = [{dirt_piles_positions[idx]: False for idx in indices[i]} for i in range(self.n_agents)]
+                else:
+                    cleaned_dirt_piles = [{pos: False for pos in dirt_piles_positions} for _ in range(self.n_agents)]
 
             ordered_dirt_piles = self.get_ordered_dirt_piles(env, cleaned_dirt_piles, target_pile)
 
@@ -556,9 +611,9 @@ class A2C:
                 self.factory.state['Agent'][i].actions.extend([Clean(), Noop()])"""
 
             while not all(done):
-                action = self.use_door_or_move(env, obs, cleaned_dirt_piles, target_pile, det=True) if self.doors_exist else self.execute_policy(obs, env, cleaned_dirt_piles) # zero exploration
-                print(action)
-                _, next_obs, reward, done, info = env.step(action)
+                action = self.use_door_or_move(env, obs, cleaned_dirt_piles, target_pile, det=True) \
+                    if "Doors" in env.state.entities.keys() else self.execute_policy(obs, env, cleaned_dirt_piles) # zero exploration
+                _, next_obs, reward, done, info = env.step(action) # Note that this call seems to flip the lists in indices
                 if done:
                     print("DoneAtMaxStepsReached:", len(self.agents[0]._episode))
 
@@ -566,7 +621,7 @@ class A2C:
                 # reward = self.reward_distance(env, obs, target_pile, reward)
 
                 # Check and handle if agent is on field with dirt
-                reward, done = self.handle_dirt(env, cleaned_dirt_piles, ordered_dirt_piles, target_pile, reward, done)
+                reward, done = self.handle_dirt(env, cleaned_dirt_piles, ordered_dirt_piles, target_pile, indices, reward, done)
 
                 # Get transformed next_obs that might have been updated because of self.handle_dirt.
                 # For eval, where pile_all_done is "all", it's mandatory that the potential change of the target pile
@@ -614,7 +669,7 @@ class A2C:
             self.agents[idx].pi.load_model_parameters(f"{run_path}/{agent_name}_PolicyNet_model_parameters.pth")
             self.agents[idx].vf.load_model_parameters(f"{run_path}/{agent_name}_ValueNet_model_parameters.pth")
 
-    def create_info_maps(self, env, used_actions, target_pile):
+    def create_info_maps(self, env, used_actions):
         # Create value map
         all_valid_observations = self.get_all_observations(env)
         dirt_piles_positions = self.get_dirt_piles_positions(env)
@@ -624,7 +679,7 @@ class A2C:
                 max(t[0] for t in env.state.entities.floorlist) + 2, max(t[1] for t in env.state.entities.floorlist) + 2)
                 value_maps = [np.zeros(observations_shape) for _ in self.agents]
                 likeliest_action = [np.full(observations_shape, np.NaN) for _ in self.agents]
-                action_probabilities = [np.zeros((observations_shape[0], observations_shape[1], env.action_space[0].n)) for
+                action_probabilities = [np.zeros((observations_shape[0], observations_shape[1], self.act_dim)) for
                                         _ in self.agents]
                 for obs in all_valid_observations[obs_layer]:
                     """obs = self._as_torch(obs).view(-1).to(torch.float32)"""
@@ -663,6 +718,7 @@ class A2C:
                 txt_file.write("=======Action Probabilities=======\n")
                 print("=======Action Probabilities=======")
                 for agent_idx, pmap in enumerate(action_probabilities):
+                    self.action_probabilities[agent_idx].append(pmap)
                     txt_file.write(f"Action probability map of agent {agent_idx} for target pile {pos}:\n")
                     print(f"Action probability map of agent {agent_idx} for target pile {pos}:")
                     for d in range(pmap.shape[0]):

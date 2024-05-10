@@ -19,11 +19,8 @@ Agents:
   #Sigmund:
     #Actions:
       #- Move4
-      #- Clean
       #- Noop
     #Observations:
-      # - Walls
-      # - Other
       #- DirtPiles
       #- Self
     #Positions:
@@ -33,17 +30,13 @@ Agents:
   Wolfgang:
     Actions:
       - Move4
-      #- Clean
-      #- Noop
     Observations:
-      # - Walls
-      # - Other
       - DirtPiles
       - Self
     Positions:
       - (9,5)
-      #- (9,9)
-      #- (4,5)
+      - (9,9)
+      - (4,5)
 
 Entities:
   DirtPiles:

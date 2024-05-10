@@ -14,30 +14,30 @@ General:
 # In "two rooms one door" scenario 2 agents spawn in 2 different rooms that are connected by a single door. Their aim
 # is to reach the destination in the room they didn't spawn in leading to a conflict at the door.
 Agents:
+  #Sigmund:
+    #Actions:
+      #- Move4
+      #- DoorUse
+    #Observations:
+      #- DirtPiles
+      #- Self
+    #Positions:
+      #- (3,1)
+      #- (2,1)
   Wolfgang:
     Actions:
-      - Move8
+      - Move4
       - DoorUse
-      - Noop
-    Observations:
-      - DirtPiles
-      - Self
-    Positions:
-      - (3,1) # Agent spawnpoint
-  Sigmund:
-    Actions:
-      - Move8
-      - DoorUse
-      - Noop
     Observations:
       - DirtPiles
       - Self
     Positions:
       - (3,13)
+      - (2,13)
 
 Entities:
   DirtPiles:
-    coords_or_quantity: (3,12), (3,2)
+    coords_or_quantity: (2,13), (3,2) # (2,1), (3,12)
     initial_amount: 0.5 # <1 to ensure that the robot which first attempts to clean this field, can remove the dirt in one action
     clean_amount: 1
     dirt_spawn_r_var: 0
@@ -48,8 +48,8 @@ Entities:
 
 Rules:
   # Environment Dynamics
-  DoorAutoClose:
-    close_frequency: 10
+  #DoorAutoClose:
+    #close_frequency: 10
 
   # Utilities
   # This rule defines the collision mechanic, introduces a related DoneCondition and lets you specify rewards.
@@ -58,5 +58,5 @@ Rules:
 
   # Done Conditions
   #DoneOnAllDirtCleaned:
-  #DoneAtMaxStepsReached:
-    #max_steps: 100
+  #DoneAtMaxStepsReached: # Mayne Required since door blocking will result in infinite loop
+    #max_steps: 1000

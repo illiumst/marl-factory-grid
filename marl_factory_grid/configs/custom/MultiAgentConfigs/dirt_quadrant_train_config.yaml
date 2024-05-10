@@ -22,8 +22,6 @@ Agents:
       #- Clean
       #- Noop
     Observations:
-      # - Walls
-      # - Other
       - DirtPiles
       - Self
     Positions:
@@ -39,8 +37,6 @@ Agents:
       #- Clean
       #- Noop
     Observations:
-      # - Walls
-      # - Other
       - DirtPiles
       - Self
     Positions:

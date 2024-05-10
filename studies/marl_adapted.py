@@ -3,13 +3,13 @@ from pathlib import Path
 from marl_factory_grid.algorithms.marl.a2c_dirt import A2C
 from marl_factory_grid.algorithms.utils import load_yaml_file
 
-def dirt_quadrant_single_agent_training():
-    cfg_path = Path('../marl_factory_grid/algorithms/marl/configs/dirt_quadrant_config.yaml')
+def single_agent_training(config_name):
+    cfg_path = Path(f'../marl_factory_grid/algorithms/marl/configs/{config_name}_config.yaml')
 
     train_cfg = load_yaml_file(cfg_path)
     # Use environment config with fixed spawnpoints for eval
     eval_cfg = copy.deepcopy(train_cfg)
-    eval_cfg["env"]["env_name"] = "custom/dirt_quadrant_eval_config"
+    eval_cfg["env"]["env_name"] = f"custom/{config_name}_eval_config"
 
     print("Training phase")
     agent = A2C(train_cfg, eval_cfg)
@@ -17,21 +17,80 @@ def dirt_quadrant_single_agent_training():
     print("Evaluation phase")
     # Have consecutive episode for eval in single agent case
     train_cfg["algorithm"]["pile_all_done"] = "all"
-    # agent.load_agents(["run0", "run1"])
     agent.eval_loop(10)
+    print(agent.action_probabilities)
 
 
-def dirt_quadrant_multi_agent_eval():
-    cfg_path = Path('../marl_factory_grid/algorithms/marl/configs/MultiAgentConfigs/dirt_quadrant_config.yaml')
+def single_agent_eval(config_name, run):
+    cfg_path = Path(f'../marl_factory_grid/algorithms/marl/configs/{config_name}_config.yaml')
 
     train_cfg = load_yaml_file(cfg_path)
     # Use environment config with fixed spawnpoints for eval
     eval_cfg = copy.deepcopy(train_cfg)
-    eval_cfg["env"]["env_name"] = "custom/MultiAgentConfigs/dirt_quadrant_eval_config"
+    eval_cfg["env"]["env_name"] = f"custom/{config_name}_eval_config"
     agent = A2C(train_cfg, eval_cfg)
     print("Evaluation phase")
-    agent.load_agents(["run0", "run1"])
+    agent.load_agents(run)
     agent.eval_loop(10)
+
+
+def multi_agent_eval(config_name, runs, emergent_phenomenon=False):
+    cfg_path = Path(f'../marl_factory_grid/algorithms/marl/configs/MultiAgentConfigs/{config_name}_config.yaml')
+
+    train_cfg = load_yaml_file(cfg_path)
+    # Use environment config with fixed spawnpoints for eval
+    eval_cfg = copy.deepcopy(train_cfg)
+    eval_cfg["env"]["env_name"] = f"custom/MultiAgentConfigs/{config_name}_eval_config"
+    #  Sanity setting of required attributes and configs
+    if config_name == "two_rooms_one_door_modified":
+        if emergent_phenomenon:
+            eval_cfg["env"]["env_name"] = f"custom/MultiAgentConfigs/{config_name}_eval_config_emergent"
+            eval_cfg["algorithm"]["auxiliary_piles"] = False
+        else:
+            eval_cfg["algorithm"]["auxiliary_piles"] = True
+    elif config_name == "dirt_quadrant":
+        if emergent_phenomenon:
+            eval_cfg["algorithm"]["pile-order"] = "dynamic"
+        else:
+            eval_cfg["algorithm"]["pile-order"] = "smart"
+    agent = A2C(train_cfg, eval_cfg)
+    print("Evaluation phase")
+    agent.load_agents(runs)
+    agent.eval_loop(10)
+
+
+def dirt_quadrant_single_agent_training():
+    single_agent_training("dirt_quadrant")
+
+
+def two_rooms_one_door_modified_single_agent_training():
+    single_agent_training("two_rooms_one_door_modified")
+
+
+def dirt_quadrant_single_agent_eval(agent_name):
+    if agent_name == "Sigmund":
+        run = "run0"
+    elif agent_name == "Wolfgang":
+        run = "run4"
+    single_agent_eval("dirt_quadrant", [run])
+
+
+def two_rooms_one_door_modified_single_agent_eval(agent_name):
+    if agent_name == "Sigmund":
+        run = "run2"
+    elif agent_name == "Wolfgang":
+        run = "run3"
+    single_agent_eval("two_rooms_one_door_modified", [run])
+
+
+def dirt_quadrant_multi_agent_eval(emergent_phenomenon):
+    multi_agent_eval("dirt_quadrant", ["run0", "run1"], emergent_phenomenon)
+
+
+def two_rooms_one_door_modified_multi_agent_eval(emergent_phenomenon):
+    multi_agent_eval("two_rooms_one_door_modified", ["run2", "run3"], emergent_phenomenon)
+
+
 
 
 if __name__ == '__main__':

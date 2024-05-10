@@ -16,7 +16,7 @@ env:
   individual_rewards: True
   train_render:       False
   eval_render:        True
-  save_and_log:       False
+  save_and_log:       True
 method:               marl_factory_grid.algorithms.marl.LoopSEAC
 algorithm:
   gamma:              0.99
@@ -28,5 +28,6 @@ algorithm:
   pile-order:         "fixed" # Options: "fixed", "random", "none", "agents", "dynamic", "smart" (Use "fixed", "random" and "none" for single agent training and the other for multi agent inference)
   pile-observability: "single" # Options: "single", "all"
   pile_all_done:      "single" # Options: "single", "all" ("single" for training, "all" for eval)
+  auxiliary_piles:    False # Option that is only considered when pile-order = "agents"
   chunk-episode:      20000 # Chunk size. (0 = update networks with full episode at once)
 
