@@ -278,7 +278,7 @@ class Renderer:
         walls which cover the entire grid cell.
         """
         self.fill_bg()
-        font = pygame.font.Font(None, 18)
+        font = pygame.font.Font(None, 20)
 
         # prepare position dict to iterate over
         position_dict = defaultdict(list)
@@ -286,18 +286,7 @@ class Renderer:
             position_dict[tuple(entity.pos)].append(entity)
 
         for position, entities in position_dict.items():
-            num_entities = len(entities)
             entity_size = self.cell_size // 2  # Adjust size to fit multiple entities for non-wall entities
-
-            # Define offsets for each direction based on a quadrant layout within the cell
-            offsets = {
-                0: (-entity_size // 2, -entity_size // 2),  # North
-                90: (-entity_size // 2, entity_size // 2),  # East
-                180: (entity_size // 2, entity_size // 2),  # South
-                270: (entity_size // 2, -entity_size // 2)  # West
-            }
-
-            # Sort entities based on direction to ensure consistent positioning
             entities.sort(key=lambda x: x.rotation)
 
             for entity in entities:
@@ -306,31 +295,37 @@ class Renderer:
                     print(f"Error: No asset available for '{entity.name}'. Skipping rendering this entity.")
                     continue
 
-                img = pygame.transform.rotate(img, entity.rotation)
-
                 # Check if the entity is a wall and adjust the size and position accordingly
                 if entity.name == 'wall':
                     img = pygame.transform.scale(img, (self.cell_size, self.cell_size))
                     img_rect = img.get_rect(center=(position[0] * self.cell_size + self.cell_size // 2,
                                                     position[1] * self.cell_size + self.cell_size // 2))
                 else:
-                    img = pygame.transform.scale(img, (entity_size, entity_size))  # Scale down the image for arrows
+                    # Define offsets for each direction based on a quadrant layout within the cell
+                    offsets = {
+                        0: (0, -entity_size // 2),  # North
+                        90: (-entity_size // 2, 0),  # West
+                        180: (0, entity_size // 2),  # South
+                        270: (entity_size // 2, 0)  # East
+                    }
+                    img = pygame.transform.scale(img, (int(entity_size), entity_size))
                     offset = offsets.get(entity.rotation, (0, 0))
                     img_rect = img.get_rect(center=(
                         position[0] * self.cell_size + self.cell_size // 2 + offset[0],
                         position[1] * self.cell_size + self.cell_size // 2 + offset[1]
                     ))
 
+                img = pygame.transform.rotate(img, entity.rotation)
                 self.screen.blit(img, img_rect)
 
                 # Render the probability next to the icon if it exists and is non-zero
                 if entity.probability > 0 and entity.name != 'wall':
-                    formatted_probability = f"{entity.probability:.4f}"
-                    prob_text = font.render(formatted_probability, True, (0, 0, 0))  # Black color for readability
+                    formatted_probability = f"{entity.probability * 100:.2f}"
+                    prob_text = font.render(formatted_probability, True, (0, 0, 0))
                     prob_text_rect = prob_text.get_rect(center=img_rect.center)  # Center text on the arrow
                     self.screen.blit(prob_text, prob_text_rect)
 
-        pygame.display.flip()  # Update the display
+        pygame.display.flip()
         self.save_screen("multi_action_graph")
 
     def save_screen(self, filename):
