@@ -16,7 +16,7 @@ General:
 Agents:
   Wolfgang:
     Actions:
-      - Move8
+      - Move4
       - Noop
       - DestAction
       - DoorUse
@@ -29,7 +29,7 @@ Agents:
       - (3,1) # Agent spawnpoint
   Sigmund:
     Actions:
-      - Move8
+      - Move4
       - Noop
       - DestAction
       - DoorUse
@@ -67,6 +67,11 @@ Rules:
   # Init
   AssignGlobalPositions: { }
 
+  DoneAtDestinationReach:
+    reward_at_done: 1
+    # We want to give rewards only, when all targets have been reached.
+    condition: "all"
+
   # Done Conditions
   DoneAtMaxStepsReached:
-    max_steps: 100
+    max_steps: 50

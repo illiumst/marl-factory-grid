@@ -16,7 +16,7 @@ class DestAction(Action):
 
     def do(self, entity, state) -> Union[None, ActionResult]:
         if destination := state[d.DESTINATION].by_pos(entity.pos):
-            valid = destination.do_wait_action(entity)
+            valid = destination[0].do_wait_action(entity)
             state.print(f'{entity.name} just waited at {entity.pos}')
         else:
             valid = c.NOT_VALID

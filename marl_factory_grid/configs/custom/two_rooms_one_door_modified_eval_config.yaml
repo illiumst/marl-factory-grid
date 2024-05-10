@@ -58,5 +58,5 @@ Rules:
 
   # Done Conditions
   #DoneOnAllDirtCleaned:
-  #DoneAtMaxStepsReached: # Mayne Required since door blocking will result in infinite loop
-    #max_steps: 1000
+  DoneAtMaxStepsReached:
+    max_steps: 50
