@@ -121,7 +121,7 @@ def plot_routes(factory, agents):
 
 
 def plot_action_maps(factory, agents):
-    renderer = Renderer(factory.map.level_shape, custom_assets_path={
+    renderer = Renderer(factory.map.level_shape, cell_size=80, custom_assets_path={
         'green_arrow': 'marl_factory_grid/utils/plotting/action_assets/green_arrow.png',
         'yellow_arrow': 'marl_factory_grid/utils/plotting/action_assets/yellow_arrow.png',
         'red_arrow': 'marl_factory_grid/utils/plotting/action_assets/red_arrow.png',
