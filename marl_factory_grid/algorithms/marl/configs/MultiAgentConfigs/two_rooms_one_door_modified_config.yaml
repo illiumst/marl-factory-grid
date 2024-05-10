@@ -16,7 +16,8 @@ env:
   individual_rewards: True
   train_render:       False
   eval_render:        True
-  save_and_log:       False
+  save_and_log:       True
+  record:             False
 method:               marl_factory_grid.algorithms.marl.LoopSEAC
 algorithm:
   gamma:              0.99

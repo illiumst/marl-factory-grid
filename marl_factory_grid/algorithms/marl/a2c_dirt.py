@@ -2,6 +2,7 @@ import copy
 import os
 import random
 
+import imageio # requires ffmpeg install on operating system and imageio-ffmpeg package for python
 from scipy import signal
 import matplotlib.pyplot as plt
 import torch
@@ -79,6 +80,8 @@ class A2C:
             os.mkdir(self.results_path)
             # Save settings in results folder
             self.save_configs()
+            if self.cfg[nms.ENV]["record"]:
+                self.recorder = imageio.get_writer(f'{self.results_path}/pygame_recording.mp4', fps=5)
 
     def set_cfg(self, eval=False):
         if eval:
@@ -422,6 +425,15 @@ class A2C:
             if self.cfg[nms.ALGORITHM]["pile_all_done"] in ["all", "distributed"]:
                 if all([all(cleaned_dirt_piles[i].values()) for i in range(self.n_agents)]):
                     done = True
+            elif self.cfg[nms.ALGORITHM]["pile_all_done"] == "shared":
+                # End episode if both agents together have cleaned all dirt piles
+                meta_cleaned_dirt_piles = {pos: False for pos in dirt_piles_positions}
+                for agent_idx in range(self.n_agents):
+                    for (pos, cleaned) in cleaned_dirt_piles[agent_idx].items():
+                        if cleaned:
+                            meta_cleaned_dirt_piles[pos] = True
+                if all(meta_cleaned_dirt_piles.values()):
+                    done = True
 
         return reward, done
 
@@ -484,8 +496,6 @@ class A2C:
     @torch.no_grad()
     def train_loop(self):
         env = self.factory
-        if self.cfg[nms.ENV][nms.TRAIN_RENDER]:
-            env.render()
         n_steps, max_steps = [self.cfg[nms.ALGORITHM][k] for k in [nms.N_STEPS, nms.MAX_STEPS]]
         global_steps, episode = 0, 0
         indices = self.distribute_indices(env)
@@ -497,6 +507,8 @@ class A2C:
         while global_steps < max_steps:
             print(global_steps)
             obs = env.reset() # !!!!!!!!Commented seems to work better? Only if a fixed spawnpoint is given
+            if self.cfg[nms.ENV][nms.TRAIN_RENDER]:
+                env.render()
             self.set_agent_spawnpoint(env)
             ordered_dirt_piles = self.get_ordered_dirt_piles(env, cleaned_dirt_piles, target_pile)
             # Reset current target pile at episode begin if all piles have to be cleaned in one episode
@@ -578,8 +590,6 @@ class A2C:
     def eval_loop(self, n_episodes, render=False):
         env = self.eval_factory
         self.set_cfg(eval=True)
-        if self.cfg[nms.ENV][nms.EVAL_RENDER]:
-            env.render()
         episode, results = 0, []
         dirt_piles_positions = self.get_dirt_piles_positions(env)
         indices = self.distribute_indices(env)
@@ -591,10 +601,15 @@ class A2C:
 
         while episode < n_episodes:
             obs = env.reset()
+            if self.cfg[nms.ENV][nms.EVAL_RENDER]:
+                if self.cfg[nms.ENV]["save_and_log"] and self.cfg[nms.ENV]["record"]:
+                    env.set_recorder(self.recorder)
+                env.render()
+                env._renderer.fps = 5
             self.set_agent_spawnpoint(env)
             """obs = list(obs.values())"""
             # Reset current target pile at episode begin if all piles have to be cleaned in one episode
-            if self.cfg[nms.ALGORITHM]["pile_all_done"] in ["all", "distributed"]:
+            if self.cfg[nms.ALGORITHM]["pile_all_done"] in ["all", "distributed", "shared"]:
                 target_pile = [partition[0] for partition in indices]
                 if self.cfg[nms.ALGORITHM]["pile_all_done"] == "distributed":
                     cleaned_dirt_piles = [{dirt_piles_positions[idx]: False for idx in indices[i]} for i in range(self.n_agents)]
@@ -636,6 +651,10 @@ class A2C:
                 obs = next_obs
 
             episode += 1
+
+        # Properly finalize the video file
+        if self.cfg[nms.ENV]["save_and_log"] and self.cfg[nms.ENV]["record"]:
+            self.recorder.close()
 
     def plot_reward_development(self):
         smoothed_data = np.convolve(self.reward_development, np.ones(10) / 10, mode='valid')

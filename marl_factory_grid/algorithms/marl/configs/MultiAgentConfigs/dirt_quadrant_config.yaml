@@ -17,6 +17,7 @@ env:
   train_render:       False
   eval_render:        True
   save_and_log:       True
+  record:             False
 method:               marl_factory_grid.algorithms.marl.LoopSEAC
 algorithm:
   gamma:              0.99
@@ -27,7 +28,7 @@ algorithm:
   advantage:          "Advantage-AC" # Options: "Advantage-AC", "TD-Advantage-AC", "Reinforce"
   pile-order:         "dynamic" # Use "dynamic" to see emergent phenomenon and "smart" to prevent it
   pile-observability: "single" # Options: "single", "all"
-  pile_all_done:      "all" # Options: "single", "all" ("single" for training, "all" for eval)
+  pile_all_done:      "shared" # Options: "single", "all" ("single" for training, "all" for eval), "shared"
   auxiliary_piles:    False # Option that is only considered when pile-order = "agents"
   chunk-episode:      20000 # Chunk size. (0 = update networks with full episode at once)
 
