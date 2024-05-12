@@ -1,4 +1,5 @@
 import json
+import os
 import pickle
 from os import PathLike
 from pathlib import Path
@@ -121,50 +122,60 @@ def plot_routes(factory, agents):
 
 
 def plot_action_maps(factory, agents):
-    renderer = Renderer(factory.map.level_shape, cell_size=80, custom_assets_path={
-        'green_arrow': 'marl_factory_grid/utils/plotting/action_assets/green_arrow.png',
-        'yellow_arrow': 'marl_factory_grid/utils/plotting/action_assets/yellow_arrow.png',
-        'red_arrow': 'marl_factory_grid/utils/plotting/action_assets/red_arrow.png',
-        'grey_arrow': 'marl_factory_grid/utils/plotting/action_assets/grey_arrow.png',
-        'wall': 'marl_factory_grid/environment/assets/wall.png',
-    })
+    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    assets_path = {
+        'green_arrow': os.path.join(base_dir, 'utils', 'plotting', 'action_assets', 'green_arrow.png'),
+        'yellow_arrow': os.path.join(base_dir, 'utils', 'plotting', 'action_assets', 'yellow_arrow.png'),
+        'red_arrow': os.path.join(base_dir, 'utils', 'plotting', 'action_assets', 'red_arrow.png'),
+        'grey_arrow': os.path.join(base_dir, 'utils', 'plotting', 'action_assets', 'grey_arrow.png'),
+        'wall': os.path.join(base_dir, 'environment', 'assets', 'wall.png'),
+    }
+    renderer = Renderer(factory.map.level_shape, cell_size=80, custom_assets_path=assets_path)
 
     directions = ['north', 'east', 'south', 'west']
     wall_positions = swap_coordinates(factory.map.walls)
-    wall_entities = [RenderEntity(name='wall', probability=0, pos=np.array(pos)) for pos in wall_positions]
-    action_entities = list(wall_entities)
 
-    dummy_action_map = load_action_map("example_action_map.txt")
-    for agent in agents:
-        # if hasattr(agent, 'action_probability_map'):
-        # for y in range(len(agent.action_probability_map)):
-        for y in range(len(dummy_action_map)):
-            #     for x in range(len(agent.action_probability_map[y])):
-            for x in range(len(dummy_action_map[y])):
-                position = (x, y)
-                if position not in wall_positions:
-                    # action_probabilities = agent.action_probability_map[y][x]
-                    action_probabilities = dummy_action_map[y][x]
-                    if sum(action_probabilities) > 0:  # Ensure it's not all zeros which would indicate a wall
-                        # Sort actions by probability and assign colors
-                        sorted_indices = sorted(range(len(action_probabilities)),
-                                                key=lambda i: -action_probabilities[i])
-                        colors = ['green_arrow', 'yellow_arrow', 'red_arrow', 'grey_arrow']
+    for agent_index, agent in enumerate(agents):
+        if hasattr(agent, 'action_probabilities'):
+            action_probabilities = unpack_action_probabilities(agent.action_probabilities)
+            for action_map_index, probabilities_map in enumerate(action_probabilities[agent_index]):
+                wall_entities = [RenderEntity(name='wall', probability=0, pos=np.array(pos)) for pos in wall_positions]
+                action_entities = list(wall_entities)
+                for position, probabilities in probabilities_map.items():
+                    if position not in wall_positions:
+                        if np.any(probabilities) > 0:  # Ensure it's not all zeros which would indicate a wall
+                            sorted_indices = sorted(range(len(probabilities)), key=lambda i: -probabilities[i])
+                            colors = ['green_arrow', 'yellow_arrow', 'red_arrow', 'grey_arrow']
 
-                        for rank, direction_index in enumerate(sorted_indices):
-                            action = directions[direction_index]
-                            probability = action_probabilities[direction_index]
-                            arrow_color = colors[rank]
-                            if probability > 0:
-                                action_entity = RenderEntity(
-                                    name=arrow_color,
-                                    pos=position,
-                                    probability=probability,
-                                    rotation=direction_index * 90
-                                )
-                                action_entities.append(action_entity)
+                            for rank, direction_index in enumerate(sorted_indices):
+                                action = directions[direction_index]
+                                probability = probabilities[direction_index]
+                                arrow_color = colors[rank]
+                                if probability > 0:
+                                    action_entity = RenderEntity(
+                                        name=arrow_color,
+                                        pos=position,
+                                        probability=probability,
+                                        rotation=direction_index * 90
+                                    )
+                                    action_entities.append(action_entity)
 
-    renderer.render_multi_action_icons(action_entities)
+                renderer.render_multi_action_icons(action_entities)
+
+
+def unpack_action_probabilities(action_probabilities):
+    unpacked = {}
+    for agent_index, maps in action_probabilities.items():
+        unpacked[agent_index] = []
+        for map_index, probability_map in enumerate(maps):
+            single_map = {}
+            for y in range(len(probability_map)):
+                for x in range(len(probability_map[y])):
+                    position = (x, y)
+                    probabilities = probability_map[y][x]
+                    single_map[position] = probabilities
+            unpacked[agent_index].append(single_map)
+    return unpacked
 
 
 def load_action_map(file_path):
