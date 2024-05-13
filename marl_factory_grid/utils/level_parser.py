@@ -96,8 +96,9 @@ class LevelParser(object):
                         e = e_class.from_coordinates(np.argwhere(level_array == c.VALUE_OCCUPIED_CELL).tolist(),
                                                      self.size, entity_kwargs=e_kwargs)
                     else:
-                        raise ValueError(f'No {e_class} (Symbol: {e_class.symbol}) could be found!\n'
-                                         f'Check your level file!')
+                        print(f'Warning: No {e_class.__name__} (Symbol: {symbol}) found in level file.'
+                              f' Initializing with empty position.')
+                        e = e_class.from_coordinates([], self.size, entity_kwargs=e_kwargs)
             else:
                 e = e_class(self.size, **e_kwargs)
             entities.add_items({e.name: e})
