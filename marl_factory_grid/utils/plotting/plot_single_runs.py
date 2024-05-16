@@ -14,6 +14,8 @@ from marl_factory_grid.utils.plotting.plotting_utils import prepare_plot
 from marl_factory_grid.utils.renderer import Renderer
 from marl_factory_grid.utils.utility_classes import RenderEntity
 
+from marl_factory_grid.modules.clean_up import constants as d
+
 
 def plot_single_run(run_path: Union[str, PathLike], use_tex: bool = False, column_keys=None,
                     file_key: str = 'monitor', file_ext: str = 'pkl'):
@@ -97,7 +99,7 @@ def plot_routes(factory, agents):
             top_actions = sorted(agent.action_probabilities.items(), key=lambda x: -x[1])[:4]
         else:
             # Handle deterministic agents by iterating through all actions in the list
-            top_actions = [(action, 1.0) for action in agent.action_list]
+            top_actions = [(action, 0) for action in agent.action_list]
 
         for action, probability in top_actions:
             if action.lower() in rotation_mapping:
@@ -121,7 +123,7 @@ def plot_routes(factory, agents):
     renderer.render_single_action_icons(action_entities)  # move in/out loop for graph per agent or not
 
 
-def plot_action_maps(factory, agents):
+def plot_action_maps(factory, agents, result_path):
     base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     assets_path = {
         'green_arrow': os.path.join(base_dir, 'utils', 'plotting', 'action_assets', 'green_arrow.png'),
@@ -129,6 +131,8 @@ def plot_action_maps(factory, agents):
         'red_arrow': os.path.join(base_dir, 'utils', 'plotting', 'action_assets', 'red_arrow.png'),
         'grey_arrow': os.path.join(base_dir, 'utils', 'plotting', 'action_assets', 'grey_arrow.png'),
         'wall': os.path.join(base_dir, 'environment', 'assets', 'wall.png'),
+        'target_dirt': os.path.join(base_dir, 'utils', 'plotting', 'action_assets', 'target_dirt.png'),
+        'spawn_pos': os.path.join(base_dir, 'utils', 'plotting', 'action_assets', 'spawn_pos.png')
     }
     renderer = Renderer(factory.map.level_shape, cell_size=80, custom_assets_path=assets_path)
 
@@ -139,8 +143,15 @@ def plot_action_maps(factory, agents):
         if hasattr(agent, 'action_probabilities'):
             action_probabilities = unpack_action_probabilities(agent.action_probabilities)
             for action_map_index, probabilities_map in enumerate(action_probabilities[agent_index]):
+
                 wall_entities = [RenderEntity(name='wall', probability=0, pos=np.array(pos)) for pos in wall_positions]
                 action_entities = list(wall_entities)
+                target_dirt_pos = factory.state.entities[d.DIRT][action_map_index].pos
+                action_entities.append(
+                    RenderEntity(name='target_dirt', probability=0, pos=swap_coordinates(target_dirt_pos)))
+                action_entities.append(RenderEntity(name='spawn_pos', probability=0, pos=swap_coordinates(
+                    factory.state.agent_spawn_positions[agent_index])))
+
                 for position, probabilities in probabilities_map.items():
                     if position not in wall_positions:
                         if np.any(probabilities) > 0:  # Ensure it's not all zeros which would indicate a wall
@@ -160,7 +171,7 @@ def plot_action_maps(factory, agents):
                                     )
                                     action_entities.append(action_entity)
 
-                renderer.render_multi_action_icons(action_entities)
+                renderer.render_multi_action_icons(action_entities, result_path)
 
 
 def unpack_action_probabilities(action_probabilities):
@@ -176,12 +187,6 @@ def unpack_action_probabilities(action_probabilities):
                     single_map[position] = probabilities
             unpacked[agent_index].append(single_map)
     return unpacked
-
-
-def load_action_map(file_path):
-    with open(file_path, 'r') as file:
-        action_map = json.load(file)
-    return action_map
 
 
 def swap_coordinates(positions):

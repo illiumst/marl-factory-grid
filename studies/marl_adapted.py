@@ -18,7 +18,6 @@ def single_agent_training(config_name):
     # Have consecutive episode for eval in single agent case
     train_cfg["algorithm"]["pile_all_done"] = "all"
     agent.eval_loop(10)
-    print(agent.action_probabilities)
 
 
 def single_agent_eval(config_name, run):

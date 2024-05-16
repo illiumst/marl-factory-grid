@@ -92,7 +92,6 @@ class LevelParser(object):
                 for symbol in symbols:
                     level_array = h.one_hot_level(self._parsed_level, symbol=symbol)
                     if np.any(level_array):
-                        # TODO: Get rid of this!
                         e = e_class.from_coordinates(np.argwhere(level_array == c.VALUE_OCCUPIED_CELL).tolist(),
                                                      self.size, entity_kwargs=e_kwargs)
                     else:

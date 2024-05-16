@@ -186,6 +186,11 @@ class SpawnAgents(Rule):
             if isinstance(rule, marl_factory_grid.environment.rules.AgentSpawnRule):
                 spawn_rule = rule.spawn_rule
 
+        if not hasattr(state, 'agent_spawn_positions'):
+            state.agent_spawn_positions = []
+        else:
+            state.agent_spawn_positions.clear()
+
         agents = state[c.AGENT]
         for agent_name, agent_conf in state.agents_conf.items():
             empty_positions = state.entities.empty_positions
@@ -198,11 +203,14 @@ class SpawnAgents(Rule):
             if position := self._get_position(spawn_rule, positions, empty_positions, positions_pointer):
                 assert state.check_pos_validity(position), 'smth went wrong....'
                 agents.add_item(Agent(actions, observations, position, str_ident=agent_name, **other))
+                state.agent_spawn_positions.append(position)
             elif positions:
                 raise ValueError(f'It was not possible to spawn an Agent on the available position: '
                                  f'\n{agent_conf["positions"].copy()}')
             else:
-                agents.add_item(Agent(actions, observations, empty_positions.pop(), str_ident=agent_name, **other))
+                chosen_position = empty_positions.pop()
+                agents.add_item(Agent(actions, observations, chosen_position, str_ident=agent_name, **other))
+                state.agent_spawn_positions.append(chosen_position)
         return []
 
     def _get_position(self, spawn_rule, positions, empty_positions, positions_pointer):

@@ -1,3 +1,4 @@
+import os
 import sys
 
 from pathlib import Path
@@ -272,10 +273,10 @@ class Renderer:
         pygame.display.flip()  # Update the display with all new blits
         self.save_screen("route_graph")
 
-    def render_multi_action_icons(self, action_entities):
+    def render_multi_action_icons(self, action_entities, result_path):
         """
-        Renders multiple action icons at the same position without overlap and arranges them based on direction, except for
-        walls which cover the entire grid cell.
+        Renders multiple action icons at the same position without overlap and arranges them based on direction, except
+        for walls, spawn and target positions, which cover the entire grid cell.
         """
         self.fill_bg()
         font = pygame.font.Font(None, 20)
@@ -286,7 +287,7 @@ class Renderer:
             position_dict[tuple(entity.pos)].append(entity)
 
         for position, entities in position_dict.items():
-            entity_size = self.cell_size // 2  # Adjust size to fit multiple entities for non-wall entities
+            entity_size = self.cell_size // 2
             entities.sort(key=lambda x: x.rotation)
 
             for entity in entities:
@@ -296,7 +297,7 @@ class Renderer:
                     continue
 
                 # Check if the entity is a wall and adjust the size and position accordingly
-                if entity.name == 'wall':
+                if entity.name in ['wall', 'target_dirt', 'spawn_pos']:
                     img = pygame.transform.scale(img, (self.cell_size, self.cell_size))
                     img_rect = img.get_rect(center=(position[0] * self.cell_size + self.cell_size // 2,
                                                     position[1] * self.cell_size + self.cell_size // 2))
@@ -326,17 +327,22 @@ class Renderer:
                     self.screen.blit(prob_text, prob_text_rect)
 
         pygame.display.flip()
-        self.save_screen("multi_action_graph")
+        self.save_screen("multi_action_graph", result_path)
 
-    def save_screen(self, filename):
+    def save_screen(self, filename, result_path):
         """
         Saves the current screen to a PNG file, appending a counter to ensure uniqueness.
         :param filename: The base filename where to save the image.
-        :param agent_id: Unique identifier for the agent.
+        :param result_path: path to out folder
         """
+        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        out_dir = os.path.join(base_dir, 'study_out', result_path)
+        if not os.path.exists(out_dir):
+            os.makedirs(out_dir)
         unique_filename = f"{filename}_agent_{self.save_counter}.png"
         self.save_counter += 1
-        pygame.image.save(self.screen, unique_filename)
+        full_path = os.path.join(out_dir, unique_filename)
+        pygame.image.save(self.screen, full_path)
         print(f"Image saved as {unique_filename}")
 
 
