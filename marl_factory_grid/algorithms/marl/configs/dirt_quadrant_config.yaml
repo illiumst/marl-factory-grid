@@ -24,7 +24,7 @@ algorithm:
   entropy_coef:       0.01
   vf_coef:            0.05
   n_steps:            0 # How much experience should be sampled at most (n-TD) until the next value and policy update is performed. Default 0: MC
-  max_steps:          270000
+  max_steps:          240000
   advantage:          "Advantage-AC" # Options: "Advantage-AC", "TD-Advantage-AC", "Reinforce"
   pile-order:         "fixed" # Options: "fixed", "random", "none", "agents", "dynamic", "smart" (Use "fixed", "random" and "none" for single agent training and the other for multi agent inference)
   pile-observability: "single" # Options: "single", "all"
