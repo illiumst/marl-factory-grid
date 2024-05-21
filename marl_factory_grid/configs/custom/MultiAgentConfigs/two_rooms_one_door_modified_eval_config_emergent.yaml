@@ -59,4 +59,4 @@ Rules:
   # Done Conditions
   #DoneOnAllDirtCleaned:
   DoneAtMaxStepsReached:
-    max_steps: 50
+    max_steps: 30

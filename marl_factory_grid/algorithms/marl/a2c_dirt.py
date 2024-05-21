@@ -384,6 +384,14 @@ class A2C:
             obs[0][1][x][y] = 1
             print("Missing agent position")
 
+    def get_all_cleaned_dirt_piles(self, dirt_piles_positions, cleaned_dirt_piles):
+        meta_cleaned_dirt_piles = {pos: False for pos in dirt_piles_positions}
+        for agent_idx in range(self.n_agents):
+            for (pos, cleaned) in cleaned_dirt_piles[agent_idx].items():
+                if cleaned:
+                    meta_cleaned_dirt_piles[pos] = True
+        return meta_cleaned_dirt_piles
+
     def handle_dirt(self, env, cleaned_dirt_piles, ordered_dirt_piles, target_pile, indices, reward, done):
         # Check if agent moved on field with dirt. If that is the case collect dirt automatically
         agent_positions = [env.state.moving_entites[agent_idx].pos for agent_idx in range(self.n_agents)]
@@ -428,12 +436,7 @@ class A2C:
                     done = True
             elif self.cfg[nms.ALGORITHM]["pile_all_done"] == "shared":
                 # End episode if both agents together have cleaned all dirt piles
-                meta_cleaned_dirt_piles = {pos: False for pos in dirt_piles_positions}
-                for agent_idx in range(self.n_agents):
-                    for (pos, cleaned) in cleaned_dirt_piles[agent_idx].items():
-                        if cleaned:
-                            meta_cleaned_dirt_piles[pos] = True
-                if all(meta_cleaned_dirt_piles.values()):
+                if all(self.get_all_cleaned_dirt_piles(dirt_piles_positions, cleaned_dirt_piles).values()):
                     done = True
 
         return reward, done
