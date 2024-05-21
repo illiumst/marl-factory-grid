@@ -3,6 +3,7 @@ import numpy as np
 from marl_factory_grid.algorithms.static.TSP_base_agent import TSPBaseAgent
 
 from marl_factory_grid.modules.items import constants as i
+from marl_factory_grid.environment import constants as c
 
 future_planning = 7
 inventory_size  = 3
@@ -22,6 +23,7 @@ class TSPItemAgent(TSPBaseAgent):
         """
         super(TSPItemAgent, self).__init__(*args, **kwargs)
         self.mode = mode
+        self.fallback_action = c.NOOP
 
     def predict(self, *_, **__):
         item_at_position = self._env.state[i.ITEM].by_pos(self.state.pos)
@@ -36,6 +38,7 @@ class TSPItemAgent(TSPBaseAgent):
             action = self._use_door_or_move(door, i.DROP_OFF if self.mode == MODE_BRING else i.ITEM)
         else:
             action = self._choose()
+        self.action_list.append(action)
         # Translate the action_object to an integer to have the same output as any other model
         try:
             action_obj = next(action_i for action_i, a in enumerate(self.state.actions) if a.name == action)

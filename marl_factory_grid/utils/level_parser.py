@@ -42,6 +42,7 @@ class LevelParser(object):
         level_array = h.one_hot_level(self._parsed_level, c.SYMBOL_WALL)
         self.level_shape = level_array.shape
         self.size = self.pomdp_r ** 2 if self.pomdp_r else np.prod(self.level_shape)
+        self.walls = None
 
     def get_coordinates_for_symbol(self, symbol, negate=False) -> np.ndarray:
         """
@@ -74,6 +75,7 @@ class LevelParser(object):
         # Walls
         walls = Walls.from_coordinates(self.get_coordinates_for_symbol(c.SYMBOL_WALL), self.size)
         entities.add_items({c.WALLS: walls})
+        self.walls = self.get_coordinates_for_symbol(c.SYMBOL_WALL)
 
         # Agents
         entities.add_items({c.AGENT: Agents(self.size)})
@@ -90,12 +92,12 @@ class LevelParser(object):
                 for symbol in symbols:
                     level_array = h.one_hot_level(self._parsed_level, symbol=symbol)
                     if np.any(level_array):
-                        # TODO: Get rid of this!
                         e = e_class.from_coordinates(np.argwhere(level_array == c.VALUE_OCCUPIED_CELL).tolist(),
                                                      self.size, entity_kwargs=e_kwargs)
                     else:
-                        raise ValueError(f'No {e_class} (Symbol: {e_class.symbol}) could be found!\n'
-                                         f'Check your level file!')
+                        print(f'Warning: No {e_class.__name__} (Symbol: {symbol}) found in level file.'
+                              f' Initializing with empty position.')
+                        e = e_class.from_coordinates([], self.size, entity_kwargs=e_kwargs)
             else:
                 e = e_class(self.size, **e_kwargs)
             entities.add_items({e.name: e})
