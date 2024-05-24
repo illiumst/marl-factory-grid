@@ -93,4 +93,4 @@ def two_rooms_one_door_modified_multi_agent_eval(emergent_phenomenon):
 
 
 if __name__ == '__main__':
-    dirt_quadrant_single_agent_training()
+    dirt_quadrant_5_multi_agent_ctde_eval(True)

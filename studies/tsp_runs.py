@@ -104,4 +104,4 @@ def two_rooms_one_door_modified_multi_agent_tsp(emergent_phenomenon):
 
 
 if __name__ == '__main__':
-    dirt_quadrant_multi_agent_tsp(False)
+    two_rooms_one_door_modified_multi_agent_tsp(False)
