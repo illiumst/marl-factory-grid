@@ -7,7 +7,10 @@ from typing import Union
 
 import numpy as np
 import pandas as pd
+import torch
+from matplotlib import pyplot as plt
 
+from marl_factory_grid.algorithms.rl.utils import _as_torch
 from marl_factory_grid.utils.helpers import IGNORED_DF_COLUMNS
 
 from marl_factory_grid.utils.renderer import Renderer
@@ -199,3 +202,68 @@ direction_mapping = {
     'south_east': (1, 1),
     'south_west': (-1, 1)
 }
+
+
+def plot_reward_development(reward_development, cfg, results_path):
+    smoothed_data = np.convolve(reward_development, np.ones(10) / 10, mode='valid')
+    plt.plot(smoothed_data)
+    plt.ylim([-10, max(smoothed_data) + 20])
+    plt.title('Smoothed Reward Development')
+    plt.xlabel('Episode')
+    plt.ylabel('Reward')
+    if cfg["env"]["save_and_log"]:
+        plt.savefig(f"{results_path}/smoothed_reward_development.png")
+    plt.show()
+
+
+def create_info_maps(env, used_actions, all_valid_observations, dirt_piles_positions, results_path, agents, act_dim,
+                     a2c_instance):
+    # Create value map
+    with open(f"{results_path}/info_maps.txt", "w") as txt_file:
+        for obs_layer, pos in enumerate(dirt_piles_positions):
+            observations_shape = (
+                max(t[0] for t in env.state.entities.floorlist) + 2,
+                max(t[1] for t in env.state.entities.floorlist) + 2)
+            value_maps = [np.zeros(observations_shape) for _ in agents]
+            likeliest_action = [np.full(observations_shape, np.NaN) for _ in agents]
+            action_probabilities = [np.zeros((observations_shape[0], observations_shape[1], act_dim)) for
+                                    _ in agents]
+            for obs in all_valid_observations[obs_layer]:
+                for idx, agent in enumerate(agents):
+                    x, y = int(obs[0]), int(obs[1])
+                    try:
+                        value_maps[idx][x][y] = agent.vf(obs)
+                        probs = agent.pi.distribution(obs).probs
+                        likeliest_action[idx][x][y] = torch.argmax(
+                            probs)  # get the likeliest action at the current agent position
+                        action_probabilities[idx][x][y] = probs
+                    except:
+                        pass
+
+            txt_file.write("=======Value Maps=======\n")
+            for agent_idx, vmap in enumerate(value_maps):
+                txt_file.write(f"Value map of agent {agent_idx} for target pile {pos}:\n")
+                vmap = _as_torch(vmap).round(decimals=4)
+                max_digits = max(len(str(vmap.max().item())), len(str(vmap.min().item())))
+                for idx, row in enumerate(vmap):
+                    txt_file.write(' '.join(f" {elem:>{max_digits + 1}}" for elem in row.tolist()))
+                    txt_file.write("\n")
+            txt_file.write("\n")
+            txt_file.write("=======Likeliest Action=======\n")
+            for agent_idx, amap in enumerate(likeliest_action):
+                txt_file.write(f"Likeliest action map of agent {agent_idx} for target pile {pos}:\n")
+                txt_file.write(np.array2string(amap))
+            txt_file.write("\n")
+            txt_file.write("=======Action Probabilities=======\n")
+            for agent_idx, pmap in enumerate(action_probabilities):
+                a2c_instance.action_probabilities[agent_idx].append(pmap)
+                txt_file.write(f"Action probability map of agent {agent_idx} for target pile {pos}:\n")
+                for d in range(pmap.shape[0]):
+                    row = '['
+                    for r in range(pmap.shape[1]):
+                        row += "[" + ', '.join(f"{x:7.4f}" for x in pmap[d, r]) + "]"
+                    txt_file.write(row + "]")
+                    txt_file.write("\n")
+            txt_file.write(f"Used actions: {used_actions}\n")
+
+    return action_probabilities
