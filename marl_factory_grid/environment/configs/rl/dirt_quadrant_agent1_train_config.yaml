@@ -5,61 +5,38 @@ General:
   individual_rewards: true
   # The level.txt file to load from marl_factory_grid/levels
   level_name: quadrant
-  # Radius of Partially observable Markov decision process
-  pomdp_r: 0 # default 3
+  # View Radius
+  pomdp_r: 0 # 0 = full observability
   # Print all messages and events
   verbose: false
   # Run tests
   tests: false
 
-# In the "clean and bring" Scenario one agent aims to pick up all items and drop them at drop-off locations while all
-# other agents aim to clean dirt piles.
+# Define Agents, their actions, observations and spawnpoints
 Agents:
   # The clean agents
-  #Sigmund:
-    #Actions:
-      #- Move4
-    #Observations:
-      #- DirtPiles
-      #- Self
-    #Positions:
-      #- (9,1)
-      #- (1,1)
-      #- (2,4)
-      #- (4,7)
-      #- (6,8)
-      #- (7,9)
-      #- (2,4)
-      #- (4,7)
-      #- (6,8)
-      #- (7,9)
-      #- (9,9)
-      #- (9,1)
-  Wolfgang:
+  Agent1:
     Actions:
       - Move4
     Observations:
       - DirtPiles
       - Self
     Positions:
-      - (9,5)
+      - (9,1)
       - (1,1)
       - (2,4)
       - (4,7)
-      - (6,8)
       - (7,9)
       - (2,4)
       - (4,7)
-      - (6,8)
       - (7,9)
       - (9,9)
-      - (9,5)
-
+      - (9,1)
 
 Entities:
   DirtPiles:
-    coords_or_quantity: (1, 1), (2,4), (4,7), (6,8), (7,9), (9,9)  # (4,7), (2,4), (1, 1) #(1, 1), (2,4), (4,7), (7,9), (9,9) # (1, 1), (1,2), (1,3), (2,4), (2,5), (3,6), (4,7), (5,8), (6,8), (7,9), (8,9), (9,9)
-    initial_amount: 0.5 # <1 to ensure that the robot which first attempts to clean this field, can remove the dirt in one action
+    coords_or_quantity: (1, 1), (2,4), (4,7), (7,9), (9,9) # Locations of dirt piles
+    initial_amount: 0.5
     clean_amount: 1
     dirt_spawn_r_var: 0
     max_global_amount: 12
@@ -67,7 +44,6 @@ Entities:
 
 # Rules section specifies the rules governing the dynamics of the environment.
 Rules:
-
   # Utilities
   # This rule defines the collision mechanic, introduces a related DoneCondition and lets you specify rewards.
   # Can be omitted/ignored if you do not want to take care of collisions at all.
@@ -78,8 +54,6 @@ Rules:
   # Define the conditions for the environment to stop. Either success or a fail conditions.
   # The environment stops when all dirt is cleaned
   DoneOnAllDirtCleaned:
-  #DoneAtMaxStepsReached: # An episode should last for at most max_steps steps
-    #max_steps: 1000
 
   # Define how agents spawn.
   # Options: "random" (Spawn agent at a random position from the list of defined positions)

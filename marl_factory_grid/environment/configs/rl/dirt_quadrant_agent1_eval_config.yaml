@@ -24,19 +24,10 @@ Agents:
       - Self
     Positions:
       - (9,1)
-  Agent2:
-    Actions:
-      - Move4
-      - Noop
-    Observations:
-      - DirtPiles
-      - Self
-    Positions:
-      - (9,5)
 
 Entities:
   DirtPiles:
-    coords_or_quantity: (9,9), (7,9), (4,7), (2,4), (1, 1)
+    coords_or_quantity: (1, 1), (2,4), (4,7), (7,9), (9,9) # Locations of dirt piles
     initial_amount: 0.5
     clean_amount: 1
     dirt_spawn_r_var: 0

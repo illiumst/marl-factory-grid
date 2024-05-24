@@ -1,40 +1,38 @@
 General:
+  # RNG-seed to sample the same "random" numbers every time, to make the different runs comparable.
   env_seed: 69
   # Individual vs global rewards
   individual_rewards: true
   # The level.txt file to load from marl_factory_grid/levels
   level_name: two_rooms
-  # View Radius; 0 = full observatbility
-  pomdp_r: 0
+  # View Radius
+  pomdp_r: 0 # 0 = full observability
   # Print all messages and events
   verbose: false
   # Run tests
   tests: false
 
-# In "two rooms one door" scenario 2 agents spawn in 2 different rooms that are connected by a single door. Their aim
-# is to reach the destination in the room they didn't spawn in leading to a conflict at the door.
+# Define Agents, their actions, observations and spawnpoints
 Agents:
-  Wolfgang:
+  Agent1:
     Actions:
       - Move4
       - Noop
-      - DestAction
+      - DestAction # Action that is performed when the destination is reached
       - DoorUse
     Observations:
       - Walls
-      - Other
       - Doors
       - Destination
     Positions:
-      - (3,1) # Agent spawnpoint
-  Sigmund:
+      - (3,1)
+  Agent2:
     Actions:
       - Move4
       - Noop
       - DestAction
       - DoorUse
     Observations:
-      - Other
       - Walls
       - Destination
       - Doors
@@ -45,10 +43,11 @@ Entities:
   Destinations:
     spawnrule:
       SpawnDestinationsPerAgent:
+        # Target coordinates
         coords_or_quantity:
-          Wolfgang:
-            - (3,12) # Target coordinates
-          Sigmund:
+          Agent1:
+            - (3,12)
+          Agent2:
             - (3,2)
 
   Doors: { }
@@ -68,10 +67,12 @@ Rules:
   AssignGlobalPositions: { }
 
   DoneAtDestinationReach:
-    reward_at_done: 1
+    reward_at_done: 50
     # We want to give rewards only, when all targets have been reached.
     condition: "all"
 
   # Done Conditions
+  # Define the conditions for the environment to stop. Either success or a fail conditions
+  # Environment execution stops after 30 steps
   DoneAtMaxStepsReached:
-    max_steps: 50
+    max_steps: 30

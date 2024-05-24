@@ -6,7 +6,7 @@ from networkx.algorithms.approximation import traveling_salesman as tsp
 import time
 import copy
 
-from marl_factory_grid.algorithms.static.utils import points_to_graph
+from marl_factory_grid.algorithms.tsp.utils import points_to_graph
 from marl_factory_grid.modules.doors import constants as do
 from marl_factory_grid.environment import constants as c
 from marl_factory_grid.utils.helpers import MOVEMAP

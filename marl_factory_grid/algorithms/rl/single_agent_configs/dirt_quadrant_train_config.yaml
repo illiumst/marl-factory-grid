@@ -1,0 +1,17 @@
+env:
+  classname:          marl_factory_grid.environment.configs.rl
+  env_name:           "rl/dirt_quadrant_agent1_train_config"
+  n_agents:           1
+  train_render:       False
+  save_and_log:       True
+algorithm:
+  gamma:              0.99
+  n_steps:            0 # How much experience should be sampled at most (n-TD) until the next value and policy update is performed. Default 0: MC
+  chunk-episode:      20000 # Chunk size. (0 = update networks with full episode at once)
+  max_steps:          140000
+  advantage:          "Advantage-AC" # Options: "Advantage-AC", "TD-Advantage-AC", "Reinforce"
+  pile-order:         "fixed" # Options: "fixed", "random", "none", "agents", "dynamic", "smart" (Use "fixed", "random" and "none" for single agent training and the other for multi agent inference)
+  pile-observability: "single" # Options: "single", "all"
+  pile_all_done:      "single" # Options: "single", "all" ("single" for training, "all" for eval)
+  auxiliary_piles:    False # Dirt quadrant does not use this option
+

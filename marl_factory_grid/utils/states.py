@@ -3,7 +3,7 @@ from typing import List, Tuple
 
 import numpy as np
 
-from marl_factory_grid.algorithms.static.utils import points_to_graph
+from marl_factory_grid.algorithms.tsp.utils import points_to_graph
 from marl_factory_grid.environment import constants as c
 from marl_factory_grid.environment.entity.entity import Entity
 from marl_factory_grid.environment.rules import Rule, SpawnAgents

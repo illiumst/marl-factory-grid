@@ -1,4 +1,4 @@
-from marl_factory_grid.algorithms.static.TSP_base_agent import TSPBaseAgent
+from marl_factory_grid.algorithms.tsp.TSP_base_agent import TSPBaseAgent
 
 from marl_factory_grid.modules.clean_up import constants as di
 from marl_factory_grid.environment import constants as c

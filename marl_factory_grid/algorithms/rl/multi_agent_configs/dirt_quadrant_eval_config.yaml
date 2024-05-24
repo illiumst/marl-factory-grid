@@ -1,0 +1,11 @@
+env:
+  classname:          marl_factory_grid.environment.configs.marl_eval
+  env_name:           "marl_eval/dirt_quadrant_eval_config"
+  n_agents:           2
+  eval_render:        True
+  save_and_log:       False
+algorithm:
+  pile-order:         "smart" # Use "dynamic" to see emergent phenomenon and "smart" to prevent it
+  pile-observability: "single" # Options: "single", "all"
+  pile_all_done:      "shared" # Options: "single", "all" ("single" for training, "all" for eval), "shared"
+  auxiliary_piles:    False # Dirt quadrant does not use this option

@@ -4,9 +4,10 @@ from pathlib import Path
 
 from tqdm import trange
 
-from marl_factory_grid.algorithms.static.TSP_dirt_agent import TSPDirtAgent
-from marl_factory_grid.algorithms.static.TSP_target_agent import TSPTargetAgent
+from marl_factory_grid.algorithms.tsp.TSP_dirt_agent import TSPDirtAgent
+from marl_factory_grid.algorithms.tsp.TSP_target_agent import TSPTargetAgent
 from marl_factory_grid.environment.factory import Factory
+
 
 def get_dirt_quadrant_tsp_agents(emergent_phenomenon, factory):
     agents = [TSPDirtAgent(factory, 0), TSPDirtAgent(factory, 1)]
@@ -31,19 +32,18 @@ def get_dirt_quadrant_tsp_agents(emergent_phenomenon, factory):
             for u, v, weight in agent._position_graph.edges(data='weight'):
                 agent._position_graph[u][v]['weight'] = edge_costs[f"{u}-{v}"]
 
-            """for u, v, weight in agent._position_graph.edges(data='weight'):
-                            print(f"Edge ({u}-{v}) has weight: {weight}")"""
 
     return agents
 
 
-def get_two_rooms_one_door_modified_tsp_agents(emergent_phenomenon, factory):
+def get_two_rooms_tsp_agents(emergent_phenomenon, factory):
     agents = [TSPTargetAgent(factory, 0), TSPTargetAgent(factory, 1)]
     if not emergent_phenomenon:
         print(emergent_phenomenon)
         for agent in agents:
             agent._position_graph[(3, 1)][(3, 2)]['weight'] = 4
     return agents
+
 
 def run_tsp_setting(config_name, emergent_phenomenon):
     # Render at each step?
@@ -74,7 +74,7 @@ def run_tsp_setting(config_name, emergent_phenomenon):
         if config_name == "dirt_quadrant":
             agents = get_dirt_quadrant_tsp_agents(emergent_phenomenon, factory)
         elif config_name == "two_rooms":
-            agents = get_two_rooms_one_door_modified_tsp_agents(emergent_phenomenon, factory)
+            agents = get_two_rooms_tsp_agents(emergent_phenomenon, factory)
         else:
             print("Config name does not exist. Abort...")
             break
@@ -95,7 +95,7 @@ def dirt_quadrant_multi_agent_tsp(emergent_phenomenon):
     run_tsp_setting("dirt_quadrant", emergent_phenomenon)
 
 
-def two_rooms_one_door_modified_multi_agent_tsp(emergent_phenomenon):
+def two_rooms_multi_agent_tsp(emergent_phenomenon):
     run_tsp_setting("two_rooms", emergent_phenomenon)
 
 

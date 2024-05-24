@@ -1,44 +1,23 @@
 import copy
 import os
 import random
-
-import imageio # requires ffmpeg install on operating system and imageio-ffmpeg package for python
-from scipy import signal
 import matplotlib.pyplot as plt
 import torch
-from typing import Union, List, Dict
+from typing import Union, List
 import numpy as np
-from torch.distributions import Categorical
 
-from marl_factory_grid.algorithms.marl.base_a2c import PolicyGradient, cumulate_discount
-from marl_factory_grid.algorithms.utils import add_env_props, instantiate_class
-from pathlib import Path
-from collections import deque
-
-from marl_factory_grid.environment.actions import Noop
-from marl_factory_grid.modules import Clean, DoorUse
+from marl_factory_grid.algorithms.rl.base_a2c import PolicyGradient, cumulate_discount
+from marl_factory_grid.algorithms.utils import add_env_props
 from marl_factory_grid.utils.plotting.plot_single_runs import plot_action_maps
 
 
 class Names:
-    REWARD          = 'reward'
-    DONE            = 'done'
-    ACTION          = 'action'
-    OBSERVATION     = 'observation'
-    LOGITS          = 'logits'
-    HIDDEN_ACTOR    = 'hidden_actor'
-    HIDDEN_CRITIC   = 'hidden_critic'
-    AGENT           = 'agent'
     ENV             = 'env'
     ENV_NAME        = 'env_name'
     N_AGENTS        = 'n_agents'
     ALGORITHM       = 'algorithm'
     MAX_STEPS       = 'max_steps'
     N_STEPS         = 'n_steps'
-    BUFFER_SIZE     = 'buffer_size'
-    CRITIC          = 'critic'
-    BATCH_SIZE      = 'bnatch_size'
-    N_ACTIONS       = 'n_actions'
     TRAIN_RENDER    = 'train_render'
     EVAL_RENDER     = 'eval_render'
 
@@ -55,7 +34,7 @@ class A2C:
         self.train_cfg = train_cfg
         self.eval_cfg = eval_cfg
         self.cfg = train_cfg
-        self.n_agents = train_cfg[nms.AGENT][nms.N_AGENTS]
+        self.n_agents = train_cfg[nms.ENV][nms.N_AGENTS]
         self.setup()
         self.reward_development = []
         self.action_probabilities = {agent_idx:[] for agent_idx in range(self.n_agents)}
@@ -80,8 +59,6 @@ class A2C:
             os.mkdir(self.results_path)
             # Save settings in results folder
             self.save_configs()
-            if self.cfg[nms.ENV]["record"]:
-                self.recorder = imageio.get_writer(f'{self.results_path}/pygame_recording.mp4', fps=5)
 
     def set_cfg(self, eval=False):
         if eval:
@@ -610,8 +587,6 @@ class A2C:
             obs = env.reset()
             self.set_agent_spawnpoint(env)
             if self.cfg[nms.ENV][nms.EVAL_RENDER]:
-                if self.cfg[nms.ENV]["save_and_log"] and self.cfg[nms.ENV]["record"]:
-                    env.set_recorder(self.recorder)
                 if self.cfg[nms.ALGORITHM]["auxiliary_piles"]:
                     # Don't render auxiliary piles
                     auxiliary_piles = [pile for idx, pile in enumerate(env.state.entities['DirtPiles']) if idx % 2 == 0]
@@ -664,10 +639,6 @@ class A2C:
 
             episode += 1
 
-        # Properly finalize the video file
-        if self.cfg[nms.ENV]["save_and_log"] and self.cfg[nms.ENV]["record"]:
-            self.recorder.close()
-
     def plot_reward_development(self):
         smoothed_data = np.convolve(self.reward_development, np.ones(10) / 10, mode='valid')
         plt.plot(smoothed_data)
@@ -689,16 +660,14 @@ class A2C:
 
     def save_agent_models(self):
         for idx, agent in enumerate(self.agents):
-            agent_name = list(self.factory.state.agents_conf.keys())[idx]
-            agent.pi.save_model_parameters(self.results_path, agent_name)
-            agent.vf.save_model_parameters(self.results_path, agent_name)
+            agent.pi.save_model_parameters(self.results_path)
+            agent.vf.save_model_parameters(self.results_path)
 
     def load_agents(self, runs_list):
         for idx, run in enumerate(runs_list):
             run_path = f"../study_out/{run}"
-            agent_name = list(self.eval_factory.state.agents_conf.keys())[idx]
-            self.agents[idx].pi.load_model_parameters(f"{run_path}/{agent_name}_PolicyNet_model_parameters.pth")
-            self.agents[idx].vf.load_model_parameters(f"{run_path}/{agent_name}_ValueNet_model_parameters.pth")
+            self.agents[idx].pi.load_model_parameters(f"{run_path}/PolicyNet_model_parameters.pth")
+            self.agents[idx].vf.load_model_parameters(f"{run_path}/ValueNet_model_parameters.pth")
 
     def create_info_maps(self, env, used_actions):
         # Create value map

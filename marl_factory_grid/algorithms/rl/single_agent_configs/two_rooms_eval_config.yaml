@@ -1,0 +1,13 @@
+env:
+  classname:          marl_factory_grid.environment.configs.rl
+  env_name:           "rl/two_rooms_eval_config"
+  n_agents:           1
+  eval_render:        True
+  save_and_log:       False
+algorithm:
+  pile-order:         "fixed" # Options: "fixed", "random", "none", "agents", "dynamic", "smart" (Use "fixed", "random" and "none" for single agent training and the other for multi agent inference)
+  pile-observability: "single" # Options: "single", "all"
+  pile_all_done:      "all" # Options: "single", "all" ("single" for training, "all" for eval)
+  auxiliary_piles:    False # Auxiliary piles are only used during marl eval
+
+

@@ -293,9 +293,6 @@ class Factory(gym.Env):
                     render_entity.aux = self.obs_builder.curr_lightmaps[render_entity.real_name]
         return self._renderer.render(render_entities)
 
-    def set_recorder(self, recorder):
-        self._recorder = recorder
-
     def summarize_header(self):
         header = {'rec_step': self.state.curr_step}
         for entity_group in (x for x in self.state if x.name in ['Walls', 'DropOffLocations', 'ChargePods']):

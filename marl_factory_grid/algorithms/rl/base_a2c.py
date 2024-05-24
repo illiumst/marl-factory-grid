@@ -19,11 +19,11 @@ class Net(th.nn.Module):
         if module.bias is not None:
           nn.init.uniform_(module.bias, a=-0.1, b=0.1)
 
-  def save_model(self, path, agent_name):
-    th.save(self.net, f"{path}/{agent_name}_{self.__class__.__name__}_model.pth")
+  def save_model(self, path):
+    th.save(self.net, f"{path}/{self.__class__.__name__}_model.pth")
 
-  def save_model_parameters(self, path, agent_name):
-    th.save(self.net.state_dict(), f"{path}/{agent_name}_{self.__class__.__name__}_model_parameters.pth")
+  def save_model_parameters(self, path):
+    th.save(self.net.state_dict(), f"{path}/{self.__class__.__name__}_model_parameters.pth")
 
   def load_model_parameters(self, path):
     self.net.load_state_dict(th.load(path))
