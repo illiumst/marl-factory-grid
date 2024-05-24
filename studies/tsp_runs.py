@@ -2,11 +2,9 @@ import os
 import time
 from pathlib import Path
 
-import imageio
 from tqdm import trange
 
 from marl_factory_grid.algorithms.static.TSP_dirt_agent import TSPDirtAgent
-from marl_factory_grid.algorithms.static.TSP_item_agent import TSPItemAgent
 from marl_factory_grid.algorithms.static.TSP_target_agent import TSPTargetAgent
 from marl_factory_grid.environment.factory import Factory
 
@@ -52,7 +50,7 @@ def run_tsp_setting(config_name, emergent_phenomenon):
     render = True
 
     # Path to config File
-    path = Path(f'../marl_factory_grid/configs/{config_name}.yaml')
+    path = Path(f'../marl_factory_grid/environment/configs/tsp/{config_name}.yaml')
 
     # Create results folder
     runs = os.listdir("../study_out/")
@@ -67,18 +65,15 @@ def run_tsp_setting(config_name, emergent_phenomenon):
     with open(f"{results_path}/env_config.txt", "w") as txt_file:
         txt_file.write(str(factory.conf))
 
-    recorder = imageio.get_writer(f'{results_path}/pygame_recording.mp4', fps=5)
-
     for episode in trange(1):
         _ = factory.reset()
         done = False
         if render:
-            factory.set_recorder(recorder)
             factory.render()
             factory._renderer.fps = 5
         if config_name == "dirt_quadrant":
             agents = get_dirt_quadrant_tsp_agents(emergent_phenomenon, factory)
-        elif config_name == "two_rooms_one_door_modified":
+        elif config_name == "two_rooms":
             agents = get_two_rooms_one_door_modified_tsp_agents(emergent_phenomenon, factory)
         else:
             print("Config name does not exist. Abort...")
@@ -92,16 +87,14 @@ def run_tsp_setting(config_name, emergent_phenomenon):
                 print(f'Episode {episode} done...')
                 break
 
-    recorder.close()
-
 
 def dirt_quadrant_multi_agent_tsp(emergent_phenomenon):
     run_tsp_setting("dirt_quadrant", emergent_phenomenon)
 
 
 def two_rooms_one_door_modified_multi_agent_tsp(emergent_phenomenon):
-    run_tsp_setting("two_rooms_one_door_modified", emergent_phenomenon)
+    run_tsp_setting("two_rooms", emergent_phenomenon)
 
 
 if __name__ == '__main__':
-    two_rooms_one_door_modified_multi_agent_tsp(False)
+    dirt_quadrant_multi_agent_tsp(False)

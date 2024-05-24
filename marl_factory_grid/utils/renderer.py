@@ -196,7 +196,7 @@ class Renderer:
                     rects.append(dict(source=shape_surf, dest=visibility_rect))
         return rects
 
-    def render(self, entities, recorder):
+    def render(self, entities):
         """
         Renders the entities on the screen.
 
@@ -229,11 +229,6 @@ class Renderer:
 
         for blit in blits:
             self.screen.blit(**blit)
-
-        if recorder:
-            frame = pygame.surfarray.array3d(self.screen)
-            frame = np.transpose(frame, (1, 0, 2))  # Transpose to (height, width, channels)
-            recorder.append_data(frame)
 
         pygame.display.flip()
         self.clock.tick(self.fps)

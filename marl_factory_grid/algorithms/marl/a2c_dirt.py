@@ -11,7 +11,6 @@ import numpy as np
 from torch.distributions import Categorical
 
 from marl_factory_grid.algorithms.marl.base_a2c import PolicyGradient, cumulate_discount
-from marl_factory_grid.algorithms.marl.memory import MARLActorCriticMemory
 from marl_factory_grid.algorithms.utils import add_env_props, instantiate_class
 from pathlib import Path
 from collections import deque

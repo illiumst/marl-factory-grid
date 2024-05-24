@@ -58,7 +58,7 @@ def load_yaml_file(path: Path):
 
 def add_env_props(cfg):
     # Path to config File
-    env_path = Path(f'../marl_factory_grid/configs/{cfg["env"]["env_name"]}.yaml')
+    env_path = Path(f'../marl_factory_grid/environment/configs/{cfg["env"]["env_name"]}.yaml')
 
     # Env Init
     factory = Factory(env_path)

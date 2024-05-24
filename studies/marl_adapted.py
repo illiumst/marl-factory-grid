@@ -4,12 +4,12 @@ from marl_factory_grid.algorithms.marl.a2c_dirt import A2C
 from marl_factory_grid.algorithms.utils import load_yaml_file
 
 def single_agent_training(config_name):
-    cfg_path = Path(f'../marl_factory_grid/algorithms/marl/configs/{config_name}_config.yaml')
+    cfg_path = Path(f'../marl_factory_grid/algorithms/marl/single_agent_configs/{config_name}_config.yaml')
 
     train_cfg = load_yaml_file(cfg_path)
     # Use environment config with fixed spawnpoints for eval
     eval_cfg = copy.deepcopy(train_cfg)
-    eval_cfg["env"]["env_name"] = f"custom/{config_name}_eval_config"
+    eval_cfg["env"]["env_name"] = f"rl/{config_name}_eval_config"
 
     print("Training phase")
     agent = A2C(train_cfg, eval_cfg)
@@ -21,12 +21,12 @@ def single_agent_training(config_name):
 
 
 def single_agent_eval(config_name, run):
-    cfg_path = Path(f'../marl_factory_grid/algorithms/marl/configs/{config_name}_config.yaml')
+    cfg_path = Path(f'../marl_factory_grid/algorithms/marl/single_agent_configs/{config_name}_config.yaml')
 
     train_cfg = load_yaml_file(cfg_path)
     # Use environment config with fixed spawnpoints for eval
     eval_cfg = copy.deepcopy(train_cfg)
-    eval_cfg["env"]["env_name"] = f"custom/{config_name}_eval_config"
+    eval_cfg["env"]["env_name"] = f"rl/{config_name}_eval_config"
     agent = A2C(train_cfg, eval_cfg)
     print("Evaluation phase")
     agent.load_agents(run)
@@ -34,16 +34,13 @@ def single_agent_eval(config_name, run):
 
 
 def multi_agent_eval(config_name, runs, emergent_phenomenon=False):
-    cfg_path = Path(f'../marl_factory_grid/algorithms/marl/configs/MultiAgentConfigs/{config_name}_config.yaml')
+    cfg_path = Path(f'../marl_factory_grid/algorithms/marl/multi_agent_configs/{config_name}_config.yaml')
 
-    train_cfg = load_yaml_file(cfg_path)
-    # Use environment config with fixed spawnpoints for eval
-    eval_cfg = copy.deepcopy(train_cfg)
-    eval_cfg["env"]["env_name"] = f"custom/MultiAgentConfigs/{config_name}_eval_config"
+    eval_cfg = load_yaml_file(cfg_path)
     #  Sanity setting of required attributes and configs
-    if config_name == "two_rooms_one_door_modified":
+    if config_name == "two_rooms":
         if emergent_phenomenon:
-            eval_cfg["env"]["env_name"] = f"custom/MultiAgentConfigs/{config_name}_eval_config_emergent"
+            eval_cfg["env"]["env_name"] = f"marl_eval/{config_name}_eval_config_emergent"
             eval_cfg["algorithm"]["auxiliary_piles"] = False
         else:
             eval_cfg["algorithm"]["auxiliary_piles"] = True
@@ -52,7 +49,7 @@ def multi_agent_eval(config_name, runs, emergent_phenomenon=False):
             eval_cfg["algorithm"]["pile-order"] = "dynamic"
         else:
             eval_cfg["algorithm"]["pile-order"] = "smart"
-    agent = A2C(train_cfg, eval_cfg)
+    agent = A2C(train_cfg=eval_cfg, eval_cfg=eval_cfg)
     print("Evaluation phase")
     agent.load_agents(runs)
     agent.eval_loop(1)
@@ -63,7 +60,7 @@ def dirt_quadrant_single_agent_training():
 
 
 def two_rooms_one_door_modified_single_agent_training():
-    single_agent_training("two_rooms_one_door_modified")
+    single_agent_training("two_rooms")
 
 
 def dirt_quadrant_single_agent_eval(agent_name):
@@ -79,7 +76,7 @@ def two_rooms_one_door_modified_single_agent_eval(agent_name):
         run = "run2"
     elif agent_name == "Wolfgang":
         run = "run3"
-    single_agent_eval("two_rooms_one_door_modified", [run])
+    single_agent_eval("two_rooms", [run])
 
 
 def dirt_quadrant_5_multi_agent_eval(emergent_phenomenon):
@@ -89,8 +86,8 @@ def dirt_quadrant_5_multi_agent_ctde_eval(emergent_phenomenon): # run7 == run4
     multi_agent_eval("dirt_quadrant", ["run4", "run7"], emergent_phenomenon)
 
 def two_rooms_one_door_modified_multi_agent_eval(emergent_phenomenon):
-    multi_agent_eval("two_rooms_one_door_modified", ["run2", "run3"], emergent_phenomenon)
+    multi_agent_eval("two_rooms", ["run2", "run3"], emergent_phenomenon)
 
 
 if __name__ == '__main__':
-    dirt_quadrant_5_multi_agent_ctde_eval(True)
+    two_rooms_one_door_modified_multi_agent_eval(False)

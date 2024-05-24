@@ -2,8 +2,6 @@ import numpy as np; import torch as th; import scipy as sp;
 from collections import deque
 from torch import nn
 
-# RLLab Magic for calculating the discounted return G(t) = R(t) + gamma * R(t-1)
-# cf. https://github.com/rll/rllab/blob/ba78e4c16dc492982e648f117875b22af3965579/rllab/misc/special.py#L107
 cumulate_discount = lambda x, gamma: sp.signal.lfilter([1], [1, - gamma], x[::-1], axis=0)[::-1]
 
 class Net(th.nn.Module):

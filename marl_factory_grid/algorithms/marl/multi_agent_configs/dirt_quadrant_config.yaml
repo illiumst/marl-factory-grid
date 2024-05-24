@@ -1,0 +1,34 @@
+agent:
+  classname:           marl_factory_grid.algorithms.marl.networks.RecurrentAC
+  n_agents:            2
+  obs_emb_size:        96
+  action_emb_size:     16
+  hidden_size_actor:   64
+  hidden_size_critic:  64
+  use_agent_embedding: False
+env:
+  classname:          marl_factory_grid.environment.configs.marl_eval
+  env_name:           "marl_eval/dirt_quadrant_eval_config"
+  n_agents:           2
+  max_steps:          250
+  pomdp_r:            2
+  stack_n_frames:     0
+  individual_rewards: True
+  train_render:       False
+  eval_render:        True
+  save_and_log:       True
+  record:             False
+method:               marl_factory_grid.algorithms.marl.LoopSEAC
+algorithm:
+  gamma:              0.99
+  entropy_coef:       0.01
+  vf_coef:            0.05
+  n_steps:            0 # How much experience should be sampled at most (n-TD) until the next value and policy update is performed. Default 0: MC
+  max_steps:          200000
+  advantage:          "Advantage-AC" # Options: "Advantage-AC", "TD-Advantage-AC", "Reinforce"
+  pile-order:         "dynamic" # Use "dynamic" to see emergent phenomenon and "smart" to prevent it
+  pile-observability: "single" # Options: "single", "all"
+  pile_all_done:      "shared" # Options: "single", "all" ("single" for training, "all" for eval), "shared"
+  auxiliary_piles:    False # Option that is only considered when pile-order = "agents"
+  chunk-episode:      20000 # Chunk size. (0 = update networks with full episode at once)
+

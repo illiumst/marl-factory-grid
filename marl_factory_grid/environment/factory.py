@@ -109,7 +109,6 @@ class Factory(gym.Env):
 
         # expensive - don't use; unless required !
         self._renderer = None
-        self._recorder = None
 
         # Init entities
         entities = self.map.do_init()
@@ -278,7 +277,7 @@ class Factory(gym.Env):
             for render_entity in render_entities:
                 if render_entity.name == c.AGENT:
                     render_entity.aux = self.obs_builder.curr_lightmaps[render_entity.real_name]
-        return self._renderer.render(render_entities, self._recorder)
+        return self._renderer.render(render_entities)
 
     def set_recorder(self, recorder):
         self._recorder = recorder

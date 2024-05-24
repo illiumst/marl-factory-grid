@@ -56,7 +56,7 @@ Refer to [quickstart](_quickstart) for specific scenarios.
 
 The majority of environment objects, including entities, rules, and assets, can be loaded automatically.
 Simply specify the requirements of your environment in a [
-*yaml*-config file](marl_factory_grid/configs/default_config.yaml).
+*yaml*-config file](marl_factory_grid/environment/configs/default_config.yaml).
 
 If you only plan on using the environment without making any modifications, use ``quickstart_use``.
 This creates a default config-file and another one that lists all possible options of the environment.

@@ -1,4 +1,3 @@
-from .quickstart import init
 from marl_factory_grid.environment.factory import Factory
 """
 Main module of the 'marl-factory-grid'-environment.
