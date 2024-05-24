@@ -272,7 +272,21 @@ class Factory(gym.Env):
             global Renderer
             self._renderer = Renderer(self.map.level_shape,  view_radius=self.conf.pomdp_r, fps=10)
 
+        # Hide dirt piles where all dirt was cleaned
         render_entities = self.state.entities.render()
+        if 'DirtPiles' in list(self.state.entities.keys()):
+            for pile in self.state.entities['DirtPiles']:
+                if pile.amount <= 0:
+                    render_entities = [entity for entity in render_entities if not (entity.name == 'DirtPiles' and entity.pos == pile.pos)]
+
+        # Mask dirt piles as Destinations (relevant for RL-agents) # TODO
+        if self.conf['General']['level_name'] == 'two_rooms':
+            if 'DirtPiles' in list(self.state.entities.keys()):
+                for entity in render_entities:
+                    if entity.name == 'DirtPiles':
+                        entity.name = 'Destinations'
+                        entity.value = 1
+
         if self.conf.pomdp_r:
             for render_entity in render_entities:
                 if render_entity.name == c.AGENT:

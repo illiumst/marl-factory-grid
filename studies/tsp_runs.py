@@ -80,11 +80,14 @@ def run_tsp_setting(config_name, emergent_phenomenon):
             break
         while not done:
             a = [x.predict() for x in agents]
+            # Have this condition, to terminate as soon as all dirt piles are collected. This ensures that the implementation
+            # of the TSP agent is equivalent to that of the RL agent
+            if 'DirtPiles' in list(factory.state.entities.keys()) and factory.state.entities['DirtPiles'].global_amount == 0.0:
+                break
             obs_type, _, _, done, info = factory.step(a)
             if render:
                 factory.render()
             if done:
-                print(f'Episode {episode} done...')
                 break
 
 

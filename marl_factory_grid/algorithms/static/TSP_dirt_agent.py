@@ -24,9 +24,9 @@ class TSPDirtAgent(TSPBaseAgent):
         """
         dirt_at_position = self._env.state[di.DIRT].by_pos(self.state.pos)
         if dirt_at_position:
-            # Translate the action_object to an integer to have the same output as any other model
-            action = di.CLEAN_UP
-        elif door := self._door_is_close(self._env.state):
+            # Remove dirt from map
+            self._env.state[di.DIRT].delete_env_object(dirt_at_position[0])
+        if door := self._door_is_close(self._env.state):
             action = self._use_door_or_move(door, di.DIRT)
         else:
             action = self._predict_move(di.DIRT)

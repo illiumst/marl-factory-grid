@@ -286,6 +286,7 @@ class A2C:
                 updated_indices = []
                 if len(affected_agents[door_positions[0]]) == 0:
                     # Remove auxiliary piles for all agents
+                    # (In config, we defined every pile with an even numbered index to be an auxiliary pile)
                     updated_indices = [[ele for ele in lst if ele % 2 != 0] for lst in indices]
                 else:
                     for distance, agent_indices in affected_agents[door_positions[0]].items():
@@ -429,6 +430,10 @@ class A2C:
                     else:
                         reward[idx] += 50  # 1
                         cleaned_dirt_piles[idx][pos] = True
+
+                    # Indicate that renderer can hide dirt pile
+                    dirt_at_position = env.state['DirtPiles'].by_pos(pos)
+                    dirt_at_position[0].set_new_amount(0)
 
             if self.cfg[nms.ALGORITHM]["pile_all_done"] in ["all", "distributed"]:
                 if all([all(cleaned_dirt_piles[i].values()) for i in range(self.n_agents)]):
@@ -603,12 +608,17 @@ class A2C:
 
         while episode < n_episodes:
             obs = env.reset()
+            self.set_agent_spawnpoint(env)
             if self.cfg[nms.ENV][nms.EVAL_RENDER]:
                 if self.cfg[nms.ENV]["save_and_log"] and self.cfg[nms.ENV]["record"]:
                     env.set_recorder(self.recorder)
+                if self.cfg[nms.ALGORITHM]["auxiliary_piles"]:
+                    # Don't render auxiliary piles
+                    auxiliary_piles = [pile for idx, pile in enumerate(env.state.entities['DirtPiles']) if idx % 2 == 0]
+                    for pile in auxiliary_piles:
+                        pile.set_new_amount(0)
                 env.render()
                 env._renderer.fps = 5
-            self.set_agent_spawnpoint(env)
             """obs = list(obs.values())"""
             # Reset current target pile at episode begin if all piles have to be cleaned in one episode
             if self.cfg[nms.ALGORITHM]["pile_all_done"] in ["all", "distributed", "shared"]:
