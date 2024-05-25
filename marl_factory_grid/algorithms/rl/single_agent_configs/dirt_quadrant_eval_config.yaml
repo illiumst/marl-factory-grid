@@ -1,12 +1,12 @@
 env:
   classname:          marl_factory_grid.environment.configs.rl
   env_name:           "rl/dirt_quadrant_agent1_eval_config"
-  n_agents:           1
-  eval_render:        True
-  save_and_log:       False
+  n_agents:           1 # Number of agents in the environment
+  eval_render:        True # If inference should be graphically visualized
+  save_and_log:       False # If configurations and potential logging files should be saved
 algorithm:
-  pile-order:         "fixed" # Options: "fixed", "random", "none", "agents", "dynamic", "smart" (Use "fixed", "random" and "none" for single agent training and the other for multi agent inference)
-  pile-observability: "single" # Options: "single", "all"
-  pile_all_done:      "all" #
+  pile-order:         "fixed" # Clean dirt piles in a fixed order specified by the environment config (cf. coords_or_quantity)
+  pile-observability: "single" # Agent can only perceive one dirt pile at any given time step
+  pile_all_done:      "all" # During inference the episode ends only when all dirt piles are cleaned
   auxiliary_piles:    False # Dirt quadrant does not use this option
 

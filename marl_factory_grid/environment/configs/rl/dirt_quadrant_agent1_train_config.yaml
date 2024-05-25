@@ -21,7 +21,7 @@ Agents:
     Observations:
       - DirtPiles
       - Self
-    Positions:
+    Positions: # Each spawnpoint is mapped to one dirt pile looping over coords_or_quantity (see below)
       - (9,1)
       - (1,1)
       - (2,4)

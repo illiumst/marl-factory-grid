@@ -1,13 +1,16 @@
+# Configuration that shows emergent behavior in our two-rooms environment
 env:
   classname:          marl_factory_grid.environment.configs.marl_eval
   env_name:           "marl_eval/two_rooms_eval_config_emergent"
-  n_agents:           2
-  eval_render:        True
-  save_and_log:       False
+  n_agents:           2 # Number of agents in the environment
+  eval_render:        True # If inference should be graphically visualized
+  save_and_log:       False # If configurations and potential logging files should be saved
 algorithm:
-  pile-order:         "agents" # Options: "fixed", "random", "none", "agents", "dynamic", "smart" (Use "fixed", "random" and "none" for single agent training and the other for multi agent inference)
-  pile-observability: "single" # Options: "single", "all"
-  pile_all_done:      "distributed" # Options: "single", "all" ("single" for training, "all" and "distributed" for eval)
-  auxiliary_piles:    False # Use True to see emergent phenomenon and False to prevent it
+  # Piles (=encoded flags) are evenly distributed among the two agents and have to be collected in the order defined
+  # by the environment config (cf. coords_or_quantity)
+  pile-order:         "agents"
+  pile-observability: "single" # Agents can only perceive one dirt pile at any given time step
+  pile_all_done:      "distributed" # Indicates that agents must clean their specifically assigned dirt piles
+  auxiliary_piles:    False # Shows emergent behavior
 
 
