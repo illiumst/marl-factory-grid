@@ -216,6 +216,54 @@ def plot_reward_development(reward_development, cfg, results_path):
     plt.show()
 
 
+def plot_collected_coins_per_step():
+    # Observed behaviour for multi-agent setting consisting of run0 and run0
+    cleaned_dirt_per_step_emergent = [0, 0, 0, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 4, 4, 5]
+    cleaned_dirt_per_step = [0, 0, 0, 1, 1, 2, 2, 3, 3, 3, 4, 5]
+
+    plt.step(range(1, len(cleaned_dirt_per_step) + 1), cleaned_dirt_per_step, color='green', linewidth=3, label='Prevented')
+    plt.step(range(1, len(cleaned_dirt_per_step_emergent) + 1), cleaned_dirt_per_step_emergent, linestyle='--', color='darkred', linewidth=3, label='Emergent')
+    plt.xlabel("Environment step", fontsize=20)
+    plt.ylabel("Collected Coins", fontsize=20)
+    yint = range(min(cleaned_dirt_per_step), max(cleaned_dirt_per_step) + 1)
+    plt.yticks(yint, fontsize=17)
+    plt.xticks(range(1, len(cleaned_dirt_per_step_emergent) + 1), fontsize=17)
+    frame1 = plt.gca()
+    for idx, xlabel_i in enumerate(frame1.axes.get_xticklabels()):
+        if (idx + 1) % 5 != 0:
+            xlabel_i.set_visible(False)
+            xlabel_i.set_fontsize(0.0)
+    plt.legend(prop={'size': 20})
+    fig = plt.gcf()
+    fig.set_size_inches(8, 7)
+    plt.savefig("../study_out/number_of_collected_coins.png")
+    plt.show()
+
+
+def plot_reached_flags_per_step():
+    # Observed behaviour for multi-agent setting consisting of runs 1 + 2
+    reached_flags_per_step_emergent = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    reached_flags_per_step = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2]
+
+    plt.step(range(1, len(reached_flags_per_step) + 1), reached_flags_per_step, color='green', linewidth=3, label='Prevented')
+    plt.step(range(1, len(reached_flags_per_step_emergent) + 1), reached_flags_per_step_emergent,  linestyle='--', color='darkred', linewidth=3, label='Emergent')
+    plt.xlabel("Environment step", fontsize=20)
+    plt.ylabel("Reached Flags", fontsize=20)
+    yint = range(min(reached_flags_per_step), max(reached_flags_per_step) + 1)
+    plt.yticks(yint, fontsize=17)
+    plt.xticks(range(1, len(reached_flags_per_step_emergent) + 1), fontsize=17)
+    frame1 = plt.gca()
+    for idx, xlabel_i in enumerate(frame1.axes.get_xticklabels()):
+        if (idx + 1) % 5 != 0:
+            xlabel_i.set_visible(False)
+            xlabel_i.set_fontsize(0.0)
+    plt.legend(prop={'size': 20})
+    fig = plt.gcf()
+    fig.set_size_inches(8, 7)
+    plt.savefig("../study_out/number_of_reached_flags.png")
+    plt.show()
+
+
 def create_info_maps(env, used_actions, all_valid_observations, dirt_piles_positions, results_path, agents, act_dim,
                      a2c_instance):
     # Create value map
