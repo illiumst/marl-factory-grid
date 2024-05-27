@@ -1,0 +1,13 @@
+numpy
+pygame>=2.0
+numba>=0.56
+gymnasium>=0.26
+seaborn
+pandas
+PyYAML
+networkx
+torch
+tqdm
+packaging
+pillow
+scipy

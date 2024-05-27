@@ -3,9 +3,10 @@ from marl_factory_grid.algorithms.rl.a2c_dirt import A2C
 from marl_factory_grid.algorithms.utils import load_yaml_file
 
 
-def dirt_quadrant_agent1_training():
-    train_cfg_path = Path(f'../marl_factory_grid/algorithms/rl/single_agent_configs/dirt_quadrant_train_config.yaml')
-    eval_cfg_path = Path(f'../marl_factory_grid/algorithms/rl/single_agent_configs/dirt_quadrant_eval_config.yaml')
+####### Training routines ######
+def rerun_dirt_quadrant_agent1_training():
+    train_cfg_path = Path(f'./marl_factory_grid/algorithms/rl/single_agent_configs/dirt_quadrant_train_config.yaml')
+    eval_cfg_path = Path(f'./marl_factory_grid/algorithms/rl/single_agent_configs/dirt_quadrant_eval_config.yaml')
     train_cfg = load_yaml_file(train_cfg_path)
     eval_cfg = load_yaml_file(eval_cfg_path)
 
@@ -17,8 +18,8 @@ def dirt_quadrant_agent1_training():
 
 
 def two_rooms_training(max_steps, agent_name):
-    train_cfg_path = Path(f'../marl_factory_grid/algorithms/rl/single_agent_configs/two_rooms_train_config.yaml')
-    eval_cfg_path = Path(f'../marl_factory_grid/algorithms/rl/single_agent_configs/two_rooms_eval_config.yaml')
+    train_cfg_path = Path(f'./marl_factory_grid/algorithms/rl/single_agent_configs/two_rooms_train_config.yaml')
+    eval_cfg_path = Path(f'./marl_factory_grid/algorithms/rl/single_agent_configs/two_rooms_eval_config.yaml')
     train_cfg = load_yaml_file(train_cfg_path)
     eval_cfg = load_yaml_file(eval_cfg_path)
 
@@ -32,14 +33,15 @@ def two_rooms_training(max_steps, agent_name):
     agent.eval_loop(n_episodes=1)
 
 
-def two_rooms_agent1_training():
+def rerun_two_rooms_agent1_training():
     two_rooms_training(max_steps=190000, agent_name="agent1")
 
 
-def two_rooms_agent2_training():
+def rerun_two_rooms_agent2_training():
     two_rooms_training(max_steps=260000, agent_name="agent2")
 
 
+####### Eval routines ########
 def single_agent_eval(config_name, run_folder_name):
     eval_cfg_path = Path(f'../marl_factory_grid/algorithms/rl/single_agent_configs/{config_name}_eval_config.yaml')
     train_cfg = eval_cfg = load_yaml_file(eval_cfg_path)
@@ -52,7 +54,7 @@ def single_agent_eval(config_name, run_folder_name):
 
 
 def multi_agent_eval(config_name, runs, emergent_phenomenon=False):
-    eval_cfg_path = Path(f'../marl_factory_grid/algorithms/rl/multi_agent_configs/{config_name}' +
+    eval_cfg_path = Path(f'./marl_factory_grid/algorithms/rl/multi_agent_configs/{config_name}' +
                          f'_eval_config{"_emergent" if emergent_phenomenon else ""}.yaml')
     eval_cfg = load_yaml_file(eval_cfg_path)
 
@@ -63,13 +65,9 @@ def multi_agent_eval(config_name, runs, emergent_phenomenon=False):
     agent.eval_loop(1)
 
 
-def dirt_quadrant_multi_agent_ctde_eval(emergent_phenomenon):
+def dirt_quadrant_multi_agent_rl_eval(emergent_phenomenon):
     multi_agent_eval("dirt_quadrant", ["run0", "run0"], emergent_phenomenon)
 
 
-def two_rooms_multi_agent_eval(emergent_phenomenon):
+def two_rooms_multi_agent_rl_eval(emergent_phenomenon):
     multi_agent_eval("two_rooms", ["run1", "run2"], emergent_phenomenon)
-
-
-if __name__ == '__main__':
-    dirt_quadrant_agent1_training()

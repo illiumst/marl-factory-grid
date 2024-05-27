@@ -327,7 +327,7 @@ class Renderer:
                     self.screen.blit(prob_text, prob_text_rect)
 
         pygame.display.flip()
-        self.save_screen("multi_action_graph", result_path)
+        self.save_screen("multi_action_graph", "." + result_path)
 
     def save_screen(self, filename, result_path):
         """

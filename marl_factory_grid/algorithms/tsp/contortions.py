@@ -1,12 +1,6 @@
-import os
-from pathlib import Path
-
 import numpy as np
-from tqdm import trange
-
 from marl_factory_grid.algorithms.tsp.TSP_dirt_agent import TSPDirtAgent
 from marl_factory_grid.algorithms.tsp.TSP_target_agent import TSPTargetAgent
-from marl_factory_grid.environment.factory import Factory
 
 
 def get_dirt_quadrant_tsp_agents(emergent_phenomenon, factory):
@@ -59,61 +53,3 @@ def get_two_rooms_tsp_agents(emergent_phenomenon, factory):
             for u, v, weight in agent._position_graph.edges(data='weight'):
                 agent._position_graph[u][v]['weight'] = edge_costs[f"{u}-{v}"]
     return agents
-
-
-def run_tsp_setting(config_name, emergent_phenomenon):
-    # Render at each step?
-    render = True
-
-    # Path to config File
-    path = Path(f'../marl_factory_grid/environment/configs/tsp/{config_name}.yaml')
-
-    # Create results folder
-    runs = os.listdir("../study_out/")
-    run_numbers = [int(run[7:]) for run in runs if run[:7] == "tsp_run"]
-    next_run_number = max(run_numbers) + 1 if run_numbers else 0
-    results_path = f"../study_out/tsp_run{next_run_number}"
-    os.mkdir(results_path)
-
-    # Env Init
-    factory = Factory(path)
-
-    with open(f"{results_path}/env_config.txt", "w") as txt_file:
-        txt_file.write(str(factory.conf))
-
-    for episode in trange(1):
-        _ = factory.reset()
-        done = False
-        if render:
-            factory.render()
-            factory._renderer.fps = 5
-        if config_name == "dirt_quadrant":
-            agents = get_dirt_quadrant_tsp_agents(emergent_phenomenon, factory)
-        elif config_name == "two_rooms":
-            agents = get_two_rooms_tsp_agents(emergent_phenomenon, factory)
-        else:
-            print("Config name does not exist. Abort...")
-            break
-        while not done:
-            a = [x.predict() for x in agents]
-            # Have this condition, to terminate as soon as all dirt piles are collected. This ensures that the implementation
-            # of the TSP agent is equivalent to that of the RL agent
-            if 'DirtPiles' in list(factory.state.entities.keys()) and factory.state.entities['DirtPiles'].global_amount == 0.0:
-                break
-            obs_type, _, _, done, info = factory.step(a)
-            if render:
-                factory.render()
-            if done:
-                break
-
-
-def dirt_quadrant_multi_agent_tsp(emergent_phenomenon):
-    run_tsp_setting("dirt_quadrant", emergent_phenomenon)
-
-
-def two_rooms_multi_agent_tsp(emergent_phenomenon):
-    run_tsp_setting("two_rooms", emergent_phenomenon)
-
-
-if __name__ == '__main__':
-    dirt_quadrant_multi_agent_tsp(False)

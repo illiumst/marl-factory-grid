@@ -6,7 +6,7 @@ General:
   # The level.txt file to load from marl_factory_grid/levels
   level_name: two_rooms
   # View Radius
-  pomdp_r: 0 # 0 = full observability
+  pomdp_r: 0 # Use custom partial observability setting
   # Print all messages and events
   verbose: false
   # Run tests

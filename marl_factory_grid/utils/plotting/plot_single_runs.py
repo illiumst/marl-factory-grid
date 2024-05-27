@@ -204,15 +204,14 @@ direction_mapping = {
 }
 
 
-def plot_reward_development(reward_development, cfg, results_path):
+def plot_reward_development(reward_development, results_path):
     smoothed_data = np.convolve(reward_development, np.ones(10) / 10, mode='valid')
     plt.plot(smoothed_data)
     plt.ylim([-10, max(smoothed_data) + 20])
     plt.title('Smoothed Reward Development')
     plt.xlabel('Episode')
     plt.ylabel('Reward')
-    if cfg["env"]["save_and_log"]:
-        plt.savefig(f"{results_path}/smoothed_reward_development.png")
+    plt.savefig(f"{results_path}/smoothed_reward_development.png")
     plt.show()
 
 
@@ -275,7 +274,7 @@ def plot_reached_flags_per_step():
     plt.show()
 
 
-def create_info_maps(env, used_actions, all_valid_observations, dirt_piles_positions, results_path, agents, act_dim,
+def create_info_maps(env, all_valid_observations, dirt_piles_positions, results_path, agents, act_dim,
                      a2c_instance):
     # Create value map
     with open(f"{results_path}/info_maps.txt", "w") as txt_file:
@@ -323,6 +322,5 @@ def create_info_maps(env, used_actions, all_valid_observations, dirt_piles_posit
                         row += "[" + ', '.join(f"{x:7.4f}" for x in pmap[d, r]) + "]"
                     txt_file.write(row + "]")
                     txt_file.write("\n")
-            txt_file.write(f"Used actions: {used_actions}\n")
 
     return action_probabilities
