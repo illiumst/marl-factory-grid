@@ -2,7 +2,7 @@
 
 ## Setup
 
-1. Set up a virtualenv with python 3.9 or higher. You can use pyvenv or conda for this.
+1. Set up a virtualenv with python 3.10 or higher. You can use pyvenv or conda for this.
 2. Run ```pip install -r requirements.txt``` to get requirements.
 3. In case there is no ```study_out/``` folder in the root directory, create one.
 
