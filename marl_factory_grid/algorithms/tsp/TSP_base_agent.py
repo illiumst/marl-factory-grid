@@ -90,7 +90,7 @@ class TSPBaseAgent(ABC):
                     [self.state.pos] + \
                     [x for x in positions if max(abs(np.subtract(x, self.state.pos))) < 3]
                 try:
-                    while len(nodes) < 7:
+                    while len(nodes) < 13:
                         nodes += [next(x for x in positions if x not in nodes)]
                 except StopIteration:
                     nodes = [self.state.pos] + positions
