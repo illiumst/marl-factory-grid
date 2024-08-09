@@ -21,18 +21,13 @@ Agents:
       - DirtPiles
       - Self
     Positions: # Each spawnpoint is mapped to one dirt pile looping over coords_or_quantity (see below)
-      - (3,1)
-      - (1,1)
-      - (3,1)
       - (5,1)
-      - (3,1)
-      - (1,8)
-      - (3,1)
-      - (5,8)
+      - (2,1)
+      - (1,1)
 
 Entities:
   DirtPiles:
-    coords_or_quantity: (2,1), (3,12) # Locations of dirt piles
+    coords_or_quantity: (3,12) # Locations of dirt piles
     initial_amount: 0.5
     clean_amount: 1
     dirt_spawn_r_var: 0
