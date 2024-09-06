@@ -1,8 +1,8 @@
 import torch
 from torch.distributions import Categorical
-from marl_factory_grid.algorithms.marl.iac import LoopIAC
-from marl_factory_grid.algorithms.marl.base_ac import nms
-from marl_factory_grid.algorithms.marl.memory import MARLActorCriticMemory
+from marl_factory_grid.algorithms.rl.iac import LoopIAC
+from marl_factory_grid.algorithms.rl.base_ac import nms
+from marl_factory_grid.algorithms.rl.memory import MARLActorCriticMemory
 
 
 class LoopSEAC(LoopIAC):

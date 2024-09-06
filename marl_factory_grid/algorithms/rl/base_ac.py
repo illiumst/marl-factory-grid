@@ -2,7 +2,7 @@ import torch
 from typing import Union, List, Dict
 import numpy as np
 from torch.distributions import Categorical
-from marl_factory_grid.algorithms.marl.memory import MARLActorCriticMemory
+from marl_factory_grid.algorithms.rl.memory import MARLActorCriticMemory
 from marl_factory_grid.algorithms.utils import add_env_props, instantiate_class
 from pathlib import Path
 import pandas as pd

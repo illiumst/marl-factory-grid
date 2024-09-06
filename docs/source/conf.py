@@ -6,7 +6,7 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = 'marl-factory-grid'
+project = 'rl-factory-grid'
 copyright = '2023, Steffen Illium, Robert Mueller, Joel Friedrich'
 author = 'Steffen Illium, Robert Mueller, Joel Friedrich'
 release = '2.5.0'

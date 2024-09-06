@@ -1,9 +1,9 @@
 import torch
-from marl_factory_grid.algorithms.marl.base_ac import BaseActorCritic, nms
+from marl_factory_grid.algorithms.rl.base_ac import BaseActorCritic, nms
 from marl_factory_grid.algorithms.utils import instantiate_class
 from pathlib import Path
 from natsort import natsorted
-from marl_factory_grid.algorithms.marl.memory import MARLActorCriticMemory
+from marl_factory_grid.algorithms.rl.memory import MARLActorCriticMemory
 
 
 class LoopIAC(BaseActorCritic):

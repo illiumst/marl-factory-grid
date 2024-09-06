@@ -1,10 +1,11 @@
 import copy
 from pathlib import Path
-from marl_factory_grid.algorithms.marl.a2c_dirt import A2C
+from marl_factory_grid.algorithms.rl.a2c_coin import A2C
 from marl_factory_grid.algorithms.utils import load_yaml_file
 
+
 def single_agent_training(config_name):
-    cfg_path = Path(f'../marl_factory_grid/algorithms/marl/configs/{config_name}_config.yaml')
+    cfg_path = Path(f'../marl_factory_grid/algorithms/rl/configs/{config_name}_config.yaml')
 
     train_cfg = load_yaml_file(cfg_path)
     # Use environment config with fixed spawnpoints for eval
@@ -21,7 +22,7 @@ def single_agent_training(config_name):
 
 
 def single_agent_eval(config_name, run):
-    cfg_path = Path(f'../marl_factory_grid/algorithms/marl/configs/{config_name}_config.yaml')
+    cfg_path = Path(f'../marl_factory_grid/algorithms/rl/configs/{config_name}_config.yaml')
 
     train_cfg = load_yaml_file(cfg_path)
     # Use environment config with fixed spawnpoints for eval
@@ -34,7 +35,7 @@ def single_agent_eval(config_name, run):
 
 
 def multi_agent_eval(config_name, runs, emergent_phenomenon=False):
-    cfg_path = Path(f'../marl_factory_grid/algorithms/marl/configs/MultiAgentConfigs/{config_name}_config.yaml')
+    cfg_path = Path(f'../marl_factory_grid/algorithms/rl/configs/MultiAgentConfigs/{config_name}_config.yaml')
 
     train_cfg = load_yaml_file(cfg_path)
     # Use environment config with fixed spawnpoints for eval
@@ -85,8 +86,10 @@ def two_rooms_one_door_modified_single_agent_eval(agent_name):
 def dirt_quadrant_5_multi_agent_eval(emergent_phenomenon):
     multi_agent_eval("dirt_quadrant", ["run4", "run5"], emergent_phenomenon)
 
-def dirt_quadrant_5_multi_agent_ctde_eval(emergent_phenomenon): # run7 == run4
+
+def dirt_quadrant_5_multi_agent_ctde_eval(emergent_phenomenon):  # run7 == run4
     multi_agent_eval("dirt_quadrant", ["run4", "run7"], emergent_phenomenon)
+
 
 def two_rooms_one_door_modified_multi_agent_eval(emergent_phenomenon):
     multi_agent_eval("two_rooms_one_door_modified", ["run2", "run3"], emergent_phenomenon)

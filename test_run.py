@@ -3,6 +3,7 @@ from pprint import pprint
 
 from tqdm import trange
 
+from marl_factory_grid.algorithms.static.TSP_coin_agent import TSPCoinAgent
 from marl_factory_grid.algorithms.static.TSP_dirt_agent import TSPDirtAgent
 from marl_factory_grid.algorithms.static.TSP_item_agent import TSPItemAgent
 from marl_factory_grid.algorithms.static.TSP_target_agent import TSPTargetAgent
@@ -30,7 +31,7 @@ if __name__ == '__main__':
             factory.render()
         action_spaces = factory.action_space
         # agents = [TSPDirtAgent(factory, 0), TSPItemAgent(factory, 1), TSPTargetAgent(factory, 2)]
-        agents = [TSPTargetAgent(factory, 0), TSPTargetAgent(factory, 1)]
+        agents = [TSPCoinAgent(factory, 0)]
         while not done:
             a = [x.predict() for x in agents]
             obs_type, _, _, done, info = factory.step(a)
@@ -39,5 +40,3 @@ if __name__ == '__main__':
             if done:
                 print(f'Episode {episode} done...')
                 break
-
-        plot_routes(factory, agents)

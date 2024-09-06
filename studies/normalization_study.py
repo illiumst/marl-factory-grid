@@ -2,7 +2,7 @@ from marl_factory_grid.algorithms.utils import Checkpointer
 from pathlib import Path
 from marl_factory_grid.algorithms.utils import load_yaml_file, add_env_props, instantiate_class, load_class
 
-# from algorithms.marl import LoopSNAC, LoopIAC, LoopSEAC
+# from algorithms.rl import LoopSNAC, LoopIAC, LoopSEAC
 
 
 for i in range(0, 5):

@@ -67,7 +67,7 @@ Existing modules include a variety of functionalities within the environment:
 
 - [Agents](marl_factory_grid/algorithms) implement either static strategies or learning algorithms based on the specific
   configuration.
-- Their action set includes opening [door entities](marl_factory_grid/modules/doors/entitites.py), cleaning
+- Their action set includes opening [door entities](marl_factory_grid/modules/doors/entitites.py), collecting [coins](marl_factory_grid/modules/coins/coin  cleaning
   [dirt](marl_factory_grid/modules/clean_up/entitites.py), picking
   up [items](marl_factory_grid/modules/items/entitites.py) and
   delivering them to designated drop-off locations.

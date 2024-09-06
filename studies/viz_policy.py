@@ -5,7 +5,7 @@ from algorithms.utils import load_yaml_file
 from tqdm import trange
 study = 'example_config#0'
 #study_root = Path(__file__).parent / study
-study_root = Path('/Users/romue/PycharmProjects/EDYS/algorithms/marl/')
+study_root = Path('/Users/romue/PycharmProjects/EDYS/algorithms/rl/')
 
 #['L2NoAh_gru', 'L2NoCh_gru', 'nomix_gru']:
 render = True

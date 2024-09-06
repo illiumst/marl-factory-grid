@@ -118,9 +118,8 @@ class Gamestate(object):
         self._floortile_graph = None
         self.tests = StepTests(*tests)
 
-        # Pointer that defines current spawn points of agents
-        for agent in self.agents_conf:
-            self.agents_conf[agent]["pos_pointer"] = 0
+        # Initialize position pointers for agents
+        self._initialize_position_pointers()
 
     def reset(self):
         self.curr_step = 0
@@ -137,6 +136,11 @@ class Gamestate(object):
 
     def __repr__(self):
         return f'{self.__class__.__name__}({len(self.entities)} Entitites @ Step {self.curr_step})'
+
+    def _initialize_position_pointers(self):
+        """ Initialize the position pointers for each agent in the configuration."""
+        for agent in self.agents_conf:
+            self.agents_conf[agent]["pos_pointer"] = 0
 
     @property
     def random_free_position(self) -> (int, int):

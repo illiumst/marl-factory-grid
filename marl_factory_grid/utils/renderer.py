@@ -348,7 +348,6 @@ class Renderer:
         self.save_counter += 1
         full_path = os.path.join(out_dir, unique_filename)
         pygame.image.save(self.screen, full_path)
-        print(f"Image saved as {unique_filename}")
 
 
 if __name__ == '__main__':

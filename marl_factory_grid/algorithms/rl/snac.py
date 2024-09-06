@@ -1,5 +1,5 @@
-from marl_factory_grid.algorithms.marl.base_ac import BaseActorCritic
-from marl_factory_grid.algorithms.marl.base_ac import nms
+from marl_factory_grid.algorithms.rl.base_ac import BaseActorCritic
+from marl_factory_grid.algorithms.rl.base_ac import nms
 import torch
 from torch.distributions import Categorical
 from pathlib import Path
