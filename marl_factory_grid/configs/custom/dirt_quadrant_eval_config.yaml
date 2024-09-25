@@ -13,15 +13,15 @@ General:
   tests: false
 
 # In the "clean and bring" Scenario one agent aims to pick up all items and drop them at drop-off locations while all
-# other agents aim to clean dirt piles.
+# other agents aim to collect coin piles.
 Agents:
-  # The clean agents
+  # The collect coin agents
   #Sigmund:
     #Actions:
       #- Move4
       #- Noop
     #Observations:
-      #- DirtPiles
+      #- CoinPiles
       #- Self
     #Positions:
       #- (9,1)
@@ -38,7 +38,7 @@ Agents:
     Actions:
       - Move4
     Observations:
-      - DirtPiles
+      - CoinPiles
       - Self
     Positions:
       - (9,5)
@@ -53,11 +53,11 @@ Agents:
       #- (9,5)
 
 Entities:
-  DirtPiles:
+  CoinPiles:
     coords_or_quantity: (1, 1), (2,4), (4,7), (7,9), (9,9) #(9,9), (7,9), (4,7), (2,4), (1, 1) #(1, 1), (2,4), (4,7), (7,9), (9,9) # (4,7), (2,4), (1, 1) # (1, 1), (2,4), (4,7), (7,9), (9,9) # (1, 1), (1,2), (1,3), (2,4), (2,5), (3,6), (4,7), (5,8), (6,8), (7,9), (8,9), (9,9)
-    initial_amount: 0.5 # <1 to ensure that the robot which first attempts to clean this field, can remove the dirt in one action
-    clean_amount: 1
-    dirt_spawn_r_var: 0
+    initial_amount: 0.5 # <1 to ensure that the robot which first attempts to collect this field, can collect the coin in one action
+    collect_amount: 1
+    coin_spawn_r_var: 0
     max_global_amount: 12
     max_local_amount: 1
 
@@ -72,7 +72,7 @@ Rules:
 
   # Done Conditions
   # Define the conditions for the environment to stop. Either success or a fail conditions.
-  # The environment stops when all dirt is cleaned
-  DoneOnAllDirtCleaned:
+  # The environment stops when all coins are collected
+  DoneOnAllCoinsCollected:
   #DoneAtMaxStepsReached:
     #max_steps: 200

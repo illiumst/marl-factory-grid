@@ -298,6 +298,8 @@ class Factory(gym.Env):
         """ Generalized method to mask entities based on dynamic conditions. """
         for entity in entities:
             if entity.name == 'CoinPiles':
+                # entity.name = 'Destinations'
+                # entity.value = 1
                 entity.mask = 'Destinations'
                 entity.mask_value = 1
         return entities

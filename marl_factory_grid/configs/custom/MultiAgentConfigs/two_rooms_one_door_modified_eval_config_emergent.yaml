@@ -20,7 +20,7 @@ Agents:
       - DoorUse
       - Noop
     Observations:
-      - DirtPiles
+      - CoinPiles
       - Self
     Positions:
       - (3,1)
@@ -30,17 +30,17 @@ Agents:
       - DoorUse
       - Noop
     Observations:
-      - DirtPiles
+      - CoinPiles
       - Self
     Positions:
       - (3,13)
 
 Entities:
-  DirtPiles:
+  CoinPiles:
     coords_or_quantity: (3,12), (3,2) # Static form: auxiliary pile, primary pile, auxiliary pile, ...
-    initial_amount: 0.5 # <1 to ensure that the robot which first attempts to clean this field, can remove the dirt in one action
-    clean_amount: 1
-    dirt_spawn_r_var: 0
+    initial_amount: 0.5 # <1 to ensure that the robot which first attempts to collect this field, can collect the coin in one action
+    collect_amount: 1
+    coin_spawn_r_var: 0
     max_global_amount: 12
     max_local_amount: 1
 
