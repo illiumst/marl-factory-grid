@@ -104,7 +104,7 @@ using the config file.
 
 [Groups](marl_factory_grid/environment/groups/objects.py) are entity Sets that provide administrative access to all
 group members.
-All [Entites](marl_factory_grid/environment/entity/entity.py) are available at runtime as EnvState property.
+All [GlobalEntities](marl_factory_grid/environment/groups/global_entities.py) are available at runtime as EnvState property.
 
 ### Rules
 
