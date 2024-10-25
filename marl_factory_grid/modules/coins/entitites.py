@@ -43,4 +43,4 @@ class CoinPile(Entity):
         return state_dict
 
     def render(self):
-        return RenderEntity(d.COIN, self.pos, min(0.15 + self.amount, 1.5), 'scale')
+        return RenderEntity(d.COIN, self.pos, min(0 + self.amount, 1.5), 'scale')

@@ -1,0 +1,63 @@
+General:
+  # RNG-seed to sample the same "random" numbers every time, to make the different runs comparable.
+  env_seed: 69
+  # Individual vs global rewards
+  individual_rewards: true
+  # The level.txt file to load from marl_factory_grid/levels
+  level_name: quadrant
+  # View Radius
+  pomdp_r: 0 # Use custom partial observability setting
+  # Print all messages and events
+  verbose: false
+  # Run tests
+  tests: false
+
+# Define Agents, their actions, observations and spawnpoints
+Agents:
+  # The clean agents
+  Agent1:
+    Actions:
+      - Move4
+    Observations:
+      - CoinPiles
+      - Self
+    Positions: # Each spawnpoint is mapped to one coin pile looping over coords_or_quantity (see below)
+      - (9,1)
+      - (1,1)
+      - (2,4)
+      - (4,7)
+      - (7,9)
+      - (2,4)
+      - (4,7)
+      - (7,9)
+      - (9,9)
+      - (9,1)
+
+Entities:
+  CoinPiles:
+    coords_or_quantity: (1, 1), (2,4), (4,7), (7,9), (9,9) # Locations of coin piles
+    initial_amount: 0.5
+    clean_amount: 1
+    coin_spawn_r_var: 0
+    max_global_amount: 12
+    max_local_amount: 1
+
+# Rules section specifies the rules governing the dynamics of the environment.
+Rules:
+  # Utilities
+  # This rule defines the collision mechanic, introduces a related DoneCondition and lets you specify rewards.
+  # Can be omitted/ignored if you do not want to take care of collisions at all.
+  WatchCollisions:
+    done_at_collisions: false
+
+  # Done Conditions
+  # Define the conditions for the environment to stop. Either success or a fail conditions.
+  # The environment stops when all coin is cleaned
+  DoneOnAllCoinsCollected:
+
+  # Define how agents spawn.
+  # Options: "random" (Spawn agent at a random position from the list of defined positions)
+  # "first" (Always spawn agent at first position regardless of the other provided positions)
+  # "order" (Loop through agent positions)
+  AgentSpawnRule:
+    spawn_rule: "order"

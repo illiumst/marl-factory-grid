@@ -1,0 +1,16 @@
+env:
+  classname:          marl_factory_grid.configs.marl.multi_agent_configs
+  env_name:           "marl/multi_agent_configs/two_rooms_eval_config"
+  n_agents:           2 # Number of agents in the environment
+  eval_render:        True # If inference should be graphically visualized
+  save_and_log:       False # If configurations and potential logging files should be saved
+algorithm:
+  seed:               42 # Picks seed to make random parts of algorithm reproducible. -1 for random seed
+  # Piles (=encoded flags) are evenly distributed among the two agents and have to be collected in the order defined
+  # by the environment config (cf. coords_or_quantity)
+  pile-order:         "agents"
+  pile-observability: "single" # Agents can only perceive one dirt pile at any given time step
+  pile_all_done:      "distributed" # Indicates that agents must clean their specifically assigned dirt piles
+  auxiliary_piles:    True # Allows agents to go to an auxiliary pile
+
+

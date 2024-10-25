@@ -2,8 +2,6 @@ import numpy as np; import torch as th; import scipy as sp;
 from collections import deque
 from torch import nn
 
-# RLLab Magic for calculating the discounted return G(t) = R(t) + gamma * R(t-1)
-# cf. https://github.com/rll/rllab/blob/ba78e4c16dc492982e648f117875b22af3965579/rllab/misc/special.py#L107
 cumulate_discount = lambda x, gamma: sp.signal.lfilter([1], [1, - gamma], x[::-1], axis=0)[::-1]
 
 class Net(th.nn.Module):
@@ -21,11 +19,11 @@ class Net(th.nn.Module):
         if module.bias is not None:
           nn.init.uniform_(module.bias, a=-0.1, b=0.1)
 
-  def save_model(self, path, agent_name):
-    th.save(self.net, f"{path}/{agent_name}_{self.__class__.__name__}_model.pth")
+  def save_model(self, path):
+    th.save(self.net, f"{path}/{self.__class__.__name__}_model.pth")
 
-  def save_model_parameters(self, path, agent_name):
-    th.save(self.net.state_dict(), f"{path}/{agent_name}_{self.__class__.__name__}_model_parameters.pth")
+  def save_model_parameters(self, path):
+    th.save(self.net.state_dict(), f"{path}/{self.__class__.__name__}_model_parameters.pth")
 
   def load_model_parameters(self, path):
     self.net.load_state_dict(th.load(path))

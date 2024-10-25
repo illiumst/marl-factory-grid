@@ -1,0 +1,22 @@
+env:
+  classname:          marl_factory_grid.configs.marl.single_agent_configs
+  env_name:           "marl/single_agent_configs/two_rooms_agent2_train_config"
+  n_agents:           1 # Number of agents in the environment
+  train_render:       False # If training should be graphically visualized
+  save_and_log:       True # If configurations and potential logging files should be saved
+algorithm:
+  seed:               9 # Picks seed to make random parts of algorithm reproducible. -1 for random seed
+  gamma:              0.99 # The gamma value that is used as discounting factor
+  n_steps:            0 # How much experience should be sampled at most until the next value- and policy-net updates are performed. (0 = Monte Carlo)
+  chunk-episode:      20000 # For update, splits very large episodes in batches of approximately equal size. (0 = update networks with full episode at once)
+  max_steps:          300000 # Number of training steps used to train the agent. Here, only a placeholder value
+  early_stopping:     True # If the early stopping functionality should be used
+  last_n_episodes:    100 # To determine if low change phase has begun, the last n episodes are checked if the mean target change is reached
+  mean_target_change: 2.0 # What should be the accepted fluctuation for determining if a low change phase has begun
+  advantage:          "Advantage-AC" # Defines the used actor critic model
+  pile-order:         "fixed" # Clean coin piles (=encoded flags) in a fixed order specified by the environment config (cf. coords_or_quantity)
+  pile-observability: "single" # Agent can only perceive one coin pile at any given time step
+  pile_all_done:      "single" # Episode ends when the current target pile is cleaned
+  auxiliary_piles:    False # Auxiliary piles are only differentiated from regular target piles during marl eval
+
+

@@ -26,6 +26,28 @@ Agents:
       - Noop
       - Charge
       - Clean
+      - DestAction
+      - DoorUse
+      - ItemAction
+      - Move8
+    Observations:
+      - Combined:
+          - Other
+          - Walls
+      - GlobalPosition
+      - Battery
+      - ChargePods
+      - DirtPiles
+      - Destinations
+      - Doors
+      - Items
+      - Inventory
+      - DropOffLocations
+      - Maintainers
+  Herbert:
+    Actions:
+      - Noop
+      - Charge
       - Collect
       - DestAction
       - DoorUse
@@ -39,7 +61,6 @@ Agents:
       - Battery
       - ChargePods
       - CoinPiles
-      - DirtPiles
       - Destinations
       - Doors
       - Items
@@ -62,10 +83,10 @@ Entities:
   # CoinPiles: Entities that can be collected by an agent.
   CoinPiles:
     coords_or_quantity: 10
-    initial_amount: 2
+    initial_amount: 1
     collect_amount: 1
     coin_spawn_r_var: 0.1
-    max_global_amount: 20
+    max_global_amount: 10
     max_local_amount: 5
 
   # Destinations: Entities representing target locations for agents.

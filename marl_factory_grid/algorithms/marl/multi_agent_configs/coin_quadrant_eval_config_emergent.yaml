@@ -1,0 +1,13 @@
+# Configuration that shows emergent behavior in out coin-quadrant environment
+env:
+  classname:          marl_factory_grid.configs.marl.multi_agent_configs
+  env_name:           "marl/multi_agent_configs/coin_quadrant_eval_config"
+  n_agents:           2 # Number of agents in the environment
+  eval_render:        True # If inference should be graphically visualized
+  save_and_log:       False # If configurations and potential logging files should be saved
+algorithm:
+  seed:               42 # Picks seed to make random parts of algorithm reproducible. -1 for random seed
+  pile-order:         "dynamic" # Agents only decide on next target pile based on the distance to the respective piles
+  pile-observability: "single" # Agents can only perceive one coin pile at any given time step
+  pile_all_done:      "shared" # Indicates that agents don't have to collect the same coin piles
+  auxiliary_piles:    False # Coin quadrant does not use this option

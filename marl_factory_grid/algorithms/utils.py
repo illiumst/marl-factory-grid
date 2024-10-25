@@ -1,9 +1,11 @@
+import os
 from pathlib import Path
 
 import numpy as np
 import yaml
 
 from marl_factory_grid import Factory
+from marl_factory_grid.algorithms.marl.utils import get_configs_marl_path
 
 
 def load_class(classname):
@@ -43,6 +45,10 @@ def get_class(arguments):
         return c
 
 
+def get_study_out_path():
+    return Path(os.path.join(Path(__file__).parent.parent.parent, "study_out"))
+
+
 def get_arguments(arguments):
     d = dict(arguments)
     if "classname" in d:
@@ -58,18 +64,12 @@ def load_yaml_file(path: Path):
 
 def add_env_props(cfg):
     # Path to config File
-    env_path = Path(f'../marl_factory_grid/configs/{cfg["env"]["env_name"]}.yaml')
+    env_path = Path(f'{get_configs_marl_path()}/{cfg["env"]["env_name"]}.yaml')
+    print(cfg)
 
     # Env Init
     factory = Factory(env_path)
     _ = factory.reset()
-
-    # Agent Init
-    if len(factory.state.moving_entites) == 1: # Single agent setting
-        observation_size = list(factory.observation_space.shape)
-    else: # Multi-agent setting
-        observation_size = list(factory.observation_space[0].shape)
-    cfg['agent'].update(dict(observation_size=observation_size, n_actions=factory.action_space[0].n))
 
     return factory
 

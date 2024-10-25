@@ -1,4 +1,6 @@
 import ast
+import random
+
 from marl_factory_grid.environment import constants as c
 from marl_factory_grid.environment.groups.collection import Collection
 from marl_factory_grid.modules.coins.entitites import CoinPile
@@ -30,12 +32,12 @@ class CoinPiles(Collection):
         """
         Internal Usage
         """
-        return sum([dirt.amount for dirt in self])
+        return sum([coin.amount for coin in self])
 
     def __init__(self, *args, max_local_amount=5, collect_amount=1, max_global_amount: int = 20, coords_or_quantity=10,
-                 initial_amount=2, amount_var=0.2, n_var=0.2, **kwargs):
+                 initial_amount=2, amount_var=0.2, n_var=0.2, randomize=False, randomization_seed=0, **kwargs):
         """
-        A Collection of dirt piles that triggers their spawn.
+        A Collection of coin piles that triggers their spawn.
 
         :param max_local_amount: The maximum amount of coins allowed in a single pile at one position.
         :type max_local_amount: int
@@ -67,6 +69,8 @@ class CoinPiles(Collection):
         self.max_local_amount = max_local_amount
         self.coords_or_quantity = coords_or_quantity
         self.initial_amount = initial_amount
+        self.randomize = randomize
+        self.randomized_selection = None
 
     def trigger_spawn(self, state, coords_or_quantity=0, amount=0, ignore_blocking=False) -> [Result]:
         if ignore_blocking:
@@ -85,7 +89,17 @@ class CoinPiles(Collection):
             else:
                 n_new = [pos for pos in coords_or_quantity]
 
-        amounts = [amount if amount else (self.initial_amount ) # removed rng amount
+        if self.randomize:
+            if not self.randomized_selection:
+                n_new_prime = []
+                for n in n_new:
+                    if random.random() < 0.5:
+                        n_new_prime.append(n)
+                n_new = n_new_prime
+                self.randomized_selection = n_new
+            else:
+                n_new = self.randomized_selection
+        amounts = [amount if amount else (self.initial_amount)  # removed rng amount
                    for _ in range(len(n_new))]
 
         spawn_counter = 0

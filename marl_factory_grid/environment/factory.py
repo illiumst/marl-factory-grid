@@ -1,3 +1,4 @@
+import copy
 import shutil
 
 from collections import defaultdict
@@ -100,7 +101,7 @@ class Factory(gym.Env):
 
         parsed_entities = self.conf.load_entities()
         self.map = LevelParser(self.level_filepath, parsed_entities, self.conf.pomdp_r)
-        self.levels_that_require_masking = ['two_rooms']
+        self.levels_that_require_masking = ['two_rooms_small']
 
         # Init for later usage:
         # noinspection PyTypeChecker
@@ -274,10 +275,15 @@ class Factory(gym.Env):
             global Renderer
             self._renderer = Renderer(self.map.level_shape, view_radius=self.conf.pomdp_r, fps=10)
 
-        render_entities = self.state.entities.render()
+        # Remove potential Nones from entities
+        render_entities_full = self.state.entities.render()
 
         # Hide entities where certain conditions are met (e.g., amount <= 0 for DirtPiles)
-        render_entities = self.filter_entities(render_entities)
+        maintain_indices = self.filter_entities(self.state.entities)
+        if maintain_indices:
+            render_entities = [render_entity for idx, render_entity in enumerate(render_entities_full) if idx in maintain_indices]
+        else:
+            render_entities = render_entities_full
 
         # Mask entities based on dynamic conditions instead of hardcoding level-specific logic
         if self.conf['General']['level_name'] in self.levels_that_require_masking:
@@ -291,18 +297,18 @@ class Factory(gym.Env):
 
     def filter_entities(self, entities):
         """ Generalized method to filter out entities that shouldn't be rendered. """
-        if 'DirtPiles' in self.state.entities.keys():
-            entities = [entity for entity in entities if not (entity.name == 'DirtPiles' and entity.amount <= 0)]
-        return entities
+        if 'CoinPiles' in self.state.entities.keys():
+            all_entities = [item for sublist in [[e for e in entity] for entity in entities] for item in sublist]
+            return [idx for idx, entity in enumerate(all_entities) if not ('CoinPile' in entity.name and entity.amount <= 0)]
 
     def mask_entities(self, entities):
         """ Generalized method to mask entities based on dynamic conditions. """
         for entity in entities:
             if entity.name == 'CoinPiles':
-                # entity.name = 'Destinations'
-                # entity.value = 1
-                entity.mask = 'Destinations'
-                entity.mask_value = 1
+                entity.name = 'Destinations'
+                entity.value = 1
+                #entity.mask = 'Destinations'
+                #entity.mask_value = 1
         return entities
 
     def set_recorder(self, recorder):

@@ -1,0 +1,78 @@
+General:
+  # RNG-seed to sample the same "random" numbers every time, to make the different runs comparable.
+  env_seed: 69
+  # Individual vs global rewards
+  individual_rewards: true
+  # The level.txt file to load from marl_factory_grid/levels
+  level_name: two_rooms_small
+  # View Radius
+  pomdp_r: 0 # Use custom partial observability setting
+  # Print all messages and events
+  verbose: false
+  # Run tests
+  tests: false
+
+# Define Agents, their actions, observations and spawnpoints
+Agents:
+  Agent1:
+    Actions:
+      - Move4
+      - Noop
+      - DestAction # Action that is performed when the destination is reached
+      - DoorUse
+    Observations:
+      - Walls
+      - Doors
+      - Destination
+    Positions:
+      - (3,1)
+  Agent2:
+    Actions:
+      - Move4
+      - Noop
+      - DestAction
+      - DoorUse
+    Observations:
+      - Walls
+      - Destination
+      - Doors
+    Positions:
+      - (3,13)
+
+Entities:
+  Destinations:
+    spawnrule:
+      SpawnDestinationsPerAgent:
+        # Target coordinates
+        coords_or_quantity:
+          Agent1:
+            - (3,12)
+          Agent2:
+            - (3,2)
+
+  Doors: { }
+  GlobalPositions: { }
+
+Rules:
+  # Environment Dynamics
+  DoorAutoClose:
+    close_frequency: 10
+
+  # Utilities
+  # This rule defines the collision mechanic, introduces a related DoneCondition and lets you specify rewards.
+  WatchCollisions:
+    done_at_collisions: false
+
+  # Init
+  AssignGlobalPositions: { }
+
+  DoneAtDestinationReach:
+    reward_at_done: 50
+    # We want to give rewards only, when all targets have been reached.
+    condition: "all"
+
+  # Done Conditions
+  # Define the conditions for the environment to stop. Either success or a fail conditions
+  # Environment execution stops after 30 steps
+  DoneAtMaxStepsReached:
+    max_steps: 30

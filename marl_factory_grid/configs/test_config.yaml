@@ -18,28 +18,28 @@ Agents:
 #      - Doors
 #      - Maintainers
 #    Clones: 0
-#  Item test agent:
-#    Actions:
-#      - Noop
-#      - Charge
-#      - DestAction
-#      - DoorUse
-#      - ItemAction
-#      - Move8
-#    Observations:
-#      - Combined:
-#          - Other
-#          - Walls
-#      - GlobalPosition
-#      - Battery
-#      - ChargePods
-#      - Destinations
-#      - Doors
-#      - Items
-#      - Inventory
-#      - DropOffLocations
-#      - Maintainers
-#    Clones: 0
+  Item test agent:
+    Actions:
+      - Noop
+      - Charge
+      - DestAction
+      - DoorUse
+      - ItemAction
+      - Move8
+    Observations:
+      - Combined:
+          - Other
+          - Walls
+      - GlobalPosition
+      - Battery
+      - ChargePods
+      - Destinations
+      - Doors
+      - Items
+      - Inventory
+      - DropOffLocations
+      - Maintainers
+    Clones: 0
 #  Target test agent:
 #    Actions:
 #      - Noop
@@ -56,25 +56,25 @@ Agents:
 #      - Doors
 #      - Maintainers
 #    Clones: 1
-  Coin test agent:
-    Actions:
-      - Noop
-      - Charge
-      - Collect
-      - DoorUse
-      - Move8
-    Observations:
-      - Combined:
-          - Other
-          - Walls
-      - GlobalPosition
-      - Battery
-      - ChargePods
-      - CoinPiles
-      - Destinations
-      - Doors
-      - Maintainers
-    Clones: 1
+#  Coin test agent:
+#    Actions:
+#      - Noop
+#      - Charge
+#      - Collect
+#      - DoorUse
+#      - Move8
+#    Observations:
+#      - Combined:
+#          - Other
+#          - Walls
+#      - GlobalPosition
+#      - Battery
+#      - ChargePods
+#      - CoinPiles
+#      - Destinations
+#      - Doors
+#      - Maintainers
+#    Clones: 1
 
 Entities:
 
@@ -93,7 +93,7 @@ Entities:
 #    dirt_spawn_r_var: 0.1
 #    max_global_amount: 20
 #    max_local_amount: 5
-  CoinPiles:
+  DirtPiles:
     coords_or_quantity: 10
     initial_amount: 2
     collect_amount: 1
@@ -134,7 +134,7 @@ Rules:
   #    respawn_freq: 15
   RespawnItems:
     respawn_freq: 15
-  RespawnCoins:
+  RespawnDirt:
     respawn_freq: 15
 
   # Utilities

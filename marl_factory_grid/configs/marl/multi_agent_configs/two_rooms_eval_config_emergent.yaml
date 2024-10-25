@@ -1,0 +1,60 @@
+General:
+  # RNG-seed to sample the same "random" numbers every time, to make the different runs comparable.
+  env_seed: 69
+  # Individual vs global rewards
+  individual_rewards: true
+  # The level.txt file to load from marl_factory_grid/levels
+  level_name: two_rooms_small
+  # View Radius
+  pomdp_r: 0 # Use custom partial observability setting
+  # Print all messages and events
+  verbose: false
+  # Run tests
+  tests: false
+
+# Define Agents, their actions, observations and spawnpoints
+Agents:
+  Agent1:
+    Actions:
+      - Move4
+      - DoorUse
+      - Noop
+    Observations:
+      - CoinPiles
+      - Self
+    Positions:
+      - (3,1)
+  Agent2:
+    Actions:
+      - Move4
+      - DoorUse
+      - Noop
+    Observations:
+      - CoinPiles
+      - Self
+    Positions:
+      - (3,13)
+
+Entities:
+  # For RL-agent we model the flags as coin piles to be more flexible
+  CoinPiles:
+    coords_or_quantity: (3,12), (3,2) # Locations of flags
+    initial_amount: 0.5
+    clean_amount: 1
+    coin_spawn_r_var: 0
+    max_global_amount: 12
+    max_local_amount: 1
+
+  Doors: { }
+
+Rules:
+  # Utilities
+  # This rule defines the collision mechanic, introduces a related DoneCondition and lets you specify rewards.
+  WatchCollisions:
+    done_at_collisions: false
+
+  # Done Conditions
+  # Define the conditions for the environment to stop. Either success or a fail conditions
+  # Environment execution stops after 30 steps
+  DoneAtMaxStepsReached:
+    max_steps: 30
